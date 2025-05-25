@@ -1,7 +1,7 @@
 export enum TypeUser {
-  'ADMIN',
-  'HOTELIER',
-  'JOB_SEEKER',
+  "ADMIN",
+  "HOTELIER",
+  "JOB_SEEKER",
 }
 
 export interface ICreateUserPayload {
@@ -18,7 +18,9 @@ export interface ICheckUserParams {
   id?: number;
   email?: string;
   username?: string;
-  type: TypeUser;
+  type: string;
+  user_name?: string;
+  phone_number?: string;
 }
 
 export interface ICheckUserData {

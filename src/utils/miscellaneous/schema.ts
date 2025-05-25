@@ -1,10 +1,13 @@
 export default class Schema {
-  protected readonly PUBLIC_SCHEMA = 'public';
-  protected readonly DBO_SCHEMA = 'dbo';
-  protected readonly ADMIN_SCHEMA = 'admin';
+  protected readonly PUBLIC_SCHEMA = "public";
+  protected readonly DBO_SCHEMA = "dbo";
+  protected readonly ADMIN_SCHEMA = "admin";
+  protected readonly JOB_SEEKER = "jobseeker";
+  protected readonly HOTELIER = "hotelier";
   protected readonly TABLES = {
-    user: 'user',
-    last_no: 'last_no',
-    audit_trail: 'audit_trail',
+    user: "user",
+    last_no: "last_no",
+    audit_trail: "audit_trail",
   };
+
 }

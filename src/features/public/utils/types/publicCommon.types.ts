@@ -1,4 +1,4 @@
-import { Knex } from 'knex';
+import { Knex } from "knex";
 
 // Db or Transaction connection types
 export type TDB = Knex | Knex.Transaction;
@@ -11,6 +11,7 @@ export interface ITokenParseAdmin {
   photo: string | null;
   user_email: string;
   phone_number: string | null;
+  status: boolean;
 }
 
 export interface ITokenParseHotelier {
@@ -21,6 +22,7 @@ export interface ITokenParseHotelier {
   photo: string | null;
   user_email: string;
   phone_number: string | null;
+  status: boolean;
 }
 
 export interface ITokenParseJobSeeker {
@@ -30,4 +32,5 @@ export interface ITokenParseJobSeeker {
   photo: string | null;
   user_email: string;
   phone_number: string | null;
+  status: boolean;
 }

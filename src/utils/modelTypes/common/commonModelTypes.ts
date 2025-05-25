@@ -17,3 +17,55 @@ export interface IGetLastIdData {
   id: number;
   last_id: number;
 }
+
+
+export interface IJobSeeker {
+  user_id: number;
+  username: string;
+  email: string;
+  name: string;
+  phone_number: string;
+  photo: string;
+  user_type: string;
+  date_of_birth: string;
+  gender: string;
+  nationality: string;
+  address: string;
+  work_permit: boolean;
+  account_status: string;
+  criminal_convictions: boolean;
+}
+
+export interface IHotelier {
+  user_id: number;
+  username: string;
+  email: string;
+  name: string;
+  phone_number: string;
+  photo: string;
+  organization_id: number;
+  organization_name: string;
+  address: string;
+  organization_status: string;
+}
+
+export interface IAdmin {
+  user_id: number;
+  username: string;
+  email: string;
+  status: boolean;
+  name: string;
+  phone_number: string;
+  photo: string;
+  user_type: string;
+  role_id: number;
+  is_main: boolean;
+  is_2fa_on: boolean;
+}
+
+
+export interface IForgetPasswordPayload {
+  token: string;
+  email: string;
+  password: string;
+}

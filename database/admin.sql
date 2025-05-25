@@ -20,12 +20,48 @@ CREATE TABLE IF NOT EXISTS admin.audit_trail
     CONSTRAINT admin_audit_trail_pkey PRIMARY KEY (id)
 );
 
-CREATE TABLE IF NOT EXISTS admin.admin
-(
-    user_id integer NOT NULL,
-    role_id integer NOT NULL,
-    is_main boolean NOT NULL DEFAULT false,
-    created_by integer
+CREATE TABLE admin.admin (
+    user_id INTEGER PRIMARY KEY,
+    role_id INTEGER NOT NULL,
+    is_main BOOLEAN NOT NULL DEFAULT FALSE,
+    created_by INTEGER,
+    CONSTRAINT fk_admin_user FOREIGN KEY (user_id) REFERENCES dbo."user"(id) ON DELETE CASCADE,
+    CONSTRAINT fk_admin_creator FOREIGN KEY (created_by) REFERENCES dbo."user"(id) ON DELETE SET NULL
 );
+
+-- admin auth view
+CREATE OR REPLACE VIEW admin.vw_admin_auth AS
+SELECT
+    u.id AS user_id,
+    u.username,
+    u.email,
+    u.password_hash,
+    u.name,
+    u.photo,
+    u.phone_number,
+    u.status AS user_status,
+    u.is_deleted AS user_deleted,
+    u.type AS user_type,
+    a.role_id,
+    a.is_main,
+    a.created_by,
+    a.is_2fa_on
+FROM dbo."user" u
+JOIN admin.admin a ON u.id = a.user_id
+WHERE u.is_deleted = FALSE;
+
+
+-- Admin
+ALTER TABLE admin.admin
+ADD COLUMN IF NOT EXISTS is_2fa_on BOOLEAN DEFAULT FALSE;
+
+-- Hotelier
+ALTER TABLE hotelier.organization
+ADD COLUMN IF NOT EXISTS is_2fa_on BOOLEAN DEFAULT FALSE;
+
+-- Job Seeker
+ALTER TABLE jobSeeker.job_seeker
+ADD COLUMN IF NOT EXISTS is_2fa_on BOOLEAN DEFAULT FALSE;
+
 -------------------------------------------------------------------------------------------------
 

@@ -24,15 +24,15 @@ class RootRouter {
     }
     callV2Router() {
         // Public Routes
-        this.v2Router.use('/public', this.publicRootRouter.router);
+        this.v2Router.use("/public", this.publicRootRouter.router);
         // Auth Routes
-        this.v2Router.use('/auth', this.authRootRouter.router);
+        this.v2Router.use("/auth", this.authRootRouter.router);
         // Admin Routes
-        this.v2Router.use('/admin', this.authChecker.adminAuthChecker, this.adminRootRouter.router);
+        this.v2Router.use("/admin", this.authChecker.adminAuthChecker, this.adminRootRouter.router);
         // Job Seeker Routes
-        this.v2Router.use('/job-seeker', this.authChecker.adminAuthChecker, this.jobSeekerRootRouter.router);
+        this.v2Router.use("/job-seeker", this.authChecker.jobSeekerAuthChecker, this.jobSeekerRootRouter.router);
         // Hotelier Routes
-        this.v2Router.use('/hotelier', this.authChecker.adminAuthChecker, this.hotelierRootRouter.router);
+        this.v2Router.use("/hotelier", this.authChecker.hotelierAuthChecker, this.hotelierRootRouter.router);
     }
 }
 exports.default = RootRouter;

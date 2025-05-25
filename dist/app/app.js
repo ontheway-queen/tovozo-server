@@ -48,7 +48,7 @@ class App {
     startServer() {
         return __awaiter(this, void 0, void 0, function* () {
             this.server.listen(this.port, () => {
-                console.log(`Booking Expert V2 OTA server has started successfully at port: ${this.port}...🚀`);
+                console.log(`Tovozo server has started successfully at port: ${this.port}...🚀`);
             });
         });
     }
@@ -82,10 +82,10 @@ class App {
     // init routers
     initRouters() {
         this.app.get('/', (_req, res) => {
-            res.send(`Booking Expert OTA server is running successfully...🚀`);
+            res.send(`Tovozo server is running successfully...🚀`);
         });
         this.app.get('/api', (_req, res) => {
-            res.send(`Booking Expert OTA API is active...🚀`);
+            res.send(`Tovozo API is active...🚀`);
         });
         this.app.use('/api/v2', new router_1.default().v2Router);
     }

@@ -16,21 +16,20 @@ CREATE TYPE dbo.shift_type AS ENUM
 
 
 --Create Tables ---------------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS dbo.user
-(
-    id SERIAL NOT NULL,
-    username character varying(255) COLLATE pg_catalog."default",
-    name character varying(255) COLLATE pg_catalog."default",
-    email character varying(255) COLLATE pg_catalog."default",
-    password_hash character varying(255) COLLATE pg_catalog."default" NOT NULL,
-    phone_number character varying(20) COLLATE pg_catalog."default",
-    photo character varying(255) COLLATE pg_catalog."default",
-    created_at timestamp without time zone DEFAULT 'CURRENT_TIMESTAMP',
-    socket_id character varying(255),
+-- Main user table (generic for all user types)
+CREATE TABLE IF NOT EXISTS dbo."user" (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(255),
+    name VARCHAR(255),
+    email VARCHAR(255) UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    phone_number VARCHAR(20),
+    photo VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    socket_id VARCHAR(255),
     type dbo.user_type NOT NULL,
-    status boolean NOT NULL DEFAULT 'true',
-    is_deleted boolean NOT NULL DEFAULT 'false',
-    CONSTRAINT user_pkey PRIMARY KEY (id)
+    status BOOLEAN NOT NULL DEFAULT TRUE,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 
@@ -86,6 +85,33 @@ CREATE TABLE IF NOT EXISTS dbo.job_post_details
     status character varying(42) DEFAULT 'Pending',
     CONSTRAINT job_post_details_pkey PRIMARY KEY (id)
 );
+
+-- job seeker view
+CREATE OR REPLACE VIEW jobSeeker.job_seeker_auth_view AS
+SELECT
+    u.id AS user_id,
+    u.username,
+    u.name,
+    u.email,
+    u.password_hash,
+    u.phone_number,
+    u.photo,
+    u.type,
+    u.status AS user_active,
+    u.is_deleted,
+    js.date_of_birth,
+    js.gender,
+    js.nationality,
+    js.account_status,
+    js.work_permit,
+    js.criminal_convictions
+FROM
+    dbo."user" u
+JOIN
+    jobSeeker.job_seeker js ON js.user_id = u.id
+WHERE
+    u.is_deleted = FALSE;
+
 
 
 --------------------------------------------------------------------------------------------------

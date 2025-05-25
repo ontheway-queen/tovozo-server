@@ -1,7 +1,7 @@
-import { NextFunction, Request, Response } from 'express';
-import Joi from 'joi';
-import StatusCode from '../../utils/miscellaneous/statusCode';
-import CustomError from '../../utils/lib/customError';
+import { NextFunction, Request, Response } from "express";
+import Joi from "joi";
+import StatusCode from "../../utils/miscellaneous/statusCode";
+import CustomError from "../../utils/lib/customError";
 
 type Func = (req: Request, res: Response, next: NextFunction) => Promise<void>;
 
@@ -36,7 +36,7 @@ export default class Wrapper {
 
         await cb(req, res, next);
       } catch (err: any) {
-        console.log({ err }, 'error from wrap');
+        console.log({ err }, "error from wrap");
 
         if (err.isJoi) {
           res.status(StatusCode.HTTP_UNPROCESSABLE_ENTITY).json({
@@ -44,7 +44,9 @@ export default class Wrapper {
             message: err.message,
           });
         } else {
-          next(new CustomError(err.message, err.status, err.level, err.metadata));
+          next(
+            new CustomError(err.message, err.status, err.level, err.metadata)
+          );
         }
       }
     };
