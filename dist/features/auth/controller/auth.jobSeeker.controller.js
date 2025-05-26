@@ -30,7 +30,7 @@ class JobSeekerAuthController extends abstract_controller_1.default {
         super();
         this.services = new auth_jobSeeker_service_1.default();
         //register
-        this.registration = this.asyncWrapper.wrap({ bodySchema: this.commonValidator.registerValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+        this.registration = this.asyncWrapper.wrap({ bodySchema: this.commonValidator.registerJobSeekerValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
             const _a = yield this.services.registrationService(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));

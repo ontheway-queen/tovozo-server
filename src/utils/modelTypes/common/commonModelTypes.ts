@@ -1,6 +1,6 @@
 export interface IInsertLastNoPayload {
   last_id: number;
-  type: 'Job';
+  type: "Job";
   last_updated: Date;
 }
 
@@ -10,14 +10,13 @@ export interface IUpdateLastNoPayload {
 }
 
 export interface IGetLastIdParams {
-  type: 'Job';
+  type: "Job";
 }
 
 export interface IGetLastIdData {
   id: number;
   last_id: number;
 }
-
 
 export interface IJobSeeker {
   user_id: number;
@@ -63,9 +62,30 @@ export interface IAdmin {
   is_2fa_on: boolean;
 }
 
-
 export interface IForgetPasswordPayload {
   token: string;
   email: string;
   password: string;
+}
+
+export interface OTPType {
+  type:
+    | "reset_job_seeker"
+    | "reset_admin"
+    | "reset_hotelier"
+    | "verify_user"
+    | "2fa_user";
+}
+
+export interface IChangePasswordPayload {
+  old_password: string;
+  new_password: string;
+}
+export interface IInsertOTPPayload extends OTPType {
+  hashed_otp: string;
+  email?: string;
+}
+
+export interface IGetOTPPayload extends OTPType {
+  email: string;
 }

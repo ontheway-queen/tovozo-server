@@ -77,7 +77,7 @@ export default class UserModel extends Schema {
     email,
     phone_number,
   }: {
-    schema_name: "dbo" | "hotelier" | "job_seeker" | "admin";
+    schema_name: "dbo" | "hotelier" | "jobseeker" | "admin";
     table_name: string;
     user_id?: number;
     user_name?: string;

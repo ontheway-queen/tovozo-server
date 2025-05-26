@@ -85,9 +85,10 @@ class JobSeekerModel extends schema_1.default {
     }
     getJobPreferences(job_seeker_id) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db("job_preferences")
+            return yield this.db("job_preferences AS jp")
                 .withSchema(this.JOB_SEEKER)
-                .select("*")
+                .select("jp.*", "j.title")
+                .joinRaw("LEFT JOIN dbo.jobs j ON jp.job_id = j.id")
                 .where({ job_seeker_id });
         });
     }

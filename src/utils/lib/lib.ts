@@ -1,12 +1,12 @@
-import jwt, { SignOptions } from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
-import fs from 'fs';
-import path from 'path';
-import { TDB } from '../../features/public/utils/types/publicCommon.types';
-import { Attachment } from 'nodemailer/lib/mailer';
-import nodemailer from 'nodemailer';
-import config from '../../app/config';
-import CommonModel from '../../models/commonModel/commonModel';
+import jwt, { SignOptions } from "jsonwebtoken";
+import bcrypt from "bcryptjs";
+import fs from "fs";
+import path from "path";
+import { TDB } from "../../features/public/utils/types/publicCommon.types";
+import { Attachment } from "nodemailer/lib/mailer";
+import nodemailer from "nodemailer";
+import config from "../../app/config";
+import CommonModel from "../../models/commonModel/commonModel";
 
 class Lib {
   // send email by nodemailer
@@ -23,8 +23,8 @@ class Lib {
   }) {
     try {
       const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        host: 'smtp.gmail.com',
+        service: "gmail",
+        host: "smtp.gmail.com",
         port: 465,
         auth: {
           user: config.EMAIL_SEND_EMAIL_ID,
@@ -40,7 +40,7 @@ class Lib {
         attachments: attachments || undefined,
       });
 
-      console.log('Message send: %s', info);
+      console.log("Message send: %s", info);
 
       return true;
     } catch (err: any) {
@@ -67,7 +67,7 @@ class Lib {
   public static createToken(
     payload: object,
     secret: string,
-    expiresIn: SignOptions['expiresIn']
+    expiresIn: SignOptions["expiresIn"]
   ) {
     return jwt.sign(payload, secret, { expiresIn });
   }
@@ -84,7 +84,7 @@ class Lib {
   // generate random Number
   public static otpGenNumber(length: number) {
     const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
-    let otp = '';
+    let otp = "";
 
     for (let i = 0; i < length; i++) {
       const randomNumber = Math.floor(Math.random() * 10);
@@ -106,9 +106,9 @@ class Lib {
 
     fs.writeFile(reqFilePath, JSON.stringify(data, null, 4), (err) => {
       if (err) {
-        console.error('Error writing to file:', err);
+        console.error("Error writing to file:", err);
       } else {
-        console.log('JSON data has been written to', reqFilePath);
+        console.log("JSON data has been written to", reqFilePath);
       }
     });
     // Write response in json data file======================
@@ -129,9 +129,9 @@ class Lib {
       includeSpecialChars = true,
     } = options;
 
-    const lowercaseChars = 'abcdefghijklmnopqrstuvwxyz';
-    const uppercaseChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const numberChars = '0123456789';
+    const lowercaseChars = "abcdefghijklmnopqrstuvwxyz";
+    const uppercaseChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const numberChars = "0123456789";
     const specialChars = "!@#$%^&*()_+[]{}|;:',.<>?/";
 
     let characterPool = lowercaseChars;
@@ -141,23 +141,23 @@ class Lib {
 
     if (!characterPool) {
       throw new Error(
-        'Character pool cannot be empty. Please enable at least one character type.'
+        "Character pool cannot be empty. Please enable at least one character type."
       );
     }
 
     return Array.from(
       { length },
       () => characterPool[Math.floor(Math.random() * characterPool.length)]
-    ).join('');
+    ).join("");
   }
 
   //remove country code from phone number
   public static removeCountryCodeFromPhoneNumber(phone_number: string) {
-    if (phone_number.startsWith('0') && phone_number.length === 11) {
+    if (phone_number.startsWith("0") && phone_number.length === 11) {
       return phone_number.slice(1); // Remove the first '0'
-    } else if (phone_number.startsWith('+880')) {
+    } else if (phone_number.startsWith("+880")) {
       return phone_number.slice(4); // Remove the '+880'
-    } else if (phone_number.startsWith('880')) {
+    } else if (phone_number.startsWith("880")) {
       return phone_number.slice(3); // Remove the '880'
     } else {
       return phone_number; // Return the whole phone number if none of the conditions are met
@@ -165,7 +165,7 @@ class Lib {
   }
 
   public static generateUsername(full_name: string) {
-    const newName = full_name.split(' ').join('');
+    const newName = full_name.split(" ").join("");
     return newName.toLowerCase();
   }
 
@@ -173,7 +173,7 @@ class Lib {
     let newId = 1001;
     const currYear = new Date().getFullYear();
     const commonModel = new CommonModel(trx);
-    let NoCode = '';
+    let NoCode = "";
 
     const lastId = await commonModel.getLastId({ type });
 
@@ -192,19 +192,30 @@ class Lib {
     }
 
     switch (type) {
-      case 'Job':
-        NoCode = 'JOB';
+      case "Job":
+        NoCode = "JOB";
         break;
       default:
         break;
     }
 
-    return 'T' + NoCode + currYear + newId;
+    return "T" + NoCode + currYear + newId;
+  }
+
+  public static safeParseJSON(value: any) {
+    if (typeof value === "string") {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return value;
+      }
+    }
+    return value;
   }
 }
 export default Lib;
 
 interface IGenNoParams {
   trx: TDB;
-  type: 'Job';
+  type: "Job";
 }

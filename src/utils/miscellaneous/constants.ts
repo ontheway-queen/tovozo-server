@@ -27,6 +27,9 @@ export const PROJECT_EMAIL = "sup.m360ict@gmail.com";
 export const PROJECT_NUMBER = "+8801958398339";
 export const PROJECT_ADDRESS = "Block#H, Road#7, House#74, Banani, Dhaka";
 
+export const CLIENT_URL = "http://10.10.220.47:5000";
+export const HOTELIER_CLIENT_URL = "http://10.10.220.47:5000";
+
 // Email subject
 export const OTP_EMAIL_SUBJECT = "Your One Time Password For Verification";
 
@@ -49,6 +52,20 @@ export const SOURCE_B2C = "B2C";
 export const SOURCE_EXTERNAL = "EXTERNAL";
 export const SOURCE_ADMIN = "ADMIN";
 
+// // OTP types constants
+export const OTP_TYPE_FORGET_ADMIN = "reset_admin";
+export const OTP_TYPE_FORGET_JOB_SEEKER = "reset_job_seeker";
+export const OTP_TYPE_VERIFY_JOB_SEEKER = "verify_job_seeker";
+export const OTP_TYPE_VERIFY_HOTELIER = "verify_hotelier";
+export const OTP_TYPE_VERIFY_ADMIN = "verify_admin";
+export const OTP_TYPE_FORGET_HOTELIER = "reset_hotelier";
+export const OTP_TYPE_TWO_FA_JOB_SEEKER = "2fa_job_seeker";
+export const OTP_TYPE_TWO_FA_ADMIN = "2fa_admin";
+export const OTP_TYPE_TWO_FA_HOTELIER = "2fa_hotelier";
+
+
+
+
 export const USER_STATUS = {
   ACTIVE: "active",
   INACTIVE: "inactive",
@@ -68,3 +85,7 @@ export const USER_TYPE = {
   HOTELIER: "HOTELIER",
   ADMIN: "ADMIN",
 } as const;
+
+
+// OTP for
+export const OTP_FOR = "Verification";

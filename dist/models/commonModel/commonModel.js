@@ -18,11 +18,42 @@ class CommonModel extends schema_1.default {
         super();
         this.db = db;
     }
+    // get otp
+    getOTP(payload) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const check = yield this.db("email_otp")
+                .withSchema(this.DBO_SCHEMA)
+                .select("id", "hashed_otp as otp", "tried")
+                .andWhere("email", payload.email)
+                .andWhere("type", payload.type)
+                .andWhere("matched", 0)
+                .andWhere("tried", "<", 3)
+                .andWhereRaw(`"create_date" + interval '3 minutes' > NOW()`);
+            return check;
+        });
+    }
+    // insert OTP
+    insertOTP(payload) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("email_otp")
+                .withSchema(this.DBO_SCHEMA)
+                .insert(payload);
+        });
+    }
+    // update otp
+    updateOTP(payload, where) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("email_otp")
+                .withSchema(this.DBO_SCHEMA)
+                .update(payload)
+                .where("id", where.id);
+        });
+    }
     insertLastNo(payload) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db(this.TABLES.last_no)
                 .withSchema(this.DBO_SCHEMA)
-                .insert(payload, 'id');
+                .insert(payload, "id");
         });
     }
     updateLastNo(payload, id) {
@@ -30,15 +61,15 @@ class CommonModel extends schema_1.default {
             return yield this.db(this.TABLES.last_no)
                 .withSchema(this.DBO_SCHEMA)
                 .update(payload)
-                .where('id', id);
+                .where("id", id);
         });
     }
     getLastId(_a) {
         return __awaiter(this, arguments, void 0, function* ({ type, }) {
             return yield this.db(this.TABLES.last_no)
                 .withSchema(this.DBO_SCHEMA)
-                .select('id', 'last_id')
-                .where('type', type)
+                .select("id", "last_id")
+                .where("type", type)
                 .first();
         });
     }

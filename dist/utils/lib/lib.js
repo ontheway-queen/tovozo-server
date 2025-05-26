@@ -25,8 +25,8 @@ class Lib {
         return __awaiter(this, arguments, void 0, function* ({ email, emailBody, emailSub, attachments, }) {
             try {
                 const transporter = nodemailer_1.default.createTransport({
-                    service: 'gmail',
-                    host: 'smtp.gmail.com',
+                    service: "gmail",
+                    host: "smtp.gmail.com",
                     port: 465,
                     auth: {
                         user: config_1.default.EMAIL_SEND_EMAIL_ID,
@@ -40,7 +40,7 @@ class Lib {
                     html: emailBody,
                     attachments: attachments || undefined,
                 });
-                console.log('Message send: %s', info);
+                console.log("Message send: %s", info);
                 return true;
             }
             catch (err) {
@@ -78,7 +78,7 @@ class Lib {
     // generate random Number
     static otpGenNumber(length) {
         const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
-        let otp = '';
+        let otp = "";
         for (let i = 0; i < length; i++) {
             const randomNumber = Math.floor(Math.random() * 10);
             otp += numbers[randomNumber];
@@ -94,10 +94,10 @@ class Lib {
         const reqFilePath = path_1.default.join(`json/${name}.json`);
         fs_1.default.writeFile(reqFilePath, JSON.stringify(data, null, 4), (err) => {
             if (err) {
-                console.error('Error writing to file:', err);
+                console.error("Error writing to file:", err);
             }
             else {
-                console.log('JSON data has been written to', reqFilePath);
+                console.log("JSON data has been written to", reqFilePath);
             }
         });
         // Write response in json data file======================
@@ -105,9 +105,9 @@ class Lib {
     // generate Random pass
     static generateRandomPassword(length, options = {}) {
         const { includeUppercase = true, includeNumbers = true, includeSpecialChars = true, } = options;
-        const lowercaseChars = 'abcdefghijklmnopqrstuvwxyz';
-        const uppercaseChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        const numberChars = '0123456789';
+        const lowercaseChars = "abcdefghijklmnopqrstuvwxyz";
+        const uppercaseChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const numberChars = "0123456789";
         const specialChars = "!@#$%^&*()_+[]{}|;:',.<>?/";
         let characterPool = lowercaseChars;
         if (includeUppercase)
@@ -117,19 +117,19 @@ class Lib {
         if (includeSpecialChars)
             characterPool += specialChars;
         if (!characterPool) {
-            throw new Error('Character pool cannot be empty. Please enable at least one character type.');
+            throw new Error("Character pool cannot be empty. Please enable at least one character type.");
         }
-        return Array.from({ length }, () => characterPool[Math.floor(Math.random() * characterPool.length)]).join('');
+        return Array.from({ length }, () => characterPool[Math.floor(Math.random() * characterPool.length)]).join("");
     }
     //remove country code from phone number
     static removeCountryCodeFromPhoneNumber(phone_number) {
-        if (phone_number.startsWith('0') && phone_number.length === 11) {
+        if (phone_number.startsWith("0") && phone_number.length === 11) {
             return phone_number.slice(1); // Remove the first '0'
         }
-        else if (phone_number.startsWith('+880')) {
+        else if (phone_number.startsWith("+880")) {
             return phone_number.slice(4); // Remove the '+880'
         }
-        else if (phone_number.startsWith('880')) {
+        else if (phone_number.startsWith("880")) {
             return phone_number.slice(3); // Remove the '880'
         }
         else {
@@ -137,7 +137,7 @@ class Lib {
         }
     }
     static generateUsername(full_name) {
-        const newName = full_name.split(' ').join('');
+        const newName = full_name.split(" ").join("");
         return newName.toLowerCase();
     }
     static generateNo(_a) {
@@ -145,7 +145,7 @@ class Lib {
             let newId = 1001;
             const currYear = new Date().getFullYear();
             const commonModel = new commonModel_1.default(trx);
-            let NoCode = '';
+            let NoCode = "";
             const lastId = yield commonModel.getLastId({ type });
             if (lastId) {
                 newId = Number(lastId.last_id) + 1;
@@ -159,14 +159,25 @@ class Lib {
                 });
             }
             switch (type) {
-                case 'Job':
-                    NoCode = 'JOB';
+                case "Job":
+                    NoCode = "JOB";
                     break;
                 default:
                     break;
             }
-            return 'T' + NoCode + currYear + newId;
+            return "T" + NoCode + currYear + newId;
         });
+    }
+    static safeParseJSON(value) {
+        if (typeof value === "string") {
+            try {
+                return JSON.parse(value);
+            }
+            catch (_a) {
+                return value;
+            }
+        }
+        return value;
     }
 }
 exports.default = Lib;

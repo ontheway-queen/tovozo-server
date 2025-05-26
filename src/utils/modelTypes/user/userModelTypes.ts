@@ -12,6 +12,7 @@ export interface ICreateUserPayload {
   phone_number: string;
   photo: string;
   type: TypeUser;
+  is_verified?: boolean;
 }
 
 export interface ICheckUserParams {

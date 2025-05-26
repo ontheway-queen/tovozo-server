@@ -18,6 +18,7 @@ ResMsg.HTTP_ACCOUNT_INACTIVE = "Your account is disabled! Please contact us.";
 ResMsg.WRONG_CREDENTIALS = "Wrong username/email or password.";
 ResMsg.PASSWORD_CHANGED = "Password changed successfully";
 ResMsg.PASSWORD_NOT_CHANGED = "Password cannot changed";
+ResMsg.PASSWORDS_DO_NOT_MATCH = "Passwords do not match";
 // OTP
 ResMsg.OTP_SENT = "OTP sent successfully";
 ResMsg.OTP_MATCHED = "OTP matched successfully";
@@ -34,4 +35,5 @@ ResMsg.UNABLE_FOR_STATUS = "Unable to complete your request for application stat
 ResMsg.EMAIL_ALREADY_EXISTS = "The email already exists";
 ResMsg.USERNAME_ALREADY_EXISTS = "The username already exists";
 ResMsg.PHONE_NUMBER_ALREADY_EXISTS = "The phone number already exists";
+ResMsg.UNKNOWN_FILE_FIELD = "Uploaded file field is not recognized";
 exports.default = ResMsg;

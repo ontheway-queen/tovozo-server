@@ -24,6 +24,7 @@ class ResMsg {
   static readonly WRONG_CREDENTIALS = "Wrong username/email or password.";
   static readonly PASSWORD_CHANGED = "Password changed successfully";
   static readonly PASSWORD_NOT_CHANGED = "Password cannot changed";
+  static readonly PASSWORDS_DO_NOT_MATCH = "Passwords do not match";
 
   // OTP
   static readonly OTP_SENT = "OTP sent successfully";
@@ -48,6 +49,8 @@ class ResMsg {
 
   static readonly USERNAME_ALREADY_EXISTS = "The username already exists";
   static readonly PHONE_NUMBER_ALREADY_EXISTS = "The phone number already exists";
+  static readonly UNKNOWN_FILE_FIELD = "Uploaded file field is not recognized";
+
 }
 
 export default ResMsg;

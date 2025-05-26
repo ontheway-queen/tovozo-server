@@ -9,6 +9,8 @@ import {
 import Lib from "../../../utils/lib/lib";
 import config from "../../../app/config";
 import { IForgetPasswordPayload } from "../../../utils/modelTypes/common/commonModelTypes";
+import CustomError from "../../../utils/lib/customError";
+import { registrationJobSeekerTemplate } from "../../../utils/templates/jobSeekerRegistrationTemplate";
 
 class JobSeekerAuthService extends AbstractServices {
   //registration service
@@ -16,34 +18,56 @@ class JobSeekerAuthService extends AbstractServices {
     return this.db.transaction(async (trx) => {
       const files = (req.files as Express.Multer.File[]) || [];
 
-      if (files?.length) {
-        req.body[files[0].fieldname] = files[0].filename;
+      const user = Lib.safeParseJSON(req.body.user);
+      const jobSeeker = Lib.safeParseJSON(req.body.job_seeker);
+      const jobPreferencesInput = Lib.safeParseJSON(req.body.job_preferences);
+      const jobLocationsInput = Lib.safeParseJSON(req.body.job_locations);
+      const jobShiftingInput = Lib.safeParseJSON(req.body.job_shifting);
+      const jobSeekerInfo = Lib.safeParseJSON(req.body.job_seeker_info) || {};
+
+      for (const file of files) {
+        const { fieldname, filename } = file;
+        if (["visa_copy", "passport_copy", "resume"].includes(fieldname)) {
+          jobSeekerInfo[fieldname] = filename;
+        } else if (fieldname === "photo") {
+          user.photo = filename;
+        } else {
+          throw new CustomError(
+            this.ResMsg.UNKNOWN_FILE_FIELD,
+            this.StatusCode.HTTP_BAD_REQUEST,
+            "ERROR"
+          );
+        }
       }
 
-      const { password, email, phone_number, username, ...rest } = req.body;
+      const { email, phone_number, username, password, ...userData } = user;
 
       const userModel = this.Model.UserModel(trx);
-      const check_user = await userModel.checkUser({
+      const jobSeekerModel = this.Model.jobSeekerModel(trx);
+
+      const existingUser = await userModel.checkUser({
         email,
         phone_number,
         username,
         type: USER_TYPE.JOB_SEEKER,
       });
 
-      if (check_user) {
-        if (check_user.email === email) {
+      if (existingUser) {
+        if (existingUser.email === email) {
           return {
             success: false,
             code: this.StatusCode.HTTP_BAD_REQUEST,
             message: this.ResMsg.EMAIL_ALREADY_EXISTS,
           };
-        } else if (check_user.username === username) {
+        }
+        if (existingUser.username === username) {
           return {
             success: false,
             code: this.StatusCode.HTTP_BAD_REQUEST,
             message: this.ResMsg.USERNAME_ALREADY_EXISTS,
           };
-        } else if (check_user.phone_number === phone_number) {
+        }
+        if (existingUser.phone_number === phone_number) {
           return {
             success: false,
             code: this.StatusCode.HTTP_BAD_REQUEST,
@@ -51,29 +75,76 @@ class JobSeekerAuthService extends AbstractServices {
           };
         }
       }
-      rest.email = email;
-      rest.phone_number = phone_number;
-      rest.username = username;
-      //password hashing
-      const hashedPass = await Lib.hashValue(password);
-      //register user
+
+      const password_hash = await Lib.hashValue(password);
+
       const registration = await userModel.createUser({
-        password_hash: hashedPass,
-        ...rest,
+        ...userData,
+        email,
+        phone_number,
+        username,
+        password_hash,
+        type: USER_TYPE.JOB_SEEKER,
       });
 
-      //retrieve token data
+      if (!registration.length) {
+        throw new CustomError(
+          this.ResMsg.HTTP_BAD_REQUEST,
+          this.StatusCode.HTTP_BAD_REQUEST,
+          "ERROR"
+        );
+      }
+
+      const jobSeekerId = registration[0].id;
+
+      await jobSeekerModel.createJobSeeker({
+        ...jobSeeker,
+        user_id: jobSeekerId,
+      });
+
+      const jobPreferences = jobPreferencesInput.map((job_id: number) => ({
+        job_seeker_id: jobSeekerId,
+        job_id,
+      }));
+
+      const jobLocations = jobLocationsInput.map((location_id: number) => ({
+        job_seeker_id: jobSeekerId,
+        location_id,
+      }));
+
+      const jobShifting = jobShiftingInput.map((shift: string) => ({
+        job_seeker_id: jobSeekerId,
+        shift,
+      }));
+
+      await Promise.all([
+        jobSeekerModel.setJobPreferences(jobPreferences),
+        jobSeekerModel.setJobLocations(jobLocations),
+        jobSeekerModel.setJobShifting(jobShifting),
+      ]);
+
+      await jobSeekerModel.createJobSeekerInfo({
+        ...jobSeekerInfo,
+        job_seeker_id: jobSeekerId,
+      });
+
       const tokenData = {
-        user_id: registration[0].id,
-        username: rest.username,
-        name: rest.name,
-        gender: rest.gender,
-        user_email: rest.email,
-        phone_number: rest.phone_number,
-        photo: rest.photo,
+        user_id: jobSeekerId,
+        username,
+        name: user.name,
+        gender: user.gender,
+        user_email: email,
+        phone_number,
+        photo: user.photo,
         status: true,
         create_date: new Date(),
       };
+
+      await Lib.sendEmailDefault({
+        email,
+        emailSub: `Your registration with ${PROJECT_NAME} is under review`,
+        emailBody: registrationJobSeekerTemplate({ name: user.name }),
+      });
 
       const token = Lib.createToken(
         tokenData,
@@ -81,21 +152,13 @@ class JobSeekerAuthService extends AbstractServices {
         "48h"
       );
 
-      if (registration.length) {
-        return {
-          success: true,
-          code: this.StatusCode.HTTP_SUCCESSFUL,
-          message: this.ResMsg.HTTP_SUCCESSFUL,
-          data: { ...tokenData },
-          token,
-        };
-      } else {
-        return {
-          success: false,
-          code: this.StatusCode.HTTP_BAD_REQUEST,
-          message: this.ResMsg.HTTP_BAD_REQUEST,
-        };
-      }
+      return {
+        success: true,
+        code: this.StatusCode.HTTP_SUCCESSFUL,
+        message: this.ResMsg.HTTP_SUCCESSFUL,
+        data: tokenData,
+        token,
+      };
     });
   }
 
@@ -104,10 +167,13 @@ class JobSeekerAuthService extends AbstractServices {
     const { email, password } = req.body as { email: string; password: string };
     const userModel = this.Model.UserModel();
     const checkUser = await userModel.getSingleCommonAuthUser({
-      schema_name: "job_seeker",
+      schema_name: "jobseeker",
       table_name: USER_AUTHENTICATION_VIEW.JOB_SEEKER,
       email,
     });
+
+    console.log({ checkUser });
+
     if (!checkUser) {
       return {
         success: false,
@@ -116,7 +182,7 @@ class JobSeekerAuthService extends AbstractServices {
       };
     }
 
-    const { password_hash: hashPass, ...rest } = checkUser[0];
+    const { password_hash: hashPass, ...rest } = checkUser;
     const checkPass = await Lib.compareHashValue(password, hashPass);
 
     if (!checkPass) {
@@ -147,16 +213,16 @@ class JobSeekerAuthService extends AbstractServices {
       };
     } else {
       const token_data = {
-        id: rest.id,
+        user_id: rest.user_id,
         username: rest.username,
-        first_name: rest.first_name,
-        last_name: rest.last_name,
+        name: rest.name,
         gender: rest.gender,
         phone_number: rest.phone_number,
         role_id: rest.role_id,
         photo: rest.photo,
-        status: rest.status,
+        status: rest.user_status,
         email: rest.email,
+        account_status: rest.account_status,
       };
 
       const token = Lib.createToken(
@@ -192,12 +258,16 @@ class JobSeekerAuthService extends AbstractServices {
 
     const { email: verify_email } = token_verify;
     if (email === verify_email) {
-      const model = this.Model.UserModel();
       const checkUser = await user_model.getSingleCommonAuthUser({
-        schema_name: "job_seeker",
+        schema_name: "jobseeker",
         table_name: USER_AUTHENTICATION_VIEW.JOB_SEEKER,
         email,
       });
+
+      console.log({ checkUser });
+
+      console.log({ checkUser });
+
       if (!checkUser) {
         return {
           success: false,
@@ -206,7 +276,7 @@ class JobSeekerAuthService extends AbstractServices {
         };
       }
 
-      const { hashed_password: hashPass, agency_id, ...rest } = checkUser[0];
+      const { password_hash: hashPass, agency_id, ...rest } = checkUser;
 
       if (rest.account_status !== USER_STATUS.ACTIVE) {
         return {
@@ -217,16 +287,16 @@ class JobSeekerAuthService extends AbstractServices {
       }
 
       const token_data = {
-        id: rest.id,
+        user_id: rest.user_id,
         username: rest.username,
-        first_name: rest.first_name,
-        last_name: rest.last_name,
+        name: rest.name,
         gender: rest.gender,
         phone_number: rest.phone_number,
         role_id: rest.role_id,
         photo: rest.photo,
-        status: rest.status,
+        status: rest.user_status,
         email: rest.email,
+        account_status: rest.account_status,
       };
 
       const token = Lib.createToken(

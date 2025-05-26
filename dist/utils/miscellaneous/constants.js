@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.USER_TYPE = exports.USER_AUTHENTICATION_VIEW = exports.USER_STATUS = exports.SOURCE_ADMIN = exports.SOURCE_EXTERNAL = exports.SOURCE_B2C = exports.SOURCE_AGENT_B2C = exports.SOURCE_SUB_AGENT = exports.SOURCE_AGENT = exports.ERROR_LEVEL_CRITICAL = exports.ERROR_LEVEL_ERROR = exports.ERROR_LEVEL_WARNING = exports.ERROR_LEVEL_INFO = exports.ERROR_LEVEL_DEBUG = exports.OTP_DEFAULT_EXPIRY = exports.DATA_LIMIT = exports.OTP_EMAIL_SUBJECT = exports.PROJECT_ADDRESS = exports.PROJECT_NUMBER = exports.PROJECT_EMAIL = exports.PROJECT_LINK = exports.PROJECT_ICON = exports.PROJECT_LOGO = exports.PROJECT_NAME = exports.OTP_TYPES = exports.origin = void 0;
+exports.OTP_FOR = exports.USER_TYPE = exports.USER_AUTHENTICATION_VIEW = exports.USER_STATUS = exports.OTP_TYPE_TWO_FA_HOTELIER = exports.OTP_TYPE_TWO_FA_ADMIN = exports.OTP_TYPE_TWO_FA_JOB_SEEKER = exports.OTP_TYPE_FORGET_HOTELIER = exports.OTP_TYPE_VERIFY_ADMIN = exports.OTP_TYPE_VERIFY_HOTELIER = exports.OTP_TYPE_VERIFY_JOB_SEEKER = exports.OTP_TYPE_FORGET_JOB_SEEKER = exports.OTP_TYPE_FORGET_ADMIN = exports.SOURCE_ADMIN = exports.SOURCE_EXTERNAL = exports.SOURCE_B2C = exports.SOURCE_AGENT_B2C = exports.SOURCE_SUB_AGENT = exports.SOURCE_AGENT = exports.ERROR_LEVEL_CRITICAL = exports.ERROR_LEVEL_ERROR = exports.ERROR_LEVEL_WARNING = exports.ERROR_LEVEL_INFO = exports.ERROR_LEVEL_DEBUG = exports.OTP_DEFAULT_EXPIRY = exports.DATA_LIMIT = exports.OTP_EMAIL_SUBJECT = exports.HOTELIER_CLIENT_URL = exports.CLIENT_URL = exports.PROJECT_ADDRESS = exports.PROJECT_NUMBER = exports.PROJECT_EMAIL = exports.PROJECT_LINK = exports.PROJECT_ICON = exports.PROJECT_LOGO = exports.PROJECT_NAME = exports.OTP_TYPES = exports.origin = void 0;
 exports.origin = [
     "http://localhost:3000",
     "http://localhost:5000",
@@ -25,6 +25,8 @@ exports.PROJECT_LINK = "http://10.10.220.31:3000";
 exports.PROJECT_EMAIL = "sup.m360ict@gmail.com";
 exports.PROJECT_NUMBER = "+8801958398339";
 exports.PROJECT_ADDRESS = "Block#H, Road#7, House#74, Banani, Dhaka";
+exports.CLIENT_URL = "http://10.10.220.47:5000";
+exports.HOTELIER_CLIENT_URL = "http://10.10.220.47:5000";
 // Email subject
 exports.OTP_EMAIL_SUBJECT = "Your One Time Password For Verification";
 // Default data get limit
@@ -43,6 +45,16 @@ exports.SOURCE_AGENT_B2C = "AGENT B2C";
 exports.SOURCE_B2C = "B2C";
 exports.SOURCE_EXTERNAL = "EXTERNAL";
 exports.SOURCE_ADMIN = "ADMIN";
+// // OTP types constants
+exports.OTP_TYPE_FORGET_ADMIN = "reset_admin";
+exports.OTP_TYPE_FORGET_JOB_SEEKER = "reset_job_seeker";
+exports.OTP_TYPE_VERIFY_JOB_SEEKER = "verify_job_seeker";
+exports.OTP_TYPE_VERIFY_HOTELIER = "verify_hotelier";
+exports.OTP_TYPE_VERIFY_ADMIN = "verify_admin";
+exports.OTP_TYPE_FORGET_HOTELIER = "reset_hotelier";
+exports.OTP_TYPE_TWO_FA_JOB_SEEKER = "2fa_job_seeker";
+exports.OTP_TYPE_TWO_FA_ADMIN = "2fa_admin";
+exports.OTP_TYPE_TWO_FA_HOTELIER = "2fa_hotelier";
 exports.USER_STATUS = {
     ACTIVE: "active",
     INACTIVE: "inactive",
@@ -60,3 +72,5 @@ exports.USER_TYPE = {
     HOTELIER: "HOTELIER",
     ADMIN: "ADMIN",
 };
+// OTP for
+exports.OTP_FOR = "Verification";

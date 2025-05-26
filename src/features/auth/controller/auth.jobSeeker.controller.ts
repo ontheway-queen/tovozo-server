@@ -11,7 +11,8 @@ class JobSeekerAuthController extends AbstractController {
 
   //register
   public registration = this.asyncWrapper.wrap(
-    { bodySchema: this.commonValidator.registerValidator },
+    { bodySchema: this.commonValidator.registerJobSeekerValidator },
+
     async (req: Request, res: Response) => {
       const { code, ...data } = await this.services.registrationService(req);
       res.status(code).json(data);

@@ -60,28 +60,33 @@ export default class JobSeekerModel extends Schema {
       .del();
   }
 
-  public async setJobPreferences(payload: IJobPreferencePayload[]) {
+  public async setJobPreferences(
+    payload: IJobPreferencePayload | IJobPreferencePayload[]
+  ) {
     return await this.db("job_preferences")
       .withSchema(this.JOB_SEEKER)
       .insert(payload);
   }
 
-  public async setJobLocations(payload: IJobLocationPayload[]) {
+  public async setJobLocations(
+    payload: IJobLocationPayload | IJobLocationPayload[]
+  ) {
     return await this.db("job_locations")
       .withSchema(this.JOB_SEEKER)
       .insert(payload);
   }
 
-  public async setJobShifting(payload: IJobShiftPayload[]) {
+  public async setJobShifting(payload: IJobShiftPayload | IJobShiftPayload[]) {
     return await this.db("job_shifting")
       .withSchema(this.JOB_SEEKER)
       .insert(payload);
   }
 
   public async getJobPreferences(job_seeker_id: number) {
-    return await this.db("job_preferences")
+    return await this.db("job_preferences AS jp")
       .withSchema(this.JOB_SEEKER)
-      .select("*")
+      .select("jp.*", "j.title")
+      .joinRaw("LEFT JOIN dbo.jobs j ON jp.job_id = j.id")
       .where({ job_seeker_id });
   }
 
@@ -121,7 +126,7 @@ export default class JobSeekerModel extends Schema {
       });
   }
 
-  public async getJobSeekerInfo(query: { job_seeker_id: string }) {
+  public async getJobSeekerInfo(query: { job_seeker_id: number }) {
     return await this.db("job_seeker_info")
       .withSchema(this.JOB_SEEKER)
       .select("*")

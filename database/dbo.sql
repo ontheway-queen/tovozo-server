@@ -12,38 +12,56 @@ CREATE TYPE dbo.gender_type AS ENUM
 
 CREATE TYPE dbo.shift_type AS ENUM
     ('Morning', 'Afternoon','Night','Flexible');
+
+DROP TYPE IF EXISTS dbo.type_email_otp;
+
+CREATE TYPE dbo.type_email_otp AS ENUM (
+  'reset_admin',
+  'reset_job_seeker',
+  'verify_job_seeker',
+  'verify_hotelier',
+  'verify_admin',
+  'reset_hotelier',
+  '2fa_job_seeker',
+  '2fa_admin',
+  '2fa_hotelier'
+);
 -------------------------------------------------------------------------------------------------
 
 
 --Create Tables ---------------------------------------------------------------------------------
 -- Main user table (generic for all user types)
-CREATE TABLE IF NOT EXISTS dbo."user" (
-    id SERIAL PRIMARY KEY,
-    username VARCHAR(255),
-    name VARCHAR(255),
-    email VARCHAR(255) UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
-    phone_number VARCHAR(20),
-    photo VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    socket_id VARCHAR(255),
-    type dbo.user_type NOT NULL,
-    status BOOLEAN NOT NULL DEFAULT TRUE,
-    is_deleted BOOLEAN NOT NULL DEFAULT FALSE
-);
 
-
-CREATE TABLE IF NOT EXISTS dbo.email_otp
+CREATE TABLE IF NOT EXISTS dbo."user"
 (
-    id SERIAL NOT NULL,
-    create_date timestamp without time zone DEFAULT 'CURRENT_TIMESTAMP',
-    hashed_otp character varying(255) COLLATE pg_catalog."default" NOT NULL,
-    email character varying(255) COLLATE pg_catalog."default" NOT NULL,
-    tried integer DEFAULT 0,
-    type dbo.type_email_otp NOT NULL,
-    matched boolean DEFAULT 'false',
-    CONSTRAINT email_otp_pkey PRIMARY KEY (id)
+    id integer NOT NULL DEFAULT nextval('dbo.user_id_seq'::regclass),
+    username character varying(255) COLLATE pg_catalog."default",
+    name character varying(255) COLLATE pg_catalog."default",
+    email character varying(255) COLLATE pg_catalog."default",
+    password_hash character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    phone_number character varying(20) COLLATE pg_catalog."default",
+    photo character varying(255) COLLATE pg_catalog."default",
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    socket_id character varying(255) COLLATE pg_catalog."default",
+    type dbo.user_type NOT NULL,
+    status boolean NOT NULL DEFAULT true,
+    is_deleted boolean NOT NULL DEFAULT false,
+    CONSTRAINT user_pkey PRIMARY KEY (id)
+)
+
+DROP TABLE IF EXISTS dbo.email_otp;
+
+CREATE TABLE IF NOT EXISTS dbo.email_otp (
+  id SERIAL NOT NULL,
+  create_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  hashed_otp character varying(255) COLLATE pg_catalog."default" NOT NULL,
+  email character varying(255) COLLATE pg_catalog."default" NOT NULL,
+  tried integer DEFAULT 0,
+  type dbo.type_email_otp NOT NULL,
+  matched boolean DEFAULT false,
+  CONSTRAINT email_otp_pkey PRIMARY KEY (id)
 );
+
 
 
 
@@ -69,7 +87,7 @@ CREATE TABLE IF NOT EXISTS dbo.job_post
     organization_id integer NOT NULL,
     title character varying(255) NOT NULL,
     details text,
-    created_time TIMESTAMP DEFAULT 'CURRENT_TIMESTAMP',
+    created_time timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     expire_time TIMESTAMP,
     status character varying(42) DEFAULT 'Live',
     CONSTRAINT job_post_pkey PRIMARY KEY (id)

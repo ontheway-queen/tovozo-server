@@ -126,6 +126,65 @@ class PublicCommonValidator {
                 "any.required": "New password is required",
             }),
         });
+        this.registerJobSeekerValidator = joi_1.default.object({
+            user: joi_1.default.object({
+                username: joi_1.default.string().min(1).max(255).required(),
+                name: joi_1.default.string().min(1).max(255).required(),
+                email: joi_1.default.string().email().lowercase().min(1).max(255).required(),
+                password: joi_1.default.string().min(8).max(100).required(),
+                phone_number: joi_1.default.string().min(7).max(20).optional(),
+            }).required(),
+            job_seeker: joi_1.default.object({
+                date_of_birth: joi_1.default.date().required(),
+                gender: joi_1.default.string().valid("Male", "Female", "Other").required(),
+                nationality: joi_1.default.string().max(255).required(),
+                address: joi_1.default.string().required(),
+                work_permit: joi_1.default.boolean().required(),
+                account_status: joi_1.default.string().max(42).default("Pending"),
+                criminal_convictions: joi_1.default.boolean().required(),
+            }).required(),
+            job_preferences: joi_1.default.array().items(joi_1.default.number().integer()).required(),
+            job_locations: joi_1.default.array().items(joi_1.default.number().integer()).required(),
+            job_shifting: joi_1.default.array()
+                .items(joi_1.default.string().valid("Morning", "Afternoon", "Night", "Flexible"))
+                .required(),
+            job_seeker_info: joi_1.default.object({
+                hospitality_exp: joi_1.default.boolean().required(),
+                languages: joi_1.default.string().allow("").optional(),
+                hospitality_certifications: joi_1.default.string().allow("").optional(),
+                medical_condition: joi_1.default.string().allow("").optional(),
+                dietary_restrictions: joi_1.default.string().allow("").optional(),
+                work_start: joi_1.default.string().max(42).allow("").optional(),
+                certifications: joi_1.default.string().allow("").optional(),
+                reference: joi_1.default.string().allow("").optional(),
+                resume: joi_1.default.string().max(255).allow("").optional(),
+                training_program_interested: joi_1.default.boolean().required(),
+                start_working: joi_1.default.string().max(42).allow("").optional(),
+                hours_available: joi_1.default.string().max(42).allow("").optional(),
+                comment: joi_1.default.string().allow("").optional(),
+                passport_copy: joi_1.default.string().max(255).allow("").optional(),
+                visa_copy: joi_1.default.string().max(255).allow("").optional(),
+            }).required(),
+        });
+        this.registerOrganizationValidator = joi_1.default.object({
+            user: joi_1.default.object({
+                username: joi_1.default.string().min(1).max(255).required(),
+                name: joi_1.default.string().min(1).max(255).required(),
+                email: joi_1.default.string().email().lowercase().min(1).max(255).required(),
+                password: joi_1.default.string().min(8).max(100).required(),
+                phone_number: joi_1.default.string().min(7).max(20).optional(),
+                photo: joi_1.default.string().max(255).allow("").optional(),
+                type: joi_1.default.string().valid("HOTELIER", "ADMIN", "JOB_SEEKER").required(),
+            }).required(),
+            organization: joi_1.default.object({
+                name: joi_1.default.string().max(255).required(),
+                address: joi_1.default.string().max(500).required(),
+                details: joi_1.default.string().allow("").optional(),
+            }).required(),
+            organization_amenities: joi_1.default.array()
+                .items(joi_1.default.string().max(255).required())
+                .optional(),
+        });
     }
     // multiple params number validator
     multipleParamsNumValidator(fields) {
