@@ -1,7 +1,17 @@
-import AbstractRouter from '../../abstract/abstract.router';
+import { Router } from "express";
+import AdminAdministrationRouter from "./router/administration.router";
 
-export default class AdminRootRouter extends AbstractRouter {
+export default class AdminRootRouter  {
+  public Router = Router();
+  private AdminAdministrationRouter = new AdminAdministrationRouter();
   constructor() {
-    super();
+   
+
+    this.callRouter();
+  }
+
+  private callRouter() {
+    //administration
+    this.Router.use("/administration", this.AdminAdministrationRouter.router);
   }
 }

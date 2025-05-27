@@ -9,6 +9,7 @@ const adminModel_1 = __importDefault(require("./adminModel/adminModel"));
 const jobSeekerModel_1 = __importDefault(require("./jobSeekerModel/jobSeekerModel"));
 const commonModel_1 = __importDefault(require("./commonModel/commonModel"));
 const organizationModel_1 = __importDefault(require("./hotelierModel/organizationModel"));
+const administrationModel_1 = __importDefault(require("./adminModel/administrationModel"));
 class Models {
     UserModel(trx) {
         return new userModel_1.default(trx || database_1.db);
@@ -27,6 +28,10 @@ class Models {
     // organization model
     organizationModel(trx) {
         return new organizationModel_1.default(trx || database_1.db);
+    }
+    //administration model
+    administrationModel(trx) {
+        return new administrationModel_1.default(trx || database_1.db);
     }
 }
 exports.default = Models;

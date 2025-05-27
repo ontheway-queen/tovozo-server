@@ -88,5 +88,16 @@ class UserModel extends schema_1.default {
                 .first();
         });
     }
+    //get last  user Id
+    getLastUserID() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const data = yield this.db('admin')
+                .withSchema(this.ADMIN_SCHEMA)
+                .select('id')
+                .orderBy('id', 'desc')
+                .limit(1);
+            return data.length ? data[0].id : 0;
+        });
+    }
 }
 exports.default = UserModel;

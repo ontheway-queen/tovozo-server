@@ -39,7 +39,7 @@ class HotelierAuthService extends abstract_service_1.default {
                 const files = req.files || [];
                 const user = lib_1.default.safeParseJSON(req.body.user);
                 const organization = lib_1.default.safeParseJSON(req.body.organization);
-                const amenitiesInput = lib_1.default.safeParseJSON(req.body.amenities) || [];
+                const amenitiesInput = lib_1.default.safeParseJSON(req.body.organization_amenities) || [];
                 for (const file of files) {
                     if (file.fieldname === "photo") {
                         user.photo = file.filename;

@@ -24,26 +24,21 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_controller_1 = __importDefault(require("../../../abstract/abstract.controller"));
-const auth_admin_servide_1 = __importDefault(require("../services/auth.admin.servide"));
-class AdminAuthController extends abstract_controller_1.default {
+const profile_service_1 = __importDefault(require("../services/profile.service"));
+class HotelierProfileController extends abstract_controller_1.default {
     constructor() {
         super();
-        this.services = new auth_admin_servide_1.default();
-        // login
-        this.login = this.asyncWrapper.wrap({ bodySchema: this.commonValidator.loginValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.services.loginService(req), { code } = _a, data = __rest(_a, ["code"]);
+        this.profileService = new profile_service_1.default();
+        // get profile
+        this.getProfile = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.profileService.getProfile(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
-        // forget pass
-        this.forgetPassword = this.asyncWrapper.wrap({ bodySchema: this.commonValidator.commonForgetPassInputValidation }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.services.forgetPassword(req), { code } = _a, data = __rest(_a, ["code"]);
-            res.status(code).json(data);
-        }));
-        // get login data
-        this.loginData = this.asyncWrapper.wrap({ bodySchema: this.commonValidator.commonTwoFAInputValidation }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.services.LoginData(req), { code } = _a, data = __rest(_a, ["code"]);
+        //change password
+        this.changePassword = this.asyncWrapper.wrap({ bodySchema: this.commonValidator.changePassInputValidation }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.profileService.changePassword(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }
 }
-exports.default = AdminAuthController;
+exports.default = HotelierProfileController;

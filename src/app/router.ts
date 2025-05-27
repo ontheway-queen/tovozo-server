@@ -31,7 +31,7 @@ export default class RootRouter {
     this.v2Router.use(
       "/admin",
       this.authChecker.adminAuthChecker,
-      this.adminRootRouter.router
+      this.adminRootRouter.Router
     );
 
     // Job Seeker Routes

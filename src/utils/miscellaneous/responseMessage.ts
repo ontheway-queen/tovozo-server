@@ -47,10 +47,17 @@ class ResMsg {
     "Unable to complete your request for application status reason";
   static readonly EMAIL_ALREADY_EXISTS = "The email already exists";
 
-  static readonly USERNAME_ALREADY_EXISTS = "The username already exists";
-  static readonly PHONE_NUMBER_ALREADY_EXISTS = "The phone number already exists";
-  static readonly UNKNOWN_FILE_FIELD = "Uploaded file field is not recognized";
+  static readonly ROLE_NAME_EXIST = "Role already exists";
+  static readonly PERMISSION_NAME_EXIST = "Permission already exists";
+  static readonly PERMISSION_EXISTS_FOR_ROLE =
+    "Selected permission already exists for this role";
+  static readonly PERMISSION_NOT_FOUND_FOR_ROLE =
+    "Selected permission not found for this role";
 
+  static readonly USERNAME_ALREADY_EXISTS = "The username already exists";
+  static readonly PHONE_NUMBER_ALREADY_EXISTS =
+    "The phone number already exists";
+  static readonly UNKNOWN_FILE_FIELD = "Uploaded file field is not recognized";
 }
 
 export default ResMsg;

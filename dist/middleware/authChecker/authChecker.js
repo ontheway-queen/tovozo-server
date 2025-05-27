@@ -24,6 +24,7 @@ class AuthChecker {
         // admin auth checker
         this.adminAuthChecker = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
             const { authorization } = req.headers;
+            console.log({ authorization });
             if (!authorization) {
                 res.status(statusCode_1.default.HTTP_UNAUTHORIZED).json({
                     success: false,

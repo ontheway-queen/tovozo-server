@@ -28,7 +28,7 @@ class RootRouter {
         // Auth Routes
         this.v2Router.use("/auth", this.authRootRouter.AuthRouter);
         // Admin Routes
-        this.v2Router.use("/admin", this.authChecker.adminAuthChecker, this.adminRootRouter.router);
+        this.v2Router.use("/admin", this.authChecker.adminAuthChecker, this.adminRootRouter.Router);
         // Job Seeker Routes
         this.v2Router.use("/job-seeker", this.authChecker.jobSeekerAuthChecker, this.jobSeekerRootRouter.router);
         // Hotelier Routes

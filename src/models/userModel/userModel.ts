@@ -103,4 +103,15 @@ export default class UserModel extends Schema {
       })
       .first();
   }
+
+    //get last  user Id
+  public async getLastUserID() {
+    const data = await this.db('admin')
+      .withSchema(this.ADMIN_SCHEMA)
+      .select('id')
+      .orderBy('id', 'desc')
+      .limit(1);
+
+    return data.length ? data[0].id : 0;
+  }
 }

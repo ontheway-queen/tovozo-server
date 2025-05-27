@@ -23,6 +23,8 @@ export default class AuthChecker {
   ): Promise<void> => {
     const { authorization } = req.headers;
 
+    console.log({authorization})
+
     if (!authorization) {
       res.status(StatusCode.HTTP_UNAUTHORIZED).json({
         success: false,

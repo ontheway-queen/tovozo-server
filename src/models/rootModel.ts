@@ -5,6 +5,7 @@ import AdminModel from "./adminModel/adminModel";
 import JobSeekerModel from "./jobSeekerModel/jobSeekerModel";
 import CommonModel from "./commonModel/commonModel";
 import OrganizationModel from "./hotelierModel/organizationModel";
+import AdministrationModel from "./adminModel/administrationModel";
 
 export default class Models {
   public UserModel(trx?: Knex.Transaction) {
@@ -27,5 +28,10 @@ export default class Models {
   // organization model
   public organizationModel(trx?: Knex.Transaction) {
     return new OrganizationModel(trx || db);
+  }
+
+  //administration model
+  public administrationModel(trx?: Knex.Transaction) {
+    return new AdministrationModel(trx || db);
   }
 }
