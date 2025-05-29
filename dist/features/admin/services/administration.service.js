@@ -274,8 +274,9 @@ class AdminAdministrationService extends abstract_service_1.default {
             if (files === null || files === void 0 ? void 0 : files.length) {
                 req.body[files[0].fieldname] = files[0].filename;
             }
-            const _a = req.body, { password, email, phone_number, username } = _a, rest = __rest(_a, ["password", "email", "phone_number", "username"]);
+            const _a = req.body, { password, email, phone_number, username, role_id } = _a, rest = __rest(_a, ["password", "email", "phone_number", "username", "role_id"]);
             const model = this.Model.UserModel();
+            const adminModel = this.Model.AdminModel();
             //check admins email and phone number
             const check_admin = yield model.checkUser({
                 email,
@@ -292,13 +293,18 @@ class AdminAdministrationService extends abstract_service_1.default {
             }
             const getLastAdminID = yield model.getLastUserID();
             rest.email = email;
+            rest.type = constants_1.USER_TYPE.ADMIN;
             rest.phone_number = phone_number;
-            rest.created_by = user_id;
             rest.username = username.split(" ").join("") + getLastAdminID;
             //password hashing
             const hashedPass = yield lib_1.default.hashValue(password);
             //create user
-            yield model.createUser(Object.assign({ password_hash: hashedPass }, rest));
+            const admin_res = yield model.createUser(Object.assign({ password_hash: hashedPass }, rest));
+            yield adminModel.createAdmin({
+                role_id,
+                user_id: admin_res[0].id,
+                created_by: user_id,
+            });
             return {
                 success: true,
                 code: this.StatusCode.HTTP_SUCCESSFUL,
@@ -309,7 +315,7 @@ class AdminAdministrationService extends abstract_service_1.default {
     //get all admin
     getAllAdmin(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const model = this.Model.administrationModel();
+            const model = this.Model.AdminModel();
             const data = yield model.getAllAdmin(req.query, true);
             return {
                 success: true,
@@ -322,82 +328,84 @@ class AdminAdministrationService extends abstract_service_1.default {
     //get single admin
     getSingleAdmin(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const id = req.params.id;
-            const model = this.Model.administrationModel();
-            const data = yield model.getSingleAdmin({ id: Number(id) });
-            if (data.length) {
-                delete data[0].password_hash;
+            const id = Number(req.params.id);
+            const model = this.Model.AdminModel();
+            const [admin] = yield model.getSingleAdmin({ id });
+            if (!admin) {
+                return {
+                    success: false,
+                    code: this.StatusCode.HTTP_NOT_FOUND,
+                    message: this.ResMsg.HTTP_NOT_FOUND,
+                };
             }
+            const { password_hash } = admin, cleanedData = __rest(admin, ["password_hash"]);
             return {
                 success: true,
                 code: this.StatusCode.HTTP_OK,
-                data: data[0],
+                data: cleanedData,
             };
         });
     }
     //update admin
     updateAdmin(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const id = req.params.id;
-            const model = this.Model.UserModel();
-            const administrationModel = this.Model.administrationModel();
+            const id = Number(req.params.id);
+            const { UserModel, AdminModel, administrationModel } = this.Model;
             const files = req.files || [];
-            if (files === null || files === void 0 ? void 0 : files.length) {
+            // Attach file to request body if uploaded
+            if (files.length) {
                 req.body[files[0].fieldname] = files[0].filename;
             }
-            const admin = yield administrationModel.getSingleAdmin({
-                id: Number(id),
-            });
-            if (admin[0].is_main_user) {
+            const [admin] = yield AdminModel().getSingleAdmin({ id });
+            if (admin === null || admin === void 0 ? void 0 : admin.is_main) {
                 return {
                     success: false,
                     code: this.StatusCode.HTTP_UNPROCESSABLE_ENTITY,
                     message: "You can't update main admin",
                 };
             }
+            // Check for unique username
             if (req.body.username) {
-                const check_username = yield administrationModel.getSingleAdmin({
+                const [existingUser] = yield AdminModel().getSingleAdmin({
                     username: req.body.username,
                 });
-                if (check_username.length) {
-                    if (Number(check_username[0].id) !== Number(id)) {
-                        return {
-                            success: false,
-                            code: this.StatusCode.HTTP_CONFLICT,
-                            message: this.ResMsg.USERNAME_ALREADY_EXISTS,
-                        };
-                    }
+                if (existingUser && existingUser.id !== id) {
+                    return {
+                        success: false,
+                        code: this.StatusCode.HTTP_CONFLICT,
+                        message: this.ResMsg.USERNAME_ALREADY_EXISTS,
+                    };
                 }
             }
+            // Check for unique phone number
             if (req.body.phone_number) {
-                const check_phone = yield administrationModel.getSingleAdmin({
+                const [existingPhone] = yield AdminModel().getSingleAdmin({
                     phone_number: req.body.phone_number,
                 });
-                if (check_phone.length) {
-                    if (Number(check_phone[0].id) !== Number(id)) {
-                        return {
-                            success: false,
-                            code: this.StatusCode.HTTP_CONFLICT,
-                            message: this.ResMsg.PHONE_NUMBER_ALREADY_EXISTS,
-                        };
-                    }
+                if (existingPhone && existingPhone.id !== id) {
+                    return {
+                        success: false,
+                        code: this.StatusCode.HTTP_CONFLICT,
+                        message: this.ResMsg.PHONE_NUMBER_ALREADY_EXISTS,
+                    };
                 }
             }
-            const res = yield model.updateProfile(req.body, { id: Number(id) });
-            if (res) {
-                return {
+            const _a = req.body, { role_id, is_2fa_on } = _a, rest = __rest(_a, ["role_id", "is_2fa_on"]);
+            const updatedProfile = yield UserModel().updateProfile(rest, { id });
+            if (role_id !== undefined || is_2fa_on !== undefined) {
+                yield AdminModel().updateAdmin({ role_id, is_2fa_on }, { user_id: id });
+            }
+            return updatedProfile
+                ? {
                     success: true,
                     code: this.StatusCode.HTTP_OK,
                     data: req.body,
-                };
-            }
-            else {
-                return {
+                }
+                : {
                     success: false,
                     code: this.StatusCode.HTTP_BAD_REQUEST,
                     message: this.ResMsg.HTTP_BAD_REQUEST,
                 };
-            }
         });
     }
 }

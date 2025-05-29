@@ -5,15 +5,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const administration_router_1 = __importDefault(require("./router/administration.router"));
+const profile_router_1 = __importDefault(require("./router/profile.router"));
 class AdminRootRouter {
     constructor() {
         this.Router = (0, express_1.Router)();
         this.AdminAdministrationRouter = new administration_router_1.default();
+        this.adminProfileRouter = new profile_router_1.default();
         this.callRouter();
     }
     callRouter() {
         //administration
         this.Router.use("/administration", this.AdminAdministrationRouter.router);
+        // profile router
+        this.Router.use("/profile", this.adminProfileRouter.router);
     }
 }
 exports.default = AdminRootRouter;

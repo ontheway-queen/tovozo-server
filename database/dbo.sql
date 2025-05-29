@@ -13,6 +13,8 @@ CREATE TYPE dbo.gender_type AS ENUM
 CREATE TYPE dbo.shift_type AS ENUM
     ('Morning', 'Afternoon','Night','Flexible');
 
+
+
 DROP TYPE IF EXISTS dbo.type_email_otp;
 
 CREATE TYPE dbo.type_email_otp AS ENUM (
@@ -62,7 +64,33 @@ CREATE TABLE IF NOT EXISTS dbo.email_otp (
   CONSTRAINT email_otp_pkey PRIMARY KEY (id)
 );
 
+CREATE TYPE dbo.notification_type AS ENUM (
+    'JOB_MATCH',         
+    'REMINDER',         
+    'APPLICATION_UPDATE',
+    'PAYMENT',          
+    'CANCELLATION',      
+    'VERIFICATION',      
+    'SECURITY_ALERT',    
+    'SYSTEM_UPDATE'   
+);
+-- Notification system
+CREATE TABLE IF NOT EXISTS dbo.notification (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES dbo."user"(id),
+    content TEXT NOT NULL,
+    type dbo.notification_type NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    related_id INT 
+);
 
+
+CREATE TABLE IF NOT EXISTS b2b.notification_seen
+(
+    notification_id integer NOT NULL,
+    user_id integer NOT NULL,
+    CONSTRAINT notification_seen_pkey PRIMARY KEY (notification_id, user_id)
+)
 
 
 
@@ -90,6 +118,7 @@ CREATE TABLE IF NOT EXISTS dbo.job_post
     created_time timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     expire_time TIMESTAMP,
     status character varying(42) DEFAULT 'Live',
+    hourly_rate DECIMAL(8,2) NOT NULL 
     CONSTRAINT job_post_pkey PRIMARY KEY (id)
 );
 
@@ -103,6 +132,9 @@ CREATE TABLE IF NOT EXISTS dbo.job_post_details
     status character varying(42) DEFAULT 'Pending',
     CONSTRAINT job_post_details_pkey PRIMARY KEY (id)
 );
+
+
+
 
 -- job seeker view
 CREATE OR REPLACE VIEW jobSeeker.job_seeker_auth_view AS
@@ -129,6 +161,7 @@ JOIN
     jobSeeker.job_seeker js ON js.user_id = u.id
 WHERE
     u.is_deleted = FALSE;
+
 
 
 

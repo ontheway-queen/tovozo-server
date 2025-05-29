@@ -10,7 +10,13 @@ export default class jobSeekerProfileRouter extends AbstractRouter {
 
   private callRouter() {
     // get profile
-    this.router.route("/").get(this.controller.getProfile);
+    this.router
+      .route("/")
+      .get(this.controller.getProfile)
+      .patch(
+        this.uploader.cloudUploadRaw(this.fileFolders.JOB_SEEKER_FILES),
+        this.controller.updateProfile
+      );
 
     // change password
     this.router.route("/change-password").post(this.controller.changePassword);

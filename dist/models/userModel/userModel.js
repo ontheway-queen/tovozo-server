@@ -76,7 +76,7 @@ class UserModel extends schema_1.default {
                     qb.andWhere("user_id", user_id);
                 }
                 if (user_name) {
-                    qb.andWhere("user_name", user_name);
+                    qb.andWhere("username", user_name);
                 }
                 if (email) {
                     qb.andWhere("email", email);
@@ -91,8 +91,8 @@ class UserModel extends schema_1.default {
     //get last  user Id
     getLastUserID() {
         return __awaiter(this, void 0, void 0, function* () {
-            const data = yield this.db('admin')
-                .withSchema(this.ADMIN_SCHEMA)
+            const data = yield this.db('user')
+                .withSchema(this.DBO_SCHEMA)
                 .select('id')
                 .orderBy('id', 'desc')
                 .limit(1);

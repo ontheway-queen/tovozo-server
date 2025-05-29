@@ -90,6 +90,13 @@ export default class JobSeekerModel extends Schema {
       .where({ job_seeker_id });
   }
 
+  public async deleteJobPreferences(job_seeker_id: number) {
+    return await this.db("job_preferences AS jp")
+      .withSchema(this.JOB_SEEKER)
+      .del()
+      .where({ job_seeker_id });
+  }
+
   public async getJobLocations(job_seeker_id: number) {
     return await this.db("job_locations")
       .withSchema(this.JOB_SEEKER)
@@ -97,10 +104,24 @@ export default class JobSeekerModel extends Schema {
       .where({ job_seeker_id });
   }
 
+  public async deleteJobLocations(job_seeker_id: number) {
+    return await this.db("job_locations")
+      .withSchema(this.JOB_SEEKER)
+      .del()
+      .where({ job_seeker_id });
+  }
+
   public async getJobShifting(job_seeker_id: number) {
     return await this.db("job_shifting")
       .withSchema(this.JOB_SEEKER)
       .select("*")
+      .where({ job_seeker_id });
+  }
+
+  public async deleteJobShifting(job_seeker_id: number) {
+    return await this.db("job_shifting")
+      .withSchema(this.JOB_SEEKER)
+      .del()
       .where({ job_seeker_id });
   }
 
@@ -113,7 +134,7 @@ export default class JobSeekerModel extends Schema {
   public async updateJobSeekerInfo(
     payload: Partial<IJobSeekerInfoPayload>,
     query: {
-      job_seeker_id: string;
+      job_seeker_id: number;
     }
   ) {
     return await this.db("job_seeker_info")

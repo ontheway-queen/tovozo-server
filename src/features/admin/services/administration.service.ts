@@ -83,6 +83,7 @@ class AdminAdministrationService extends AbstractServices {
   public async createPermission(req: Request) {
     const { user_id } = req.admin;
     const model = this.Model.administrationModel();
+
     const check_name = await model.permissionsList({
       name: req.body.permission_name,
     });
@@ -93,6 +94,7 @@ class AdminAdministrationService extends AbstractServices {
         message: this.ResMsg.PERMISSION_NAME_EXIST,
       };
     }
+
     const create_permission = await model.createPermission({
       name: req.body.permission_name,
       created_by: user_id,
@@ -287,8 +289,10 @@ class AdminAdministrationService extends AbstractServices {
     if (files?.length) {
       req.body[files[0].fieldname] = files[0].filename;
     }
-    const { password, email, phone_number, username, ...rest } = req.body;
+    const { password, email, phone_number, username, role_id, ...rest } =
+      req.body;
     const model = this.Model.UserModel();
+    const adminModel = this.Model.AdminModel();
 
     //check admins email and phone number
     const check_admin = await model.checkUser({
@@ -308,15 +312,21 @@ class AdminAdministrationService extends AbstractServices {
 
     const getLastAdminID = await model.getLastUserID();
     rest.email = email;
+    rest.type = USER_TYPE.ADMIN;
     rest.phone_number = phone_number;
-    rest.created_by = user_id;
     rest.username = username.split(" ").join("") + getLastAdminID;
     //password hashing
     const hashedPass = await Lib.hashValue(password);
     //create user
-    await model.createUser({
+    const admin_res = await model.createUser({
       password_hash: hashedPass,
       ...rest,
+    });
+
+    await adminModel.createAdmin({
+      role_id,
+      user_id: admin_res[0].id,
+      created_by: user_id,
     });
 
     return {
@@ -328,7 +338,7 @@ class AdminAdministrationService extends AbstractServices {
 
   //get all admin
   public async getAllAdmin(req: Request) {
-    const model = this.Model.administrationModel();
+    const model = this.Model.AdminModel();
     const data = await model.getAllAdmin(req.query, true);
     return {
       success: true,
@@ -340,34 +350,41 @@ class AdminAdministrationService extends AbstractServices {
 
   //get single admin
   public async getSingleAdmin(req: Request) {
-    const id = req.params.id;
-    const model = this.Model.administrationModel();
-    const data = await model.getSingleAdmin({ id: Number(id) });
-    if (data.length) {
-      delete data[0].password_hash;
+    const id = Number(req.params.id);
+    const model = this.Model.AdminModel();
+    const [admin] = await model.getSingleAdmin({ id });
+
+    if (!admin) {
+      return {
+        success: false,
+        code: this.StatusCode.HTTP_NOT_FOUND,
+        message: this.ResMsg.HTTP_NOT_FOUND,
+      };
     }
+
+    const { password_hash, ...cleanedData } = admin;
+
     return {
       success: true,
       code: this.StatusCode.HTTP_OK,
-      data: data[0],
+      data: cleanedData,
     };
   }
 
   //update admin
   public async updateAdmin(req: Request) {
-    const id = req.params.id;
-    const model = this.Model.UserModel();
-    const administrationModel = this.Model.administrationModel();
+    const id = Number(req.params.id);
+    const { UserModel, AdminModel, administrationModel } = this.Model;
     const files = (req.files as Express.Multer.File[]) || [];
-    if (files?.length) {
+
+    // Attach file to request body if uploaded
+    if (files.length) {
       req.body[files[0].fieldname] = files[0].filename;
     }
 
-    const admin = await administrationModel.getSingleAdmin({
-      id: Number(id),
-    });
+    const [admin] = await AdminModel().getSingleAdmin({ id });
 
-    if (admin[0].is_main_user) {
+    if (admin?.is_main) {
       return {
         success: false,
         code: this.StatusCode.HTTP_UNPROCESSABLE_ENTITY,
@@ -375,49 +392,53 @@ class AdminAdministrationService extends AbstractServices {
       };
     }
 
+    // Check for unique username
     if (req.body.username) {
-      const check_username = await administrationModel.getSingleAdmin({
+      const [existingUser] = await AdminModel().getSingleAdmin({
         username: req.body.username,
       });
-
-      if (check_username.length) {
-        if (Number(check_username[0].id) !== Number(id)) {
-          return {
-            success: false,
-            code: this.StatusCode.HTTP_CONFLICT,
-            message: this.ResMsg.USERNAME_ALREADY_EXISTS,
-          };
-        }
+      if (existingUser && existingUser.id !== id) {
+        return {
+          success: false,
+          code: this.StatusCode.HTTP_CONFLICT,
+          message: this.ResMsg.USERNAME_ALREADY_EXISTS,
+        };
       }
     }
+
+    // Check for unique phone number
     if (req.body.phone_number) {
-      const check_phone = await administrationModel.getSingleAdmin({
+      const [existingPhone] = await AdminModel().getSingleAdmin({
         phone_number: req.body.phone_number,
       });
-      if (check_phone.length) {
-        if (Number(check_phone[0].id) !== Number(id)) {
-          return {
-            success: false,
-            code: this.StatusCode.HTTP_CONFLICT,
-            message: this.ResMsg.PHONE_NUMBER_ALREADY_EXISTS,
-          };
-        }
+      if (existingPhone && existingPhone.id !== id) {
+        return {
+          success: false,
+          code: this.StatusCode.HTTP_CONFLICT,
+          message: this.ResMsg.PHONE_NUMBER_ALREADY_EXISTS,
+        };
       }
     }
-    const res = await model.updateProfile(req.body, { id: Number(id) });
-    if (res) {
-      return {
-        success: true,
-        code: this.StatusCode.HTTP_OK,
-        data: req.body,
-      };
-    } else {
-      return {
-        success: false,
-        code: this.StatusCode.HTTP_BAD_REQUEST,
-        message: this.ResMsg.HTTP_BAD_REQUEST,
-      };
+
+    const { role_id, is_2fa_on, ...rest } = req.body;
+
+    const updatedProfile = await UserModel().updateProfile(rest, { id });
+
+    if (role_id !== undefined || is_2fa_on !== undefined) {
+      await AdminModel().updateAdmin({ role_id, is_2fa_on }, { user_id: id });
     }
+
+    return updatedProfile
+      ? {
+          success: true,
+          code: this.StatusCode.HTTP_OK,
+          data: req.body,
+        }
+      : {
+          success: false,
+          code: this.StatusCode.HTTP_BAD_REQUEST,
+          message: this.ResMsg.HTTP_BAD_REQUEST,
+        };
   }
 }
 

@@ -4,21 +4,21 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_router_1 = __importDefault(require("../../../abstract/abstract.router"));
-const jobSeekerProfile_controller_1 = __importDefault(require("../controller/jobSeekerProfile.controller"));
-class jobSeekerProfileRouter extends abstract_router_1.default {
+const profile_controller_1 = __importDefault(require("../controller/profile.controller"));
+class AdminProfileRouter extends abstract_router_1.default {
     constructor() {
         super();
-        this.controller = new jobSeekerProfile_controller_1.default();
+        this.controller = new profile_controller_1.default();
         this.callRouter();
     }
     callRouter() {
-        // get profile
+        //view profile, edit profile
         this.router
             .route("/")
             .get(this.controller.getProfile)
-            .patch(this.uploader.cloudUploadRaw(this.fileFolders.JOB_SEEKER_FILES), this.controller.updateProfile);
-        // change password
+            .patch(this.uploader.cloudUploadRaw(this.fileFolders.ADMIN_FILES), this.controller.editProfile);
+        //change password
         this.router.route("/change-password").post(this.controller.changePassword);
     }
 }
-exports.default = jobSeekerProfileRouter;
+exports.default = AdminProfileRouter;

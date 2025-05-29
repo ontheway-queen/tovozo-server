@@ -69,6 +69,21 @@ CREATE TABLE IF NOT EXISTS jobSeeker.job_seeker_info (
     FOREIGN KEY (job_seeker_id) REFERENCES jobSeeker.job_seeker(user_id) ON DELETE CASCADE
 );
 
+CREATE TYPE dbo.payment_status AS ENUM ('PENDING', 'PAID', 'FAILED', "PARTIAL_PAID");
+CREATE TYPE dbo.job_status AS ENUM ('PENDING', 'ASSIGNED', 'CANCELLED', 'COMPLETED');
+CREATE TABLE IF NOT EXISTS jobSeeker.job_application (
+    id SERIAL PRIMARY KEY,
+    job_post_id INT NOT NULL REFERENCES dbo.job_post(id),
+    job_seeker_id INT NOT NULL REFERENCES jobSeeker.job_seeker(user_id),
+    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    cancelled_at TIMESTAMP,
+    start_time TIMESTAMP NOT NULL, 
+    end_time TIMESTAMP,            
+    status dbo.job_status NOT NULL DEFAULT 'PENDING',
+    hotelier_approved BOOLEAN DEFAULT false,
+    payment_status dbo.payment_status DEFAULT 'PENDING',     
+);
+
     
 -- Job Seeker Auth View 
 CREATE OR REPLACE VIEW jobSeeker.job_seeker_auth_view AS

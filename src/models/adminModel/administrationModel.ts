@@ -136,7 +136,7 @@ class AdministrationModel extends Schema {
         "per.create_date"
       )
       .leftJoin("admin as ua", "ua.user_id", "per.created_by")
-          .joinRaw("LEFT JOIN dbo.user u ON u.id = ua.user_id")
+      .joinRaw("LEFT JOIN dbo.user u ON u.id = ua.user_id")
       .limit(params.limit ? params.limit : 100)
       .offset(params.skip ? params.skip : 0)
       .orderBy("per.id", "asc")
@@ -209,96 +209,6 @@ class AdministrationModel extends Schema {
       .andWhere({ permission_id });
   }
 
-  //get all admin
-  public async getAllAdmin(
-    query: IGetAdminListFilterQuery,
-    is_total: boolean = false
-  ) {
-    const data = await this.db("admin as ua")
-      .withSchema(this.ADMIN_SCHEMA)
-      .select(
-        "ua.user_id",
-        "u.username",
-        "ua.email",
-        "ua.phone_number",
-        "ua.photo",
-        "rl.name as role",
-        "ua.status",
-        "ua.socket_id",
-        "ua.twoFA"
-      )
-      .leftJoin("roles as rl", "rl.id", "ua.role_id")
-      .joinRaw("LEFT JOIN dbo.user u ON u.id = ua.user_id")
-      .where((qb) => {
-        if (query.filter) {
-          qb.where((qbc) => {
-            qbc.where("u.username", "ilike", `%${query.filter}%`);
-            qbc.orWhere("u.email", "ilike", `%${query.filter}%`);
-            qbc.orWhere("u.phone_number", "ilike", `%${query.filter}%`);
-          });
-        }
-        if (query.role) {
-          qb.andWhere("rl.id", query.role);
-        }
-        if (query.status === "true" || query.status === "false") {
-          qb.andWhere("u.status", query.status);
-        }
-      })
-      .orderBy("ua.user_id", "desc")
-      .limit(query.limit ? query.limit : 100)
-      .offset(query.skip ? query.skip : 0);
-
-    let total: any[] = [];
-
-    if (is_total) {
-      total = await this.db("admin as ua")
-        .withSchema(this.ADMIN_SCHEMA)
-        .count("u.user_id as total")
-        .join("roles as rl", "rl.id", "u.role_id")
-        .joinRaw("LEFT JOIN dbo.user u ON u.id = ua.user_id")
-        .where((qb) => {
-          if (query.filter) {
-            qb.where((qbc) => {
-              qbc.where("u.username", "ilike", `%${query.filter}%`);
-              qbc.orWhere("u.email", "ilike", `%${query.filter}%`);
-              qbc.orWhere("u.phone_number", "ilike", `%${query.filter}%`);
-            });
-          }
-          if (query.role) {
-            qb.andWhere("rl.id", query.role);
-          }
-          if (query.status === "true" || query.status === "false") {
-            qb.andWhere("u.status", query.status);
-          }
-        });
-    }
-
-    return {
-      data: data,
-      total: total[0]?.total,
-    };
-  }
-
-  //get single admin
-  public async getSingleAdmin(payload: IAdminSearchQuery) {
-    return await this.db("admin as ua")
-      .select("ua.*", "rl.name as role", "rl.id as role_id")
-      .withSchema(this.ADMIN_SCHEMA)
-      .leftJoin("roles as rl", "rl.id", "ua.role_id")
-      .where((qb) => {
-        if (payload.id) {
-          qb.where("ua.user_id", payload.id);
-        }
-        if (payload.email) {
-          qb.orWhere("email", payload.email);
-        }
-        if (payload.phone_number) {
-          qb.orWhere("phone_number", payload.phone_number);
-        }
-        if (payload.username) {
-          qb.orWhere("username", payload.username);
-        }
-      });
-  }
+ 
 }
 export default AdministrationModel;

@@ -26,6 +26,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
 const constants_1 = require("../../../utils/miscellaneous/constants");
 const lib_1 = __importDefault(require("../../../utils/lib/lib"));
+const customError_1 = __importDefault(require("../../../utils/lib/customError"));
 class JobSeekerProfileService extends abstract_service_1.default {
     constructor() {
         super();
@@ -54,6 +55,79 @@ class JobSeekerProfileService extends abstract_service_1.default {
                     jobLocations,
                     jobShifts }),
             };
+        });
+    }
+    updateProfile(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const files = req.files || [];
+                const user = lib_1.default.safeParseJSON(req.body.user);
+                const jobSeeker = lib_1.default.safeParseJSON(req.body.job_seeker);
+                const jobPreferencesInput = lib_1.default.safeParseJSON(req.body.job_preferences);
+                const jobLocationsInput = lib_1.default.safeParseJSON(req.body.job_locations);
+                const jobShiftingInput = lib_1.default.safeParseJSON(req.body.job_shifting);
+                const jobSeekerInfo = lib_1.default.safeParseJSON(req.body.job_seeker_info) || {};
+                const { user_id } = req.jobSeeker;
+                for (const { fieldname, filename } of files) {
+                    if (fieldname === "resume") {
+                        jobSeekerInfo.resume = filename;
+                    }
+                    else if (fieldname === "photo") {
+                        user.photo = filename;
+                    }
+                    else {
+                        throw new customError_1.default(this.ResMsg.UNKNOWN_FILE_FIELD, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
+                    }
+                }
+                const userModel = this.Model.UserModel(trx);
+                const jobSeekerModel = this.Model.jobSeekerModel(trx);
+                const existingUser = yield userModel.checkUser({
+                    id: user_id,
+                    type: constants_1.USER_TYPE.JOB_SEEKER,
+                });
+                if (!existingUser) {
+                    throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND, "ERROR");
+                }
+                if (Object.keys(user).length) {
+                    yield userModel.updateProfile(user, { id: user_id });
+                }
+                yield jobSeekerModel.updateJobSeeker(jobSeeker, { user_id });
+                const hasPreferences = Array.isArray(jobPreferencesInput);
+                if (hasPreferences) {
+                    yield jobSeekerModel.deleteJobPreferences(user_id);
+                    const jobPreferences = jobPreferencesInput.map((job_id) => ({
+                        job_seeker_id: user_id,
+                        job_id,
+                    }));
+                    yield jobSeekerModel.setJobPreferences(jobPreferences);
+                }
+                const hasLocations = Array.isArray(jobLocationsInput);
+                if (hasLocations) {
+                    yield jobSeekerModel.deleteJobLocations(user_id);
+                    const jobLocations = jobLocationsInput.map((location_id) => ({
+                        job_seeker_id: user_id,
+                        location_id,
+                    }));
+                    yield jobSeekerModel.setJobLocations(jobLocations);
+                }
+                const hasShifting = Array.isArray(jobShiftingInput);
+                if (hasShifting) {
+                    yield jobSeekerModel.deleteJobShifting(user_id);
+                    const jobShifting = jobShiftingInput.map((shift) => ({
+                        job_seeker_id: user_id,
+                        shift,
+                    }));
+                    yield jobSeekerModel.setJobShifting(jobShifting);
+                }
+                yield jobSeekerModel.updateJobSeekerInfo(jobSeekerInfo, {
+                    job_seeker_id: user_id,
+                });
+                return {
+                    success: true,
+                    code: this.StatusCode.HTTP_OK,
+                    message: this.ResMsg.HTTP_OK,
+                };
+            }));
         });
     }
     //change password

@@ -92,6 +92,14 @@ class JobSeekerModel extends schema_1.default {
                 .where({ job_seeker_id });
         });
     }
+    deleteJobPreferences(job_seeker_id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("job_preferences AS jp")
+                .withSchema(this.JOB_SEEKER)
+                .del()
+                .where({ job_seeker_id });
+        });
+    }
     getJobLocations(job_seeker_id) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("job_locations")
@@ -100,11 +108,27 @@ class JobSeekerModel extends schema_1.default {
                 .where({ job_seeker_id });
         });
     }
+    deleteJobLocations(job_seeker_id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("job_locations")
+                .withSchema(this.JOB_SEEKER)
+                .del()
+                .where({ job_seeker_id });
+        });
+    }
     getJobShifting(job_seeker_id) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("job_shifting")
                 .withSchema(this.JOB_SEEKER)
                 .select("*")
+                .where({ job_seeker_id });
+        });
+    }
+    deleteJobShifting(job_seeker_id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("job_shifting")
+                .withSchema(this.JOB_SEEKER)
+                .del()
                 .where({ job_seeker_id });
         });
     }

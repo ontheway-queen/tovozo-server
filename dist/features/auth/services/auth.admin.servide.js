@@ -163,7 +163,7 @@ class AdminAuthService extends abstract_service_1.default {
     forgetPassword(req) {
         return __awaiter(this, void 0, void 0, function* () {
             const { token, email, password } = req.body;
-            const token_verify = lib_1.default.verifyToken(token, config_1.default.JWT_SECRET_JOB_SEEKER);
+            const token_verify = lib_1.default.verifyToken(token, config_1.default.JWT_SECRET_ADMIN);
             if (!token_verify) {
                 return {
                     success: false,
@@ -177,7 +177,7 @@ class AdminAuthService extends abstract_service_1.default {
                 const model = this.Model.UserModel();
                 const get_user = yield model.checkUser({
                     email,
-                    type: constants_1.USER_TYPE.JOB_SEEKER,
+                    type: constants_1.USER_TYPE.ADMIN,
                 });
                 yield model.updateProfile({ password_hash: hashed_pass }, { id: get_user.id });
                 return {

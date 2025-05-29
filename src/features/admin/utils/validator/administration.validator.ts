@@ -1,4 +1,4 @@
-import Joi from 'joi';
+import Joi from "joi";
 
 class AdminAdministrationValidator {
   //Role validation
@@ -38,9 +38,7 @@ class AdminAdministrationValidator {
   //create admin
   public createAdmin = Joi.object({
     username: Joi.string().required().lowercase().trim(),
-    first_name: Joi.string().required(),
-    last_name: Joi.string().required(),
-    gender: Joi.string().required().valid('Male', 'Female', 'Other'),
+    name: Joi.string().required(),
     email: Joi.string().email().lowercase().required(),
     password: Joi.string().min(8).required(),
     phone_number: Joi.string().required(),
@@ -77,13 +75,11 @@ class AdminAdministrationValidator {
   //update admin
   public updateAdmin = Joi.object({
     username: Joi.string(),
-    first_name: Joi.string(),
-    last_name: Joi.string(),
-    gender: Joi.string().valid('Male', 'Female', 'Other'),
+    name: Joi.string(),
     phone_number: Joi.string(),
     role_id: Joi.number(),
     status: Joi.boolean(),
-    twoFA:Joi.number().valid(0, 1),
+    is_2fa_on: Joi.boolean().optional(),
   });
 
   //get users filter validator
@@ -96,11 +92,9 @@ class AdminAdministrationValidator {
 
   //update user profile
   public editUserProfileValidator = Joi.object({
-    username: Joi.string().min(1).max(255),
-    first_name: Joi.string().min(1).max(255),
-    last_name: Joi.string().min(1).max(255),
-    gender: Joi.string().valid('Male', 'Female', 'Other'),
-    status: Joi.boolean(),
+    username: Joi.string().min(1).max(255).optional(),
+    is_2fa_on: Joi.boolean().optional(),
+    name: Joi.string().optional(),
   });
 
   //create city

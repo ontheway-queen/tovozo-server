@@ -40,9 +40,7 @@ class AdminAdministrationValidator {
         //create admin
         this.createAdmin = joi_1.default.object({
             username: joi_1.default.string().required().lowercase().trim(),
-            first_name: joi_1.default.string().required(),
-            last_name: joi_1.default.string().required(),
-            gender: joi_1.default.string().required().valid('Male', 'Female', 'Other'),
+            name: joi_1.default.string().required(),
             email: joi_1.default.string().email().lowercase().required(),
             password: joi_1.default.string().min(8).required(),
             phone_number: joi_1.default.string().required(),
@@ -75,13 +73,11 @@ class AdminAdministrationValidator {
         //update admin
         this.updateAdmin = joi_1.default.object({
             username: joi_1.default.string(),
-            first_name: joi_1.default.string(),
-            last_name: joi_1.default.string(),
-            gender: joi_1.default.string().valid('Male', 'Female', 'Other'),
+            name: joi_1.default.string(),
             phone_number: joi_1.default.string(),
             role_id: joi_1.default.number(),
             status: joi_1.default.boolean(),
-            twoFA: joi_1.default.number().valid(0, 1),
+            is_2fa_on: joi_1.default.boolean().optional(),
         });
         //get users filter validator
         this.getUsersFilterValidator = joi_1.default.object({
@@ -92,11 +88,9 @@ class AdminAdministrationValidator {
         });
         //update user profile
         this.editUserProfileValidator = joi_1.default.object({
-            username: joi_1.default.string().min(1).max(255),
-            first_name: joi_1.default.string().min(1).max(255),
-            last_name: joi_1.default.string().min(1).max(255),
-            gender: joi_1.default.string().valid('Male', 'Female', 'Other'),
-            status: joi_1.default.boolean(),
+            username: joi_1.default.string().min(1).max(255).optional(),
+            is_2fa_on: joi_1.default.boolean().optional(),
+            name: joi_1.default.string().optional(),
         });
         //create city
         this.createCityValidator = joi_1.default.object({

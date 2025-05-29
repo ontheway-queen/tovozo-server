@@ -92,7 +92,7 @@ export default class UserModel extends Schema {
           qb.andWhere("user_id", user_id);
         }
         if (user_name) {
-          qb.andWhere("user_name", user_name);
+          qb.andWhere("username", user_name);
         }
         if (email) {
           qb.andWhere("email", email);
@@ -106,8 +106,8 @@ export default class UserModel extends Schema {
 
     //get last  user Id
   public async getLastUserID() {
-    const data = await this.db('admin')
-      .withSchema(this.ADMIN_SCHEMA)
+    const data = await this.db('user')
+      .withSchema(this.DBO_SCHEMA)
       .select('id')
       .orderBy('id', 'desc')
       .limit(1);

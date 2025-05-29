@@ -159,7 +159,7 @@ class AdminAuthService extends AbstractServices {
     const { token, email, password } = req.body as IForgetPasswordPayload;
     const token_verify: any = Lib.verifyToken(
       token,
-      config.JWT_SECRET_JOB_SEEKER
+      config.JWT_SECRET_ADMIN
     );
 
     if (!token_verify) {
@@ -176,7 +176,7 @@ class AdminAuthService extends AbstractServices {
       const model = this.Model.UserModel();
       const get_user = await model.checkUser({
         email,
-        type: USER_TYPE.JOB_SEEKER,
+        type: USER_TYPE.ADMIN,
       });
       await model.updateProfile(
         { password_hash: hashed_pass },

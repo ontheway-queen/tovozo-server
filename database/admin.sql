@@ -63,5 +63,8 @@ ADD COLUMN IF NOT EXISTS is_2fa_on BOOLEAN DEFAULT FALSE;
 ALTER TABLE jobSeeker.job_seeker
 ADD COLUMN IF NOT EXISTS is_2fa_on BOOLEAN DEFAULT FALSE;
 
+ALTER TABLE admin.role_permissions 
+ALTER COLUMN role_id DROP IDENTITY IF EXISTS;
+
 -------------------------------------------------------------------------------------------------
 

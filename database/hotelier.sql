@@ -19,6 +19,7 @@ CREATE TABLE hotelier.organization (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     status VARCHAR(42) NOT NULL DEFAULT 'Pending',  -- e.g. Pending, Approved, Blocked
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    location_id INT REFERENCES dbo.location(id),
     CONSTRAINT fk_org_user FOREIGN KEY (user_id) REFERENCES dbo."user" (id) ON DELETE CASCADE
 );
 
