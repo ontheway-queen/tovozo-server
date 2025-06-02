@@ -20,7 +20,7 @@ export default class JobSeekerModel extends Schema {
   public async createJobSeeker(payload: ICreateJobSeekerPayload) {
     return await this.db("job_seeker")
       .withSchema(this.JOB_SEEKER)
-      .insert(payload, "user_id");
+      .insert(payload);
   }
 
   public async updateJobSeeker(
@@ -39,6 +39,19 @@ export default class JobSeekerModel extends Schema {
 
   public async getJobSeeker(where: { user_id: number }) {
     return await this.db("job_seeker")
+      .withSchema(this.JOB_SEEKER)
+      .select("*")
+      .where((qb) => {
+        if (where.user_id) {
+          qb.andWhere("user_id", where.user_id);
+        }
+      })
+      .first();
+  }
+
+  // get single job seeker details
+  public async getJobSeekerDetails(where: { user_id: number }) {
+    return await this.db("vw_full_job_seeker_profile")
       .withSchema(this.JOB_SEEKER)
       .select("*")
       .where((qb) => {
@@ -76,6 +89,26 @@ export default class JobSeekerModel extends Schema {
       .insert(payload);
   }
 
+  public async updateJobLocations(
+    payload: Partial<IUpdateJobSeekerPayload>,
+    query: {
+      job_seeker_id: number;
+      location_id: number;
+    }
+  ) {
+    return await this.db("job_locations")
+      .withSchema(this.JOB_SEEKER)
+      .update(payload)
+      .where((qb) => {
+        if (query.job_seeker_id) {
+          qb.andWhere("job_seeker_id", query.job_seeker_id);
+        }
+        if (query.location_id) {
+          qb.andWhere("location_id", query.location_id);
+        }
+      });
+  }
+
   public async setJobShifting(payload: IJobShiftPayload | IJobShiftPayload[]) {
     return await this.db("job_shifting")
       .withSchema(this.JOB_SEEKER)
@@ -90,25 +123,67 @@ export default class JobSeekerModel extends Schema {
       .where({ job_seeker_id });
   }
 
-  public async deleteJobPreferences(job_seeker_id: number) {
+  public async getSingleJobPreference(query: { job_seeker_id: number; job_id: number }) {
+    return await this.db("job_preferences AS jp")
+      .withSchema(this.JOB_SEEKER)
+      .select("jp.*", "j.title")
+      .joinRaw("LEFT JOIN dbo.jobs j ON jp.job_id = j.id")
+      .where((qb) => {
+        if (query.job_seeker_id) {
+          qb.andWhere({ job_seeker_id: query.job_seeker_id });
+        }
+        if (query.job_id) {
+          qb.andWhere({ job_id: query.job_id });
+        }
+      })
+      .first();
+  }
+
+  public async deleteJobPreferences(query: {
+    job_seeker_id: number;
+    job_ids: number[];
+  }) {
     return await this.db("job_preferences AS jp")
       .withSchema(this.JOB_SEEKER)
       .del()
-      .where({ job_seeker_id });
+      .where((qb) => {
+        if (query.job_seeker_id) {
+          qb.andWhere({ job_seeker_id: query.job_seeker_id });
+        }
+        if (query.job_ids) {
+          qb.whereIn("job_id", query.job_ids);
+        }
+      });
   }
 
   public async getJobLocations(job_seeker_id: number) {
-    return await this.db("job_locations")
+    return await this.db("job_locations AS jl")
       .withSchema(this.JOB_SEEKER)
-      .select("*")
+      .select(
+        "jl.*",
+        "l.name as location_name",
+        "l.address as location_address"
+      )
+      .joinRaw("LEFT JOIN dbo.location l ON jl.location_id = l.id")
       .where({ job_seeker_id });
   }
 
-  public async deleteJobLocations(job_seeker_id: number) {
+  public async deleteJobLocations(query: {
+    job_seeker_id: number;
+    location_ids: number[];
+  }) {
     return await this.db("job_locations")
       .withSchema(this.JOB_SEEKER)
       .del()
-      .where({ job_seeker_id });
+      .where((qb) => {
+        qb.andWhere({ is_home_address: false });
+        if (query.job_seeker_id) {
+          qb.andWhere({ job_seeker_id: query.job_seeker_id });
+        }
+        if (query.location_ids) {
+          qb.whereIn("location_id", query.location_ids);
+        }
+      });
   }
 
   public async getJobShifting(job_seeker_id: number) {
@@ -118,11 +193,39 @@ export default class JobSeekerModel extends Schema {
       .where({ job_seeker_id });
   }
 
-  public async deleteJobShifting(job_seeker_id: number) {
+  public async getSingleJobShift(query: {
+    job_seeker_id: number;
+    shift?: string;
+  }) {
+    return await this.db("job_shifting")
+      .withSchema(this.JOB_SEEKER)
+      .select("*")
+      .where((qb) => {
+        if (query.job_seeker_id) {
+          qb.andWhere({ job_seeker_id: query.job_seeker_id });
+        }
+        if (query.shift) {
+          qb.andWhere({ shift: query.shift });
+        }
+      })
+      .first();
+  }
+
+  public async deleteJobShifting(query: {
+    job_seeker_id: number;
+    name?: string[];
+  }) {
     return await this.db("job_shifting")
       .withSchema(this.JOB_SEEKER)
       .del()
-      .where({ job_seeker_id });
+      .where((qb) => {
+        if (query.job_seeker_id) {
+          qb.andWhere({ job_seeker_id: query.job_seeker_id });
+        }
+        if (query.name) {
+          qb.whereIn("shift", query.name);
+        }
+      });
   }
 
   public async createJobSeekerInfo(payload: IJobSeekerInfoPayload) {

@@ -17,6 +17,15 @@ class PublicRouter extends AbstractRouter {
       "/match-email-otp",
       this.Controller.matchEmailOtpController
     );
+
+    //get country
+    this.router.get("/country", this.Controller.getAllCountry);
+
+    //get city
+    this.router.get("/city", this.Controller.getAllCity);
+
+    //get states
+    this.router.get("/state", this.Controller.getAllStates);
   }
 }
 

@@ -8,17 +8,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __rest = (this && this.__rest) || function (s, e) {
-    var t = {};
-    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-        t[p] = s[p];
-    if (s != null && typeof Object.getOwnPropertySymbols === "function")
-        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                t[p[i]] = s[p[i]];
-        }
-    return t;
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -33,27 +22,15 @@ class JobSeekerProfileService extends abstract_service_1.default {
         // get profile
         this.getProfile = (req) => __awaiter(this, void 0, void 0, function* () {
             const { user_id } = req.jobSeeker;
-            const userModel = this.Model.UserModel();
             const jobSeekerModel = this.Model.jobSeekerModel();
-            const _a = yield userModel.getSingleCommonAuthUser({
-                table_name: constants_1.USER_AUTHENTICATION_VIEW.JOB_SEEKER,
-                schema_name: "jobseeker",
+            const jobSeekerDetails = yield jobSeekerModel.getJobSeekerDetails({
                 user_id,
-            }), { password_hash } = _a, rest = __rest(_a, ["password_hash"]);
-            const jobPreferences = yield jobSeekerModel.getJobPreferences(user_id);
-            const jobLocations = yield jobSeekerModel.getJobLocations(user_id);
-            const jobShifts = yield jobSeekerModel.getJobShifting(user_id);
-            const jobSeekerInfo = yield jobSeekerModel.getJobSeekerInfo({
-                job_seeker_id: user_id,
             });
             return {
                 success: true,
                 code: this.StatusCode.HTTP_OK,
                 message: this.ResMsg.HTTP_OK,
-                data: Object.assign(Object.assign({}, rest), { jobSeekerInfo,
-                    jobPreferences,
-                    jobLocations,
-                    jobShifts }),
+                data: jobSeekerDetails,
             };
         });
     }
@@ -61,26 +38,35 @@ class JobSeekerProfileService extends abstract_service_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             return this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const files = req.files || [];
-                const user = lib_1.default.safeParseJSON(req.body.user);
-                const jobSeeker = lib_1.default.safeParseJSON(req.body.job_seeker);
-                const jobPreferencesInput = lib_1.default.safeParseJSON(req.body.job_preferences);
-                const jobLocationsInput = lib_1.default.safeParseJSON(req.body.job_locations);
-                const jobShiftingInput = lib_1.default.safeParseJSON(req.body.job_shifting);
-                const jobSeekerInfo = lib_1.default.safeParseJSON(req.body.job_seeker_info) || {};
                 const { user_id } = req.jobSeeker;
+                const parsed = {
+                    user: lib_1.default.safeParseJSON(req.body.user),
+                    jobSeeker: lib_1.default.safeParseJSON(req.body.job_seeker),
+                    jobSeekerInfo: lib_1.default.safeParseJSON(req.body.job_seeker_info) || {},
+                    ownAddress: lib_1.default.safeParseJSON(req.body.own_address) || {},
+                    addJobPreferences: lib_1.default.safeParseJSON(req.body.add_job_preferences) || [],
+                    delJobPreferences: lib_1.default.safeParseJSON(req.body.del_job_preferences) || [],
+                    addJobLocations: lib_1.default.safeParseJSON(req.body.add_job_locations) || [],
+                    delJobLocations: lib_1.default.safeParseJSON(req.body.del_job_locations) || [],
+                    updateJobLocations: lib_1.default.safeParseJSON(req.body.update_job_locations) || [],
+                    addJobShifting: lib_1.default.safeParseJSON(req.body.add_job_shifting) || [],
+                    delJobShifting: lib_1.default.safeParseJSON(req.body.del_job_shifting) || [],
+                };
                 for (const { fieldname, filename } of files) {
-                    if (fieldname === "resume") {
-                        jobSeekerInfo.resume = filename;
-                    }
-                    else if (fieldname === "photo") {
-                        user.photo = filename;
-                    }
-                    else {
-                        throw new customError_1.default(this.ResMsg.UNKNOWN_FILE_FIELD, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
+                    switch (fieldname) {
+                        case "resume":
+                            parsed.jobSeekerInfo.resume = filename;
+                            break;
+                        case "photo":
+                            parsed.user.photo = filename;
+                            break;
+                        default:
+                            throw new customError_1.default(this.ResMsg.UNKNOWN_FILE_FIELD, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
                     }
                 }
                 const userModel = this.Model.UserModel(trx);
                 const jobSeekerModel = this.Model.jobSeekerModel(trx);
+                const commonModel = this.Model.commonModel(trx);
                 const existingUser = yield userModel.checkUser({
                     id: user_id,
                     type: constants_1.USER_TYPE.JOB_SEEKER,
@@ -88,40 +74,91 @@ class JobSeekerProfileService extends abstract_service_1.default {
                 if (!existingUser) {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND, "ERROR");
                 }
-                if (Object.keys(user).length) {
-                    yield userModel.updateProfile(user, { id: user_id });
+                if (parsed.user.phone_number &&
+                    parsed.user.phone_number !== existingUser.phone_number) {
+                    const phoneExists = yield userModel.checkUser({
+                        phone_number: parsed.user.phone_number,
+                        type: constants_1.USER_TYPE.JOB_SEEKER,
+                    });
+                    if (phoneExists) {
+                        throw new customError_1.default(this.ResMsg.PHONE_NUMBER_ALREADY_EXISTS, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
+                    }
                 }
-                yield jobSeekerModel.updateJobSeeker(jobSeeker, { user_id });
-                const hasPreferences = Array.isArray(jobPreferencesInput);
-                if (hasPreferences) {
-                    yield jobSeekerModel.deleteJobPreferences(user_id);
-                    const jobPreferences = jobPreferencesInput.map((job_id) => ({
+                const updateTasks = [];
+                if (Object.keys(parsed.user).length > 0) {
+                    updateTasks.push(userModel.updateProfile(parsed.user, { id: user_id }));
+                }
+                if (Object.keys(parsed.ownAddress).length > 0) {
+                    updateTasks.push(commonModel.updateLocation(parsed.ownAddress, {
+                        location_id: parsed.ownAddress.id,
+                    }));
+                }
+                if (Object.keys(parsed.jobSeeker).length > 0) {
+                    updateTasks.push(jobSeekerModel.updateJobSeeker(parsed.jobSeeker, { user_id }));
+                }
+                if (Object.keys(parsed.jobSeekerInfo).length > 0) {
+                    updateTasks.push(jobSeekerModel.updateJobSeekerInfo(parsed.jobSeekerInfo, {
+                        job_seeker_id: user_id,
+                    }));
+                }
+                if (parsed.delJobPreferences.length > 0) {
+                    updateTasks.push(jobSeekerModel.deleteJobPreferences({
+                        job_seeker_id: user_id,
+                        job_ids: parsed.delJobPreferences,
+                    }));
+                }
+                if (parsed.delJobLocations.length > 0) {
+                    updateTasks.push(jobSeekerModel.deleteJobLocations({
+                        job_seeker_id: user_id,
+                        location_ids: parsed.delJobLocations,
+                    }));
+                }
+                if (parsed.delJobShifting.length > 0) {
+                    updateTasks.push(jobSeekerModel.deleteJobShifting({
+                        job_seeker_id: user_id,
+                        name: parsed.delJobShifting,
+                    }));
+                }
+                if (parsed.updateJobLocations.length > 0) {
+                    for (const loc of parsed.updateJobLocations) {
+                        updateTasks.push(commonModel.updateLocation(loc, { location_id: loc.id }));
+                    }
+                }
+                if (parsed.addJobLocations.length > 0) {
+                    const locationIds = yield commonModel.createLocation(parsed.addJobLocations);
+                    const jobLocations = locationIds.map((loc) => ({
+                        job_seeker_id: user_id,
+                        location_id: loc.id,
+                    }));
+                    updateTasks.push(jobSeekerModel.setJobLocations(jobLocations));
+                }
+                if (parsed.addJobPreferences.length > 0) {
+                    const existingPrefs = yield jobSeekerModel.getJobPreferences(user_id);
+                    const existingJobIds = new Set(existingPrefs.map((p) => p.job_id));
+                    const newPrefs = parsed.addJobPreferences.filter((id) => !existingJobIds.has(id));
+                    if (newPrefs.length !== parsed.addJobPreferences.length) {
+                        throw new customError_1.default("Some job preferences already exist", this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
+                    }
+                    const preferences = newPrefs.map((job_id) => ({
                         job_seeker_id: user_id,
                         job_id,
                     }));
-                    yield jobSeekerModel.setJobPreferences(jobPreferences);
+                    updateTasks.push(jobSeekerModel.setJobPreferences(preferences));
                 }
-                const hasLocations = Array.isArray(jobLocationsInput);
-                if (hasLocations) {
-                    yield jobSeekerModel.deleteJobLocations(user_id);
-                    const jobLocations = jobLocationsInput.map((location_id) => ({
-                        job_seeker_id: user_id,
-                        location_id,
-                    }));
-                    yield jobSeekerModel.setJobLocations(jobLocations);
-                }
-                const hasShifting = Array.isArray(jobShiftingInput);
-                if (hasShifting) {
-                    yield jobSeekerModel.deleteJobShifting(user_id);
-                    const jobShifting = jobShiftingInput.map((shift) => ({
+                if (parsed.addJobShifting.length > 0) {
+                    const existingShifts = yield jobSeekerModel.getJobShifting(user_id);
+                    const existingShiftNames = new Set(existingShifts.map((s) => s.shift));
+                    const newShifts = parsed.addJobShifting.filter((shift) => !existingShiftNames.has(shift));
+                    if (newShifts.length !== parsed.addJobShifting.length) {
+                        throw new customError_1.default("Some job shifts already exist", this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
+                    }
+                    const shifts = newShifts.map((shift) => ({
                         job_seeker_id: user_id,
                         shift,
                     }));
-                    yield jobSeekerModel.setJobShifting(jobShifting);
+                    updateTasks.push(jobSeekerModel.setJobShifting(shifts));
                 }
-                yield jobSeekerModel.updateJobSeekerInfo(jobSeekerInfo, {
-                    job_seeker_id: user_id,
-                });
+                yield Promise.all(updateTasks);
                 return {
                     success: true,
                     code: this.StatusCode.HTTP_OK,

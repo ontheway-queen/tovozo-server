@@ -167,15 +167,21 @@ export default class PublicCommonValidator {
       date_of_birth: Joi.date().required(),
       gender: Joi.string().valid("Male", "Female", "Other").required(),
       nationality: Joi.string().max(255).required(),
-      address: Joi.string().required(),
       work_permit: Joi.boolean().required(),
       account_status: Joi.string().max(42).default("Pending"),
       criminal_convictions: Joi.boolean().required(),
     }).required(),
 
-    job_preferences: Joi.array().items(Joi.number().integer()).required(),
+    own_address: Joi.object({
+      city_id: Joi.number().integer().required(),
+      name: Joi.string().max(100).required(),
+      address: Joi.string().optional(),
+      longitude: Joi.number().precision(6).optional(),
+      latitude: Joi.number().precision(6).optional(),
+      postal_code: Joi.string().max(20).optional(),
+    }).required(),
 
-    job_locations: Joi.array().items(Joi.number().integer()).required(),
+    job_preferences: Joi.array().items(Joi.number().integer()).required(),
 
     job_shifting: Joi.array()
       .items(Joi.string().valid("Morning", "Afternoon", "Night", "Flexible"))
@@ -198,6 +204,20 @@ export default class PublicCommonValidator {
       passport_copy: Joi.string().max(255).allow("").optional(),
       visa_copy: Joi.string().max(255).allow("").optional(),
     }).required(),
+
+    job_locations: Joi.array()
+      .items(
+        Joi.object({
+          city_id: Joi.number().integer().required(),
+          name: Joi.string().max(100).required(),
+          address: Joi.string().optional(),
+          longitude: Joi.number().precision(6).optional(),
+          latitude: Joi.number().precision(6).optional(),
+          postal_code: Joi.string().max(20).optional(),
+        })
+      )
+      .min(1)
+      .required(),
   });
 
   registerOrganizationValidator = Joi.object({
@@ -208,13 +228,20 @@ export default class PublicCommonValidator {
       password: Joi.string().min(8).max(100).required(),
       phone_number: Joi.string().min(7).max(20).optional(),
       photo: Joi.string().max(255).allow("").optional(),
-      type: Joi.string().valid("HOTELIER", "ADMIN", "JOB_SEEKER").required(),
     }).required(),
 
     organization: Joi.object({
       name: Joi.string().max(255).required(),
-      address: Joi.string().max(500).required(),
       details: Joi.string().allow("").optional(),
+    }).required(),
+
+    organization_address: Joi.object({
+      city_id: Joi.number().integer().required(),
+      name: Joi.string().max(100).required(),
+      address: Joi.string().optional(),
+      longitude: Joi.number().precision(6).optional(),
+      latitude: Joi.number().precision(6).optional(),
+      postal_code: Joi.string().max(20).optional(),
     }).required(),
 
     organization_amenities: Joi.array()

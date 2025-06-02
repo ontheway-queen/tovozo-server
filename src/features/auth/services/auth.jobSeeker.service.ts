@@ -18,32 +18,42 @@ class JobSeekerAuthService extends AbstractServices {
     return this.db.transaction(async (trx) => {
       const files = (req.files as Express.Multer.File[]) || [];
 
-      const user = Lib.safeParseJSON(req.body.user);
-      const jobSeeker = Lib.safeParseJSON(req.body.job_seeker);
-      const jobPreferencesInput = Lib.safeParseJSON(req.body.job_preferences);
-      const jobLocationsInput = Lib.safeParseJSON(req.body.job_locations);
-      const jobShiftingInput = Lib.safeParseJSON(req.body.job_shifting);
-      const jobSeekerInfo = Lib.safeParseJSON(req.body.job_seeker_info) || {};
+      const parseInput = (key: string) =>
+        Lib.safeParseJSON(req.body[key]) || {};
 
-      for (const file of files) {
-        const { fieldname, filename } = file;
-        if (["visa_copy", "passport_copy", "resume"].includes(fieldname)) {
-          jobSeekerInfo[fieldname] = filename;
-        } else if (fieldname === "photo") {
-          user.photo = filename;
-        } else {
+      const userInput = parseInput("user");
+      const jobSeekerInput = parseInput("job_seeker");
+      const jobPreferencesInput = parseInput("job_preferences");
+      const jobLocationsInput = parseInput("job_locations");
+      const ownAddressInput = parseInput("own_address");
+      const jobShiftingInput = parseInput("job_shifting");
+      const jobSeekerInfoInput = parseInput("job_seeker_info");
+
+      const validFileFields = ["visa_copy", "passport_copy", "resume", "photo"];
+
+      // Attach file references
+      files.forEach(({ fieldname, filename }) => {
+        if (!validFileFields.includes(fieldname)) {
           throw new CustomError(
             this.ResMsg.UNKNOWN_FILE_FIELD,
             this.StatusCode.HTTP_BAD_REQUEST,
             "ERROR"
           );
         }
-      }
 
-      const { email, phone_number, username, password, ...userData } = user;
+        if (fieldname === "photo") {
+          userInput.photo = filename;
+        } else {
+          jobSeekerInfoInput[fieldname] = filename;
+        }
+      });
+
+      const { email, phone_number, username, password, ...restUserData } =
+        userInput;
 
       const userModel = this.Model.UserModel(trx);
       const jobSeekerModel = this.Model.jobSeekerModel(trx);
+      const commonModel = this.Model.commonModel(trx);
 
       const existingUser = await userModel.checkUser({
         email,
@@ -79,7 +89,7 @@ class JobSeekerAuthService extends AbstractServices {
       const password_hash = await Lib.hashValue(password);
 
       const registration = await userModel.createUser({
-        ...userData,
+        ...restUserData,
         email,
         phone_number,
         username,
@@ -95,24 +105,40 @@ class JobSeekerAuthService extends AbstractServices {
         );
       }
 
+      const [ownAddressId] = await commonModel.createLocation({
+        ...ownAddressInput,
+        is_home_address: true,
+      });
+
       const jobSeekerId = registration[0].id;
 
+      console.log({ jobSeekerId, ownAddressId: ownAddressId.id });
+
       await jobSeekerModel.createJobSeeker({
-        ...jobSeeker,
+        ...jobSeekerInput,
+        location_id: ownAddressId.id,
         user_id: jobSeekerId,
       });
+
+      const createdLocations = await commonModel.createLocation(
+        jobLocationsInput
+      );
+      const preferenceLocationIds = [
+        ...createdLocations.map((loc) => loc.id),
+        ownAddressId.id,
+      ];
 
       const jobPreferences = jobPreferencesInput.map((job_id: number) => ({
         job_seeker_id: jobSeekerId,
         job_id,
       }));
 
-      const jobLocations = jobLocationsInput.map((location_id: number) => ({
+      const jobLocations = preferenceLocationIds.map((location_id: number) => ({
         job_seeker_id: jobSeekerId,
         location_id,
       }));
 
-      const jobShifting = jobShiftingInput.map((shift: string) => ({
+      const jobShifts = jobShiftingInput.map((shift: string) => ({
         job_seeker_id: jobSeekerId,
         shift,
       }));
@@ -120,22 +146,22 @@ class JobSeekerAuthService extends AbstractServices {
       await Promise.all([
         jobSeekerModel.setJobPreferences(jobPreferences),
         jobSeekerModel.setJobLocations(jobLocations),
-        jobSeekerModel.setJobShifting(jobShifting),
+        jobSeekerModel.setJobShifting(jobShifts),
       ]);
 
       await jobSeekerModel.createJobSeekerInfo({
-        ...jobSeekerInfo,
+        ...jobSeekerInfoInput,
         job_seeker_id: jobSeekerId,
       });
 
-      const tokenData = {
+      const tokenPayload = {
         user_id: jobSeekerId,
         username,
-        name: user.name,
-        gender: user.gender,
+        name: userInput.name,
+        gender: userInput.gender,
         user_email: email,
         phone_number,
-        photo: user.photo,
+        photo: userInput.photo,
         status: true,
         create_date: new Date(),
       };
@@ -143,11 +169,11 @@ class JobSeekerAuthService extends AbstractServices {
       await Lib.sendEmailDefault({
         email,
         emailSub: `Your registration with ${PROJECT_NAME} is under review`,
-        emailBody: registrationJobSeekerTemplate({ name: user.name }),
+        emailBody: registrationJobSeekerTemplate({ name: userInput.name }),
       });
 
       const token = Lib.createToken(
-        tokenData,
+        tokenPayload,
         config.JWT_SECRET_JOB_SEEKER,
         "48h"
       );
@@ -156,7 +182,7 @@ class JobSeekerAuthService extends AbstractServices {
         success: true,
         code: this.StatusCode.HTTP_SUCCESSFUL,
         message: this.ResMsg.HTTP_SUCCESSFUL,
-        data: tokenData,
+        data: tokenPayload,
         token,
       };
     });

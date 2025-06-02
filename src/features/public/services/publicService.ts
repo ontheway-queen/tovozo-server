@@ -269,5 +269,63 @@ class PublicService extends AbstractServices {
       }
     });
   }
+
+  //get all country
+  public async getAllCountry(req: Request) {
+    const query = req.query;
+    const model = this.Model.commonModel();
+    const country_list = await model.getAllCountry({ ...query });
+    return {
+      success: true,
+      code: this.StatusCode.HTTP_OK,
+      message: this.ResMsg.HTTP_OK,
+      data: country_list,
+    };
+  }
+
+  //get all city
+  public async getAllCity(req: Request) {
+    const { city_id, country_id, limit, skip, name, state_id } = req.query;
+
+    const parsedParams = {
+      country_id: country_id ? Number(country_id) : undefined,
+      limit: limit ? Number(limit) : undefined,
+      skip: skip ? Number(skip) : undefined,
+      name: name as string,
+      city_id: city_id ? parseInt(city_id as string) : 0,
+      state_id: state_id ? parseInt(state_id as string) : 0,
+    };
+
+    const model = this.Model.commonModel();
+    const city_list = await model.getAllCity(parsedParams);
+
+    return {
+      success: true,
+      code: this.StatusCode.HTTP_OK,
+      message: this.ResMsg.HTTP_OK,
+      data: city_list,
+    };
+  }
+  public async getAllStates(req: Request) {
+    const { state_id, country_id, limit, skip, name } = req.query;
+
+    const parsedParams = {
+      country_id: country_id ? Number(country_id) : undefined,
+      limit: limit ? Number(limit) : undefined,
+      skip: skip ? Number(skip) : undefined,
+      name: name as string,
+      state_id: state_id ? parseInt(state_id as string) : 0,
+    };
+
+    const model = this.Model.commonModel();
+    const state_list = await model.getAllStates(parsedParams);
+
+    return {
+      success: true,
+      code: this.StatusCode.HTTP_OK,
+      message: this.ResMsg.HTTP_OK,
+      data: state_list,
+    };
+  }
 }
 export default PublicService;

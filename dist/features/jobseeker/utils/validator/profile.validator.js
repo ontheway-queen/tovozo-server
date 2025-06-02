@@ -12,6 +12,15 @@ class JobSeekerProfileUpdate {
                 phone_number: joi_1.default.string().min(7).max(20).optional(),
                 photo: joi_1.default.string().max(255).optional(),
             }).optional(),
+            own_address: joi_1.default.object({
+                id: joi_1.default.number().required(),
+                city_id: joi_1.default.number().integer().optional(),
+                name: joi_1.default.string().max(100).optional(),
+                address: joi_1.default.string().max(100).optional(),
+                longitude: joi_1.default.number().precision(6).optional(),
+                latitude: joi_1.default.number().precision(6).optional(),
+                postal_code: joi_1.default.string().max(20).optional(),
+            }).optional(),
             job_seeker: joi_1.default.object({
                 date_of_birth: joi_1.default.date().optional(),
                 gender: joi_1.default.string().valid("Male", "Female", "Other").optional(),
@@ -21,9 +30,35 @@ class JobSeekerProfileUpdate {
                 criminal_convictions: joi_1.default.boolean().optional(),
                 is_2fa_on: joi_1.default.boolean().optional(),
             }).optional(),
-            job_preferences: joi_1.default.array().items(joi_1.default.number().integer()).optional(),
-            job_locations: joi_1.default.array().items(joi_1.default.number().integer()).optional(),
-            job_shifting: joi_1.default.array()
+            add_job_preferences: joi_1.default.array().items(joi_1.default.number().integer()).optional(),
+            del_job_preferences: joi_1.default.array().items(joi_1.default.number().integer()).optional(),
+            delete_job_locations: joi_1.default.array().items(joi_1.default.number().integer()).optional(),
+            update_job_locations: joi_1.default.array()
+                .items(joi_1.default.object({
+                id: joi_1.default.number().optional(),
+                city_id: joi_1.default.number().integer().optional(),
+                name: joi_1.default.string().max(100).optional(),
+                address: joi_1.default.string().optional(),
+                longitude: joi_1.default.number().precision(6).optional(),
+                latitude: joi_1.default.number().precision(6).optional(),
+                postal_code: joi_1.default.string().max(20).optional(),
+            }))
+                .optional(),
+            add_job_locations: joi_1.default.array()
+                .items(joi_1.default.object({
+                id: joi_1.default.number().optional(),
+                city_id: joi_1.default.number().integer().optional(),
+                name: joi_1.default.string().max(100).optional(),
+                address: joi_1.default.string().optional(),
+                longitude: joi_1.default.number().precision(6).optional(),
+                latitude: joi_1.default.number().precision(6).optional(),
+                postal_code: joi_1.default.string().max(20).optional(),
+            }))
+                .optional(),
+            add_job_shifting: joi_1.default.array()
+                .items(joi_1.default.string().valid("Morning", "Afternoon", "Night", "Flexible"))
+                .optional(),
+            del_job_shifting: joi_1.default.array()
                 .items(joi_1.default.string().valid("Morning", "Afternoon", "Night", "Flexible"))
                 .optional(),
             job_seeker_info: joi_1.default.object({

@@ -73,5 +73,96 @@ class CommonModel extends schema_1.default {
                 .first();
         });
     }
+    //get all country
+    getAllCountry(payload) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("countries")
+                .withSchema(this.DBO_SCHEMA)
+                .select("id", "name", "iso2", "iso3", "phonecode", "currency", "currency_name", "numeric_code")
+                .where((qb) => {
+                if (payload.id) {
+                    qb.where("id", payload.id);
+                }
+                if (payload.name) {
+                    qb.andWhereILike("name", `%${payload.name}%`);
+                }
+                if (payload.iso2) {
+                    qb.andWhere("iso2", payload.iso2);
+                }
+                if (payload.iso3) {
+                    qb.andWhere("iso3", payload.iso3);
+                }
+            })
+                .orderBy("name", "asc");
+        });
+    }
+    //get all city
+    getAllCity(_a) {
+        return __awaiter(this, arguments, void 0, function* ({ country_id, city_id, limit, skip, state_id, name, }) {
+            // console.log({ city_id });
+            return yield this.db("cities")
+                .withSchema(this.DBO_SCHEMA)
+                .select("id", "name")
+                .where((qb) => {
+                if (country_id) {
+                    qb.where({ country_id });
+                }
+                if (name) {
+                    qb.andWhere("name", "ilike", `%${name}%`);
+                }
+                if (city_id) {
+                    qb.andWhere("id", city_id);
+                }
+                if (state_id) {
+                    qb.andWhere("state_id", state_id);
+                }
+            })
+                .orderBy("id", "asc")
+                .limit(limit || 100)
+                .offset(skip || 0);
+        });
+    }
+    // get all states
+    getAllStates(_a) {
+        return __awaiter(this, arguments, void 0, function* ({ country_id, state_id, limit, skip, name, }) {
+            // console.log({ city_id });
+            return yield this.db("states")
+                .withSchema(this.DBO_SCHEMA)
+                .select("id", "name")
+                .where((qb) => {
+                if (country_id) {
+                    qb.where({ country_id });
+                }
+                if (name) {
+                    qb.andWhere("name", "ilike", `%${name}%`);
+                }
+                if (state_id) {
+                    qb.andWhere("state_id", state_id);
+                }
+            })
+                .orderBy("id", "asc")
+                .limit(limit || 100)
+                .offset(skip || 0);
+        });
+    }
+    createLocation(payload) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("location")
+                .withSchema(this.DBO_SCHEMA)
+                .insert(payload, "id");
+        });
+    }
+    updateLocation(payload, query) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("location")
+                .withSchema(this.DBO_SCHEMA)
+                .update(payload)
+                .where((qb) => {
+                if (query.location_id) {
+                    qb.andWhere("id", query.location_id);
+                }
+            });
+        });
+    }
 }
 exports.default = CommonModel;

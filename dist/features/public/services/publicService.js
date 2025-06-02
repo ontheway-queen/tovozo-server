@@ -246,5 +246,61 @@ class PublicService extends abstract_service_1.default {
             }));
         });
     }
+    //get all country
+    getAllCountry(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const query = req.query;
+            const model = this.Model.commonModel();
+            const country_list = yield model.getAllCountry(Object.assign({}, query));
+            return {
+                success: true,
+                code: this.StatusCode.HTTP_OK,
+                message: this.ResMsg.HTTP_OK,
+                data: country_list,
+            };
+        });
+    }
+    //get all city
+    getAllCity(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { city_id, country_id, limit, skip, name, state_id } = req.query;
+            const parsedParams = {
+                country_id: country_id ? Number(country_id) : undefined,
+                limit: limit ? Number(limit) : undefined,
+                skip: skip ? Number(skip) : undefined,
+                name: name,
+                city_id: city_id ? parseInt(city_id) : 0,
+                state_id: state_id ? parseInt(state_id) : 0,
+            };
+            const model = this.Model.commonModel();
+            const city_list = yield model.getAllCity(parsedParams);
+            return {
+                success: true,
+                code: this.StatusCode.HTTP_OK,
+                message: this.ResMsg.HTTP_OK,
+                data: city_list,
+            };
+        });
+    }
+    getAllStates(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { state_id, country_id, limit, skip, name } = req.query;
+            const parsedParams = {
+                country_id: country_id ? Number(country_id) : undefined,
+                limit: limit ? Number(limit) : undefined,
+                skip: skip ? Number(skip) : undefined,
+                name: name,
+                state_id: state_id ? parseInt(state_id) : 0,
+            };
+            const model = this.Model.commonModel();
+            const state_list = yield model.getAllStates(parsedParams);
+            return {
+                success: true,
+                code: this.StatusCode.HTTP_OK,
+                message: this.ResMsg.HTTP_OK,
+                data: state_list,
+            };
+        });
+    }
 }
 exports.default = PublicService;

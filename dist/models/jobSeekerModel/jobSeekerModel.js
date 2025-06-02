@@ -22,7 +22,7 @@ class JobSeekerModel extends schema_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("job_seeker")
                 .withSchema(this.JOB_SEEKER)
-                .insert(payload, "user_id");
+                .insert(payload);
         });
     }
     updateJobSeeker(payload, where) {
@@ -40,6 +40,20 @@ class JobSeekerModel extends schema_1.default {
     getJobSeeker(where) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("job_seeker")
+                .withSchema(this.JOB_SEEKER)
+                .select("*")
+                .where((qb) => {
+                if (where.user_id) {
+                    qb.andWhere("user_id", where.user_id);
+                }
+            })
+                .first();
+        });
+    }
+    // get single job seeker details
+    getJobSeekerDetails(where) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("vw_full_job_seeker_profile")
                 .withSchema(this.JOB_SEEKER)
                 .select("*")
                 .where((qb) => {
@@ -76,6 +90,21 @@ class JobSeekerModel extends schema_1.default {
                 .insert(payload);
         });
     }
+    updateJobLocations(payload, query) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("job_locations")
+                .withSchema(this.JOB_SEEKER)
+                .update(payload)
+                .where((qb) => {
+                if (query.job_seeker_id) {
+                    qb.andWhere("job_seeker_id", query.job_seeker_id);
+                }
+                if (query.location_id) {
+                    qb.andWhere("location_id", query.location_id);
+                }
+            });
+        });
+    }
     setJobShifting(payload) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("job_shifting")
@@ -92,28 +121,61 @@ class JobSeekerModel extends schema_1.default {
                 .where({ job_seeker_id });
         });
     }
-    deleteJobPreferences(job_seeker_id) {
+    getSingleJobPreference(query) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("job_preferences AS jp")
+                .withSchema(this.JOB_SEEKER)
+                .select("jp.*", "j.title")
+                .joinRaw("LEFT JOIN dbo.jobs j ON jp.job_id = j.id")
+                .where((qb) => {
+                if (query.job_seeker_id) {
+                    qb.andWhere({ job_seeker_id: query.job_seeker_id });
+                }
+                if (query.job_id) {
+                    qb.andWhere({ job_id: query.job_id });
+                }
+            })
+                .first();
+        });
+    }
+    deleteJobPreferences(query) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("job_preferences AS jp")
                 .withSchema(this.JOB_SEEKER)
                 .del()
-                .where({ job_seeker_id });
+                .where((qb) => {
+                if (query.job_seeker_id) {
+                    qb.andWhere({ job_seeker_id: query.job_seeker_id });
+                }
+                if (query.job_ids) {
+                    qb.whereIn("job_id", query.job_ids);
+                }
+            });
         });
     }
     getJobLocations(job_seeker_id) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db("job_locations")
+            return yield this.db("job_locations AS jl")
                 .withSchema(this.JOB_SEEKER)
-                .select("*")
+                .select("jl.*", "l.name as location_name", "l.address as location_address")
+                .joinRaw("LEFT JOIN dbo.location l ON jl.location_id = l.id")
                 .where({ job_seeker_id });
         });
     }
-    deleteJobLocations(job_seeker_id) {
+    deleteJobLocations(query) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("job_locations")
                 .withSchema(this.JOB_SEEKER)
                 .del()
-                .where({ job_seeker_id });
+                .where((qb) => {
+                qb.andWhere({ is_home_address: false });
+                if (query.job_seeker_id) {
+                    qb.andWhere({ job_seeker_id: query.job_seeker_id });
+                }
+                if (query.location_ids) {
+                    qb.whereIn("location_id", query.location_ids);
+                }
+            });
         });
     }
     getJobShifting(job_seeker_id) {
@@ -124,12 +186,35 @@ class JobSeekerModel extends schema_1.default {
                 .where({ job_seeker_id });
         });
     }
-    deleteJobShifting(job_seeker_id) {
+    getSingleJobShift(query) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("job_shifting")
+                .withSchema(this.JOB_SEEKER)
+                .select("*")
+                .where((qb) => {
+                if (query.job_seeker_id) {
+                    qb.andWhere({ job_seeker_id: query.job_seeker_id });
+                }
+                if (query.shift) {
+                    qb.andWhere({ shift: query.shift });
+                }
+            })
+                .first();
+        });
+    }
+    deleteJobShifting(query) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("job_shifting")
                 .withSchema(this.JOB_SEEKER)
                 .del()
-                .where({ job_seeker_id });
+                .where((qb) => {
+                if (query.job_seeker_id) {
+                    qb.andWhere({ job_seeker_id: query.job_seeker_id });
+                }
+                if (query.name) {
+                    qb.whereIn("shift", query.name);
+                }
+            });
         });
     }
     createJobSeekerInfo(payload) {

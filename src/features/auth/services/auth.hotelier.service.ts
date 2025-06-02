@@ -23,7 +23,11 @@ export default class HotelierAuthService extends AbstractServices {
 
       const user = Lib.safeParseJSON(req.body.user);
       const organization = Lib.safeParseJSON(req.body.organization);
-      const amenitiesInput = Lib.safeParseJSON(req.body.organization_amenities) || [];
+      const organizationAddress = Lib.safeParseJSON(
+        req.body.organization_address
+      );
+      const amenitiesInput =
+        Lib.safeParseJSON(req.body.organization_amenities) || [];
 
       for (const file of files) {
         if (file.fieldname === "photo") {
@@ -35,6 +39,7 @@ export default class HotelierAuthService extends AbstractServices {
 
       const userModel = this.Model.UserModel(trx);
       const organizationModel = this.Model.organizationModel(trx);
+      const commonModel = this.Model.commonModel(trx);
 
       const existingUser = await userModel.checkUser({
         email,
@@ -86,11 +91,16 @@ export default class HotelierAuthService extends AbstractServices {
         );
       }
 
+      const organization_location = await commonModel.createLocation(
+        organizationAddress
+      );
+      const locationId = organization_location[0].id;
       const userId = registration[0].id;
 
       const orgInsert = await organizationModel.createOrganization({
         ...organization,
         user_id: userId,
+        location_id: locationId,
       });
 
       const organizationId = orgInsert[0].id;

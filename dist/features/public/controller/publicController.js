@@ -39,6 +39,21 @@ class PublicController extends abstract_controller_1.default {
             const _a = yield this.services.matchEmailOtpService(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
+        //get all country
+        this.getAllCountry = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.services.getAllCountry(req), { code } = _a, data = __rest(_a, ["code"]);
+            res.status(code).json(data);
+        }));
+        //get all city
+        this.getAllCity = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.services.getAllCity(req), { code } = _a, data = __rest(_a, ["code"]);
+            res.status(code).json(data);
+        }));
+        // get all states
+        this.getAllStates = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.services.getAllStates(req), { code } = _a, data = __rest(_a, ["code"]);
+            res.status(code).json(data);
+        }));
     }
 }
 exports.default = PublicController;

@@ -138,13 +138,19 @@ class PublicCommonValidator {
                 date_of_birth: joi_1.default.date().required(),
                 gender: joi_1.default.string().valid("Male", "Female", "Other").required(),
                 nationality: joi_1.default.string().max(255).required(),
-                address: joi_1.default.string().required(),
                 work_permit: joi_1.default.boolean().required(),
                 account_status: joi_1.default.string().max(42).default("Pending"),
                 criminal_convictions: joi_1.default.boolean().required(),
             }).required(),
+            own_address: joi_1.default.object({
+                city_id: joi_1.default.number().integer().required(),
+                name: joi_1.default.string().max(100).required(),
+                address: joi_1.default.string().optional(),
+                longitude: joi_1.default.number().precision(6).optional(),
+                latitude: joi_1.default.number().precision(6).optional(),
+                postal_code: joi_1.default.string().max(20).optional(),
+            }).required(),
             job_preferences: joi_1.default.array().items(joi_1.default.number().integer()).required(),
-            job_locations: joi_1.default.array().items(joi_1.default.number().integer()).required(),
             job_shifting: joi_1.default.array()
                 .items(joi_1.default.string().valid("Morning", "Afternoon", "Night", "Flexible"))
                 .required(),
@@ -165,6 +171,17 @@ class PublicCommonValidator {
                 passport_copy: joi_1.default.string().max(255).allow("").optional(),
                 visa_copy: joi_1.default.string().max(255).allow("").optional(),
             }).required(),
+            job_locations: joi_1.default.array()
+                .items(joi_1.default.object({
+                city_id: joi_1.default.number().integer().required(),
+                name: joi_1.default.string().max(100).required(),
+                address: joi_1.default.string().optional(),
+                longitude: joi_1.default.number().precision(6).optional(),
+                latitude: joi_1.default.number().precision(6).optional(),
+                postal_code: joi_1.default.string().max(20).optional(),
+            }))
+                .min(1)
+                .required(),
         });
         this.registerOrganizationValidator = joi_1.default.object({
             user: joi_1.default.object({
@@ -174,12 +191,18 @@ class PublicCommonValidator {
                 password: joi_1.default.string().min(8).max(100).required(),
                 phone_number: joi_1.default.string().min(7).max(20).optional(),
                 photo: joi_1.default.string().max(255).allow("").optional(),
-                type: joi_1.default.string().valid("HOTELIER", "ADMIN", "JOB_SEEKER").required(),
             }).required(),
             organization: joi_1.default.object({
                 name: joi_1.default.string().max(255).required(),
-                address: joi_1.default.string().max(500).required(),
                 details: joi_1.default.string().allow("").optional(),
+            }).required(),
+            organization_address: joi_1.default.object({
+                city_id: joi_1.default.number().integer().required(),
+                name: joi_1.default.string().max(100).required(),
+                address: joi_1.default.string().optional(),
+                longitude: joi_1.default.number().precision(6).optional(),
+                latitude: joi_1.default.number().precision(6).optional(),
+                postal_code: joi_1.default.string().max(20).optional(),
             }).required(),
             organization_amenities: joi_1.default.array()
                 .items(joi_1.default.string().max(255).required())

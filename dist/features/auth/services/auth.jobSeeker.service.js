@@ -35,27 +35,31 @@ class JobSeekerAuthService extends abstract_service_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             return this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const files = req.files || [];
-                const user = lib_1.default.safeParseJSON(req.body.user);
-                const jobSeeker = lib_1.default.safeParseJSON(req.body.job_seeker);
-                const jobPreferencesInput = lib_1.default.safeParseJSON(req.body.job_preferences);
-                const jobLocationsInput = lib_1.default.safeParseJSON(req.body.job_locations);
-                const jobShiftingInput = lib_1.default.safeParseJSON(req.body.job_shifting);
-                const jobSeekerInfo = lib_1.default.safeParseJSON(req.body.job_seeker_info) || {};
-                for (const file of files) {
-                    const { fieldname, filename } = file;
-                    if (["visa_copy", "passport_copy", "resume"].includes(fieldname)) {
-                        jobSeekerInfo[fieldname] = filename;
-                    }
-                    else if (fieldname === "photo") {
-                        user.photo = filename;
-                    }
-                    else {
+                const parseInput = (key) => lib_1.default.safeParseJSON(req.body[key]) || {};
+                const userInput = parseInput("user");
+                const jobSeekerInput = parseInput("job_seeker");
+                const jobPreferencesInput = parseInput("job_preferences");
+                const jobLocationsInput = parseInput("job_locations");
+                const ownAddressInput = parseInput("own_address");
+                const jobShiftingInput = parseInput("job_shifting");
+                const jobSeekerInfoInput = parseInput("job_seeker_info");
+                const validFileFields = ["visa_copy", "passport_copy", "resume", "photo"];
+                // Attach file references
+                files.forEach(({ fieldname, filename }) => {
+                    if (!validFileFields.includes(fieldname)) {
                         throw new customError_1.default(this.ResMsg.UNKNOWN_FILE_FIELD, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
                     }
-                }
-                const { email, phone_number, username, password } = user, userData = __rest(user, ["email", "phone_number", "username", "password"]);
+                    if (fieldname === "photo") {
+                        userInput.photo = filename;
+                    }
+                    else {
+                        jobSeekerInfoInput[fieldname] = filename;
+                    }
+                });
+                const { email, phone_number, username, password } = userInput, restUserData = __rest(userInput, ["email", "phone_number", "username", "password"]);
                 const userModel = this.Model.UserModel(trx);
                 const jobSeekerModel = this.Model.jobSeekerModel(trx);
+                const commonModel = this.Model.commonModel(trx);
                 const existingUser = yield userModel.checkUser({
                     email,
                     phone_number,
@@ -86,55 +90,62 @@ class JobSeekerAuthService extends abstract_service_1.default {
                     }
                 }
                 const password_hash = yield lib_1.default.hashValue(password);
-                const registration = yield userModel.createUser(Object.assign(Object.assign({}, userData), { email,
+                const registration = yield userModel.createUser(Object.assign(Object.assign({}, restUserData), { email,
                     phone_number,
                     username,
                     password_hash, type: constants_1.USER_TYPE.JOB_SEEKER }));
                 if (!registration.length) {
                     throw new customError_1.default(this.ResMsg.HTTP_BAD_REQUEST, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
                 }
+                const [ownAddressId] = yield commonModel.createLocation(Object.assign(Object.assign({}, ownAddressInput), { is_home_address: true }));
                 const jobSeekerId = registration[0].id;
-                yield jobSeekerModel.createJobSeeker(Object.assign(Object.assign({}, jobSeeker), { user_id: jobSeekerId }));
+                console.log({ jobSeekerId, ownAddressId: ownAddressId.id });
+                yield jobSeekerModel.createJobSeeker(Object.assign(Object.assign({}, jobSeekerInput), { location_id: ownAddressId.id, user_id: jobSeekerId }));
+                const createdLocations = yield commonModel.createLocation(jobLocationsInput);
+                const preferenceLocationIds = [
+                    ...createdLocations.map((loc) => loc.id),
+                    ownAddressId.id,
+                ];
                 const jobPreferences = jobPreferencesInput.map((job_id) => ({
                     job_seeker_id: jobSeekerId,
                     job_id,
                 }));
-                const jobLocations = jobLocationsInput.map((location_id) => ({
+                const jobLocations = preferenceLocationIds.map((location_id) => ({
                     job_seeker_id: jobSeekerId,
                     location_id,
                 }));
-                const jobShifting = jobShiftingInput.map((shift) => ({
+                const jobShifts = jobShiftingInput.map((shift) => ({
                     job_seeker_id: jobSeekerId,
                     shift,
                 }));
                 yield Promise.all([
                     jobSeekerModel.setJobPreferences(jobPreferences),
                     jobSeekerModel.setJobLocations(jobLocations),
-                    jobSeekerModel.setJobShifting(jobShifting),
+                    jobSeekerModel.setJobShifting(jobShifts),
                 ]);
-                yield jobSeekerModel.createJobSeekerInfo(Object.assign(Object.assign({}, jobSeekerInfo), { job_seeker_id: jobSeekerId }));
-                const tokenData = {
+                yield jobSeekerModel.createJobSeekerInfo(Object.assign(Object.assign({}, jobSeekerInfoInput), { job_seeker_id: jobSeekerId }));
+                const tokenPayload = {
                     user_id: jobSeekerId,
                     username,
-                    name: user.name,
-                    gender: user.gender,
+                    name: userInput.name,
+                    gender: userInput.gender,
                     user_email: email,
                     phone_number,
-                    photo: user.photo,
+                    photo: userInput.photo,
                     status: true,
                     create_date: new Date(),
                 };
                 yield lib_1.default.sendEmailDefault({
                     email,
                     emailSub: `Your registration with ${constants_1.PROJECT_NAME} is under review`,
-                    emailBody: (0, jobSeekerRegistrationTemplate_1.registrationJobSeekerTemplate)({ name: user.name }),
+                    emailBody: (0, jobSeekerRegistrationTemplate_1.registrationJobSeekerTemplate)({ name: userInput.name }),
                 });
-                const token = lib_1.default.createToken(tokenData, config_1.default.JWT_SECRET_JOB_SEEKER, "48h");
+                const token = lib_1.default.createToken(tokenPayload, config_1.default.JWT_SECRET_JOB_SEEKER, "48h");
                 return {
                     success: true,
                     code: this.StatusCode.HTTP_SUCCESSFUL,
                     message: this.ResMsg.HTTP_SUCCESSFUL,
-                    data: tokenData,
+                    data: tokenPayload,
                     token,
                 };
             }));

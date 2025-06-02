@@ -114,4 +114,6 @@ export default class UserModel extends Schema {
 
     return data.length ? data[0].id : 0;
   }
+
+  
 }

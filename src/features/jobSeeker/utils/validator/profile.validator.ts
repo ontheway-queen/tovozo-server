@@ -8,6 +8,16 @@ export default class JobSeekerProfileUpdate {
       photo: Joi.string().max(255).optional(),
     }).optional(),
 
+    own_address: Joi.object({
+      id: Joi.number().required(),
+      city_id: Joi.number().integer().optional(),
+      name: Joi.string().max(100).optional(),
+      address: Joi.string().max(100).optional(),
+      longitude: Joi.number().precision(6).optional(),
+      latitude: Joi.number().precision(6).optional(),
+      postal_code: Joi.string().max(20).optional(),
+    }).optional(),
+
     job_seeker: Joi.object({
       date_of_birth: Joi.date().optional(),
       gender: Joi.string().valid("Male", "Female", "Other").optional(),
@@ -18,11 +28,43 @@ export default class JobSeekerProfileUpdate {
       is_2fa_on: Joi.boolean().optional(),
     }).optional(),
 
-    job_preferences: Joi.array().items(Joi.number().integer()).optional(),
+    add_job_preferences: Joi.array().items(Joi.number().integer()).optional(),
+    del_job_preferences: Joi.array().items(Joi.number().integer()).optional(),
 
-    job_locations: Joi.array().items(Joi.number().integer()).optional(),
+    delete_job_locations: Joi.array().items(Joi.number().integer()).optional(),
 
-    job_shifting: Joi.array()
+    update_job_locations: Joi.array()
+      .items(
+        Joi.object({
+          id: Joi.number().optional(),
+          city_id: Joi.number().integer().optional(),
+          name: Joi.string().max(100).optional(),
+          address: Joi.string().optional(),
+          longitude: Joi.number().precision(6).optional(),
+          latitude: Joi.number().precision(6).optional(),
+          postal_code: Joi.string().max(20).optional(),
+        })
+      )
+      .optional(),
+
+    add_job_locations: Joi.array()
+      .items(
+        Joi.object({
+          id: Joi.number().optional(),
+          city_id: Joi.number().integer().optional(),
+          name: Joi.string().max(100).optional(),
+          address: Joi.string().optional(),
+          longitude: Joi.number().precision(6).optional(),
+          latitude: Joi.number().precision(6).optional(),
+          postal_code: Joi.string().max(20).optional(),
+        })
+      )
+      .optional(),
+
+    add_job_shifting: Joi.array()
+      .items(Joi.string().valid("Morning", "Afternoon", "Night", "Flexible"))
+      .optional(),
+    del_job_shifting: Joi.array()
       .items(Joi.string().valid("Morning", "Afternoon", "Night", "Flexible"))
       .optional(),
 

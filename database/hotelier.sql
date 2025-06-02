@@ -13,7 +13,6 @@ CREATE SCHEMA IF NOT EXISTS hotelier;
 CREATE TABLE hotelier.organization (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255),
-    address VARCHAR(500),
     user_id INTEGER NOT NULL,
     details TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -41,6 +40,8 @@ CREATE TABLE hotelier.organization_amenities (
 );
 
 --  hotelier auth view 
+-- DROP VIEW hotelier.vw_hotelier_auth;
+
 CREATE OR REPLACE VIEW hotelier.vw_hotelier_auth AS
 SELECT
     u.id AS user_id,
@@ -53,17 +54,32 @@ SELECT
     u.status AS user_status,
     u.is_deleted AS user_deleted,
     u.type AS user_type,
+
     o.id AS organization_id,
     o.name AS organization_name,
-    o.address,
     o.details,
     o.status AS organization_status,
     o.is_deleted AS organization_deleted,
     o.created_at AS organization_created_at,
-    o.is_2fa_on
+    o.is_2fa_on,
+
+    l.id AS location_id,
+    l.city_id,
+    l.name AS location_name,
+    l.address,
+    l.longitude,
+    l.latitude,
+    l.type AS location_type,
+    l.postal_code,
+    l.status AS location_status,
+    l.is_home_address,
+    l.created_at AS location_created_at,
+    l.updated_at AS location_updated_at
+
 FROM dbo."user" u
 JOIN hotelier.organization o ON u.id = o.user_id
-WHERE u.is_deleted = FALSE;
+LEFT JOIN dbo.location l ON o.location_id = l.id
+WHERE u.is_deleted = false;
 
--------------------------------------------------------------------------------------------------
-
+ALTER TABLE hotelier.vw_hotelier_auth
+    OWNER TO postgres;

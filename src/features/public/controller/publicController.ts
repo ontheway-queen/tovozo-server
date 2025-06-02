@@ -25,6 +25,33 @@ class PublicController extends AbstractController {
       res.status(code).json(data);
     }
   );
+
+  //get all country
+  public getAllCountry = this.asyncWrapper.wrap(
+    null,
+    async (req: Request, res: Response) => {
+      const { code, ...data } = await this.services.getAllCountry(req);
+      res.status(code).json(data);
+    }
+  );
+
+  //get all city
+  public getAllCity = this.asyncWrapper.wrap(
+    null,
+    async (req: Request, res: Response) => {
+      const { code, ...data } = await this.services.getAllCity(req);
+      res.status(code).json(data);
+    }
+  );
+
+  // get all states
+  public getAllStates = this.asyncWrapper.wrap(
+    null,
+    async (req: Request, res: Response) => {
+      const { code, ...data } = await this.services.getAllStates(req);
+      res.status(code).json(data);
+    }
+  );
 }
 
 export default PublicController;

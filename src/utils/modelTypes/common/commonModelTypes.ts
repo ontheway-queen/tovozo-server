@@ -89,3 +89,26 @@ export interface IInsertOTPPayload extends OTPType {
 export interface IGetOTPPayload extends OTPType {
   email: string;
 }
+
+
+export interface ILocationPayload {
+  city_id: number;
+  name: string;
+  address?: string;
+  longitude?: number;
+  latitude?: number;
+  is_home_address?: boolean;
+  postal_code?: string;
+}
+
+export interface ILocationUpdatePayload {
+  id: number
+  city_id: number;
+  name: string;
+  address?: string;
+  longitude?: number;
+  latitude?: number;
+  is_home_address?: boolean;
+  postal_code?: string;
+}
+

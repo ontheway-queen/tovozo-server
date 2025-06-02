@@ -5,9 +5,14 @@ import {
   USER_TYPE,
 } from "../../../utils/miscellaneous/constants";
 import Lib from "../../../utils/lib/lib";
-import { IChangePasswordPayload } from "../../../utils/modelTypes/common/commonModelTypes";
+import {
+  IChangePasswordPayload,
+  ILocationPayload,
+  ILocationUpdatePayload,
+} from "../../../utils/modelTypes/common/commonModelTypes";
 import CustomError from "../../../utils/lib/customError";
 import { object } from "joi";
+import CommonModel from "../../../models/commonModel/commonModel";
 
 export default class JobSeekerProfileService extends AbstractServices {
   constructor() {
@@ -17,65 +22,62 @@ export default class JobSeekerProfileService extends AbstractServices {
   // get profile
   public getProfile = async (req: Request) => {
     const { user_id } = req.jobSeeker;
-    const userModel = this.Model.UserModel();
     const jobSeekerModel = this.Model.jobSeekerModel();
 
-    const { password_hash, ...rest } = await userModel.getSingleCommonAuthUser({
-      table_name: USER_AUTHENTICATION_VIEW.JOB_SEEKER,
-      schema_name: "jobseeker",
+    const jobSeekerDetails = await jobSeekerModel.getJobSeekerDetails({
       user_id,
-    });
-
-    const jobPreferences = await jobSeekerModel.getJobPreferences(user_id);
-    const jobLocations = await jobSeekerModel.getJobLocations(user_id);
-    const jobShifts = await jobSeekerModel.getJobShifting(user_id);
-    const jobSeekerInfo = await jobSeekerModel.getJobSeekerInfo({
-      job_seeker_id: user_id,
     });
 
     return {
       success: true,
       code: this.StatusCode.HTTP_OK,
       message: this.ResMsg.HTTP_OK,
-      data: {
-        ...rest,
-        jobSeekerInfo,
-        jobPreferences,
-        jobLocations,
-        jobShifts,
-      },
+      data: jobSeekerDetails,
     };
   };
 
   public async updateProfile(req: Request) {
     return this.db.transaction(async (trx) => {
       const files = (req.files as Express.Multer.File[]) || [];
-
-      const user = Lib.safeParseJSON(req.body.user);
-      const jobSeeker = Lib.safeParseJSON(req.body.job_seeker);
-      const jobPreferencesInput = Lib.safeParseJSON(req.body.job_preferences);
-      const jobLocationsInput = Lib.safeParseJSON(req.body.job_locations);
-      const jobShiftingInput = Lib.safeParseJSON(req.body.job_shifting);
-      const jobSeekerInfo = Lib.safeParseJSON(req.body.job_seeker_info) || {};
-
       const { user_id } = req.jobSeeker;
 
+      const parsed = {
+        user: Lib.safeParseJSON(req.body.user),
+        jobSeeker: Lib.safeParseJSON(req.body.job_seeker),
+        jobSeekerInfo: Lib.safeParseJSON(req.body.job_seeker_info) || {},
+        ownAddress: Lib.safeParseJSON(req.body.own_address) || {},
+        addJobPreferences:
+          Lib.safeParseJSON(req.body.add_job_preferences) || [],
+        delJobPreferences:
+          Lib.safeParseJSON(req.body.del_job_preferences) || [],
+        addJobLocations: Lib.safeParseJSON(req.body.add_job_locations) || [],
+        delJobLocations: Lib.safeParseJSON(req.body.del_job_locations) || [],
+        updateJobLocations:
+          Lib.safeParseJSON(req.body.update_job_locations) || [],
+        addJobShifting: Lib.safeParseJSON(req.body.add_job_shifting) || [],
+        delJobShifting: Lib.safeParseJSON(req.body.del_job_shifting) || [],
+      };
+
       for (const { fieldname, filename } of files) {
-        if (fieldname === "resume") {
-          jobSeekerInfo.resume = filename;
-        } else if (fieldname === "photo") {
-          user.photo = filename;
-        } else {
-          throw new CustomError(
-            this.ResMsg.UNKNOWN_FILE_FIELD,
-            this.StatusCode.HTTP_BAD_REQUEST,
-            "ERROR"
-          );
+        switch (fieldname) {
+          case "resume":
+            parsed.jobSeekerInfo.resume = filename;
+            break;
+          case "photo":
+            parsed.user.photo = filename;
+            break;
+          default:
+            throw new CustomError(
+              this.ResMsg.UNKNOWN_FILE_FIELD,
+              this.StatusCode.HTTP_BAD_REQUEST,
+              "ERROR"
+            );
         }
       }
 
       const userModel = this.Model.UserModel(trx);
       const jobSeekerModel = this.Model.jobSeekerModel(trx);
+      const commonModel = this.Model.commonModel(trx);
 
       const existingUser = await userModel.checkUser({
         id: user_id,
@@ -90,45 +92,151 @@ export default class JobSeekerProfileService extends AbstractServices {
         );
       }
 
-      if (Object.keys(user).length) {
-        await userModel.updateProfile(user, { id: user_id });
+      if (
+        parsed.user.phone_number &&
+        parsed.user.phone_number !== existingUser.phone_number
+      ) {
+        const phoneExists = await userModel.checkUser({
+          phone_number: parsed.user.phone_number,
+          type: USER_TYPE.JOB_SEEKER,
+        });
+
+        if (phoneExists) {
+          throw new CustomError(
+            this.ResMsg.PHONE_NUMBER_ALREADY_EXISTS,
+            this.StatusCode.HTTP_BAD_REQUEST,
+            "ERROR"
+          );
+        }
       }
 
-      await jobSeekerModel.updateJobSeeker(jobSeeker, { user_id });
+      const updateTasks: Promise<any>[] = [];
 
-      const hasPreferences = Array.isArray(jobPreferencesInput);
-      if (hasPreferences) {
-        await jobSeekerModel.deleteJobPreferences(user_id);
-        const jobPreferences = jobPreferencesInput.map((job_id: number) => ({
+      if (Object.keys(parsed.user).length > 0) {
+        updateTasks.push(userModel.updateProfile(parsed.user, { id: user_id }));
+      }
+
+      if (Object.keys(parsed.ownAddress).length > 0) {
+        updateTasks.push(
+          commonModel.updateLocation(parsed.ownAddress, {
+            location_id: parsed.ownAddress.id!,
+          })
+        );
+      }
+
+      if (Object.keys(parsed.jobSeeker).length > 0) {
+        updateTasks.push(
+          jobSeekerModel.updateJobSeeker(parsed.jobSeeker, { user_id })
+        );
+      }
+
+      if (Object.keys(parsed.jobSeekerInfo).length > 0) {
+        updateTasks.push(
+          jobSeekerModel.updateJobSeekerInfo(parsed.jobSeekerInfo, {
+            job_seeker_id: user_id,
+          })
+        );
+      }
+
+      if (parsed.delJobPreferences.length > 0) {
+        updateTasks.push(
+          jobSeekerModel.deleteJobPreferences({
+            job_seeker_id: user_id,
+            job_ids: parsed.delJobPreferences,
+          })
+        );
+      }
+
+      if (parsed.delJobLocations.length > 0) {
+        updateTasks.push(
+          jobSeekerModel.deleteJobLocations({
+            job_seeker_id: user_id,
+            location_ids: parsed.delJobLocations,
+          })
+        );
+      }
+
+      if (parsed.delJobShifting.length > 0) {
+        updateTasks.push(
+          jobSeekerModel.deleteJobShifting({
+            job_seeker_id: user_id,
+            name: parsed.delJobShifting,
+          })
+        );
+      }
+
+      if (parsed.updateJobLocations.length > 0) {
+        for (const loc of parsed.updateJobLocations) {
+          updateTasks.push(
+            commonModel.updateLocation(loc, { location_id: loc.id })
+          );
+        }
+      }
+
+      if (parsed.addJobLocations.length > 0) {
+        const locationIds = await commonModel.createLocation(
+          parsed.addJobLocations
+        );
+
+        const jobLocations = locationIds.map((loc: { id: number }) => ({
+          job_seeker_id: user_id,
+          location_id: loc.id,
+        }));
+
+        updateTasks.push(jobSeekerModel.setJobLocations(jobLocations));
+      }
+
+      if (parsed.addJobPreferences.length > 0) {
+        const existingPrefs = await jobSeekerModel.getJobPreferences(user_id);
+
+        const existingJobIds = new Set(existingPrefs.map((p) => p.job_id));
+
+        const newPrefs = parsed.addJobPreferences.filter(
+          (id: number) => !existingJobIds.has(id)
+        );
+
+        if (newPrefs.length !== parsed.addJobPreferences.length) {
+          throw new CustomError(
+            "Some job preferences already exist",
+            this.StatusCode.HTTP_BAD_REQUEST,
+            "ERROR"
+          );
+        }
+
+        const preferences = newPrefs.map((job_id: number) => ({
           job_seeker_id: user_id,
           job_id,
         }));
-        await jobSeekerModel.setJobPreferences(jobPreferences);
+
+        updateTasks.push(jobSeekerModel.setJobPreferences(preferences));
       }
 
-      const hasLocations = Array.isArray(jobLocationsInput);
-      if (hasLocations) {
-        await jobSeekerModel.deleteJobLocations(user_id);
-        const jobLocations = jobLocationsInput.map((location_id: number) => ({
-          job_seeker_id: user_id,
-          location_id,
-        }));
-        await jobSeekerModel.setJobLocations(jobLocations);
-      }
+      if (parsed.addJobShifting.length > 0) {
+        const existingShifts = await jobSeekerModel.getJobShifting(user_id);
 
-      const hasShifting = Array.isArray(jobShiftingInput);
-      if (hasShifting) {
-        await jobSeekerModel.deleteJobShifting(user_id);
-        const jobShifting = jobShiftingInput.map((shift: string) => ({
+        const existingShiftNames = new Set(existingShifts.map((s) => s.shift));
+
+        const newShifts = parsed.addJobShifting.filter(
+          (shift: string) => !existingShiftNames.has(shift)
+        );
+
+        if (newShifts.length !== parsed.addJobShifting.length) {
+          throw new CustomError(
+            "Some job shifts already exist",
+            this.StatusCode.HTTP_BAD_REQUEST,
+            "ERROR"
+          );
+        }
+
+        const shifts = newShifts.map((shift: string) => ({
           job_seeker_id: user_id,
           shift,
         }));
-        await jobSeekerModel.setJobShifting(jobShifting);
+
+        updateTasks.push(jobSeekerModel.setJobShifting(shifts));
       }
 
-      await jobSeekerModel.updateJobSeekerInfo(jobSeekerInfo, {
-        job_seeker_id: user_id,
-      });
+      await Promise.all(updateTasks);
 
       return {
         success: true,

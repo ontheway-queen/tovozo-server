@@ -37,4 +37,5 @@ export interface ICheckUserData {
   type: TypeUser;
   status: boolean;
   is_deleted: boolean;
+  location_id?: number;
 }

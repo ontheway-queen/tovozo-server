@@ -134,35 +134,102 @@ CREATE TABLE IF NOT EXISTS dbo.job_post_details
 );
 
 
+CREATE TABLE IF NOT EXISTS dbo.countries
+(
+    id bigint NOT NULL,
+    name character varying(100) COLLATE pg_catalog."default" NOT NULL,
+    iso3 character(3) COLLATE pg_catalog."default",
+    numeric_code character(3) COLLATE pg_catalog."default",
+    iso2 character(2) COLLATE pg_catalog."default",
+    phonecode character varying(255) COLLATE pg_catalog."default",
+    currency character varying(255) COLLATE pg_catalog."default",
+    currency_name character varying(255) COLLATE pg_catalog."default",
+    timezones text COLLATE pg_catalog."default",
+    translations text COLLATE pg_catalog."default",
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP
+)
+
+
+CREATE TABLE IF NOT EXISTS dbo.states
+(
+    id bigint NOT NULL,
+    name character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    country_id bigint NOT NULL,
+    iso2 character varying(255) COLLATE pg_catalog."default",
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS dbo.cities
+(
+    id bigint NOT NULL,
+    name character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    state_id bigint NOT NULL,
+    country_id bigint NOT NULL,
+    created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP
+)
+
+
+CREATE TABLE dbo.location (
+    id SERIAL PRIMARY KEY,
+    city_id INTEGER,
+    name VARCHAR(100) NOT NULL,
+    address TEXT,
+    longitude DECIMAL(9,6),
+    latitude DECIMAL(9,6),
+    type VARCHAR(50), 
+    postal_code VARCHAR(20),
+    status BOOLEAN DEFAULT TRUE,
+    is_home_address boolean DEFAULT false
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 
 
 -- job seeker view
-CREATE OR REPLACE VIEW jobSeeker.job_seeker_auth_view AS
-SELECT
+CREATE OR REPLACE VIEW jobseeker.vw_job_seeker_auth AS
+SELECT 
     u.id AS user_id,
     u.username,
-    u.name,
     u.email,
     u.password_hash,
+    u.name,
     u.phone_number,
     u.photo,
-    u.type,
-    u.status AS user_active,
-    u.is_deleted,
+    u.status AS user_status,
+    u.is_deleted AS user_deleted,
+    u.type AS user_type,
+
     js.date_of_birth,
     js.gender,
     js.nationality,
-    js.account_status,
+    js.address,
     js.work_permit,
-    js.criminal_convictions
-FROM
-    dbo."user" u
-JOIN
-    jobSeeker.job_seeker js ON js.user_id = u.id
-WHERE
-    u.is_deleted = FALSE;
+    js.account_status,
+    js.criminal_convictions,
+    js.is_2fa_on,
 
+    -- Home address fields
+    loc.id AS location_id,
+    loc.city_id,
+    loc.name AS location_name,
+    loc.address AS location_address,
+    loc.longitude,
+    loc.latitude,
+    loc.type AS location_type,
+    loc.postal_code,
+    loc.status AS location_status,
+    loc.is_home_address,
+    loc.created_at AS location_created_at,
+    loc.updated_at AS location_updated_at
 
-
+FROM dbo."user" u
+JOIN jobseeker.job_seeker js ON u.id = js.user_id
+LEFT JOIN dbo.location loc 
+    ON js.location_id = loc.id AND loc.is_home_address = true
+WHERE u.is_deleted = false;
 
 --------------------------------------------------------------------------------------------------

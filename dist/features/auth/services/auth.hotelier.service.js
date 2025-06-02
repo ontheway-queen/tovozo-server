@@ -39,6 +39,7 @@ class HotelierAuthService extends abstract_service_1.default {
                 const files = req.files || [];
                 const user = lib_1.default.safeParseJSON(req.body.user);
                 const organization = lib_1.default.safeParseJSON(req.body.organization);
+                const organizationAddress = lib_1.default.safeParseJSON(req.body.organization_address);
                 const amenitiesInput = lib_1.default.safeParseJSON(req.body.organization_amenities) || [];
                 for (const file of files) {
                     if (file.fieldname === "photo") {
@@ -48,6 +49,7 @@ class HotelierAuthService extends abstract_service_1.default {
                 const { email, phone_number, username, password } = user, userData = __rest(user, ["email", "phone_number", "username", "password"]);
                 const userModel = this.Model.UserModel(trx);
                 const organizationModel = this.Model.organizationModel(trx);
+                const commonModel = this.Model.commonModel(trx);
                 const existingUser = yield userModel.checkUser({
                     email,
                     phone_number,
@@ -85,8 +87,10 @@ class HotelierAuthService extends abstract_service_1.default {
                 if (!registration.length) {
                     throw new customError_1.default(this.ResMsg.HTTP_BAD_REQUEST, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
                 }
+                const organization_location = yield commonModel.createLocation(organizationAddress);
+                const locationId = organization_location[0].id;
                 const userId = registration[0].id;
-                const orgInsert = yield organizationModel.createOrganization(Object.assign(Object.assign({}, organization), { user_id: userId }));
+                const orgInsert = yield organizationModel.createOrganization(Object.assign(Object.assign({}, organization), { user_id: userId, location_id: locationId }));
                 const organizationId = orgInsert[0].id;
                 const photos = files.map((file) => ({
                     organization_id: organizationId,

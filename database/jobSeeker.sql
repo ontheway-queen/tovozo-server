@@ -9,8 +9,6 @@ CREATE SCHEMA IF NOT EXISTS jobSeeker;
 
 --Create Tables ---------------------------------------------------------------------------------
 
-
-
 -- Job Seeker basic info
 CREATE TABLE IF NOT EXISTS jobSeeker.job_seeker (
     user_id INTEGER PRIMARY KEY,
@@ -18,6 +16,7 @@ CREATE TABLE IF NOT EXISTS jobSeeker.job_seeker (
     gender dbo.gender_type,
     nationality VARCHAR(255),
     address TEXT,
+    location_id INT,
     work_permit BOOLEAN,
     account_status VARCHAR(42) DEFAULT 'Pending',
     criminal_convictions BOOLEAN,
