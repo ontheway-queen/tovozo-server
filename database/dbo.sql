@@ -65,14 +65,14 @@ CREATE TABLE IF NOT EXISTS dbo.email_otp (
 );
 
 CREATE TYPE dbo.notification_type AS ENUM (
-    'JOB_MATCH',         
-    'REMINDER',         
+    'JOB_MATCH',
+    'REMINDER',
     'APPLICATION_UPDATE',
-    'PAYMENT',          
-    'CANCELLATION',      
-    'VERIFICATION',      
-    'SECURITY_ALERT',    
-    'SYSTEM_UPDATE'   
+    'PAYMENT',
+    'CANCELLATION',
+    'VERIFICATION',
+    'SECURITY_ALERT',
+    'SYSTEM_UPDATE'
 );
 -- Notification system
 CREATE TABLE IF NOT EXISTS dbo.notification (
@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS dbo.notification (
     content TEXT NOT NULL,
     type dbo.notification_type NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    related_id INT 
+    related_id INT
 );
 
 
@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS dbo.jobs
 (
     id SERIAL NOT NULL,
     title character varying(255) NOT NULL,
-    details text NOT NULL,
+    details text,
     status boolean NOT NULL DEFAULT 'true',
     is_deleted boolean NOT NULL DEFAULT 'false',
     CONSTRAINT jobs_pkey PRIMARY KEY (id)
@@ -118,7 +118,7 @@ CREATE TABLE IF NOT EXISTS dbo.job_post
     created_time timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     expire_time TIMESTAMP,
     status character varying(42) DEFAULT 'Live',
-    hourly_rate DECIMAL(8,2) NOT NULL 
+    hourly_rate DECIMAL(8,2) NOT NULL
     CONSTRAINT job_post_pkey PRIMARY KEY (id)
 );
 
@@ -179,7 +179,7 @@ CREATE TABLE dbo.location (
     address TEXT,
     longitude DECIMAL(9,6),
     latitude DECIMAL(9,6),
-    type VARCHAR(50), 
+    type VARCHAR(50),
     postal_code VARCHAR(20),
     status BOOLEAN DEFAULT TRUE,
     is_home_address boolean DEFAULT false
@@ -191,7 +191,7 @@ CREATE TABLE dbo.location (
 
 -- job seeker view
 CREATE OR REPLACE VIEW jobseeker.vw_job_seeker_auth AS
-SELECT 
+SELECT
     u.id AS user_id,
     u.username,
     u.email,
@@ -228,7 +228,7 @@ SELECT
 
 FROM dbo."user" u
 JOIN jobseeker.job_seeker js ON u.id = js.user_id
-LEFT JOIN dbo.location loc 
+LEFT JOIN dbo.location loc
     ON js.location_id = loc.id AND loc.is_home_address = true
 WHERE u.is_deleted = false;
 

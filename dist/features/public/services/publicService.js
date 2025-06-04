@@ -13,8 +13,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
-const lib_1 = __importDefault(require("../../../utils/lib/lib"));
 const config_1 = __importDefault(require("../../../app/config"));
+const lib_1 = __importDefault(require("../../../utils/lib/lib"));
 const constants_1 = require("../../../utils/miscellaneous/constants");
 const sendEmailOtpTemplate_1 = require("../../../utils/templates/sendEmailOtpTemplate");
 class PublicService extends abstract_service_1.default {
@@ -29,12 +29,12 @@ class PublicService extends abstract_service_1.default {
                 if (type === constants_1.OTP_TYPE_FORGET_JOB_SEEKER) {
                     // --check if the user exist
                     const userModel = this.Model.UserModel();
-                    const checkuser = yield userModel.getSingleCommonAuthUser({
+                    const checkUser = yield userModel.getSingleCommonAuthUser({
                         email,
                         schema_name: "jobseeker",
                         table_name: constants_1.USER_AUTHENTICATION_VIEW.JOB_SEEKER,
                     });
-                    if (!checkuser) {
+                    if (!checkUser) {
                         return {
                             success: false,
                             code: this.StatusCode.HTTP_NOT_FOUND,
@@ -75,12 +75,12 @@ class PublicService extends abstract_service_1.default {
                 else if (type === constants_1.OTP_TYPE_FORGET_HOTELIER) {
                     // --check if the user exist
                     const userModel = this.Model.UserModel();
-                    const checkuser = yield userModel.getSingleCommonAuthUser({
+                    const checkUser = yield userModel.getSingleCommonAuthUser({
                         email,
                         schema_name: "hotelier",
                         table_name: constants_1.USER_AUTHENTICATION_VIEW.HOTELIER,
                     });
-                    if (!checkuser) {
+                    if (!checkUser) {
                         return {
                             success: false,
                             code: this.StatusCode.HTTP_NOT_FOUND,
@@ -162,7 +162,6 @@ class PublicService extends abstract_service_1.default {
     matchEmailOtpService(req) {
         return __awaiter(this, void 0, void 0, function* () {
             return this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
-                var _a;
                 const { email, otp, type } = req.body;
                 const commonModel = this.Model.commonModel(trx);
                 const userModel = this.Model.UserModel(trx);
@@ -199,14 +198,14 @@ class PublicService extends abstract_service_1.default {
                             schema_name: "jobseeker",
                             table_name: constants_1.USER_AUTHENTICATION_VIEW.JOB_SEEKER,
                         });
-                        if (!checkUser || ((_a = checkUser[0]) === null || _a === void 0 ? void 0 : _a.is_verified)) {
+                        if (!checkUser || (checkUser === null || checkUser === void 0 ? void 0 : checkUser.is_verified)) {
                             return {
                                 success: false,
                                 code: this.StatusCode.HTTP_NOT_FOUND,
                                 message: "No unverified user found.",
                             };
                         }
-                        yield userModel.updateProfile({ is_verified: true }, { id: checkUser[0].id });
+                        yield userModel.updateProfile({ is_verified: true }, { id: checkUser.id });
                         return {
                             success: true,
                             code: this.StatusCode.HTTP_ACCEPTED,
@@ -222,6 +221,21 @@ class PublicService extends abstract_service_1.default {
                     else if (type === constants_1.OTP_TYPE_TWO_FA_JOB_SEEKER) {
                         secret = config_1.default.JWT_SECRET_JOB_SEEKER;
                     }
+                    else if (type == constants_1.OTP_TYPE_TWO_FA_ADMIN) {
+                        const checkUser = yield userModel.getSingleCommonAuthUser({
+                            email,
+                            schema_name: "admin",
+                            table_name: constants_1.USER_AUTHENTICATION_VIEW.ADMIN,
+                        });
+                        if (checkUser) {
+                            yield this.insertAdminAudit(trx, {
+                                details: `Admin User ${checkUser.username}(${checkUser.email}) has logged in.`,
+                                endpoint: `${req.method} ${req.originalUrl}`,
+                                created_by: checkUser.user_id,
+                                type: "CREATE",
+                            });
+                        }
+                    }
                     const token = lib_1.default.createToken({
                         email: email,
                         type: type,
@@ -230,6 +244,7 @@ class PublicService extends abstract_service_1.default {
                         success: true,
                         code: this.StatusCode.HTTP_ACCEPTED,
                         message: this.ResMsg.OTP_MATCHED,
+                        type,
                         token,
                     };
                 }

@@ -3,8 +3,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.OTP_FOR = exports.USER_TYPE = exports.USER_AUTHENTICATION_VIEW = exports.USER_STATUS = exports.OTP_TYPE_TWO_FA_HOTELIER = exports.OTP_TYPE_TWO_FA_ADMIN = exports.OTP_TYPE_TWO_FA_JOB_SEEKER = exports.OTP_TYPE_FORGET_HOTELIER = exports.OTP_TYPE_VERIFY_ADMIN = exports.OTP_TYPE_VERIFY_HOTELIER = exports.OTP_TYPE_VERIFY_JOB_SEEKER = exports.OTP_TYPE_FORGET_JOB_SEEKER = exports.OTP_TYPE_FORGET_ADMIN = exports.SOURCE_ADMIN = exports.SOURCE_EXTERNAL = exports.SOURCE_B2C = exports.SOURCE_AGENT_B2C = exports.SOURCE_SUB_AGENT = exports.SOURCE_AGENT = exports.ERROR_LEVEL_CRITICAL = exports.ERROR_LEVEL_ERROR = exports.ERROR_LEVEL_WARNING = exports.ERROR_LEVEL_INFO = exports.ERROR_LEVEL_DEBUG = exports.OTP_DEFAULT_EXPIRY = exports.DATA_LIMIT = exports.OTP_EMAIL_SUBJECT = exports.HOTELIER_CLIENT_URL = exports.CLIENT_URL = exports.PROJECT_ADDRESS = exports.PROJECT_NUMBER = exports.PROJECT_EMAIL = exports.PROJECT_LINK = exports.PROJECT_ICON = exports.PROJECT_LOGO = exports.PROJECT_NAME = exports.OTP_TYPES = exports.origin = void 0;
 exports.origin = [
     "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:3002",
     "http://localhost:5000",
     "http://10.10.220.47:5000",
+    "http://10.10.220.46:3000",
+    "http://10.10.220.46:3001",
+    "http://10.10.220.46:3002",
 ];
 // OTP types constants
 exports.OTP_TYPES = {

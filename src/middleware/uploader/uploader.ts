@@ -1,11 +1,11 @@
 import { NextFunction, Request, Response } from "express";
-import multerS3 from "multer-s3";
 import multer from "multer";
+import multerS3 from "multer-s3";
 import path from "path";
-import { allowAllFileTypes, ROOT_FILE_FOLDER } from "./uploaderConstants";
 import CommonAbstractStorage from "../../abstract/abstract.storatge";
-import CustomError from "../../utils/lib/customError";
 import config from "../../app/config";
+import CustomError from "../../utils/lib/customError";
+import { allowAllFileTypes, ROOT_FILE_FOLDER } from "./uploaderConstants";
 
 class Uploader extends CommonAbstractStorage {
   constructor() {
@@ -21,6 +21,7 @@ class Uploader extends CommonAbstractStorage {
           acl: "public-read",
           s3: this.s3Client,
           bucket: config.AWS_S3_BUCKET,
+          contentType: multerS3.AUTO_CONTENT_TYPE,
           metadata: function (_req, file, cb) {
             cb(null, { fieldName: file.fieldname });
           },

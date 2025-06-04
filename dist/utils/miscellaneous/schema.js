@@ -11,6 +11,7 @@ class Schema {
             user: "user",
             last_no: "last_no",
             audit_trail: "audit_trail",
+            jobs: "jobs",
         };
     }
 }

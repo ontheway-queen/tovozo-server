@@ -1,7 +1,12 @@
 export const origin: string[] = [
   "http://localhost:3000",
+  "http://localhost:3001",
+  "http://localhost:3002",
   "http://localhost:5000",
   "http://10.10.220.47:5000",
+  "http://10.10.220.46:3000",
+  "http://10.10.220.46:3001",
+  "http://10.10.220.46:3002",
 ];
 
 // OTP types constants
@@ -63,9 +68,6 @@ export const OTP_TYPE_TWO_FA_JOB_SEEKER = "2fa_job_seeker";
 export const OTP_TYPE_TWO_FA_ADMIN = "2fa_admin";
 export const OTP_TYPE_TWO_FA_HOTELIER = "2fa_hotelier";
 
-
-
-
 export const USER_STATUS = {
   ACTIVE: "active",
   INACTIVE: "inactive",
@@ -85,7 +87,6 @@ export const USER_TYPE = {
   HOTELIER: "HOTELIER",
   ADMIN: "ADMIN",
 } as const;
-
 
 // OTP for
 export const OTP_FOR = "Verification";

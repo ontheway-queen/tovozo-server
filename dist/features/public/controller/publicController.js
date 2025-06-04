@@ -36,22 +36,22 @@ class PublicController extends abstract_controller_1.default {
         }));
         // match email otp
         this.matchEmailOtpController = this.asyncWrapper.wrap({ bodySchema: this.commonValidator.matchEmailOtpInputValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.services.matchEmailOtpService(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _b = yield this.services.matchEmailOtpService(req), { code } = _b, data = __rest(_b, ["code"]);
             res.status(code).json(data);
         }));
         //get all country
         this.getAllCountry = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.services.getAllCountry(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _c = yield this.services.getAllCountry(req), { code } = _c, data = __rest(_c, ["code"]);
             res.status(code).json(data);
         }));
         //get all city
         this.getAllCity = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.services.getAllCity(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _d = yield this.services.getAllCity(req), { code } = _d, data = __rest(_d, ["code"]);
             res.status(code).json(data);
         }));
         // get all states
         this.getAllStates = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.services.getAllStates(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _e = yield this.services.getAllStates(req), { code } = _e, data = __rest(_e, ["code"]);
             res.status(code).json(data);
         }));
     }

@@ -12,15 +12,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const cors_1 = __importDefault(require("cors"));
 const express_1 = __importDefault(require("express"));
 const morgan_1 = __importDefault(require("morgan"));
-const cors_1 = __importDefault(require("cors"));
-const constants_1 = require("../utils/miscellaneous/constants");
-const socket_1 = require("./socket");
-const node_cron_1 = __importDefault(require("node-cron"));
-const customError_1 = __importDefault(require("../utils/lib/customError"));
 const errorHandler_1 = __importDefault(require("../middleware/errorHandler/errorHandler"));
+const customError_1 = __importDefault(require("../utils/lib/customError"));
+const constants_1 = require("../utils/miscellaneous/constants");
 const router_1 = __importDefault(require("./router"));
+const socket_1 = require("./socket");
 class App {
     constructor(port) {
         this.app = (0, express_1.default)();
@@ -39,9 +38,9 @@ class App {
     runCron() {
         return __awaiter(this, void 0, void 0, function* () {
             // Run every 3 days at 12:00 AM
-            node_cron_1.default.schedule('0 0 */3 * *', () => __awaiter(this, void 0, void 0, function* () {
-                // await services.getSabreToken();
-            }));
+            // cron.schedule('0 0 */3 * *', async () => {
+            //   // await services.getSabreToken();
+            // });
         });
     }
     //start server
@@ -54,9 +53,9 @@ class App {
     }
     //init middleware
     initMiddleware() {
-        this.app.use(express_1.default.json({ limit: '2mb' }));
-        this.app.use(express_1.default.urlencoded({ limit: '2mb', extended: true }));
-        this.app.use((0, morgan_1.default)('dev'));
+        this.app.use(express_1.default.json({ limit: "2mb" }));
+        this.app.use(express_1.default.urlencoded({ limit: "2mb", extended: true }));
+        this.app.use((0, morgan_1.default)("dev"));
         this.app.use((0, cors_1.default)({ origin: this.origin, credentials: true }));
     }
     // socket connection
@@ -64,35 +63,35 @@ class App {
         socket_1.io.use((socket, next) => {
             var _a;
             if (!((_a = socket.handshake.auth) === null || _a === void 0 ? void 0 : _a.id)) {
-                next(new Error('Provide id into auth.'));
+                next(new Error("Provide id into auth."));
             }
             else {
                 next();
             }
         });
-        socket_1.io.on('connection', (socket) => __awaiter(this, void 0, void 0, function* () {
+        socket_1.io.on("connection", (socket) => __awaiter(this, void 0, void 0, function* () {
             const { id, type } = socket.handshake.auth;
-            console.log(socket.id, '-', id, '-', type, ' is connected ⚡');
-            socket.on('disconnect', (event) => __awaiter(this, void 0, void 0, function* () {
-                console.log(socket.id, '-', id, '-', type, ' disconnected...');
+            console.log(socket.id, "-", id, "-", type, " is connected ⚡");
+            socket.on("disconnect", (event) => __awaiter(this, void 0, void 0, function* () {
+                console.log(socket.id, "-", id, "-", type, " disconnected...");
                 socket.disconnect();
             }));
         }));
     }
     // init routers
     initRouters() {
-        this.app.get('/', (_req, res) => {
+        this.app.get("/", (_req, res) => {
             res.send(`Tovozo server is running successfully...🚀`);
         });
-        this.app.get('/api', (_req, res) => {
+        this.app.get("/api", (_req, res) => {
             res.send(`Tovozo API is active...🚀`);
         });
-        this.app.use('/api/v2', new router_1.default().v2Router);
+        this.app.use("/api/v1", new router_1.default().v2Router);
     }
     // not found router
     notFoundRouter() {
-        this.app.use('*', (_req, _res, next) => {
-            next(new customError_1.default('Cannot found the route', 404));
+        this.app.use("*", (_req, _res, next) => {
+            next(new customError_1.default("Cannot found the route", 404));
         });
     }
     // error handler
@@ -101,7 +100,7 @@ class App {
     }
     //disable x-powered-by
     disableXPoweredBy() {
-        this.app.disable('x-powered-by');
+        this.app.disable("x-powered-by");
     }
 }
 exports.default = App;

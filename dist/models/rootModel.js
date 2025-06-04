@@ -4,12 +4,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const database_1 = require("../app/database");
-const userModel_1 = __importDefault(require("./userModel/userModel"));
+const administrationModel_1 = __importDefault(require("./adminModel/administrationModel"));
 const adminModel_1 = __importDefault(require("./adminModel/adminModel"));
-const jobSeekerModel_1 = __importDefault(require("./jobSeekerModel/jobSeekerModel"));
 const commonModel_1 = __importDefault(require("./commonModel/commonModel"));
 const organizationModel_1 = __importDefault(require("./hotelierModel/organizationModel"));
-const administrationModel_1 = __importDefault(require("./adminModel/administrationModel"));
+const jobModel_1 = __importDefault(require("./jobModel/jobModel"));
+const jobSeekerModel_1 = __importDefault(require("./jobSeekerModel/jobSeekerModel"));
+const userModel_1 = __importDefault(require("./userModel/userModel"));
 class Models {
     UserModel(trx) {
         return new userModel_1.default(trx || database_1.db);
@@ -32,6 +33,10 @@ class Models {
     //administration model
     administrationModel(trx) {
         return new administrationModel_1.default(trx || database_1.db);
+    }
+    // job model
+    jobModel(trx) {
+        return new jobModel_1.default(trx || database_1.db);
     }
 }
 exports.default = Models;

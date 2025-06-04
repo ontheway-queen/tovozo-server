@@ -24,75 +24,83 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
-const constants_1 = require("../../../utils/miscellaneous/constants");
-const lib_1 = __importDefault(require("../../../utils/lib/lib"));
 const config_1 = __importDefault(require("../../../app/config"));
+const lib_1 = __importDefault(require("../../../utils/lib/lib"));
+const constants_1 = require("../../../utils/miscellaneous/constants");
 class AdminAuthService extends abstract_service_1.default {
     //login
     loginService(req) {
         return __awaiter(this, void 0, void 0, function* () {
             const { email, password } = req.body;
-            const userModel = this.Model.UserModel();
-            const checkUser = yield userModel.getSingleCommonAuthUser({
-                schema_name: "admin",
-                table_name: constants_1.USER_AUTHENTICATION_VIEW.ADMIN,
-                email,
-            });
-            if (!checkUser) {
-                return {
-                    success: false,
-                    code: this.StatusCode.HTTP_BAD_REQUEST,
-                    message: this.ResMsg.WRONG_CREDENTIALS,
-                };
-            }
-            const { password_hash: hashPass } = checkUser, rest = __rest(checkUser, ["password_hash"]);
-            const checkPass = yield lib_1.default.compareHashValue(password, hashPass);
-            if (!checkPass) {
-                return {
-                    success: false,
-                    code: this.StatusCode.HTTP_BAD_REQUEST,
-                    message: this.ResMsg.WRONG_CREDENTIALS,
-                };
-            }
-            if (!rest.user_status) {
-                return {
-                    success: false,
-                    code: this.StatusCode.HTTP_FORBIDDEN,
-                    message: `Account Inactive: Your account status is 'Inactive'.`,
-                };
-            }
-            if (rest.is_2fa_on) {
-                return {
-                    success: true,
-                    code: this.StatusCode.HTTP_OK,
-                    message: this.ResMsg.LOGIN_SUCCESSFUL,
-                    data: {
+            return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const userModel = this.Model.UserModel(trx);
+                const checkUser = yield userModel.getSingleCommonAuthUser({
+                    schema_name: "admin",
+                    table_name: constants_1.USER_AUTHENTICATION_VIEW.ADMIN,
+                    email,
+                });
+                if (!checkUser) {
+                    return {
+                        success: false,
+                        code: this.StatusCode.HTTP_BAD_REQUEST,
+                        message: this.ResMsg.WRONG_CREDENTIALS,
+                    };
+                }
+                const { password_hash: hashPass } = checkUser, rest = __rest(checkUser, ["password_hash"]);
+                const checkPass = yield lib_1.default.compareHashValue(password, hashPass);
+                if (!checkPass) {
+                    return {
+                        success: false,
+                        code: this.StatusCode.HTTP_BAD_REQUEST,
+                        message: this.ResMsg.WRONG_CREDENTIALS,
+                    };
+                }
+                if (!rest.user_status) {
+                    return {
+                        success: false,
+                        code: this.StatusCode.HTTP_FORBIDDEN,
+                        message: `Account Inactive: Your account status is 'Inactive'.`,
+                    };
+                }
+                if (rest.is_2fa_on) {
+                    return {
+                        success: true,
+                        code: this.StatusCode.HTTP_OK,
+                        message: this.ResMsg.LOGIN_SUCCESSFUL,
+                        data: {
+                            email: rest.email,
+                            is_2fa_on: true,
+                        },
+                    };
+                }
+                else {
+                    yield this.insertAdminAudit(trx, {
+                        details: `Admin User ${rest.username}(${rest.email}) has logged in.`,
+                        endpoint: `${req.method} ${req.originalUrl}`,
+                        created_by: rest.user_id,
+                        type: "CREATE",
+                    });
+                    const token_data = {
+                        user_id: rest.user_id,
+                        username: rest.username,
+                        name: rest.name,
+                        gender: rest.gender,
+                        phone_number: rest.phone_number,
+                        role_id: rest.role_id,
+                        photo: rest.photo,
+                        status: rest.user_status,
                         email: rest.email,
-                        is_2fa_on: true,
-                    },
-                };
-            }
-            else {
-                const token_data = {
-                    user_id: rest.user_id,
-                    username: rest.username,
-                    name: rest.name,
-                    gender: rest.gender,
-                    phone_number: rest.phone_number,
-                    role_id: rest.role_id,
-                    photo: rest.photo,
-                    status: rest.user_status,
-                    email: rest.email,
-                };
-                const token = lib_1.default.createToken(token_data, config_1.default.JWT_SECRET_ADMIN, "48h");
-                return {
-                    success: true,
-                    code: this.StatusCode.HTTP_OK,
-                    message: this.ResMsg.LOGIN_SUCCESSFUL,
-                    data: rest,
-                    token,
-                };
-            }
+                    };
+                    const token = lib_1.default.createToken(token_data, config_1.default.JWT_SECRET_ADMIN, "48h");
+                    return {
+                        success: true,
+                        code: this.StatusCode.HTTP_OK,
+                        message: this.ResMsg.LOGIN_SUCCESSFUL,
+                        data: rest,
+                        token,
+                    };
+                }
+            }));
         });
     }
     // The loginData is used to retrieve user information after successfully verifying the user through two-factor authentication.

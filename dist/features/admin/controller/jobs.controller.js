@@ -24,27 +24,34 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_controller_1 = __importDefault(require("../../../abstract/abstract.controller"));
-const jobSeekeerProfile_service_1 = __importDefault(require("../service/jobSeekeerProfile.service"));
-const profile_validator_1 = __importDefault(require("../utils/validator/profile.validator"));
-class JobSeekerProfileController extends abstract_controller_1.default {
+const jobs_services_1 = __importDefault(require("../services/jobs.services"));
+const adminJob_validator_1 = __importDefault(require("../utils/validator/adminJob.validator"));
+class AdminJobController extends abstract_controller_1.default {
     constructor() {
         super();
-        this.profileService = new jobSeekeerProfile_service_1.default();
-        this.validator = new profile_validator_1.default();
-        // get profile
-        this.getProfile = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.profileService.getProfile(req), { code } = _a, data = __rest(_a, ["code"]);
+        this.service = new jobs_services_1.default();
+        this.validator = new adminJob_validator_1.default();
+        this.createJob = this.asyncWrapper.wrap({ bodySchema: this.validator.createJobSchema }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.createJob(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
-        this.updateProfile = this.asyncWrapper.wrap({ bodySchema: this.validator.updateJobSeekerValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _b = yield this.profileService.updateProfile(req), { code } = _b, data = __rest(_b, ["code"]);
+        this.getAllJob = this.asyncWrapper.wrap({ querySchema: this.validator.getAllJobSchema }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _b = yield this.service.getAllJob(req), { code } = _b, data = __rest(_b, ["code"]);
             res.status(code).json(data);
         }));
-        //change password
-        this.changePassword = this.asyncWrapper.wrap({ bodySchema: this.commonValidator.changePassInputValidation }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _c = yield this.profileService.changePassword(req), { code } = _c, data = __rest(_c, ["code"]);
+        this.updateJob = this.asyncWrapper.wrap({
+            paramSchema: this.commonValidator.singleParamValidator,
+            bodySchema: this.validator.updateJobSchema,
+        }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _c = yield this.service.updateJob(req), { code } = _c, data = __rest(_c, ["code"]);
+            res.status(code).json(data);
+        }));
+        this.deleteJob = this.asyncWrapper.wrap({
+            paramSchema: this.commonValidator.singleParamValidator,
+        }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _d = yield this.service.deleteJob(req), { code } = _d, data = __rest(_d, ["code"]);
             res.status(code).json(data);
         }));
     }
 }
-exports.default = JobSeekerProfileController;
+exports.default = AdminJobController;

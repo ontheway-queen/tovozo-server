@@ -1,20 +1,21 @@
 import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
-import Lib from "../../../utils/lib/lib";
 import config from "../../../app/config";
+import Lib from "../../../utils/lib/lib";
 
-import { IGetOTPPayload } from "../../../utils/modelTypes/common/commonModelTypes";
 import {
   OTP_EMAIL_SUBJECT,
   OTP_FOR,
   OTP_TYPE_FORGET_ADMIN,
   OTP_TYPE_FORGET_HOTELIER,
   OTP_TYPE_FORGET_JOB_SEEKER,
+  OTP_TYPE_TWO_FA_ADMIN,
   OTP_TYPE_TWO_FA_HOTELIER,
   OTP_TYPE_TWO_FA_JOB_SEEKER,
   OTP_TYPE_VERIFY_JOB_SEEKER,
   USER_AUTHENTICATION_VIEW,
 } from "../../../utils/miscellaneous/constants";
+import { IGetOTPPayload } from "../../../utils/modelTypes/common/commonModelTypes";
 import { sendEmailOtpTemplate } from "../../../utils/templates/sendEmailOtpTemplate";
 
 class PublicService extends AbstractServices {
@@ -30,12 +31,12 @@ class PublicService extends AbstractServices {
       if (type === OTP_TYPE_FORGET_JOB_SEEKER) {
         // --check if the user exist
         const userModel = this.Model.UserModel();
-        const checkuser = await userModel.getSingleCommonAuthUser({
+        const checkUser = await userModel.getSingleCommonAuthUser({
           email,
           schema_name: "jobseeker",
           table_name: USER_AUTHENTICATION_VIEW.JOB_SEEKER,
         });
-        if (!checkuser) {
+        if (!checkUser) {
           return {
             success: false,
             code: this.StatusCode.HTTP_NOT_FOUND,
@@ -74,13 +75,13 @@ class PublicService extends AbstractServices {
       } else if (type === OTP_TYPE_FORGET_HOTELIER) {
         // --check if the user exist
         const userModel = this.Model.UserModel();
-        const checkuser = await userModel.getSingleCommonAuthUser({
+        const checkUser = await userModel.getSingleCommonAuthUser({
           email,
           schema_name: "hotelier",
           table_name: USER_AUTHENTICATION_VIEW.HOTELIER,
         });
 
-        if (!checkuser) {
+        if (!checkUser) {
           return {
             success: false,
             code: this.StatusCode.HTTP_NOT_FOUND,
@@ -212,7 +213,7 @@ class PublicService extends AbstractServices {
             table_name: USER_AUTHENTICATION_VIEW.JOB_SEEKER,
           });
 
-          if (!checkUser || checkUser[0]?.is_verified) {
+          if (!checkUser || checkUser?.is_verified) {
             return {
               success: false,
               code: this.StatusCode.HTTP_NOT_FOUND,
@@ -222,7 +223,7 @@ class PublicService extends AbstractServices {
 
           await userModel.updateProfile(
             { is_verified: true },
-            { id: checkUser[0].id }
+            { id: checkUser.id }
           );
 
           return {
@@ -236,6 +237,20 @@ class PublicService extends AbstractServices {
           secret = config.JWT_SECRET_HOTEL;
         } else if (type === OTP_TYPE_TWO_FA_JOB_SEEKER) {
           secret = config.JWT_SECRET_JOB_SEEKER;
+        } else if (type == OTP_TYPE_TWO_FA_ADMIN) {
+          const checkUser = await userModel.getSingleCommonAuthUser({
+            email,
+            schema_name: "admin",
+            table_name: USER_AUTHENTICATION_VIEW.ADMIN,
+          });
+          if (checkUser) {
+            await this.insertAdminAudit(trx, {
+              details: `Admin User ${checkUser.username}(${checkUser.email}) has logged in.`,
+              endpoint: `${req.method} ${req.originalUrl}`,
+              created_by: checkUser.user_id,
+              type: "CREATE",
+            });
+          }
         }
 
         const token = Lib.createToken(
@@ -251,6 +266,7 @@ class PublicService extends AbstractServices {
           success: true,
           code: this.StatusCode.HTTP_ACCEPTED,
           message: this.ResMsg.OTP_MATCHED,
+          type,
           token,
         };
       } else {

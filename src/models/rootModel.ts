@@ -1,11 +1,12 @@
 import { Knex } from "knex";
 import { db } from "../app/database";
-import UserModel from "./userModel/userModel";
+import AdministrationModel from "./adminModel/administrationModel";
 import AdminModel from "./adminModel/adminModel";
-import JobSeekerModel from "./jobSeekerModel/jobSeekerModel";
 import CommonModel from "./commonModel/commonModel";
 import OrganizationModel from "./hotelierModel/organizationModel";
-import AdministrationModel from "./adminModel/administrationModel";
+import JobModel from "./jobModel/jobModel";
+import JobSeekerModel from "./jobSeekerModel/jobSeekerModel";
+import UserModel from "./userModel/userModel";
 
 export default class Models {
   public UserModel(trx?: Knex.Transaction) {
@@ -33,5 +34,10 @@ export default class Models {
   //administration model
   public administrationModel(trx?: Knex.Transaction) {
     return new AdministrationModel(trx || db);
+  }
+
+  // job model
+  public jobModel(trx?: Knex.Transaction) {
+    return new JobModel(trx || db);
   }
 }

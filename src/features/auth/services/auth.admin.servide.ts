@@ -1,89 +1,95 @@
 import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
+import config from "../../../app/config";
+import Lib from "../../../utils/lib/lib";
 import {
-  PROJECT_NAME,
   USER_AUTHENTICATION_VIEW,
-  USER_STATUS,
   USER_TYPE,
 } from "../../../utils/miscellaneous/constants";
-import Lib from "../../../utils/lib/lib";
-import config from "../../../app/config";
 import { IForgetPasswordPayload } from "../../../utils/modelTypes/common/commonModelTypes";
 
 class AdminAuthService extends AbstractServices {
   //login
   public async loginService(req: Request) {
     const { email, password } = req.body as { email: string; password: string };
-    const userModel = this.Model.UserModel();
-    const checkUser = await userModel.getSingleCommonAuthUser({
-      schema_name: "admin",
-      table_name: USER_AUTHENTICATION_VIEW.ADMIN,
-      email,
-    });
+    return await this.db.transaction(async (trx) => {
+      const userModel = this.Model.UserModel(trx);
+      const checkUser = await userModel.getSingleCommonAuthUser({
+        schema_name: "admin",
+        table_name: USER_AUTHENTICATION_VIEW.ADMIN,
+        email,
+      });
 
-    if (!checkUser) {
-      return {
-        success: false,
-        code: this.StatusCode.HTTP_BAD_REQUEST,
-        message: this.ResMsg.WRONG_CREDENTIALS,
-      };
-    }
+      if (!checkUser) {
+        return {
+          success: false,
+          code: this.StatusCode.HTTP_BAD_REQUEST,
+          message: this.ResMsg.WRONG_CREDENTIALS,
+        };
+      }
 
-    const { password_hash: hashPass, ...rest } = checkUser;
-    const checkPass = await Lib.compareHashValue(password, hashPass);
+      const { password_hash: hashPass, ...rest } = checkUser;
+      const checkPass = await Lib.compareHashValue(password, hashPass);
 
-    if (!checkPass) {
-      return {
-        success: false,
-        code: this.StatusCode.HTTP_BAD_REQUEST,
-        message: this.ResMsg.WRONG_CREDENTIALS,
-      };
-    }
+      if (!checkPass) {
+        return {
+          success: false,
+          code: this.StatusCode.HTTP_BAD_REQUEST,
+          message: this.ResMsg.WRONG_CREDENTIALS,
+        };
+      }
 
-    if (!rest.user_status) {
-      return {
-        success: false,
-        code: this.StatusCode.HTTP_FORBIDDEN,
-        message: `Account Inactive: Your account status is 'Inactive'.`,
-      };
-    }
+      if (!rest.user_status) {
+        return {
+          success: false,
+          code: this.StatusCode.HTTP_FORBIDDEN,
+          message: `Account Inactive: Your account status is 'Inactive'.`,
+        };
+      }
 
-    if (rest.is_2fa_on) {
-      return {
-        success: true,
-        code: this.StatusCode.HTTP_OK,
-        message: this.ResMsg.LOGIN_SUCCESSFUL,
-        data: {
+      if (rest.is_2fa_on) {
+        return {
+          success: true,
+          code: this.StatusCode.HTTP_OK,
+          message: this.ResMsg.LOGIN_SUCCESSFUL,
+          data: {
+            email: rest.email,
+            is_2fa_on: true,
+          },
+        };
+      } else {
+        await this.insertAdminAudit(trx, {
+          details: `Admin User ${rest.username}(${rest.email}) has logged in.`,
+          endpoint: `${req.method} ${req.originalUrl}`,
+          created_by: rest.user_id,
+          type: "CREATE",
+        });
+        const token_data = {
+          user_id: rest.user_id,
+          username: rest.username,
+          name: rest.name,
+          gender: rest.gender,
+          phone_number: rest.phone_number,
+          role_id: rest.role_id,
+          photo: rest.photo,
+          status: rest.user_status,
           email: rest.email,
-          is_2fa_on: true,
-        },
-      };
-    } else {
-      const token_data = {
-        user_id: rest.user_id,
-        username: rest.username,
-        name: rest.name,
-        gender: rest.gender,
-        phone_number: rest.phone_number,
-        role_id: rest.role_id,
-        photo: rest.photo,
-        status: rest.user_status,
-        email: rest.email,
-      };
+        };
 
-      const token = Lib.createToken(
-        token_data,
-        config.JWT_SECRET_ADMIN,
-        "48h"
-      );
-      return {
-        success: true,
-        code: this.StatusCode.HTTP_OK,
-        message: this.ResMsg.LOGIN_SUCCESSFUL,
-        data: rest,
-        token,
-      };
-    }
+        const token = Lib.createToken(
+          token_data,
+          config.JWT_SECRET_ADMIN,
+          "48h"
+        );
+        return {
+          success: true,
+          code: this.StatusCode.HTTP_OK,
+          message: this.ResMsg.LOGIN_SUCCESSFUL,
+          data: rest,
+          token,
+        };
+      }
+    });
   }
 
   // The loginData is used to retrieve user information after successfully verifying the user through two-factor authentication.
@@ -157,10 +163,7 @@ class AdminAuthService extends AbstractServices {
   //forget pass
   public async forgetPassword(req: Request) {
     const { token, email, password } = req.body as IForgetPasswordPayload;
-    const token_verify: any = Lib.verifyToken(
-      token,
-      config.JWT_SECRET_ADMIN
-    );
+    const token_verify: any = Lib.verifyToken(token, config.JWT_SECRET_ADMIN);
 
     if (!token_verify) {
       return {
