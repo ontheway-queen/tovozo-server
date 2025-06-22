@@ -22,6 +22,7 @@ class HotelierJobPostService extends abstract_service_1.default {
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const model = this.Model.jobPostModel(trx);
                 const organizationModel = this.Model.organizationModel(trx);
+                const jobModel = this.Model.jobModel(trx);
                 const checkOrganization = yield organizationModel.getOrganization({
                     user_id,
                 });
@@ -29,10 +30,15 @@ class HotelierJobPostService extends abstract_service_1.default {
                     throw new customError_1.default("Organization not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }
                 body.job_post.organization_id = checkOrganization.id;
+                const checkJob = yield jobModel.getSingleJob(body.job_post_details.job_id);
+                if (!checkJob) {
+                    throw new customError_1.default("Invalid Job Category!", this.StatusCode.HTTP_BAD_REQUEST);
+                }
                 const res = yield model.createJobPost(body.job_post);
                 if (!res.length) {
                     throw new customError_1.default(this.ResMsg.HTTP_BAD_REQUEST, this.StatusCode.HTTP_BAD_REQUEST);
                 }
+                body.job_post_details.job_post_id = res[0].id;
                 yield model.createJobPostDetails(body.job_post_details);
                 return {
                     success: true,

@@ -15,7 +15,7 @@ ResMsg.HTTP_UNPROCESSABLE_ENTITY = "The request payload is unprocessable, please
 ResMsg.HTTP_INTERNAL_SERVER_ERROR = "Internal server error";
 ResMsg.HTTP_ACCOUNT_INACTIVE = "Your account is disabled! Please contact us.";
 // without http
-ResMsg.WRONG_CREDENTIALS = "Wrong username/email or password.";
+ResMsg.WRONG_CREDENTIALS = "Wrong credentials.";
 ResMsg.PASSWORD_CHANGED = "Password changed successfully";
 ResMsg.PASSWORD_NOT_CHANGED = "Password cannot changed";
 ResMsg.PASSWORDS_DO_NOT_MATCH = "Passwords do not match";

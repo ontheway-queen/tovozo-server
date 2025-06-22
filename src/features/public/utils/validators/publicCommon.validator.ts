@@ -1,6 +1,6 @@
 import Joi from "joi";
+import { GENDERS } from "../../../../utils/miscellaneous/constants";
 import { SEND_OTP_TYPES } from "./validatorConstant";
-
 export default class PublicCommonValidator {
   public singleParamNumValidator = (idFieldName: string = "id") => {
     const schemaObject: any = {};
@@ -55,7 +55,9 @@ export default class PublicCommonValidator {
   registerValidator = Joi.object({
     username: Joi.string().min(1).max(255).required(),
     name: Joi.string().min(1).max(255).required(),
-    gender: Joi.string().valid("Male", "Female", "Other").required(),
+    gender: Joi.string()
+      .valid(...GENDERS)
+      .required(),
     email: Joi.string().email().lowercase().min(1).max(255).required(),
     password: Joi.string().min(8).max(100).required(),
     phone_number: Joi.string().min(7).max(20).optional(),

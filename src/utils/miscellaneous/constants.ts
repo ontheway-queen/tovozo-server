@@ -110,3 +110,6 @@ export const BRITISH_ID = 26;
 
 // Token Expiration time
 export const LOGIN_TOKEN_EXPIRES_IN = "48h";
+
+// Gender
+export const GENDERS = ["Male", "Female", "Other"] as const;

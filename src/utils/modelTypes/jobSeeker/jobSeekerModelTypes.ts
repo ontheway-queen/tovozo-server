@@ -1,7 +1,9 @@
+import { GenderType } from "../hotelier/jobPostModelTYpes";
+
 export interface ICreateJobSeekerPayload {
   user_id: number;
   date_of_birth: string;
-  gender: "Male" | "Female" | "Other";
+  gender: GenderType;
   nationality: string;
   address: string;
   work_permit: boolean;
@@ -9,7 +11,8 @@ export interface ICreateJobSeekerPayload {
   criminal_convictions: boolean;
 }
 
-export interface IUpdateJobSeekerPayload extends Partial<ICreateJobSeekerPayload> {}
+export interface IUpdateJobSeekerPayload
+  extends Partial<ICreateJobSeekerPayload> {}
 
 export interface IJobPreferencePayload {
   job_seeker_id: number;

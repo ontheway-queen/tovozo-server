@@ -1,4 +1,6 @@
-export type GenderType = "Male" | "Female" | "Other" | string;
+import { GENDERS } from "../../miscellaneous/constants";
+
+export type GenderType = (typeof GENDERS)[number];
 
 export interface IJobPostPayload {
   id: number;

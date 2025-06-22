@@ -184,7 +184,7 @@ export default class HotelierAuthService extends AbstractServices {
       return {
         success: false,
         code: this.StatusCode.HTTP_BAD_REQUEST,
-        message: this.ResMsg.WRONG_CREDENTIALS,
+        message: "No user found with this credentials!",
       };
     }
 

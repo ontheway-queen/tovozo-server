@@ -16,6 +16,7 @@ class HotelierJobPostService extends AbstractServices {
     return await this.db.transaction(async (trx) => {
       const model = this.Model.jobPostModel(trx);
       const organizationModel = this.Model.organizationModel(trx);
+      const jobModel = this.Model.jobModel(trx);
       const checkOrganization = await organizationModel.getOrganization({
         user_id,
       });
@@ -26,6 +27,15 @@ class HotelierJobPostService extends AbstractServices {
         );
       }
       body.job_post.organization_id = checkOrganization.id;
+      const checkJob = await jobModel.getSingleJob(
+        body.job_post_details.job_id
+      );
+      if (!checkJob) {
+        throw new CustomError(
+          "Invalid Job Category!",
+          this.StatusCode.HTTP_BAD_REQUEST
+        );
+      }
       const res = await model.createJobPost(body.job_post);
       if (!res.length) {
         throw new CustomError(
@@ -33,6 +43,7 @@ class HotelierJobPostService extends AbstractServices {
           this.StatusCode.HTTP_BAD_REQUEST
         );
       }
+      body.job_post_details.job_post_id = res[0].id;
       await model.createJobPostDetails(body.job_post_details);
       return {
         success: true,

@@ -21,7 +21,7 @@ class ResMsg {
     "Your account is disabled! Please contact us.";
 
   // without http
-  static readonly WRONG_CREDENTIALS = "Wrong username/email or password.";
+  static readonly WRONG_CREDENTIALS = "Wrong credentials.";
   static readonly PASSWORD_CHANGED = "Password changed successfully";
   static readonly PASSWORD_NOT_CHANGED = "Password cannot changed";
   static readonly PASSWORDS_DO_NOT_MATCH = "Passwords do not match";

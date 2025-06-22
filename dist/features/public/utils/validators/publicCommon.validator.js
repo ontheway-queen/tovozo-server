@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const joi_1 = __importDefault(require("joi"));
+const constants_1 = require("../../../../utils/miscellaneous/constants");
 const validatorConstant_1 = require("./validatorConstant");
 class PublicCommonValidator {
     constructor() {
@@ -35,7 +36,9 @@ class PublicCommonValidator {
         this.registerValidator = joi_1.default.object({
             username: joi_1.default.string().min(1).max(255).required(),
             name: joi_1.default.string().min(1).max(255).required(),
-            gender: joi_1.default.string().valid("Male", "Female", "Other").required(),
+            gender: joi_1.default.string()
+                .valid(...constants_1.GENDERS)
+                .required(),
             email: joi_1.default.string().email().lowercase().min(1).max(255).required(),
             password: joi_1.default.string().min(8).max(100).required(),
             phone_number: joi_1.default.string().min(7).max(20).optional(),

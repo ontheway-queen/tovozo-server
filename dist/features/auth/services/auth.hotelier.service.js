@@ -158,7 +158,7 @@ class HotelierAuthService extends abstract_service_1.default {
                 return {
                     success: false,
                     code: this.StatusCode.HTTP_BAD_REQUEST,
-                    message: this.ResMsg.WRONG_CREDENTIALS,
+                    message: "No user found with this credentials!",
                 };
             }
             const { password_hash: hashPass } = checkUser, rest = __rest(checkUser, ["password_hash"]);
