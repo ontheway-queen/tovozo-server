@@ -208,24 +208,7 @@ class PublicService extends abstract_service_1.default {
                         secret = config_1.default.JWT_SECRET_JOB_SEEKER;
                     }
                     else if (type === constants_1.OTP_TYPE_VERIFY_JOB_SEEKER) {
-                        const checkUser = yield userModel.getSingleCommonAuthUser({
-                            email,
-                            schema_name: "jobseeker",
-                            table_name: constants_1.USER_AUTHENTICATION_VIEW.JOB_SEEKER,
-                        });
-                        if (!checkUser || (checkUser === null || checkUser === void 0 ? void 0 : checkUser.is_verified)) {
-                            return {
-                                success: false,
-                                code: this.StatusCode.HTTP_NOT_FOUND,
-                                message: "No unverified user found.",
-                            };
-                        }
-                        yield userModel.updateProfile({ is_verified: true }, { id: checkUser.id });
-                        return {
-                            success: true,
-                            code: this.StatusCode.HTTP_ACCEPTED,
-                            message: "User successfully verified.",
-                        };
+                        secret = config_1.default.JWT_SECRET_JOB_SEEKER;
                     }
                     else if (type === constants_1.OTP_TYPE_FORGET_HOTELIER) {
                         secret = config_1.default.JWT_SECRET_HOTEL;

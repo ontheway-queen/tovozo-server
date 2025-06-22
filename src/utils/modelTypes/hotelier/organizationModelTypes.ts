@@ -1,5 +1,3 @@
-
-
 export interface ICreateOrganizationPayload {
   name: string;
   address: string;
@@ -26,4 +24,16 @@ export interface ICreatePhotoPayload {
 export interface ICreateAmenityPayload {
   organization_id: number;
   amenity: string;
+}
+
+export interface IGetOrganization {
+  id: number;
+  name?: string;
+  user_id: number;
+  details?: string;
+  created_at?: string;
+  status: "pending" | string;
+  is_deleted: boolean;
+  is_2fa_on?: boolean;
+  location_id?: number;
 }

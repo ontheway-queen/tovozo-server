@@ -3,6 +3,7 @@ import { db } from "../app/database";
 import AdministrationModel from "./adminModel/administrationModel";
 import AdminModel from "./adminModel/adminModel";
 import CommonModel from "./commonModel/commonModel";
+import JobPostModel from "./hotelierModel/jobPostModel";
 import OrganizationModel from "./hotelierModel/organizationModel";
 import JobModel from "./jobModel/jobModel";
 import JobSeekerModel from "./jobSeekerModel/jobSeekerModel";
@@ -39,5 +40,10 @@ export default class Models {
   // job model
   public jobModel(trx?: Knex.Transaction) {
     return new JobModel(trx || db);
+  }
+
+  // jobPost model
+  public jobPostModel(trx?: Knex.Transaction) {
+    return new JobPostModel(trx || db);
   }
 }

@@ -1,10 +1,11 @@
 import { TDB } from "../../features/public/utils/types/publicCommon.types";
 import Schema from "../../utils/miscellaneous/schema";
 import {
-  ICreateOrganizationPayload,
-  IUpdateOrganizationPayload,
-  ICreatePhotoPayload,
   ICreateAmenityPayload,
+  ICreateOrganizationPayload,
+  ICreatePhotoPayload,
+  IGetOrganization,
+  IUpdateOrganizationPayload,
 } from "../../utils/modelTypes/hotelier/organizationModelTypes";
 
 export default class OrganizationModel extends Schema {
@@ -34,7 +35,10 @@ export default class OrganizationModel extends Schema {
       });
   }
 
-  public async getOrganization(where: { id?: number; user_id?: number }) {
+  public async getOrganization(where: {
+    id?: number;
+    user_id?: number;
+  }): Promise<IGetOrganization> {
     return await this.db("organization")
       .withSchema("hotelier")
       .select("*")

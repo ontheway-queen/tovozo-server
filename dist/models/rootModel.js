@@ -7,6 +7,7 @@ const database_1 = require("../app/database");
 const administrationModel_1 = __importDefault(require("./adminModel/administrationModel"));
 const adminModel_1 = __importDefault(require("./adminModel/adminModel"));
 const commonModel_1 = __importDefault(require("./commonModel/commonModel"));
+const jobPostModel_1 = __importDefault(require("./hotelierModel/jobPostModel"));
 const organizationModel_1 = __importDefault(require("./hotelierModel/organizationModel"));
 const jobModel_1 = __importDefault(require("./jobModel/jobModel"));
 const jobSeekerModel_1 = __importDefault(require("./jobSeekerModel/jobSeekerModel"));
@@ -37,6 +38,10 @@ class Models {
     // job model
     jobModel(trx) {
         return new jobModel_1.default(trx || database_1.db);
+    }
+    // jobPost model
+    jobPostModel(trx) {
+        return new jobPostModel_1.default(trx || database_1.db);
     }
 }
 exports.default = Models;

@@ -64,6 +64,7 @@ class JobModel extends Schema {
       total,
     };
   }
+
   public async getSingleJob(id: number): Promise<IGetJobResponse> {
     return await this.db(this.TABLES.jobs)
       .withSchema(this.DBO_SCHEMA)

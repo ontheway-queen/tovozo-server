@@ -222,30 +222,7 @@ class PublicService extends AbstractServices {
         if (type === OTP_TYPE_FORGET_JOB_SEEKER) {
           secret = config.JWT_SECRET_JOB_SEEKER;
         } else if (type === OTP_TYPE_VERIFY_JOB_SEEKER) {
-          const checkUser = await userModel.getSingleCommonAuthUser({
-            email,
-            schema_name: "jobseeker",
-            table_name: USER_AUTHENTICATION_VIEW.JOB_SEEKER,
-          });
-
-          if (!checkUser || checkUser?.is_verified) {
-            return {
-              success: false,
-              code: this.StatusCode.HTTP_NOT_FOUND,
-              message: "No unverified user found.",
-            };
-          }
-
-          await userModel.updateProfile(
-            { is_verified: true },
-            { id: checkUser.id }
-          );
-
-          return {
-            success: true,
-            code: this.StatusCode.HTTP_ACCEPTED,
-            message: "User successfully verified.",
-          };
+          secret = config.JWT_SECRET_JOB_SEEKER;
         } else if (type === OTP_TYPE_FORGET_HOTELIER) {
           secret = config.JWT_SECRET_HOTEL;
         } else if (
