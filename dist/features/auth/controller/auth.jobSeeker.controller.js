@@ -38,17 +38,17 @@ class JobSeekerAuthController extends abstract_controller_1.default {
         }));
         // login
         this.login = this.asyncWrapper.wrap({ bodySchema: this.commonValidator.loginValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.services.loginService(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _b = yield this.services.loginService(req), { code } = _b, data = __rest(_b, ["code"]);
             res.status(code).json(data);
         }));
         // forget pass
         this.forgetPassword = this.asyncWrapper.wrap({ bodySchema: this.commonValidator.commonForgetPassInputValidation }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.services.forgetPassword(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _c = yield this.services.forgetPassword(req), { code } = _c, data = __rest(_c, ["code"]);
             res.status(code).json(data);
         }));
         // get login data
         this.LoginData = this.asyncWrapper.wrap({ bodySchema: this.commonValidator.commonTwoFAInputValidation }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.services.LoginData(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _d = yield this.services.LoginData(req), { code } = _d, data = __rest(_d, ["code"]);
             res.status(code).json(data);
         }));
     }
