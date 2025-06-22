@@ -6,7 +6,7 @@ import {
   IJobPostPayload,
 } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
 
-class JobPostService extends AbstractServices {
+class HotelierJobPostService extends AbstractServices {
   public async createJobPost(req: Request) {
     const { user_id } = req.hotelier;
     const body = req.body as {
@@ -42,4 +42,4 @@ class JobPostService extends AbstractServices {
     });
   }
 }
-export default JobPostService;
+export default HotelierJobPostService;

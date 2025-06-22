@@ -1,3 +1,5 @@
+import { UserStatusType } from "../../../features/public/utils/types/publicCommon.types";
+
 export interface ICreateOrganizationPayload {
   name: string;
   address: string;
@@ -32,7 +34,7 @@ export interface IGetOrganization {
   user_id: number;
   details?: string;
   created_at?: string;
-  status: "pending" | string;
+  status: UserStatusType;
   is_deleted: boolean;
   is_2fa_on?: boolean;
   location_id?: number;
