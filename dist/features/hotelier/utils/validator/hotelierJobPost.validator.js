@@ -9,6 +9,7 @@ const constants_1 = require("../../../../utils/miscellaneous/constants");
 class HotelierJobPostValidator {
     constructor() {
         this.createJobPostSchema = joi_1.default.object({
+            vacancy: joi_1.default.number().integer().required(),
             job_post: joi_1.default.object({
                 title: joi_1.default.string().required(),
                 details: joi_1.default.string().optional(),
@@ -20,11 +21,14 @@ class HotelierJobPostValidator {
                     .optional(),
                 requirements: joi_1.default.string().optional(),
             }).required(),
-            job_post_details: joi_1.default.object({
+            job_post_details: joi_1.default.array()
+                .items(joi_1.default.object({
                 job_id: joi_1.default.number().required(),
                 start_time: joi_1.default.string().isoDate().required(),
                 end_time: joi_1.default.string().isoDate().required(),
-            }),
+            }))
+                .min(1)
+                .required(),
         });
     }
 }

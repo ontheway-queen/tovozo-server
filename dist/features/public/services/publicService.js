@@ -268,6 +268,84 @@ class PublicService extends abstract_service_1.default {
             return Object.assign({ success: true, message: this.ResMsg.HTTP_OK, code: this.StatusCode.HTTP_OK }, data);
         });
     }
+    deleteNotification(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { user_id, id } = req.query;
+            return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const model = this.Model.commonModel(trx);
+                const getMyNotification = yield model.getNotification({
+                    id: Number(id),
+                    user_id,
+                    limit: "1",
+                    need_total: false,
+                });
+                if (!getMyNotification.data.length) {
+                    return {
+                        success: false,
+                        message: this.ResMsg.HTTP_NOT_FOUND,
+                        code: this.StatusCode.HTTP_NOT_FOUND,
+                    };
+                }
+                if (getMyNotification.data[0].user_type.toLowerCase() ===
+                    constants_1.USER_TYPE.ADMIN.toLowerCase()) {
+                    yield this.insertAdminAudit(trx, {
+                        details: id
+                            ? `Notification ${id} has been deleted`
+                            : "All Notification has been deleted.",
+                        created_by: user_id,
+                        endpoint: req.originalUrl,
+                        type: "DELETE",
+                    });
+                }
+                const data = yield model.deleteNotification({
+                    notification_id: Number(id),
+                    user_id,
+                });
+                return Object.assign({ success: true, message: this.ResMsg.HTTP_OK, code: this.StatusCode.HTTP_OK }, data);
+            }));
+        });
+    }
+    readNotification(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { user_id, id } = req.query;
+            return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const model = this.Model.commonModel(trx);
+                const getMyNotification = yield model.getNotification({
+                    id: Number(id),
+                    user_id,
+                    limit: "1",
+                    need_total: false,
+                });
+                if (!getMyNotification.data.length) {
+                    return {
+                        success: false,
+                        message: this.ResMsg.HTTP_NOT_FOUND,
+                        code: this.StatusCode.HTTP_NOT_FOUND,
+                    };
+                }
+                if (getMyNotification.data[0].user_type.toLowerCase() ===
+                    constants_1.USER_TYPE.ADMIN.toLowerCase()) {
+                    yield this.insertAdminAudit(trx, {
+                        details: id
+                            ? `Notification ${id} has been read`
+                            : "All Notification has been read.",
+                        created_by: user_id,
+                        endpoint: req.originalUrl,
+                        type: "UPDATE",
+                    });
+                }
+                const data = yield model.readNotification({
+                    notification_id: Number(id),
+                    user_id,
+                });
+                return {
+                    success: true,
+                    message: this.ResMsg.HTTP_OK,
+                    code: this.StatusCode.HTTP_OK,
+                };
+            }));
+        });
+    }
     //get all country
     getAllCountry(req) {
         return __awaiter(this, void 0, void 0, function* () {

@@ -30,16 +30,22 @@ class HotelierJobPostService extends abstract_service_1.default {
                     throw new customError_1.default("Organization not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }
                 body.job_post.organization_id = checkOrganization.id;
-                const checkJob = yield jobModel.getSingleJob(body.job_post_details.job_id);
-                if (!checkJob) {
-                    throw new customError_1.default("Invalid Job Category!", this.StatusCode.HTTP_BAD_REQUEST);
-                }
                 const res = yield model.createJobPost(body.job_post);
                 if (!res.length) {
                     throw new customError_1.default(this.ResMsg.HTTP_BAD_REQUEST, this.StatusCode.HTTP_BAD_REQUEST);
                 }
-                body.job_post_details.job_post_id = res[0].id;
-                yield model.createJobPostDetails(body.job_post_details);
+                const jobPostDetails = [];
+                for (const detail of body.job_post_details) {
+                    const checkJob = yield jobModel.getSingleJob(detail.job_id);
+                    if (!checkJob) {
+                        throw new customError_1.default("Invalid Job Category!", this.StatusCode.HTTP_BAD_REQUEST);
+                    }
+                    if (new Date(detail.start_time) >= new Date(detail.end_time)) {
+                        throw new customError_1.default("Job post start time cannot be greater than or equal to end time.", this.StatusCode.HTTP_BAD_REQUEST);
+                    }
+                    jobPostDetails.push(Object.assign(Object.assign({}, detail), { job_post_id: res[0].id }));
+                }
+                yield model.createJobPostDetails(jobPostDetails);
                 return {
                     success: true,
                     message: this.ResMsg.HTTP_SUCCESSFUL,

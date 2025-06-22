@@ -70,18 +70,18 @@ CREATE TABLE IF NOT EXISTS jobSeeker.job_seeker_info (
 
 CREATE TYPE dbo.payment_status AS ENUM ('PENDING', 'PAID', 'FAILED', "PARTIAL_PAID");
 CREATE TYPE dbo.job_status AS ENUM ('PENDING', 'ASSIGNED', 'CANCELLED', 'COMPLETED');
-CREATE TABLE IF NOT EXISTS jobSeeker.job_application (
-    id SERIAL PRIMARY KEY,
-    job_post_id INT NOT NULL REFERENCES dbo.job_post(id),
-    job_seeker_id INT NOT NULL REFERENCES jobSeeker.job_seeker(user_id),
-    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    cancelled_at TIMESTAMP,
-    start_time TIMESTAMP NOT NULL,
-    end_time TIMESTAMP,
-    status dbo.job_status NOT NULL DEFAULT 'PENDING',
-    hotelier_approved BOOLEAN DEFAULT false,
-    payment_status dbo.payment_status DEFAULT 'PENDING',
-);
+-- CREATE TABLE IF NOT EXISTS jobSeeker.job_application (
+--     id SERIAL PRIMARY KEY,
+--     job_post_id INT NOT NULL REFERENCES dbo.job_post(id),
+--     job_seeker_id INT NOT NULL REFERENCES jobSeeker.job_seeker(user_id),
+--     applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     cancelled_at TIMESTAMP,
+--     start_time TIMESTAMP NOT NULL,
+--     end_time TIMESTAMP,
+--     status dbo.job_status NOT NULL DEFAULT 'PENDING',
+--     hotelier_approved BOOLEAN DEFAULT false,
+--     payment_status dbo.payment_status DEFAULT 'PENDING',
+-- );
 
 
 -- Job Seeker Auth View
@@ -378,3 +378,38 @@ VALUES
 ('Yemenite'),
 ('Zambian'),
 ('Zimbabwean');
+
+
+DROP TABLE IF EXISTS jobseeker.job_application;
+CREATE TABLE IF NOT EXISTS dbo.job_applications (
+    id SERIAL PRIMARY KEY,
+    job_post_details_id INTEGER NOT NULL REFERENCES dbo.job_post_details(id),
+    job_seeker_id INTEGER NOT NULL REFERENCES jobseeker.job_seeker(user_id),
+    status dbo.job_status DEFAULT 'PENDING',
+    payment_status dbo.job_status DEFAULT 'PENDING',
+    cancelled_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+
+CREATE TYPE dbo.job_task_activities_status AS ENUM (
+  'Requested',
+  'Rejected',
+  'InProgress',
+  'Completed'
+);
+CREATE TABLE IF NOT EXISTS dbo.job_task_activities (
+    id SERIAL PRIMARY KEY,
+    job_application_id INTEGER NOT NULL REFERENCES dbo.job_applications(id),
+    job_post_details_id INTEGER NOT NULL REFERENCES dbo.job_post_details(id),
+    job_seeker_id INTEGER NOT NULL REFERENCES jobseeker.job_seeker(user_id),
+    organization_id integer NOT NULL,
+    status dbo.job_task_activities_status DEFAULT 'Requested',
+    start_time TIMESTAMP,
+    end_time TIMESTAMP,
+    start_approved_time TIMESTAMP,
+    end_approved_time TIMESTAMP,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

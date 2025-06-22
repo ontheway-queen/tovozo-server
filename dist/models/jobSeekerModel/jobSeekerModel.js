@@ -70,8 +70,8 @@ class JobSeekerModel extends schema_1.default {
                     qb.andWhereBetween("user_created_at", [from_date, to_date]);
                 }
             })
-                .limit(limit)
-                .offset(skip);
+                .limit(Number(limit))
+                .offset(Number(skip));
             const total = yield this.db("vw_full_job_seeker_profile")
                 .withSchema(this.JOB_SEEKER)
                 .count("user_id as total")

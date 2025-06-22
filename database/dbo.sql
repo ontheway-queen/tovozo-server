@@ -120,6 +120,7 @@ CREATE TABLE IF NOT EXISTS dbo.jobs
 
 
 -- Organization
+CREATE TYPE dbo.job_post_status AS ENUM('Live','Cancelled');
 
 -- Job post
 CREATE TABLE IF NOT EXISTS dbo.job_post
@@ -132,10 +133,12 @@ CREATE TABLE IF NOT EXISTS dbo.job_post
     hourly_rate DECIMAL(8,2) NOT NULL
     expire_time TIMESTAMP,
     prefer_gender varying(42) not null,
-    status character varying(42) DEFAULT 'Live',
+    status dbo.job_post_status DEFAULT 'Live',
     created_time timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT job_post_pkey PRIMARY KEY (id)
 );
+
+CREATE TYPE dbo.job_post_details_status AS ENUM('Pending','Applied','Expired', 'Completed','Work Finished');
 
 CREATE TABLE IF NOT EXISTS dbo.job_post_details
 (
@@ -144,7 +147,7 @@ CREATE TABLE IF NOT EXISTS dbo.job_post_details
     job_id integer NOT NULL,
     start_time TIMESTAMP NOT NULL,
     end_time TIMESTAMP NOT NULL,
-    status character varying(42) DEFAULT 'Pending',
+    status dbo.job_post_details_status DEFAULT 'Pending',
     CONSTRAINT job_post_details_pkey PRIMARY KEY (id)
 );
 

@@ -123,6 +123,7 @@ export default class AdminModel extends Schema {
       .select(
         "ua.*",
         "u.username",
+        "u.name",
         "u.email",
         "u.phone_number",
         "u.photo",

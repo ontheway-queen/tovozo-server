@@ -15,7 +15,7 @@ var NotificationTypeEnum;
 })(NotificationTypeEnum || (exports.NotificationTypeEnum = NotificationTypeEnum = {}));
 var TypeEmitNotification;
 (function (TypeEmitNotification) {
-    TypeEmitNotification[TypeEmitNotification["ADMIN_NEW_NOTIFICATION"] = 0] = "ADMIN_NEW_NOTIFICATION";
-    TypeEmitNotification[TypeEmitNotification["HOTELIER_NEW_NOTIFICATION"] = 1] = "HOTELIER_NEW_NOTIFICATION";
-    TypeEmitNotification[TypeEmitNotification["JOB_SEEKER_NEW_NOTIFICATION"] = 2] = "JOB_SEEKER_NEW_NOTIFICATION";
+    TypeEmitNotification["ADMIN_NEW_NOTIFICATION"] = "ADMIN_NEW_NOTIFICATION";
+    TypeEmitNotification["HOTELIER_NEW_NOTIFICATION"] = "HOTELIER_NEW_NOTIFICATION";
+    TypeEmitNotification["JOB_SEEKER_NEW_NOTIFICATION"] = "JOB_SEEKER_NEW_NOTIFICATION";
 })(TypeEmitNotification || (exports.TypeEmitNotification = TypeEmitNotification = {}));

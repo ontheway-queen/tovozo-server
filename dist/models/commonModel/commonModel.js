@@ -174,15 +174,16 @@ class CommonModel extends schema_1.default {
     }
     getNotification(params) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { limit, skip, user_id } = params;
+            const { limit = 100, skip = 0, id, user_id, need_total = true } = params;
             const data = yield this.db(`${this.TABLES.notification} as n`)
                 .withSchema(this.DBO_SCHEMA)
-                .select("n.*", this.db.raw(`
+                .select("n.*", "u.type as user_type", this.db.raw(`
         CASE
           WHEN ns.user_id IS NOT NULL THEN true
           ELSE false
         END AS is_read
       `))
+                .leftJoin("user as u", "u.id", "n.user_id")
                 .leftJoin(`${this.TABLES.notification_seen} as ns`, function () {
                 this.on("ns.notification_id", "n.id").andOn("ns.user_id", database_1.db.raw("?", [user_id]));
             })
@@ -193,28 +194,36 @@ class CommonModel extends schema_1.default {
                 .andWhere((qb) => {
                 if (user_id)
                     qb.andWhere("n.user_id", user_id);
+                if (id)
+                    qb.andWhere("n.id", id);
             })
                 .orderBy("n.created_at", "desc")
                 .limit(Number(limit))
                 .offset(Number(skip));
-            const total = yield this.db(`${this.TABLES.notification} as n`)
-                .withSchema(this.DBO_SCHEMA)
-                .count("n.id as total")
-                .leftJoin(`${this.TABLES.notification_seen} as ns`, function () {
-                this.on("ns.notification_id", "n.id").andOn("ns.user_id", database_1.db.raw("?", [user_id]));
-            })
-                .leftJoin(`${this.TABLES.notification_delete} as nd`, function () {
-                this.on("nd.notification_id", "n.id").andOn("nd.user_id", database_1.db.raw("?", [user_id]));
-            })
-                .whereNull("nd.notification_id")
-                .andWhere((qb) => {
-                if (user_id)
-                    qb.andWhere("n.user_id", user_id);
-            })
-                .first();
+            let total;
+            if (need_total) {
+                const totalQuery = yield this.db(`${this.TABLES.notification} as n`)
+                    .withSchema(this.DBO_SCHEMA)
+                    .count("n.id as total")
+                    .leftJoin(`${this.TABLES.notification_seen} as ns`, function () {
+                    this.on("ns.notification_id", "n.id").andOn("ns.user_id", database_1.db.raw("?", [user_id]));
+                })
+                    .leftJoin(`${this.TABLES.notification_delete} as nd`, function () {
+                    this.on("nd.notification_id", "n.id").andOn("nd.user_id", database_1.db.raw("?", [user_id]));
+                })
+                    .whereNull("nd.notification_id")
+                    .andWhere((qb) => {
+                    if (id)
+                        qb.andWhere("n.id", id);
+                    if (user_id)
+                        qb.andWhere("n.user_id", user_id);
+                })
+                    .first();
+                total = (totalQuery === null || totalQuery === void 0 ? void 0 : totalQuery.total) ? Number(totalQuery.total) : 0;
+            }
             return {
                 data,
-                total: total === null || total === void 0 ? void 0 : total.total,
+                total,
             };
         });
     }

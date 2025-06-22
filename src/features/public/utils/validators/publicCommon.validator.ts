@@ -272,4 +272,8 @@ export default class PublicCommonValidator {
     limit: Joi.number().integer().positive().optional(),
     skip: Joi.number().integer().positive().optional(),
   });
+  mutationNotificationValidator = Joi.object({
+    user_id: Joi.number().integer().positive().required(),
+    id: Joi.number().integer().positive().optional(),
+  });
 }

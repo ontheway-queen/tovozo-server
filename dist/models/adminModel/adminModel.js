@@ -107,7 +107,7 @@ class AdminModel extends schema_1.default {
     getSingleAdmin(payload) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("admin as ua")
-                .select("ua.*", "u.username", "u.email", "u.phone_number", "u.photo", "u.password_hash", "u.status", "u.socket_id", "rl.name as role", "rl.id as role_id")
+                .select("ua.*", "u.username", "u.name", "u.email", "u.phone_number", "u.photo", "u.password_hash", "u.status", "u.socket_id", "rl.name as role", "rl.id as role_id")
                 .withSchema(this.ADMIN_SCHEMA)
                 .leftJoin("roles as rl", "rl.id", "ua.role_id")
                 .joinRaw("LEFT JOIN dbo.user u ON u.id = ua.user_id")
