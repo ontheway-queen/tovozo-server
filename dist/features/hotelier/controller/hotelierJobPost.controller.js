@@ -25,12 +25,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_controller_1 = __importDefault(require("../../../abstract/abstract.controller"));
 const hotelierJobPost_service_1 = __importDefault(require("../services/hotelierJobPost.service"));
-const HotelierJobPostValidator_1 = require("../utils/validator/HotelierJobPostValidator");
+const hotelierJobPost_validator_1 = require("../utils/validator/hotelierJobPost.validator");
 class HotelierJobPostController extends abstract_controller_1.default {
     constructor() {
         super();
         this.service = new hotelierJobPost_service_1.default();
-        this.validator = new HotelierJobPostValidator_1.HotelierJobPostValidator();
+        this.validator = new hotelierJobPost_validator_1.HotelierJobPostValidator();
         this.createJobPost = this.asyncWrapper.wrap({ bodySchema: this.validator.createJobPostSchema }, (req, res) => __awaiter(this, void 0, void 0, function* () {
             const _a = yield this.service.createJobPost(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);

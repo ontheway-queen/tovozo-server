@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import AbstractController from "../../../abstract/abstract.controller";
 import HotelierJobPostService from "../services/hotelierJobPost.service";
-import { HotelierJobPostValidator } from "../utils/validator/HotelierJobPostValidator";
+import { HotelierJobPostValidator } from "../utils/validator/hotelierJobPost.validator";
 
 export default class HotelierJobPostController extends AbstractController {
   private service = new HotelierJobPostService();
