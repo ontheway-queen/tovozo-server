@@ -54,6 +54,11 @@ class PublicCommonValidator {
         this.singleParamValidator = joi_1.default.object({
             id: joi_1.default.number().required(),
         });
+        // limit skip
+        this.getLimitSkipQueryValidator = joi_1.default.object({
+            limit: joi_1.default.number().integer().optional(),
+            skip: joi_1.default.number().integer().optional(),
+        });
         // Get nationality validator
         this.getNationality = joi_1.default.object({
             name: joi_1.default.string().optional().allow(""),

@@ -34,17 +34,20 @@ class JobPostModel extends schema_1.default {
     }
     getJobPostList(params) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { user_id, title, category_id, city_id, limit, skip } = params;
-            const data = yield this.db(this.TABLES.job_post)
+            const { user_id, title, category_id, city_id, orderBy, orderTo, limit, skip, need_total = true, } = params;
+            const data = yield this.db("job_post as jp")
                 .withSchema(this.DBO_SCHEMA)
                 .select("jp.id", "jp.organization_id", "jp.title", "j.title as job_category", "jp.hourly_rate", "jp.created_time", "org.name as organization_name", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.city_name", "vwl.state_name", "vwl.country_name")
-                .joinRaw(`join ${this.HOTELIER}.${this.TABLES.organization} as org`)
-                .join(this.TABLES.user, "u.id", "org.user_id")
-                .join(this.TABLES.jobs, "j.id", "jp.job_id")
+                .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
+                `${this.HOTELIER}.${this.TABLES.organization}`,
+            ])
+                .join("user as u", "u.id", "org.user_id")
+                .join("job_post_details as jpd", "jp.id", "jpd.job_post_id")
+                .join("jobs as j", "j.id", "jpd.job_id")
                 .leftJoin("vw_location as vwl", "vwl.location_id", "org.location_id")
                 .where((qb) => {
                 if (user_id) {
-                    qb.andWhere("u.user_id", user_id);
+                    qb.andWhere("u.id", user_id);
                 }
                 if (category_id) {
                     qb.andWhere("j.job_id", category_id);
@@ -55,7 +58,43 @@ class JobPostModel extends schema_1.default {
                 if (title) {
                     qb.andWhereILike("jp.title", `%${title}%`);
                 }
-            });
+            })
+                .orderBy(orderBy || "jp.id", orderTo || "desc")
+                .limit(limit || 100)
+                .offset(skip || 0);
+            let total;
+            if (need_total) {
+                const totalQuery = yield this.db("job_post as jp")
+                    .withSchema(this.DBO_SCHEMA)
+                    .count("jp.id as total")
+                    .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
+                    `${this.HOTELIER}.${this.TABLES.organization}`,
+                ])
+                    .join("user as u", "u.id", "org.user_id")
+                    .join("job_post_details as jpd", "jp.id", "jpd.job_post_id")
+                    .join("jobs as j", "j.id", "jpd.job_id")
+                    .leftJoin("vw_location as vwl", "vwl.location_id", "org.location_id")
+                    .where((qb) => {
+                    if (user_id) {
+                        qb.andWhere("u.id", user_id);
+                    }
+                    if (category_id) {
+                        qb.andWhere("j.job_id", category_id);
+                    }
+                    if (city_id) {
+                        qb.andWhere("vwl.city_id", city_id);
+                    }
+                    if (title) {
+                        qb.andWhereILike("jp.title", `%${title}%`);
+                    }
+                })
+                    .first();
+                total = (totalQuery === null || totalQuery === void 0 ? void 0 : totalQuery.total) ? Number(totalQuery.total) : 0;
+            }
+            return {
+                data,
+                total,
+            };
         });
     }
 }

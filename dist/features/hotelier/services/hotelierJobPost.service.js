@@ -48,5 +48,14 @@ class HotelierJobPostService extends abstract_service_1.default {
             }));
         });
     }
+    getJobPost(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { limit, skip } = req.query;
+            const { user_id } = req.hotelier;
+            const model = this.Model.jobPostModel();
+            const data = yield model.getJobPostList({ user_id, limit, skip });
+            return Object.assign({ success: true, message: this.ResMsg.HTTP_OK, code: this.StatusCode.HTTP_OK }, data);
+        });
+    }
 }
 exports.default = HotelierJobPostService;

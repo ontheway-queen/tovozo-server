@@ -76,6 +76,12 @@ export default class PublicCommonValidator {
     id: Joi.number().required(),
   });
 
+  // limit skip
+  public getLimitSkipQueryValidator = Joi.object({
+    limit: Joi.number().integer().optional(),
+    skip: Joi.number().integer().optional(),
+  });
+
   // Get nationality validator
   public getNationality = Joi.object({
     name: Joi.string().optional().allow(""),

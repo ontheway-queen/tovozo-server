@@ -9,6 +9,9 @@ export default class HotelierJobPostRouter extends AbstractRouter {
   }
 
   private callRouter() {
-    this.router.route("/").post(this.controller.createJobPost);
+    this.router
+      .route("/")
+      .post(this.controller.createJobPost)
+      .get(this.controller.getJobPost);
   }
 }

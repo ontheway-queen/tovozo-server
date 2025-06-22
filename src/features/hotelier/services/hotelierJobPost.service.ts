@@ -52,5 +52,18 @@ class HotelierJobPostService extends AbstractServices {
       };
     });
   }
+
+  public async getJobPost(req: Request) {
+    const { limit, skip } = req.query;
+    const { user_id } = req.hotelier;
+    const model = this.Model.jobPostModel();
+    const data = await model.getJobPostList({ user_id, limit, skip });
+    return {
+      success: true,
+      message: this.ResMsg.HTTP_OK,
+      code: this.StatusCode.HTTP_OK,
+      ...data,
+    };
+  }
 }
 export default HotelierJobPostService;
