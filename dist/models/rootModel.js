@@ -12,6 +12,7 @@ const organizationModel_1 = __importDefault(require("./hotelierModel/organizatio
 const jobModel_1 = __importDefault(require("./jobModel/jobModel"));
 const jobSeekerModel_1 = __importDefault(require("./jobSeekerModel/jobSeekerModel"));
 const userModel_1 = __importDefault(require("./userModel/userModel"));
+const jobApplicationModel_1 = __importDefault(require("./jobApplicationModel/jobApplicationModel"));
 class Models {
     UserModel(trx) {
         return new userModel_1.default(trx || database_1.db);
@@ -42,6 +43,10 @@ class Models {
     // jobPost model
     jobPostModel(trx) {
         return new jobPostModel_1.default(trx || database_1.db);
+    }
+    // job application model
+    jobApplicationModel(trx) {
+        return new jobApplicationModel_1.default(trx || database_1.db);
     }
 }
 exports.default = Models;
