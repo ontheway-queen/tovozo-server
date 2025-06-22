@@ -8,6 +8,7 @@ import OrganizationModel from "./hotelierModel/organizationModel";
 import JobModel from "./jobModel/jobModel";
 import JobSeekerModel from "./jobSeekerModel/jobSeekerModel";
 import UserModel from "./userModel/userModel";
+import JobApplicationModel from "./jobApplicationModel/jobApplicationModel";
 
 export default class Models {
   public UserModel(trx?: Knex.Transaction) {
@@ -45,5 +46,10 @@ export default class Models {
   // jobPost model
   public jobPostModel(trx?: Knex.Transaction) {
     return new JobPostModel(trx || db);
+  }
+
+  // job application model
+  public jobApplicationModel(trx?: Knex.Transaction) {
+    return new JobApplicationModel(trx || db);
   }
 }

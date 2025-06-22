@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_router_1 = __importDefault(require("../../abstract/abstract.router"));
 const jobSeekerProfile_router_1 = __importDefault(require("./router/jobSeekerProfile.router"));
 const jobSeekerJobs_router_1 = require("./router/jobSeekerJobs.router");
+const jobSeekerJobApplication_router_1 = require("./router/jobSeekerJobApplication.router");
 class JobSeekerRootRouter extends abstract_router_1.default {
     constructor() {
         super();
@@ -16,6 +17,8 @@ class JobSeekerRootRouter extends abstract_router_1.default {
         this.router.use("/profile", new jobSeekerProfile_router_1.default().router);
         // job seeker jobs router
         this.router.use("/jobs", new jobSeekerJobs_router_1.JobSeekerJobsRouter().router);
+        // job seeker job application router
+        this.router.use("/job-application", new jobSeekerJobApplication_router_1.JobSeekerJobApplicationRouter().router);
     }
 }
 exports.default = JobSeekerRootRouter;
