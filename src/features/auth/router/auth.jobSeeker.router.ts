@@ -14,6 +14,7 @@ class JobSeekerAuthRouter extends AbstractRouter {
       .route("/registration")
       .post(
         this.uploader.cloudUploadRaw(this.fileFolders.JOB_SEEKER_FILES),
+        this.authChecker.jobSeekerAuthChecker,
         this.controller.registration
       );
 

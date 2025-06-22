@@ -12,6 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const database_1 = require("../../app/database");
 const schema_1 = __importDefault(require("../../utils/miscellaneous/schema"));
 class CommonModel extends schema_1.default {
     constructor(db) {
@@ -162,6 +163,104 @@ class CommonModel extends schema_1.default {
                     qb.andWhere("id", query.location_id);
                 }
             });
+        });
+    }
+    createNotification(payload) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db(this.TABLES.notification)
+                .withSchema(this.DBO_SCHEMA)
+                .insert(payload);
+        });
+    }
+    getNotification(params) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { limit, skip, user_id } = params;
+            const data = yield this.db(`${this.TABLES.notification} as n`)
+                .withSchema(this.DBO_SCHEMA)
+                .select("n.*", this.db.raw(`
+        CASE
+          WHEN ns.user_id IS NOT NULL THEN true
+          ELSE false
+        END AS is_read
+      `))
+                .leftJoin(`${this.TABLES.notification_seen} as ns`, function () {
+                this.on("ns.notification_id", "n.id").andOn("ns.user_id", database_1.db.raw("?", [user_id]));
+            })
+                .leftJoin(`${this.TABLES.notification_delete} as nd`, function () {
+                this.on("nd.notification_id", "n.id").andOn("nd.user_id", database_1.db.raw("?", [user_id]));
+            })
+                .whereNull("nd.notification_id")
+                .andWhere((qb) => {
+                if (user_id)
+                    qb.andWhere("n.user_id", user_id);
+            })
+                .orderBy("n.created_at", "desc")
+                .limit(Number(limit))
+                .offset(Number(skip));
+            const total = yield this.db(`${this.TABLES.notification} as n`)
+                .withSchema(this.DBO_SCHEMA)
+                .count("n.id as total")
+                .leftJoin(`${this.TABLES.notification_seen} as ns`, function () {
+                this.on("ns.notification_id", "n.id").andOn("ns.user_id", database_1.db.raw("?", [user_id]));
+            })
+                .leftJoin(`${this.TABLES.notification_delete} as nd`, function () {
+                this.on("nd.notification_id", "n.id").andOn("nd.user_id", database_1.db.raw("?", [user_id]));
+            })
+                .whereNull("nd.notification_id")
+                .andWhere((qb) => {
+                if (user_id)
+                    qb.andWhere("n.user_id", user_id);
+            })
+                .first();
+            return {
+                data,
+                total: total === null || total === void 0 ? void 0 : total.total,
+            };
+        });
+    }
+    deleteNotification(payload) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db(this.TABLES.notification_delete)
+                .withSchema(this.DBO_SCHEMA)
+                .insert(payload);
+        });
+    }
+    readNotification(payload) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db(this.TABLES.notification_seen)
+                .withSchema(this.DBO_SCHEMA)
+                .insert(payload);
+        });
+    }
+    getAllNationality(params) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { name, limit = 100, skip = 0 } = params;
+            const data = yield this.db(this.TABLES.nationality)
+                .withSchema(this.DBO_SCHEMA)
+                .select("id", "name", "created_at")
+                .where((qb) => {
+                qb.where("status", true);
+                if (name) {
+                    qb.whereILike("name", `%${name}%`);
+                }
+            })
+                .orderBy("name", "asc")
+                .limit(limit)
+                .offset(skip);
+            const total = yield this.db(this.TABLES.nationality)
+                .withSchema(this.DBO_SCHEMA)
+                .count("id as total")
+                .where((qb) => {
+                qb.where("status", true);
+                if (name) {
+                    qb.whereILike("name", `%${name}%`);
+                }
+            })
+                .first();
+            return {
+                data,
+                total: total === null || total === void 0 ? void 0 : total.total,
+            };
         });
     }
 }

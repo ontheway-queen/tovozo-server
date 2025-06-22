@@ -1,16 +1,21 @@
 import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
+import config from "../../../app/config";
+import CustomError from "../../../utils/lib/customError";
 import Lib from "../../../utils/lib/lib";
 import {
+  LOGIN_TOKEN_EXPIRES_IN,
   PROJECT_NAME,
   USER_AUTHENTICATION_VIEW,
   USER_STATUS,
   USER_TYPE,
 } from "../../../utils/miscellaneous/constants";
-import CustomError from "../../../utils/lib/customError";
+import {
+  IForgetPasswordPayload,
+  NotificationTypeEnum,
+} from "../../../utils/modelTypes/common/commonModelTypes";
+import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
 import { registrationHotelierTemplate } from "../../../utils/templates/registrationHotelierTemplate";
-import config from "../../../app/config";
-import { IForgetPasswordPayload } from "../../../utils/modelTypes/common/commonModelTypes";
 
 export default class HotelierAuthService extends AbstractServices {
   constructor() {
@@ -21,7 +26,7 @@ export default class HotelierAuthService extends AbstractServices {
     return this.db.transaction(async (trx) => {
       const files = (req.files as Express.Multer.File[]) || [];
 
-      const user = Lib.safeParseJSON(req.body.user);
+      const { designation, ...user } = Lib.safeParseJSON(req.body.user);
       const organization = Lib.safeParseJSON(req.body.organization);
       const organizationAddress = Lib.safeParseJSON(
         req.body.organization_address
@@ -41,7 +46,7 @@ export default class HotelierAuthService extends AbstractServices {
       const organizationModel = this.Model.organizationModel(trx);
       const commonModel = this.Model.commonModel(trx);
 
-      const existingUser = await userModel.checkUser({
+      const [existingUser] = await userModel.checkUser({
         email,
         phone_number,
         username,
@@ -56,13 +61,13 @@ export default class HotelierAuthService extends AbstractServices {
             message: this.ResMsg.EMAIL_ALREADY_EXISTS,
           };
         }
-        if (existingUser.username === username) {
-          return {
-            success: false,
-            code: this.StatusCode.HTTP_BAD_REQUEST,
-            message: this.ResMsg.USERNAME_ALREADY_EXISTS,
-          };
-        }
+        // if (existingUser.username === username) {
+        //   return {
+        //     success: false,
+        //     code: this.StatusCode.HTTP_BAD_REQUEST,
+        //     message: this.ResMsg.USERNAME_ALREADY_EXISTS,
+        //   };
+        // }
         if (existingUser.phone_number === phone_number) {
           return {
             success: false,
@@ -97,6 +102,10 @@ export default class HotelierAuthService extends AbstractServices {
       const locationId = organization_location[0].id;
       const userId = registration[0].id;
 
+      await userModel.createUserMaintenanceDesignation({
+        designation,
+        user_id: userId,
+      });
       const orgInsert = await organizationModel.createOrganization({
         ...organization,
         user_id: userId,
@@ -133,14 +142,23 @@ export default class HotelierAuthService extends AbstractServices {
         status: true,
         create_date: new Date(),
       };
-
+      await this.insertNotification(trx, TypeUser.ADMIN, {
+        user_id: userId,
+        content: `New hotelier "${user.name}" (${username}) has registered and is awaiting verification.`,
+        related_id: userId,
+        type: NotificationTypeEnum.HOTELIER_VERIFICATION,
+      });
       await Lib.sendEmailDefault({
         email,
         emailSub: `Your organization registration with ${PROJECT_NAME} is under review`,
         emailBody: registrationHotelierTemplate({ name: user.name }),
       });
 
-      const token = Lib.createToken(tokenData, config.JWT_SECRET_HOTEL, "48h");
+      const token = Lib.createToken(
+        tokenData,
+        config.JWT_SECRET_HOTEL,
+        LOGIN_TOKEN_EXPIRES_IN
+      );
 
       return {
         success: true,
@@ -161,8 +179,6 @@ export default class HotelierAuthService extends AbstractServices {
       table_name: USER_AUTHENTICATION_VIEW.HOTELIER,
       email,
     });
-
-    console.log({ checkUser });
 
     if (!checkUser) {
       return {
@@ -215,7 +231,11 @@ export default class HotelierAuthService extends AbstractServices {
         organization_status: rest.organization_status,
       };
 
-      const token = Lib.createToken(token_data, config.JWT_SECRET_HOTEL, "48h");
+      const token = Lib.createToken(
+        token_data,
+        config.JWT_SECRET_HOTEL,
+        LOGIN_TOKEN_EXPIRES_IN
+      );
       return {
         success: true,
         code: this.StatusCode.HTTP_OK,
@@ -281,7 +301,11 @@ export default class HotelierAuthService extends AbstractServices {
         organization_status: rest.organization_status,
       };
 
-      const token = Lib.createToken(token_data, config.JWT_SECRET_HOTEL, "48h");
+      const token = Lib.createToken(
+        token_data,
+        config.JWT_SECRET_HOTEL,
+        LOGIN_TOKEN_EXPIRES_IN
+      );
       return {
         success: true,
         code: this.StatusCode.HTTP_OK,
@@ -315,7 +339,7 @@ export default class HotelierAuthService extends AbstractServices {
     if (email === verify_email) {
       const hashed_pass = await Lib.hashValue(password);
       const model = this.Model.UserModel();
-      const get_user = await model.checkUser({
+      const [get_user] = await model.checkUser({
         email,
         type: USER_TYPE.HOTELIER,
       });

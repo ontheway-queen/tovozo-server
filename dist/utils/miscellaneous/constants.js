@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.OTP_FOR = exports.USER_TYPE = exports.USER_AUTHENTICATION_VIEW = exports.USER_STATUS = exports.OTP_TYPE_TWO_FA_HOTELIER = exports.OTP_TYPE_TWO_FA_ADMIN = exports.OTP_TYPE_TWO_FA_JOB_SEEKER = exports.OTP_TYPE_FORGET_HOTELIER = exports.OTP_TYPE_VERIFY_ADMIN = exports.OTP_TYPE_VERIFY_HOTELIER = exports.OTP_TYPE_VERIFY_JOB_SEEKER = exports.OTP_TYPE_FORGET_JOB_SEEKER = exports.OTP_TYPE_FORGET_ADMIN = exports.SOURCE_ADMIN = exports.SOURCE_EXTERNAL = exports.SOURCE_B2C = exports.SOURCE_AGENT_B2C = exports.SOURCE_SUB_AGENT = exports.SOURCE_AGENT = exports.ERROR_LEVEL_CRITICAL = exports.ERROR_LEVEL_ERROR = exports.ERROR_LEVEL_WARNING = exports.ERROR_LEVEL_INFO = exports.ERROR_LEVEL_DEBUG = exports.OTP_DEFAULT_EXPIRY = exports.DATA_LIMIT = exports.OTP_EMAIL_SUBJECT = exports.HOTELIER_CLIENT_URL = exports.CLIENT_URL = exports.PROJECT_ADDRESS = exports.PROJECT_NUMBER = exports.PROJECT_EMAIL = exports.PROJECT_LINK = exports.PROJECT_ICON = exports.PROJECT_LOGO = exports.PROJECT_NAME = exports.OTP_TYPES = exports.origin = void 0;
+exports.LOGIN_TOKEN_EXPIRES_IN = exports.BRITISH_ID = exports.OTP_FOR = exports.USER_TYPE = exports.USER_AUTHENTICATION_VIEW = exports.USER_STATUS = exports.OTP_TYPE_TWO_FA_HOTELIER = exports.OTP_TYPE_TWO_FA_ADMIN = exports.OTP_TYPE_TWO_FA_JOB_SEEKER = exports.OTP_TYPE_FORGET_HOTELIER = exports.OTP_TYPE_VERIFY_ADMIN = exports.OTP_TYPE_VERIFY_HOTELIER = exports.OTP_TYPE_VERIFY_JOB_SEEKER = exports.OTP_TYPE_FORGET_JOB_SEEKER = exports.OTP_TYPE_FORGET_ADMIN = exports.SOURCE_ADMIN = exports.SOURCE_EXTERNAL = exports.SOURCE_B2C = exports.SOURCE_AGENT_B2C = exports.SOURCE_SUB_AGENT = exports.SOURCE_AGENT = exports.ERROR_LEVEL_CRITICAL = exports.ERROR_LEVEL_ERROR = exports.ERROR_LEVEL_WARNING = exports.ERROR_LEVEL_INFO = exports.ERROR_LEVEL_DEBUG = exports.OTP_DEFAULT_EXPIRY = exports.DATA_LIMIT = exports.OTP_EMAIL_SUBJECT = exports.JOB_SEEKER_PLAY_STORE_URL = exports.JOB_SEEKER_APP_STORE_URL = exports.HOTELIER_PLAY_STORE_URL = exports.HOTELIER_APP_STORE_URL = exports.CLIENT_URL = exports.PROJECT_ADDRESS = exports.PROJECT_NUMBER = exports.PROJECT_EMAIL = exports.PROJECT_LINK = exports.APP_STORE_ICON = exports.PLAY_STORE_ICON = exports.PROJECT_ICON = exports.PROJECT_LOGO = exports.PROJECT_NAME = exports.OTP_TYPES = exports.origin = void 0;
 exports.origin = [
     "http://localhost:3000",
     "http://localhost:3001",
@@ -24,14 +24,19 @@ exports.OTP_TYPES = {
 };
 //Project Info
 exports.PROJECT_NAME = "Tovozo";
-exports.PROJECT_LOGO = "https://m360-trabill.s3.ap-south-1.amazonaws.com/tovozo-storage/main/be_logo.png";
-exports.PROJECT_ICON = "https://m360-trabill.s3.ap-south-1.amazonaws.com/tovozo-storage/main/be_icon.png";
+exports.PROJECT_LOGO = "https://m360ict-data.s3.ap-south-1.amazonaws.com/tovozo-storage/main/logo.png";
+exports.PROJECT_ICON = "https://m360ict-data.s3.ap-south-1.amazonaws.com/tovozo-storage/main/logo.png";
+exports.PLAY_STORE_ICON = "https://m360ict-data.s3.ap-south-1.amazonaws.com/tovozo-storage/main/play-store.webp";
+exports.APP_STORE_ICON = "https://m360ict-data.s3.ap-south-1.amazonaws.com/tovozo-storage/main/app-store.png";
 exports.PROJECT_LINK = "http://10.10.220.31:3000";
 exports.PROJECT_EMAIL = "sup.m360ict@gmail.com";
 exports.PROJECT_NUMBER = "+8801958398339";
 exports.PROJECT_ADDRESS = "Block#H, Road#7, House#74, Banani, Dhaka";
 exports.CLIENT_URL = "http://10.10.220.47:5000";
-exports.HOTELIER_CLIENT_URL = "http://10.10.220.47:5000";
+exports.HOTELIER_APP_STORE_URL = "https://apps.apple.com/us/app/m-360/id1365604081";
+exports.HOTELIER_PLAY_STORE_URL = "https://play.google.com/store/apps/dev?id=8957568887029131075&hl=en";
+exports.JOB_SEEKER_APP_STORE_URL = "https://apps.apple.com/us/app/m-360/id1365604081";
+exports.JOB_SEEKER_PLAY_STORE_URL = "https://play.google.com/store/apps/dev?id=8957568887029131075&hl=en";
 // Email subject
 exports.OTP_EMAIL_SUBJECT = "Your One Time Password For Verification";
 // Default data get limit
@@ -79,3 +84,7 @@ exports.USER_TYPE = {
 };
 // OTP for
 exports.OTP_FOR = "Verification";
+// British ID
+exports.BRITISH_ID = 26;
+// Token Expiration time
+exports.LOGIN_TOKEN_EXPIRES_IN = "48h";

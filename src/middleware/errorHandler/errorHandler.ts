@@ -1,14 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
-import ManageFile from '../../utils/lib/manageFile';
-import CustomError from '../../utils/lib/customError';
-import {
-  SOURCE_ADMIN,
-  SOURCE_AGENT,
-  SOURCE_AGENT_B2C,
-  SOURCE_B2C,
-  SOURCE_EXTERNAL,
-} from '../../utils/miscellaneous/constants';
-import Models from '../../models/rootModel';
+import { NextFunction, Request, Response } from "express";
+import CustomError from "../../utils/lib/customError";
+import ManageFile from "../../utils/lib/manageFile";
 
 interface ICustomError {
   success: boolean;
@@ -32,7 +24,6 @@ export default class ErrorHandler {
   ) => {
     // // file removing starts
     const files = req.upFiles || [];
-
     if (files.length) {
       await this.manageFile.deleteFromCloud(files);
     }

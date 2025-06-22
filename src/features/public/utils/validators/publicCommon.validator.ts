@@ -74,6 +74,13 @@ export default class PublicCommonValidator {
     id: Joi.number().required(),
   });
 
+  // Get nationality validator
+  public getNationality = Joi.object({
+    name: Joi.string().optional().allow(""),
+    limit: Joi.number().integer().optional(),
+    skip: Joi.number().integer().optional(),
+  });
+
   // common forget password input validator
   commonForgetPassInputValidation = Joi.object({
     token: Joi.string().required().messages({
@@ -156,7 +163,7 @@ export default class PublicCommonValidator {
 
   registerJobSeekerValidator = Joi.object({
     user: Joi.object({
-      username: Joi.string().min(1).max(255).required(),
+      // username: Joi.string().min(1).max(255).required(),
       name: Joi.string().min(1).max(255).required(),
       email: Joi.string().email().lowercase().min(1).max(255).required(),
       password: Joi.string().min(8).max(100).required(),
@@ -164,70 +171,73 @@ export default class PublicCommonValidator {
     }).required(),
 
     job_seeker: Joi.object({
-      date_of_birth: Joi.date().required(),
-      gender: Joi.string().valid("Male", "Female", "Other").required(),
-      nationality: Joi.string().max(255).required(),
-      work_permit: Joi.boolean().required(),
+      // date_of_birth: Joi.date().required(),
+      // gender: Joi.string().valid("Male", "Female", "Other").required(),
+      nationality: Joi.number().integer().required(),
+      // work_permit: Joi.boolean().required(),
       account_status: Joi.string().max(42).default("Pending"),
-      criminal_convictions: Joi.boolean().required(),
+      // criminal_convictions: Joi.boolean().required(),
     }).required(),
+    passport_copy: Joi.string().max(255).allow("").optional(),
+    id_copy: Joi.string().max(255).allow("").optional(),
+    visa_copy: Joi.string().max(255).allow("").optional(),
+    // own_address: Joi.object({
+    //   city_id: Joi.number().integer().required(),
+    //   name: Joi.string().max(100).required(),
+    //   address: Joi.string().optional(),
+    //   longitude: Joi.number().precision(6).optional(),
+    //   latitude: Joi.number().precision(6).optional(),
+    //   postal_code: Joi.string().max(20).optional(),
+    // }).required(),
 
-    own_address: Joi.object({
-      city_id: Joi.number().integer().required(),
-      name: Joi.string().max(100).required(),
-      address: Joi.string().optional(),
-      longitude: Joi.number().precision(6).optional(),
-      latitude: Joi.number().precision(6).optional(),
-      postal_code: Joi.string().max(20).optional(),
-    }).required(),
+    // job_preferences: Joi.array().items(Joi.number().integer()).required(),
 
-    job_preferences: Joi.array().items(Joi.number().integer()).required(),
+    // job_shifting: Joi.array()
+    //   .items(Joi.string().valid("Morning", "Afternoon", "Night", "Flexible"))
+    //   .required(),
 
-    job_shifting: Joi.array()
-      .items(Joi.string().valid("Morning", "Afternoon", "Night", "Flexible"))
-      .required(),
+    // job_seeker_info: Joi.object({
+    //   // hospitality_exp: Joi.boolean().required(),
+    //   // languages: Joi.string().allow("").optional(),
+    //   // hospitality_certifications: Joi.string().allow("").optional(),
+    //   // medical_condition: Joi.string().allow("").optional(),
+    //   // dietary_restrictions: Joi.string().allow("").optional(),
+    //   // work_start: Joi.string().max(42).allow("").optional(),
+    //   // certifications: Joi.string().allow("").optional(),
+    //   // reference: Joi.string().allow("").optional(),
+    //   // resume: Joi.string().max(255).allow("").optional(),
+    //   // training_program_interested: Joi.boolean().required(),
+    //   // start_working: Joi.string().max(42).allow("").optional(),
+    //   // hours_available: Joi.string().max(42).allow("").optional(),
+    //   // comment: Joi.string().allow("").optional(),
 
-    job_seeker_info: Joi.object({
-      hospitality_exp: Joi.boolean().required(),
-      languages: Joi.string().allow("").optional(),
-      hospitality_certifications: Joi.string().allow("").optional(),
-      medical_condition: Joi.string().allow("").optional(),
-      dietary_restrictions: Joi.string().allow("").optional(),
-      work_start: Joi.string().max(42).allow("").optional(),
-      certifications: Joi.string().allow("").optional(),
-      reference: Joi.string().allow("").optional(),
-      resume: Joi.string().max(255).allow("").optional(),
-      training_program_interested: Joi.boolean().required(),
-      start_working: Joi.string().max(42).allow("").optional(),
-      hours_available: Joi.string().max(42).allow("").optional(),
-      comment: Joi.string().allow("").optional(),
-      passport_copy: Joi.string().max(255).allow("").optional(),
-      visa_copy: Joi.string().max(255).allow("").optional(),
-    }).required(),
+    // })
+    // .required(),
 
-    job_locations: Joi.array()
-      .items(
-        Joi.object({
-          city_id: Joi.number().integer().required(),
-          name: Joi.string().max(100).required(),
-          address: Joi.string().optional(),
-          longitude: Joi.number().precision(6).optional(),
-          latitude: Joi.number().precision(6).optional(),
-          postal_code: Joi.string().max(20).optional(),
-        })
-      )
-      .min(1)
-      .required(),
+    // job_locations: Joi.array()
+    //   .items(
+    //     Joi.object({
+    //       city_id: Joi.number().integer().required(),
+    //       name: Joi.string().max(100).required(),
+    //       address: Joi.string().optional(),
+    //       longitude: Joi.number().precision(6).optional(),
+    //       latitude: Joi.number().precision(6).optional(),
+    //       postal_code: Joi.string().max(20).optional(),
+    //     })
+    //   )
+    //   .min(1)
+    //   .required(),
   });
 
   registerOrganizationValidator = Joi.object({
     user: Joi.object({
-      username: Joi.string().min(1).max(255).required(),
+      // username: Joi.string().min(1).max(255).required(),
       name: Joi.string().min(1).max(255).required(),
       email: Joi.string().email().lowercase().min(1).max(255).required(),
       password: Joi.string().min(8).max(100).required(),
       phone_number: Joi.string().min(7).max(20).optional(),
       photo: Joi.string().max(255).allow("").optional(),
+      designation: Joi.string().max(500).required(),
     }).required(),
 
     organization: Joi.object({
@@ -247,5 +257,11 @@ export default class PublicCommonValidator {
     organization_amenities: Joi.array()
       .items(Joi.string().max(255).required())
       .optional(),
+  });
+
+  getNotificationValidator = Joi.object({
+    user_id: Joi.number().integer().positive().required(),
+    limit: Joi.number().integer().positive().optional(),
+    skip: Joi.number().integer().positive().optional(),
   });
 }

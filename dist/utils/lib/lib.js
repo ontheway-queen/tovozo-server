@@ -12,11 +12,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const fs_1 = __importDefault(require("fs"));
-const path_1 = __importDefault(require("path"));
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
+const path_1 = __importDefault(require("path"));
 const config_1 = __importDefault(require("../../app/config"));
 const commonModel_1 = __importDefault(require("../../models/commonModel/commonModel"));
 class Lib {
@@ -34,7 +34,7 @@ class Lib {
                     },
                 });
                 const info = yield transporter.sendMail({
-                    from: config_1.default.EMAIL_SEND_EMAIL_ID,
+                    from: `TOVOZO <${config_1.default.EMAIL_SEND_EMAIL_ID}>`,
                     to: email,
                     subject: emailSub,
                     html: emailBody,

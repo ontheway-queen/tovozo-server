@@ -1,7 +1,7 @@
-import { Application } from 'express';
-import http from 'http';
-import { Server } from 'socket.io';
-import { origin } from '../utils/miscellaneous/constants';
+import { Application } from "express";
+import http from "http";
+import { Server } from "socket.io";
+import { origin } from "../utils/miscellaneous/constants";
 export let io: Server;
 
 export const SocketServer = (app: Application) => {

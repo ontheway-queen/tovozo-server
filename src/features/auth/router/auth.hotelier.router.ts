@@ -14,6 +14,7 @@ export default class HotelierAuthRouter extends AbstractRouter {
       .route("/registration")
       .post(
         this.uploader.cloudUploadRaw(this.fileFolders.JOB_SEEKER_FILES),
+        this.authChecker.hotelierAuthChecker,
         this.controller.registration
       );
 

@@ -1,4 +1,5 @@
 import { Knex } from "knex";
+import { USER_STATUS } from "../../../../utils/miscellaneous/constants";
 
 // Db or Transaction connection types
 export type TDB = Knex | Knex.Transaction;
@@ -34,3 +35,5 @@ export interface ITokenParseJobSeeker {
   phone_number: string | null;
   status: boolean;
 }
+
+export type UserStatusType = (typeof USER_STATUS)[keyof typeof USER_STATUS];

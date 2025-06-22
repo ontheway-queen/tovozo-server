@@ -1,12 +1,15 @@
-import { TDB } from "../../features/public/utils/types/publicCommon.types";
+import {
+  TDB,
+  UserStatusType,
+} from "../../features/public/utils/types/publicCommon.types";
 import Schema from "../../utils/miscellaneous/schema";
 import {
   ICreateJobSeekerPayload,
-  IUpdateJobSeekerPayload,
-  IJobPreferencePayload,
   IJobLocationPayload,
-  IJobShiftPayload,
+  IJobPreferencePayload,
   IJobSeekerInfoPayload,
+  IJobShiftPayload,
+  IUpdateJobSeekerPayload,
 } from "../../utils/modelTypes/jobSeeker/jobSeekerModelTypes";
 
 export default class JobSeekerModel extends Schema {
@@ -47,6 +50,76 @@ export default class JobSeekerModel extends Schema {
         }
       })
       .first();
+  }
+
+  public async getAllJobSeekerList(params: {
+    user_id?: number;
+    name?: string;
+    limit?: number;
+    skip?: number;
+    status?: UserStatusType;
+    from_date?: string;
+    to_date?: string;
+  }) {
+    const {
+      user_id,
+      name,
+      status,
+      from_date,
+      to_date,
+      limit = 100,
+      skip = 0,
+    } = params;
+    const data = await this.db("vw_full_job_seeker_profile")
+      .withSchema(this.JOB_SEEKER)
+      .select(
+        "user_id",
+        "email",
+        "name",
+        "photo",
+        "account_status",
+        "user_created_at"
+      )
+      .where((qb) => {
+        if (user_id) {
+          qb.andWhere("user_id", user_id);
+        }
+        if (name) {
+          qb.andWhereILike("name", `%${name}%`).orWhere("email", name);
+        }
+        if (status) {
+          qb.andWhere("account_status", status);
+        }
+        if (from_date && to_date) {
+          qb.andWhereBetween("user_created_at", [from_date, to_date]);
+        }
+      })
+      .limit(limit)
+      .offset(skip);
+
+    const total = await this.db("vw_full_job_seeker_profile")
+      .withSchema(this.JOB_SEEKER)
+      .count("user_id as total")
+      .where((qb) => {
+        if (user_id) {
+          qb.andWhere("user_id", user_id);
+        }
+        if (name) {
+          qb.andWhereILike("name", `%${name}%`).orWhere("email", name);
+        }
+        if (status) {
+          qb.andWhere("account_status", status);
+        }
+        if (from_date && to_date) {
+          qb.andWhereBetween("user_created_at", [from_date, to_date]);
+        }
+      })
+      .first();
+
+    return {
+      data,
+      total: total?.total,
+    };
   }
 
   // get single job seeker details
@@ -123,7 +196,10 @@ export default class JobSeekerModel extends Schema {
       .where({ job_seeker_id });
   }
 
-  public async getSingleJobPreference(query: { job_seeker_id: number; job_id: number }) {
+  public async getSingleJobPreference(query: {
+    job_seeker_id: number;
+    job_id: number;
+  }) {
     return await this.db("job_preferences AS jp")
       .withSchema(this.JOB_SEEKER)
       .select("jp.*", "j.title")

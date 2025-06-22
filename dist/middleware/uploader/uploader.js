@@ -35,6 +35,7 @@ class Uploader extends abstract_storatge_1.default {
                             Math.round(Math.random() * 1e9) +
                             path_1.default.extname(file.originalname);
                         file.filename = fileWithFolder;
+                        console.log({ fileWithFolder });
                         req.upFiles.push(fileWithFolder);
                         cb(null, `${uploaderConstants_1.ROOT_FILE_FOLDER}/${fileWithFolder}`);
                     },
@@ -58,6 +59,7 @@ class Uploader extends abstract_storatge_1.default {
                     next();
                 }
             });
+            console.log("req.upfiles", req.upFiles);
         };
     }
 }

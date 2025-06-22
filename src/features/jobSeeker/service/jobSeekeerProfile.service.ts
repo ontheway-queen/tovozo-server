@@ -1,18 +1,12 @@
 import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
+import CustomError from "../../../utils/lib/customError";
+import Lib from "../../../utils/lib/lib";
 import {
   USER_AUTHENTICATION_VIEW,
   USER_TYPE,
 } from "../../../utils/miscellaneous/constants";
-import Lib from "../../../utils/lib/lib";
-import {
-  IChangePasswordPayload,
-  ILocationPayload,
-  ILocationUpdatePayload,
-} from "../../../utils/modelTypes/common/commonModelTypes";
-import CustomError from "../../../utils/lib/customError";
-import { object } from "joi";
-import CommonModel from "../../../models/commonModel/commonModel";
+import { IChangePasswordPayload } from "../../../utils/modelTypes/common/commonModelTypes";
 
 export default class JobSeekerProfileService extends AbstractServices {
   constructor() {
@@ -79,7 +73,7 @@ export default class JobSeekerProfileService extends AbstractServices {
       const jobSeekerModel = this.Model.jobSeekerModel(trx);
       const commonModel = this.Model.commonModel(trx);
 
-      const existingUser = await userModel.checkUser({
+      const [existingUser] = await userModel.checkUser({
         id: user_id,
         type: USER_TYPE.JOB_SEEKER,
       });

@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS dbo."user"
     CONSTRAINT user_pkey PRIMARY KEY (id)
 )
 
+
 DROP TABLE IF EXISTS dbo.email_otp;
 
 CREATE TABLE IF NOT EXISTS dbo.email_otp (
@@ -64,17 +65,23 @@ CREATE TABLE IF NOT EXISTS dbo.email_otp (
   CONSTRAINT email_otp_pkey PRIMARY KEY (id)
 );
 
-CREATE TYPE dbo.notification_type AS ENUM (
-    'JOB_MATCH',
-    'REMINDER',
-    'APPLICATION_UPDATE',
-    'PAYMENT',
-    'CANCELLATION',
-    'VERIFICATION',
-    'SECURITY_ALERT',
-    'SYSTEM_UPDATE'
-);
+-- CREATE TYPE dbo.notification_type AS ENUM (
+--     'JOB_MATCH',
+--     'REMINDER',
+--     'APPLICATION_UPDATE',
+--     'PAYMENT',
+--     'CANCELLATION',
+--     'VERIFICATION',
+--     'SECURITY_ALERT',
+--     'SYSTEM_UPDATE'
+-- );
+
+DROP TYPE if EXISTS dbo.notification_type CASCADE;
+CREATE TYPE dbo.notification_type AS ENUM
+    ('JOB_MATCH', 'REMINDER', 'APPLICATION_UPDATE', 'PAYMENT', 'CANCELLATION', 'VERIFICATION', 'SECURITY_ALERT', 'SYSTEM_UPDATE','JOB_SEEKER_VERIFICATION',
+'HOTELIER_VERIFICATION');
 -- Notification system
+DROP TYPE if EXISTS dbo.notification;
 CREATE TABLE IF NOT EXISTS dbo.notification (
     id SERIAL PRIMARY KEY,
     user_id INT NOT NULL REFERENCES dbo."user"(id),
@@ -85,11 +92,17 @@ CREATE TABLE IF NOT EXISTS dbo.notification (
 );
 
 
-CREATE TABLE IF NOT EXISTS b2b.notification_seen
+CREATE TABLE IF NOT EXISTS dbo.notification_seen
 (
     notification_id integer NOT NULL,
     user_id integer NOT NULL,
     CONSTRAINT notification_seen_pkey PRIMARY KEY (notification_id, user_id)
+)
+CREATE TABLE IF NOT EXISTS dbo.notification_delete
+(
+    notification_id integer NOT NULL,
+    user_id integer NOT NULL,
+    CONSTRAINT notification_delete_pkey PRIMARY KEY (notification_id, user_id)
 )
 
 
@@ -115,10 +128,12 @@ CREATE TABLE IF NOT EXISTS dbo.job_post
     organization_id integer NOT NULL,
     title character varying(255) NOT NULL,
     details text,
-    created_time timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    expire_time TIMESTAMP,
-    status character varying(42) DEFAULT 'Live',
+    requirements text,
     hourly_rate DECIMAL(8,2) NOT NULL
+    expire_time TIMESTAMP,
+    prefer_gender varying(42) not null,
+    status character varying(42) DEFAULT 'Live',
+    created_time timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT job_post_pkey PRIMARY KEY (id)
 );
 
@@ -233,3 +248,29 @@ LEFT JOIN dbo.location loc
 WHERE u.is_deleted = false;
 
 --------------------------------------------------------------------------------------------------
+
+--  location view
+CREATE OR REPLACE VIEW dbo.vw_location AS
+SELECT
+    loc.id AS location_id,
+    loc.city_id,
+    loc.name AS location_name,
+    loc.address AS location_address,
+    loc.longitude,
+    loc.latitude,
+    loc.type AS location_type,
+    loc.postal_code,
+    loc.status AS location_status,
+    loc.is_home_address,
+    loc.created_at AS location_created_at,
+    loc.updated_at AS location_updated_at,
+    ci.name AS city_name,
+    st.name AS state_name,
+    st.id AS state_id,
+    c.name AS country_name,
+    c.id AS country_id
+FROM dbo."location" loc
+JOIN dbo.cities ci ON loc.city_id = ci.id
+JOIN dbo."states" st ON st.id = ci.state_id
+JOIN dbo."countries" c ON c.id = st.country_id
+WHERE loc.status = true;

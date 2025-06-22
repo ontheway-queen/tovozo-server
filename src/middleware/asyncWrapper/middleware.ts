@@ -1,7 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import Joi from "joi";
-import StatusCode from "../../utils/miscellaneous/statusCode";
 import CustomError from "../../utils/lib/customError";
+import ManageFile from "../../utils/lib/manageFile";
+import StatusCode from "../../utils/miscellaneous/statusCode";
 
 type Func = (req: Request, res: Response, next: NextFunction) => Promise<void>;
 
@@ -12,6 +13,12 @@ type Validators = {
 };
 
 export default class Wrapper {
+  private manageFile: ManageFile;
+
+  constructor() {
+    this.manageFile = new ManageFile();
+  }
+
   // CONTROLLER ASYNCWRAPPER
   public wrap(schema: Validators | null, cb: Func) {
     return async (req: Request, res: Response, next: NextFunction) => {
@@ -39,6 +46,10 @@ export default class Wrapper {
         console.log({ err }, "error from wrap");
 
         if (err.isJoi) {
+          const files = req.upFiles || [];
+          if (files.length) {
+            await this.manageFile.deleteFromCloud(files);
+          }
           res.status(StatusCode.HTTP_UNPROCESSABLE_ENTITY).json({
             success: false,
             message: err.message,

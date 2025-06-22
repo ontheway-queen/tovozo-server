@@ -64,11 +64,26 @@ class PublicService extends abstract_service_1.default {
                         schema_name: "jobseeker",
                         table_name: constants_1.USER_AUTHENTICATION_VIEW.JOB_SEEKER,
                     });
-                    if (!checkUser.length || checkUser[0].is_verified) {
+                    if (checkUser) {
                         return {
                             success: false,
-                            code: this.StatusCode.HTTP_NOT_FOUND,
-                            message: "No unverified user found.",
+                            code: this.StatusCode.HTTP_CONFLICT,
+                            message: "Email already exists!",
+                        };
+                    }
+                }
+                else if (type === constants_1.OTP_TYPE_VERIFY_HOTELIER) {
+                    const userModel = this.Model.UserModel();
+                    const checkUser = yield userModel.getSingleCommonAuthUser({
+                        email,
+                        schema_name: "hotelier",
+                        table_name: constants_1.USER_AUTHENTICATION_VIEW.HOTELIER,
+                    });
+                    if (checkUser) {
+                        return {
+                            success: false,
+                            code: this.StatusCode.HTTP_CONFLICT,
+                            message: "Email already exists!",
                         };
                     }
                 }
@@ -215,10 +230,12 @@ class PublicService extends abstract_service_1.default {
                     else if (type === constants_1.OTP_TYPE_FORGET_HOTELIER) {
                         secret = config_1.default.JWT_SECRET_HOTEL;
                     }
-                    else if (type === constants_1.OTP_TYPE_TWO_FA_HOTELIER) {
+                    else if (type === constants_1.OTP_TYPE_TWO_FA_HOTELIER ||
+                        constants_1.OTP_TYPE_VERIFY_HOTELIER) {
                         secret = config_1.default.JWT_SECRET_HOTEL;
                     }
-                    else if (type === constants_1.OTP_TYPE_TWO_FA_JOB_SEEKER) {
+                    else if (type === constants_1.OTP_TYPE_TWO_FA_JOB_SEEKER ||
+                        constants_1.OTP_TYPE_VERIFY_JOB_SEEKER) {
                         secret = config_1.default.JWT_SECRET_JOB_SEEKER;
                     }
                     else if (type == constants_1.OTP_TYPE_TWO_FA_ADMIN) {
@@ -239,7 +256,7 @@ class PublicService extends abstract_service_1.default {
                     const token = lib_1.default.createToken({
                         email: email,
                         type: type,
-                    }, secret, "5m");
+                    }, secret, "15m");
                     return {
                         success: true,
                         code: this.StatusCode.HTTP_ACCEPTED,
@@ -259,6 +276,13 @@ class PublicService extends abstract_service_1.default {
                     };
                 }
             }));
+        });
+    }
+    getAllNotification(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const model = this.Model.commonModel();
+            const data = yield model.getNotification(req.query);
+            return Object.assign({ success: true, message: this.ResMsg.HTTP_OK, code: this.StatusCode.HTTP_OK }, data);
         });
     }
     //get all country
@@ -315,6 +339,19 @@ class PublicService extends abstract_service_1.default {
                 message: this.ResMsg.HTTP_OK,
                 data: state_list,
             };
+        });
+    }
+    getAllNationality(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { limit, skip, name } = req.query;
+            const parsedParams = {
+                limit: limit ? Number(limit) : undefined,
+                skip: skip ? Number(skip) : undefined,
+                name: name,
+            };
+            const model = this.Model.commonModel();
+            const data = yield model.getAllNationality(parsedParams);
+            return Object.assign({ success: true, code: this.StatusCode.HTTP_OK, message: this.ResMsg.HTTP_OK }, data);
         });
     }
 }

@@ -25,6 +25,13 @@ class UserModel extends schema_1.default {
                 .insert(payload, "id");
         });
     }
+    createUserMaintenanceDesignation(payload) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db(this.TABLES.maintenance_designation)
+                .withSchema(this.HOTELIER)
+                .insert(payload);
+        });
+    }
     //update
     updateProfile(payload, where) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -44,26 +51,27 @@ class UserModel extends schema_1.default {
                 .withSchema(this.DBO_SCHEMA)
                 .select("*")
                 .where((qb) => {
-                if (email) {
-                    qb.andWhere("email", email);
-                }
-                if (username) {
-                    qb.andWhere("username", username);
-                }
-                if (id) {
-                    qb.andWhere("id", id);
-                }
-                if (type) {
-                    qb.andWhere("type", type);
-                }
-                if (user_name) {
-                    qb.andWhere("user_name", user_name);
-                }
-                if (phone_number) {
-                    qb.andWhere("phone_number", phone_number);
-                }
-            })
-                .first();
+                qb.where("is_deleted", false).andWhere((qbc) => {
+                    if (id) {
+                        qbc.andWhere("id", id);
+                    }
+                    if (type) {
+                        qbc.andWhere("type", type);
+                        if (email) {
+                            qbc.andWhere("email", email);
+                        }
+                        if (username) {
+                            qbc.orWhere("username", username);
+                        }
+                        if (user_name) {
+                            qbc.orWhere("user_name", user_name);
+                        }
+                        if (phone_number) {
+                            qbc.orWhere("phone_number", phone_number);
+                        }
+                    }
+                });
+            });
         });
     }
     getSingleCommonAuthUser(_a) {
@@ -91,12 +99,20 @@ class UserModel extends schema_1.default {
     //get last  user Id
     getLastUserID() {
         return __awaiter(this, void 0, void 0, function* () {
-            const data = yield this.db('user')
+            const data = yield this.db("user")
                 .withSchema(this.DBO_SCHEMA)
-                .select('id')
-                .orderBy('id', 'desc')
+                .select("id")
+                .orderBy("id", "desc")
                 .limit(1);
             return data.length ? data[0].id : 0;
+        });
+    }
+    deleteUser(id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db(this.TABLES.user)
+                .withSchema(this.DBO_SCHEMA)
+                .update({ is_deleted: true })
+                .where({ id });
         });
     }
 }

@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const administration_router_1 = __importDefault(require("./router/administration.router"));
 const jobs_router_1 = __importDefault(require("./router/jobs.router"));
+const jobSeeker_router_1 = __importDefault(require("./router/jobSeeker.router"));
 const profile_router_1 = __importDefault(require("./router/profile.router"));
 class AdminRootRouter {
     constructor() {
@@ -13,6 +14,7 @@ class AdminRootRouter {
         this.AdminAdministrationRouter = new administration_router_1.default();
         this.adminProfileRouter = new profile_router_1.default();
         this.adminJobRouter = new jobs_router_1.default();
+        this.adminJobSeekerRouter = new jobSeeker_router_1.default();
         this.callRouter();
     }
     callRouter() {
@@ -22,6 +24,8 @@ class AdminRootRouter {
         this.Router.use("/profile", this.adminProfileRouter.router);
         // job router
         this.Router.use("/job-category", this.adminJobRouter.router);
+        // Job seeker
+        this.Router.use("/job-seeker", this.adminJobSeekerRouter.router);
     }
 }
 exports.default = AdminRootRouter;

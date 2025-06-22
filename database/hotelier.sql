@@ -39,7 +39,9 @@ CREATE TABLE hotelier.organization_amenities (
     CONSTRAINT fk_org_amenity FOREIGN KEY (organization_id) REFERENCES hotelier.organization(id) ON DELETE CASCADE
 );
 
---  hotelier auth view 
+
+
+--  hotelier auth view
 -- DROP VIEW hotelier.vw_hotelier_auth;
 
 CREATE OR REPLACE VIEW hotelier.vw_hotelier_auth AS
@@ -83,3 +85,11 @@ WHERE u.is_deleted = false;
 
 ALTER TABLE hotelier.vw_hotelier_auth
     OWNER TO postgres;
+
+
+CREATE TABLE IF NOT EXISTS hotelier.maintenance_designation(
+    id serial PRIMARY key,
+    designation VARCHAR(500) not null,
+    user_id integer not null,
+    CONSTRAINT fk_hotelier_maintenance FOREIGN KEY(user_id) REFERENCES dbo.user(id)
+);

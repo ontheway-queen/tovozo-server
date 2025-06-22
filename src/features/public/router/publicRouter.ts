@@ -18,6 +18,8 @@ class PublicRouter extends AbstractRouter {
       this.Controller.matchEmailOtpController
     );
 
+    this.router.get("/notification", this.Controller.getAllNotification);
+
     //get country
     this.router.get("/country", this.Controller.getAllCountry);
 
@@ -26,6 +28,9 @@ class PublicRouter extends AbstractRouter {
 
     //get states
     this.router.get("/state", this.Controller.getAllStates);
+
+    // nationality
+    this.router.get("/nationality", this.Controller.getAllNationality);
   }
 }
 

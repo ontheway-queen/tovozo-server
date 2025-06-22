@@ -24,11 +24,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
+const config_1 = __importDefault(require("../../../app/config"));
+const customError_1 = __importDefault(require("../../../utils/lib/customError"));
 const lib_1 = __importDefault(require("../../../utils/lib/lib"));
 const constants_1 = require("../../../utils/miscellaneous/constants");
-const customError_1 = __importDefault(require("../../../utils/lib/customError"));
+const commonModelTypes_1 = require("../../../utils/modelTypes/common/commonModelTypes");
+const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
 const registrationHotelierTemplate_1 = require("../../../utils/templates/registrationHotelierTemplate");
-const config_1 = __importDefault(require("../../../app/config"));
 class HotelierAuthService extends abstract_service_1.default {
     constructor() {
         super();
@@ -37,7 +39,7 @@ class HotelierAuthService extends abstract_service_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             return this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const files = req.files || [];
-                const user = lib_1.default.safeParseJSON(req.body.user);
+                const _a = lib_1.default.safeParseJSON(req.body.user), { designation } = _a, user = __rest(_a, ["designation"]);
                 const organization = lib_1.default.safeParseJSON(req.body.organization);
                 const organizationAddress = lib_1.default.safeParseJSON(req.body.organization_address);
                 const amenitiesInput = lib_1.default.safeParseJSON(req.body.organization_amenities) || [];
@@ -50,7 +52,7 @@ class HotelierAuthService extends abstract_service_1.default {
                 const userModel = this.Model.UserModel(trx);
                 const organizationModel = this.Model.organizationModel(trx);
                 const commonModel = this.Model.commonModel(trx);
-                const existingUser = yield userModel.checkUser({
+                const [existingUser] = yield userModel.checkUser({
                     email,
                     phone_number,
                     username,
@@ -64,13 +66,13 @@ class HotelierAuthService extends abstract_service_1.default {
                             message: this.ResMsg.EMAIL_ALREADY_EXISTS,
                         };
                     }
-                    if (existingUser.username === username) {
-                        return {
-                            success: false,
-                            code: this.StatusCode.HTTP_BAD_REQUEST,
-                            message: this.ResMsg.USERNAME_ALREADY_EXISTS,
-                        };
-                    }
+                    // if (existingUser.username === username) {
+                    //   return {
+                    //     success: false,
+                    //     code: this.StatusCode.HTTP_BAD_REQUEST,
+                    //     message: this.ResMsg.USERNAME_ALREADY_EXISTS,
+                    //   };
+                    // }
                     if (existingUser.phone_number === phone_number) {
                         return {
                             success: false,
@@ -90,6 +92,10 @@ class HotelierAuthService extends abstract_service_1.default {
                 const organization_location = yield commonModel.createLocation(organizationAddress);
                 const locationId = organization_location[0].id;
                 const userId = registration[0].id;
+                yield userModel.createUserMaintenanceDesignation({
+                    designation,
+                    user_id: userId,
+                });
                 const orgInsert = yield organizationModel.createOrganization(Object.assign(Object.assign({}, organization), { user_id: userId, location_id: locationId }));
                 const organizationId = orgInsert[0].id;
                 const photos = files.map((file) => ({
@@ -116,12 +122,18 @@ class HotelierAuthService extends abstract_service_1.default {
                     status: true,
                     create_date: new Date(),
                 };
+                yield this.insertNotification(trx, userModelTypes_1.TypeUser.ADMIN, {
+                    user_id: userId,
+                    content: `New hotelier "${user.name}" (${username}) has registered and is awaiting verification.`,
+                    related_id: userId,
+                    type: commonModelTypes_1.NotificationTypeEnum.HOTELIER_VERIFICATION,
+                });
                 yield lib_1.default.sendEmailDefault({
                     email,
                     emailSub: `Your organization registration with ${constants_1.PROJECT_NAME} is under review`,
                     emailBody: (0, registrationHotelierTemplate_1.registrationHotelierTemplate)({ name: user.name }),
                 });
-                const token = lib_1.default.createToken(tokenData, config_1.default.JWT_SECRET_HOTEL, "48h");
+                const token = lib_1.default.createToken(tokenData, config_1.default.JWT_SECRET_HOTEL, constants_1.LOGIN_TOKEN_EXPIRES_IN);
                 return {
                     success: true,
                     code: this.StatusCode.HTTP_SUCCESSFUL,
@@ -142,7 +154,6 @@ class HotelierAuthService extends abstract_service_1.default {
                 table_name: constants_1.USER_AUTHENTICATION_VIEW.HOTELIER,
                 email,
             });
-            console.log({ checkUser });
             if (!checkUser) {
                 return {
                     success: false,
@@ -190,7 +201,7 @@ class HotelierAuthService extends abstract_service_1.default {
                     email: rest.email,
                     organization_status: rest.organization_status,
                 };
-                const token = lib_1.default.createToken(token_data, config_1.default.JWT_SECRET_HOTEL, "48h");
+                const token = lib_1.default.createToken(token_data, config_1.default.JWT_SECRET_HOTEL, constants_1.LOGIN_TOKEN_EXPIRES_IN);
                 return {
                     success: true,
                     code: this.StatusCode.HTTP_OK,
@@ -249,7 +260,7 @@ class HotelierAuthService extends abstract_service_1.default {
                     email: rest.email,
                     organization_status: rest.organization_status,
                 };
-                const token = lib_1.default.createToken(token_data, config_1.default.JWT_SECRET_HOTEL, "48h");
+                const token = lib_1.default.createToken(token_data, config_1.default.JWT_SECRET_HOTEL, constants_1.LOGIN_TOKEN_EXPIRES_IN);
                 return {
                     success: true,
                     code: this.StatusCode.HTTP_OK,
@@ -283,7 +294,7 @@ class HotelierAuthService extends abstract_service_1.default {
             if (email === verify_email) {
                 const hashed_pass = yield lib_1.default.hashValue(password);
                 const model = this.Model.UserModel();
-                const get_user = yield model.checkUser({
+                const [get_user] = yield model.checkUser({
                     email,
                     type: constants_1.USER_TYPE.HOTELIER,
                 });

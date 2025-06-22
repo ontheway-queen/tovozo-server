@@ -1,6 +1,9 @@
 import { TDB } from "../../features/public/utils/types/publicCommon.types";
 import Schema from "../../utils/miscellaneous/schema";
-import { IAdminSearchQuery, IGetAdminListFilterQuery } from "../../utils/modelTypes/admin/administrationType";
+import {
+  IAdminSearchQuery,
+  IGetAdminListFilterQuery,
+} from "../../utils/modelTypes/admin/administrationType";
 import {
   ICreateAdmin,
   ICreateAdminAuditTrailPayload,
@@ -52,6 +55,7 @@ export default class AdminModel extends Schema {
       .select(
         "ua.user_id",
         "u.username",
+        "u.name",
         "u.email",
         "u.phone_number",
         "u.photo",

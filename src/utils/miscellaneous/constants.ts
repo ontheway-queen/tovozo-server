@@ -24,16 +24,30 @@ export const OTP_TYPES = {
 //Project Info
 export const PROJECT_NAME = "Tovozo";
 export const PROJECT_LOGO =
-  "https://m360-trabill.s3.ap-south-1.amazonaws.com/tovozo-storage/main/be_logo.png";
+  "https://m360ict-data.s3.ap-south-1.amazonaws.com/tovozo-storage/main/logo.png";
 export const PROJECT_ICON =
-  "https://m360-trabill.s3.ap-south-1.amazonaws.com/tovozo-storage/main/be_icon.png";
+  "https://m360ict-data.s3.ap-south-1.amazonaws.com/tovozo-storage/main/logo.png";
+export const PLAY_STORE_ICON =
+  "https://m360ict-data.s3.ap-south-1.amazonaws.com/tovozo-storage/main/play-store.webp";
+export const APP_STORE_ICON =
+  "https://m360ict-data.s3.ap-south-1.amazonaws.com/tovozo-storage/main/app-store.png";
+
 export const PROJECT_LINK = "http://10.10.220.31:3000";
 export const PROJECT_EMAIL = "sup.m360ict@gmail.com";
 export const PROJECT_NUMBER = "+8801958398339";
 export const PROJECT_ADDRESS = "Block#H, Road#7, House#74, Banani, Dhaka";
 
 export const CLIENT_URL = "http://10.10.220.47:5000";
-export const HOTELIER_CLIENT_URL = "http://10.10.220.47:5000";
+
+export const HOTELIER_APP_STORE_URL =
+  "https://apps.apple.com/us/app/m-360/id1365604081";
+export const HOTELIER_PLAY_STORE_URL =
+  "https://play.google.com/store/apps/dev?id=8957568887029131075&hl=en";
+
+export const JOB_SEEKER_APP_STORE_URL =
+  "https://apps.apple.com/us/app/m-360/id1365604081";
+export const JOB_SEEKER_PLAY_STORE_URL =
+  "https://play.google.com/store/apps/dev?id=8957568887029131075&hl=en";
 
 // Email subject
 export const OTP_EMAIL_SUBJECT = "Your One Time Password For Verification";
@@ -90,3 +104,9 @@ export const USER_TYPE = {
 
 // OTP for
 export const OTP_FOR = "Verification";
+
+// British ID
+export const BRITISH_ID = 26;
+
+// Token Expiration time
+export const LOGIN_TOKEN_EXPIRES_IN = "48h";

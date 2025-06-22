@@ -1,5 +1,5 @@
-import AbstractServices from "../../../abstract/abstract.service";
 import { Request } from "express";
+import AbstractServices from "../../../abstract/abstract.service";
 import Lib from "../../../utils/lib/lib";
 import { USER_TYPE } from "../../../utils/miscellaneous/constants";
 
@@ -295,7 +295,7 @@ class AdminAdministrationService extends AbstractServices {
     const adminModel = this.Model.AdminModel();
 
     //check admins email and phone number
-    const check_admin = await model.checkUser({
+    const [check_admin] = await model.checkUser({
       email,
       type: USER_TYPE.ADMIN,
     });

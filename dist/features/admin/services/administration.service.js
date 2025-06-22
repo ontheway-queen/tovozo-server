@@ -278,7 +278,7 @@ class AdminAdministrationService extends abstract_service_1.default {
             const model = this.Model.UserModel();
             const adminModel = this.Model.AdminModel();
             //check admins email and phone number
-            const check_admin = yield model.checkUser({
+            const [check_admin] = yield model.checkUser({
                 email,
                 type: constants_1.USER_TYPE.ADMIN,
             });

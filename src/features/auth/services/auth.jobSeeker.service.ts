@@ -1,15 +1,21 @@
 import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
+import config from "../../../app/config";
+import CustomError from "../../../utils/lib/customError";
+import Lib from "../../../utils/lib/lib";
 import {
+  BRITISH_ID,
+  LOGIN_TOKEN_EXPIRES_IN,
   PROJECT_NAME,
   USER_AUTHENTICATION_VIEW,
   USER_STATUS,
   USER_TYPE,
 } from "../../../utils/miscellaneous/constants";
-import Lib from "../../../utils/lib/lib";
-import config from "../../../app/config";
-import { IForgetPasswordPayload } from "../../../utils/modelTypes/common/commonModelTypes";
-import CustomError from "../../../utils/lib/customError";
+import {
+  IForgetPasswordPayload,
+  NotificationTypeEnum,
+} from "../../../utils/modelTypes/common/commonModelTypes";
+import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
 import { registrationJobSeekerTemplate } from "../../../utils/templates/jobSeekerRegistrationTemplate";
 
 class JobSeekerAuthService extends AbstractServices {
@@ -23,27 +29,43 @@ class JobSeekerAuthService extends AbstractServices {
 
       const userInput = parseInput("user");
       const jobSeekerInput = parseInput("job_seeker");
-      const jobPreferencesInput = parseInput("job_preferences");
-      const jobLocationsInput = parseInput("job_locations");
-      const ownAddressInput = parseInput("own_address");
-      const jobShiftingInput = parseInput("job_shifting");
+      // const jobPreferencesInput = parseInput("job_preferences");
+      // const jobLocationsInput = parseInput("job_locations");
+      // const ownAddressInput = parseInput("own_address");
+      // const jobShiftingInput = parseInput("job_shifting");
       const jobSeekerInfoInput = parseInput("job_seeker_info");
 
-      const validFileFields = ["visa_copy", "passport_copy", "resume", "photo"];
+      // const validFileFields = ["visa_copy", "passport_copy", "resume", "photo"];
 
       // Attach file references
       files.forEach(({ fieldname, filename }) => {
-        if (!validFileFields.includes(fieldname)) {
-          throw new CustomError(
-            this.ResMsg.UNKNOWN_FILE_FIELD,
-            this.StatusCode.HTTP_BAD_REQUEST,
-            "ERROR"
-          );
-        }
+        // if (!validFileFields.includes(fieldname)) {
+        //   throw new CustomError(
+        //     this.ResMsg.UNKNOWN_FILE_FIELD,
+        //     this.StatusCode.HTTP_BAD_REQUEST,
+        //     "ERROR"
+        //   );
+        // }
 
         if (fieldname === "photo") {
           userInput.photo = filename;
         } else {
+          // console.log({ filename, fieldname });
+          if (jobSeekerInput.nationality === BRITISH_ID) {
+            if (fieldname !== "id_copy") {
+              throw new CustomError(
+                "id_copy required for British Nationality",
+                this.StatusCode.HTTP_BAD_REQUEST
+              );
+            }
+          } else {
+            if (fieldname !== "visa_copy") {
+              throw new CustomError(
+                "visa_copy required for British Nationality",
+                this.StatusCode.HTTP_BAD_REQUEST
+              );
+            }
+          }
           jobSeekerInfoInput[fieldname] = filename;
         }
       });
@@ -53,7 +75,7 @@ class JobSeekerAuthService extends AbstractServices {
 
       const userModel = this.Model.UserModel(trx);
       const jobSeekerModel = this.Model.jobSeekerModel(trx);
-      const commonModel = this.Model.commonModel(trx);
+      // const commonModel = this.Model.commonModel(trx);
 
       const existingUser = await userModel.checkUser({
         email,
@@ -61,28 +83,29 @@ class JobSeekerAuthService extends AbstractServices {
         username,
         type: USER_TYPE.JOB_SEEKER,
       });
-
-      if (existingUser) {
-        if (existingUser.email === email) {
-          return {
-            success: false,
-            code: this.StatusCode.HTTP_BAD_REQUEST,
-            message: this.ResMsg.EMAIL_ALREADY_EXISTS,
-          };
-        }
-        if (existingUser.username === username) {
-          return {
-            success: false,
-            code: this.StatusCode.HTTP_BAD_REQUEST,
-            message: this.ResMsg.USERNAME_ALREADY_EXISTS,
-          };
-        }
-        if (existingUser.phone_number === phone_number) {
-          return {
-            success: false,
-            code: this.StatusCode.HTTP_BAD_REQUEST,
-            message: this.ResMsg.PHONE_NUMBER_ALREADY_EXISTS,
-          };
+      if (existingUser && existingUser.length) {
+        for (const user of existingUser) {
+          if (user.email === email) {
+            return {
+              success: false,
+              code: this.StatusCode.HTTP_BAD_REQUEST,
+              message: this.ResMsg.EMAIL_ALREADY_EXISTS,
+            };
+          }
+          // if (user.username === username) {
+          //   return {
+          //     success: false,
+          //     code: this.StatusCode.HTTP_BAD_REQUEST,
+          //     message: this.ResMsg.USERNAME_ALREADY_EXISTS,
+          //   };
+          // }
+          if (user.phone_number === phone_number) {
+            return {
+              success: false,
+              code: this.StatusCode.HTTP_BAD_REQUEST,
+              message: this.ResMsg.PHONE_NUMBER_ALREADY_EXISTS,
+            };
+          }
         }
       }
 
@@ -105,49 +128,49 @@ class JobSeekerAuthService extends AbstractServices {
         );
       }
 
-      const [ownAddressId] = await commonModel.createLocation({
-        ...ownAddressInput,
-        is_home_address: true,
-      });
+      // const [ownAddressId] = await commonModel.createLocation({
+      //   ...ownAddressInput,
+      //   is_home_address: true,
+      // });
 
       const jobSeekerId = registration[0].id;
 
-      console.log({ jobSeekerId, ownAddressId: ownAddressId.id });
+      // console.log({ jobSeekerId, ownAddressId: ownAddressId.id });
 
       await jobSeekerModel.createJobSeeker({
         ...jobSeekerInput,
-        location_id: ownAddressId.id,
+        // location_id: ownAddressId.id,
         user_id: jobSeekerId,
       });
 
-      const createdLocations = await commonModel.createLocation(
-        jobLocationsInput
-      );
-      const preferenceLocationIds = [
-        ...createdLocations.map((loc) => loc.id),
-        ownAddressId.id,
-      ];
+      // const createdLocations = await commonModel.createLocation(
+      //   jobLocationsInput
+      // );
+      // const preferenceLocationIds = [
+      //   ...createdLocations.map((loc) => loc.id),
+      //   ownAddressId.id,
+      // ];
 
-      const jobPreferences = jobPreferencesInput.map((job_id: number) => ({
-        job_seeker_id: jobSeekerId,
-        job_id,
-      }));
+      // const jobPreferences = jobPreferencesInput.map((job_id: number) => ({
+      //   job_seeker_id: jobSeekerId,
+      //   job_id,
+      // }));
 
-      const jobLocations = preferenceLocationIds.map((location_id: number) => ({
-        job_seeker_id: jobSeekerId,
-        location_id,
-      }));
+      // const jobLocations = preferenceLocationIds.map((location_id: number) => ({
+      //   job_seeker_id: jobSeekerId,
+      //   location_id,
+      // }));
 
-      const jobShifts = jobShiftingInput.map((shift: string) => ({
-        job_seeker_id: jobSeekerId,
-        shift,
-      }));
+      // const jobShifts = jobShiftingInput.map((shift: string) => ({
+      //   job_seeker_id: jobSeekerId,
+      //   shift,
+      // }));
 
-      await Promise.all([
-        jobSeekerModel.setJobPreferences(jobPreferences),
-        jobSeekerModel.setJobLocations(jobLocations),
-        jobSeekerModel.setJobShifting(jobShifts),
-      ]);
+      // await Promise.all([
+      //   jobSeekerModel.setJobPreferences(jobPreferences),
+      //   jobSeekerModel.setJobLocations(jobLocations),
+      //   jobSeekerModel.setJobShifting(jobShifts),
+      // ]);
 
       await jobSeekerModel.createJobSeekerInfo({
         ...jobSeekerInfoInput,
@@ -166,6 +189,13 @@ class JobSeekerAuthService extends AbstractServices {
         create_date: new Date(),
       };
 
+      await this.insertNotification(trx, TypeUser.ADMIN, {
+        user_id: jobSeekerId,
+        content: `New job seeker "${userInput.name}" (${username}) has registered and is awaiting verification.`,
+        related_id: jobSeekerId,
+        type: NotificationTypeEnum.JOB_SEEKER_VERIFICATION,
+      });
+
       await Lib.sendEmailDefault({
         email,
         emailSub: `Your registration with ${PROJECT_NAME} is under review`,
@@ -175,7 +205,7 @@ class JobSeekerAuthService extends AbstractServices {
       const token = Lib.createToken(
         tokenPayload,
         config.JWT_SECRET_JOB_SEEKER,
-        "48h"
+        LOGIN_TOKEN_EXPIRES_IN
       );
 
       return {
@@ -254,7 +284,7 @@ class JobSeekerAuthService extends AbstractServices {
       const token = Lib.createToken(
         token_data,
         config.JWT_SECRET_JOB_SEEKER,
-        "48h"
+        LOGIN_TOKEN_EXPIRES_IN
       );
       return {
         success: true,
@@ -328,7 +358,7 @@ class JobSeekerAuthService extends AbstractServices {
       const token = Lib.createToken(
         token_data,
         config.JWT_SECRET_JOB_SEEKER,
-        "48h"
+        LOGIN_TOKEN_EXPIRES_IN
       );
       return {
         success: true,
@@ -366,7 +396,7 @@ class JobSeekerAuthService extends AbstractServices {
     if (email === verify_email) {
       const hashed_pass = await Lib.hashValue(password);
       const model = this.Model.UserModel();
-      const get_user = await model.checkUser({
+      const [get_user] = await model.checkUser({
         email,
         type: USER_TYPE.JOB_SEEKER,
       });

@@ -13,9 +13,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
-const constants_1 = require("../../../utils/miscellaneous/constants");
-const lib_1 = __importDefault(require("../../../utils/lib/lib"));
 const customError_1 = __importDefault(require("../../../utils/lib/customError"));
+const lib_1 = __importDefault(require("../../../utils/lib/lib"));
+const constants_1 = require("../../../utils/miscellaneous/constants");
 class JobSeekerProfileService extends abstract_service_1.default {
     constructor() {
         super();
@@ -67,7 +67,7 @@ class JobSeekerProfileService extends abstract_service_1.default {
                 const userModel = this.Model.UserModel(trx);
                 const jobSeekerModel = this.Model.jobSeekerModel(trx);
                 const commonModel = this.Model.commonModel(trx);
-                const existingUser = yield userModel.checkUser({
+                const [existingUser] = yield userModel.checkUser({
                     id: user_id,
                     type: constants_1.USER_TYPE.JOB_SEEKER,
                 });

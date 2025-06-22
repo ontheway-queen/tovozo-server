@@ -25,6 +25,14 @@ class PublicController extends AbstractController {
       res.status(code).json(data);
     }
   );
+  public getAllNotification = this.asyncWrapper.wrap(
+    { querySchema: this.commonValidator.getNotificationValidator },
+    async (req: Request, res: Response) => {
+      const { code, ...data } = await this.services.getAllNotification(req);
+
+      res.status(code).json(data);
+    }
+  );
 
   //get all country
   public getAllCountry = this.asyncWrapper.wrap(
@@ -49,6 +57,13 @@ class PublicController extends AbstractController {
     null,
     async (req: Request, res: Response) => {
       const { code, ...data } = await this.services.getAllStates(req);
+      res.status(code).json(data);
+    }
+  );
+  public getAllNationality = this.asyncWrapper.wrap(
+    { querySchema: this.commonValidator.getNationality },
+    async (req: Request, res: Response) => {
+      const { code, ...data } = await this.services.getAllNationality(req);
       res.status(code).json(data);
     }
   );

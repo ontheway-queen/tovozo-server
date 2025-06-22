@@ -1,3 +1,4 @@
+import { db } from "../../app/database";
 import { TDB } from "../../features/public/utils/types/publicCommon.types";
 import Schema from "../../utils/miscellaneous/schema";
 import {
@@ -8,6 +9,8 @@ import {
   IInsertOTPPayload,
   ILocationPayload,
   ILocationUpdatePayload,
+  INotificationPayload,
+  INotificationUserPayload,
   IUpdateLastNoPayload,
 } from "../../utils/modelTypes/common/commonModelTypes";
 
@@ -207,5 +210,126 @@ export default class CommonModel extends Schema {
           qb.andWhere("id", query.location_id);
         }
       });
+  }
+
+  public async createNotification(
+    payload: INotificationPayload | INotificationPayload[]
+  ) {
+    return await this.db(this.TABLES.notification)
+      .withSchema(this.DBO_SCHEMA)
+      .insert(payload);
+  }
+
+  public async getNotification(params: {
+    limit: string;
+    skip: string;
+    user_id: number;
+  }) {
+    const { limit, skip, user_id } = params;
+
+    const data = await this.db(`${this.TABLES.notification} as n`)
+      .withSchema(this.DBO_SCHEMA)
+      .select(
+        "n.*",
+        this.db.raw(`
+        CASE
+          WHEN ns.user_id IS NOT NULL THEN true
+          ELSE false
+        END AS is_read
+      `)
+      )
+      .leftJoin(`${this.TABLES.notification_seen} as ns`, function () {
+        this.on("ns.notification_id", "n.id").andOn(
+          "ns.user_id",
+          db.raw("?", [user_id])
+        );
+      })
+      .leftJoin(`${this.TABLES.notification_delete} as nd`, function () {
+        this.on("nd.notification_id", "n.id").andOn(
+          "nd.user_id",
+          db.raw("?", [user_id])
+        );
+      })
+      .whereNull("nd.notification_id")
+      .andWhere((qb) => {
+        if (user_id) qb.andWhere("n.user_id", user_id);
+      })
+      .orderBy("n.created_at", "desc")
+      .limit(Number(limit))
+      .offset(Number(skip));
+
+    const total = await this.db(`${this.TABLES.notification} as n`)
+      .withSchema(this.DBO_SCHEMA)
+      .count("n.id as total")
+      .leftJoin(`${this.TABLES.notification_seen} as ns`, function () {
+        this.on("ns.notification_id", "n.id").andOn(
+          "ns.user_id",
+          db.raw("?", [user_id])
+        );
+      })
+      .leftJoin(`${this.TABLES.notification_delete} as nd`, function () {
+        this.on("nd.notification_id", "n.id").andOn(
+          "nd.user_id",
+          db.raw("?", [user_id])
+        );
+      })
+      .whereNull("nd.notification_id")
+      .andWhere((qb) => {
+        if (user_id) qb.andWhere("n.user_id", user_id);
+      })
+      .first();
+
+    return {
+      data,
+      total: total?.total,
+    };
+  }
+
+  public async deleteNotification(payload: INotificationUserPayload) {
+    return await this.db(this.TABLES.notification_delete)
+      .withSchema(this.DBO_SCHEMA)
+      .insert(payload);
+  }
+
+  public async readNotification(payload: INotificationUserPayload) {
+    return await this.db(this.TABLES.notification_seen)
+      .withSchema(this.DBO_SCHEMA)
+      .insert(payload);
+  }
+
+  public async getAllNationality(params: {
+    name?: string;
+    limit?: number;
+    skip?: number;
+  }) {
+    const { name, limit = 100, skip = 0 } = params;
+    const data = await this.db(this.TABLES.nationality)
+      .withSchema(this.DBO_SCHEMA)
+      .select("id", "name", "created_at")
+      .where((qb) => {
+        qb.where("status", true);
+        if (name) {
+          qb.whereILike("name", `%${name}%`);
+        }
+      })
+      .orderBy("name", "asc")
+      .limit(limit)
+      .offset(skip);
+
+    const total = await this.db(this.TABLES.nationality)
+      .withSchema(this.DBO_SCHEMA)
+      .count("id as total")
+      .where((qb) => {
+        qb.where("status", true);
+        if (name) {
+          qb.whereILike("name", `%${name}%`);
+        }
+      })
+      .first();
+
+    return {
+      data,
+      total: total?.total,
+    };
   }
 }

@@ -3,6 +3,7 @@ import AbstractServices from "../../../abstract/abstract.service";
 import config from "../../../app/config";
 import Lib from "../../../utils/lib/lib";
 import {
+  LOGIN_TOKEN_EXPIRES_IN,
   USER_AUTHENTICATION_VIEW,
   USER_TYPE,
 } from "../../../utils/miscellaneous/constants";
@@ -79,7 +80,7 @@ class AdminAuthService extends AbstractServices {
         const token = Lib.createToken(
           token_data,
           config.JWT_SECRET_ADMIN,
-          "48h"
+          LOGIN_TOKEN_EXPIRES_IN
         );
         return {
           success: true,
@@ -143,7 +144,11 @@ class AdminAuthService extends AbstractServices {
         email: rest.email,
       };
 
-      const token = Lib.createToken(token_data, config.JWT_SECRET_ADMIN, "48h");
+      const token = Lib.createToken(
+        token_data,
+        config.JWT_SECRET_ADMIN,
+        LOGIN_TOKEN_EXPIRES_IN
+      );
       return {
         success: true,
         code: this.StatusCode.HTTP_OK,
@@ -177,7 +182,7 @@ class AdminAuthService extends AbstractServices {
     if (email === verify_email) {
       const hashed_pass = await Lib.hashValue(password);
       const model = this.Model.UserModel();
-      const get_user = await model.checkUser({
+      const [get_user] = await model.checkUser({
         email,
         type: USER_TYPE.ADMIN,
       });

@@ -73,6 +73,9 @@ export interface OTPType {
     | "reset_job_seeker"
     | "reset_admin"
     | "reset_hotelier"
+    | "verify_job_seeker"
+    | "verify_hotelier"
+    | "verify_admin"
     | "verify_user"
     | "2fa_user";
 }
@@ -90,7 +93,6 @@ export interface IGetOTPPayload extends OTPType {
   email: string;
 }
 
-
 export interface ILocationPayload {
   city_id: number;
   name: string;
@@ -102,7 +104,7 @@ export interface ILocationPayload {
 }
 
 export interface ILocationUpdatePayload {
-  id: number
+  id: number;
   city_id: number;
   name: string;
   address?: string;
@@ -111,4 +113,31 @@ export interface ILocationUpdatePayload {
   is_home_address?: boolean;
   postal_code?: string;
 }
+export enum NotificationTypeEnum {
+  JOB_MATCH = "JOB_MATCH",
+  REMINDER = "REMINDER",
+  APPLICATION_UPDATE = "APPLICATION_UPDATE",
+  PAYMENT = "PAYMENT",
+  CANCELLATION = "CANCELLATION",
+  JOB_SEEKER_VERIFICATION = "JOB_SEEKER_VERIFICATION",
+  HOTELIER_VERIFICATION = "HOTELIER_VERIFICATION",
+  SECURITY_ALERT = "SECURITY_ALERT",
+  SYSTEM_UPDATE = "SYSTEM_UPDATE",
+}
 
+export interface INotificationPayload {
+  user_id: number;
+  content: string;
+  type: `${NotificationTypeEnum}`;
+  related_id: number;
+}
+export interface INotificationUserPayload {
+  user_id: number;
+  notification_id: number;
+}
+
+export enum TypeEmitNotification {
+  "ADMIN_NEW_NOTIFICATION",
+  "HOTELIER_NEW_NOTIFICATION",
+  "JOB_SEEKER_NEW_NOTIFICATION",
+}

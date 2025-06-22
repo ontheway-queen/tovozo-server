@@ -12,19 +12,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const database_1 = require("../../app/database");
 const config_1 = __importDefault(require("../../app/config"));
-const statusCode_1 = __importDefault(require("../../utils/miscellaneous/statusCode"));
-const responseMessage_1 = __importDefault(require("../../utils/miscellaneous/responseMessage"));
-const lib_1 = __importDefault(require("../../utils/lib/lib"));
+const database_1 = require("../../app/database");
 const userModel_1 = __importDefault(require("../../models/userModel/userModel"));
+const lib_1 = __importDefault(require("../../utils/lib/lib"));
 const constants_1 = require("../../utils/miscellaneous/constants");
+const responseMessage_1 = __importDefault(require("../../utils/miscellaneous/responseMessage"));
+const statusCode_1 = __importDefault(require("../../utils/miscellaneous/statusCode"));
 class AuthChecker {
     constructor() {
         // admin auth checker
         this.adminAuthChecker = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
             const { authorization } = req.headers;
-            console.log({ authorization });
             if (!authorization) {
                 res.status(statusCode_1.default.HTTP_UNAUTHORIZED).json({
                     success: false,
@@ -79,7 +78,7 @@ class AuthChecker {
             }
             const { user_id } = verify;
             const userModel = new userModel_1.default(database_1.db);
-            const user = yield userModel.checkUser({
+            const [user] = yield userModel.checkUser({
                 id: user_id,
                 type: constants_1.USER_TYPE.HOTELIER,
             });

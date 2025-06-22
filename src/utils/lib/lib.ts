@@ -1,11 +1,12 @@
-import jwt, { SignOptions } from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+
 import fs from "fs";
-import path from "path";
-import { TDB } from "../../features/public/utils/types/publicCommon.types";
-import { Attachment } from "nodemailer/lib/mailer";
+import jwt, { SignOptions } from "jsonwebtoken";
 import nodemailer from "nodemailer";
+import { Attachment } from "nodemailer/lib/mailer";
+import path from "path";
 import config from "../../app/config";
+import { TDB } from "../../features/public/utils/types/publicCommon.types";
 import CommonModel from "../../models/commonModel/commonModel";
 
 class Lib {
@@ -33,7 +34,7 @@ class Lib {
       });
 
       const info = await transporter.sendMail({
-        from: config.EMAIL_SEND_EMAIL_ID,
+        from: `TOVOZO <${config.EMAIL_SEND_EMAIL_ID}>`,
         to: email,
         subject: emailSub,
         html: emailBody,

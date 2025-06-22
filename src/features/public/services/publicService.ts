@@ -12,6 +12,7 @@ import {
   OTP_TYPE_TWO_FA_ADMIN,
   OTP_TYPE_TWO_FA_HOTELIER,
   OTP_TYPE_TWO_FA_JOB_SEEKER,
+  OTP_TYPE_VERIFY_HOTELIER,
   OTP_TYPE_VERIFY_JOB_SEEKER,
   USER_AUTHENTICATION_VIEW,
 } from "../../../utils/miscellaneous/constants";
@@ -27,7 +28,6 @@ class PublicService extends AbstractServices {
   public async sendOtpToEmailService(req: Request) {
     return await this.db.transaction(async (trx) => {
       const { email, type } = req.body as IGetOTPPayload;
-
       if (type === OTP_TYPE_FORGET_JOB_SEEKER) {
         // --check if the user exist
         const userModel = this.Model.UserModel();
@@ -65,11 +65,26 @@ class PublicService extends AbstractServices {
           table_name: USER_AUTHENTICATION_VIEW.JOB_SEEKER,
         });
 
-        if (!checkUser.length || checkUser[0].is_verified) {
+        if (checkUser) {
           return {
             success: false,
-            code: this.StatusCode.HTTP_NOT_FOUND,
-            message: "No unverified user found.",
+            code: this.StatusCode.HTTP_CONFLICT,
+            message: "Email already exists!",
+          };
+        }
+      } else if (type === (OTP_TYPE_VERIFY_HOTELIER as typeof type)) {
+        const userModel = this.Model.UserModel();
+        const checkUser = await userModel.getSingleCommonAuthUser({
+          email,
+          schema_name: "hotelier",
+          table_name: USER_AUTHENTICATION_VIEW.HOTELIER,
+        });
+
+        if (checkUser) {
+          return {
+            success: false,
+            code: this.StatusCode.HTTP_CONFLICT,
+            message: "Email already exists!",
           };
         }
       } else if (type === OTP_TYPE_FORGET_HOTELIER) {
@@ -233,9 +248,15 @@ class PublicService extends AbstractServices {
           };
         } else if (type === OTP_TYPE_FORGET_HOTELIER) {
           secret = config.JWT_SECRET_HOTEL;
-        } else if (type === OTP_TYPE_TWO_FA_HOTELIER) {
+        } else if (
+          type === OTP_TYPE_TWO_FA_HOTELIER ||
+          OTP_TYPE_VERIFY_HOTELIER
+        ) {
           secret = config.JWT_SECRET_HOTEL;
-        } else if (type === OTP_TYPE_TWO_FA_JOB_SEEKER) {
+        } else if (
+          type === OTP_TYPE_TWO_FA_JOB_SEEKER ||
+          OTP_TYPE_VERIFY_JOB_SEEKER
+        ) {
           secret = config.JWT_SECRET_JOB_SEEKER;
         } else if (type == OTP_TYPE_TWO_FA_ADMIN) {
           const checkUser = await userModel.getSingleCommonAuthUser({
@@ -259,7 +280,7 @@ class PublicService extends AbstractServices {
             type: type,
           },
           secret,
-          "5m"
+          "15m"
         );
 
         return {
@@ -284,6 +305,17 @@ class PublicService extends AbstractServices {
         };
       }
     });
+  }
+
+  public async getAllNotification(req: Request) {
+    const model = this.Model.commonModel();
+    const data = await model.getNotification(req.query as any);
+    return {
+      success: true,
+      message: this.ResMsg.HTTP_OK,
+      code: this.StatusCode.HTTP_OK,
+      ...data,
+    };
   }
 
   //get all country
@@ -341,6 +373,26 @@ class PublicService extends AbstractServices {
       code: this.StatusCode.HTTP_OK,
       message: this.ResMsg.HTTP_OK,
       data: state_list,
+    };
+  }
+
+  public async getAllNationality(req: Request) {
+    const { limit, skip, name } = req.query;
+
+    const parsedParams = {
+      limit: limit ? Number(limit) : undefined,
+      skip: skip ? Number(skip) : undefined,
+      name: name as string,
+    };
+
+    const model = this.Model.commonModel();
+    const data = await model.getAllNationality(parsedParams);
+
+    return {
+      success: true,
+      code: this.StatusCode.HTTP_OK,
+      message: this.ResMsg.HTTP_OK,
+      ...data,
     };
   }
 }

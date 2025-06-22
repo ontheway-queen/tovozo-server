@@ -11,7 +11,6 @@ export default class HotelierAuthController extends AbstractController {
   //register
   public registration = this.asyncWrapper.wrap(
     { bodySchema: this.commonValidator.registerOrganizationValidator },
-
     async (req: Request, res: Response) => {
       const { code, ...data } =
         await this.services.organizationRegistrationService(req);

@@ -1,5 +1,8 @@
 import {
-  HOTELIER_CLIENT_URL,
+  APP_STORE_ICON,
+  HOTELIER_APP_STORE_URL,
+  HOTELIER_PLAY_STORE_URL,
+  PLAY_STORE_ICON,
   PROJECT_LOGO,
   PROJECT_NAME,
   PROJECT_NUMBER,
@@ -16,7 +19,7 @@ export const registrationHotelierTemplate = (payload: { name: string }) => {
 </head>
 <body style="margin:0; padding:0; font-family: 'Poppins', sans-serif; background-color:#f7f9fc; color:#333;">
   <div style="max-width:450px; margin:20px auto; background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 4px 10px rgba(0,0,0,0.1); border:1px solid #e7e9ec;">
-    
+
     <!-- Header -->
     <div style="background-color:#ECECEC; color:#1d1d1d; padding:20px; text-align:center;">
       <img src="${PROJECT_LOGO}" alt="Logo" style="width:120px; margin-bottom:10px;" />
@@ -42,7 +45,15 @@ export const registrationHotelierTemplate = (payload: { name: string }) => {
     <!-- Footer -->
     <div style="background-color:#f1f5fa; text-align:center; padding:10px; font-size:12px; color:#666;">
       <p style="margin:5px 0;">Need help? Call us at <strong>${PROJECT_NUMBER}</strong>.</p>
-      <p style="margin:5px 0;">Visit our website at <a href="${HOTELIER_CLIENT_URL}" target="_blank" style="color:#0085D4; text-decoration:none;">${HOTELIER_CLIENT_URL}</a>.</p>
+      <!-- App Download Buttons -->
+      <div style="margin:10px 0;">
+        <a href="${HOTELIER_APP_STORE_URL}" target="_blank" style="display:inline-block; margin:0 5px;">
+          <img src="${APP_STORE_ICON}" alt="Download on the App Store" style="height:30px;" />
+        </a>
+        <a href="${HOTELIER_PLAY_STORE_URL}" target="_blank" style="display:inline-block; margin:0 5px;">
+          <img src="${PLAY_STORE_ICON}" alt="Get it on Google Play" style="height:30px;" />
+        </a>
+      </div>
       <p style="margin:5px 0;">&copy; ${new Date().getFullYear()} ${PROJECT_NAME}. All Rights Reserved.</p>
     </div>
 

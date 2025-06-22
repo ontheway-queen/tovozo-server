@@ -20,9 +20,17 @@ export default class UserModel extends Schema {
       .insert(payload, "id");
   }
 
+  public async createUserMaintenanceDesignation(payload: {
+    designation: string;
+    user_id: number;
+  }) {
+    return await this.db(this.TABLES.maintenance_designation)
+      .withSchema(this.HOTELIER)
+      .insert(payload);
+  }
   //update
   public async updateProfile(
-    payload: Partial<ICreateUserPayload>,
+    payload: Partial<ICreateUserPayload> & { socket_id?: string },
     where: { id?: number }
   ) {
     return await this.db("user")
@@ -42,31 +50,32 @@ export default class UserModel extends Schema {
     type,
     user_name,
     phone_number,
-  }: ICheckUserParams): Promise<ICheckUserData> {
+  }: ICheckUserParams): Promise<ICheckUserData[]> {
     return await this.db(this.TABLES.user)
       .withSchema(this.DBO_SCHEMA)
       .select("*")
       .where((qb) => {
-        if (email) {
-          qb.andWhere("email", email);
-        }
-        if (username) {
-          qb.andWhere("username", username);
-        }
-        if (id) {
-          qb.andWhere("id", id);
-        }
-        if (type) {
-          qb.andWhere("type", type);
-        }
-        if (user_name) {
-          qb.andWhere("user_name", user_name);
-        }
-        if (phone_number) {
-          qb.andWhere("phone_number", phone_number);
-        }
-      })
-      .first();
+        qb.where("is_deleted", false).andWhere((qbc) => {
+          if (id) {
+            qbc.andWhere("id", id);
+          }
+          if (type) {
+            qbc.andWhere("type", type);
+            if (email) {
+              qbc.andWhere("email", email);
+            }
+            if (username) {
+              qbc.orWhere("username", username);
+            }
+            if (user_name) {
+              qbc.orWhere("user_name", user_name);
+            }
+            if (phone_number) {
+              qbc.orWhere("phone_number", phone_number);
+            }
+          }
+        });
+      });
   }
 
   public async getSingleCommonAuthUser({
@@ -104,16 +113,21 @@ export default class UserModel extends Schema {
       .first();
   }
 
-    //get last  user Id
+  //get last  user Id
   public async getLastUserID() {
-    const data = await this.db('user')
+    const data = await this.db("user")
       .withSchema(this.DBO_SCHEMA)
-      .select('id')
-      .orderBy('id', 'desc')
+      .select("id")
+      .orderBy("id", "desc")
       .limit(1);
 
     return data.length ? data[0].id : 0;
   }
 
-  
+  public async deleteUser(id: number) {
+    return await this.db(this.TABLES.user)
+      .withSchema(this.DBO_SCHEMA)
+      .update({ is_deleted: true })
+      .where({ id });
+  }
 }

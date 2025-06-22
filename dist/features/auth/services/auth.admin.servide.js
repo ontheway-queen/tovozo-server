@@ -91,7 +91,7 @@ class AdminAuthService extends abstract_service_1.default {
                         status: rest.user_status,
                         email: rest.email,
                     };
-                    const token = lib_1.default.createToken(token_data, config_1.default.JWT_SECRET_ADMIN, "48h");
+                    const token = lib_1.default.createToken(token_data, config_1.default.JWT_SECRET_ADMIN, constants_1.LOGIN_TOKEN_EXPIRES_IN);
                     return {
                         success: true,
                         code: this.StatusCode.HTTP_OK,
@@ -149,7 +149,7 @@ class AdminAuthService extends abstract_service_1.default {
                     status: rest.user_status,
                     email: rest.email,
                 };
-                const token = lib_1.default.createToken(token_data, config_1.default.JWT_SECRET_ADMIN, "48h");
+                const token = lib_1.default.createToken(token_data, config_1.default.JWT_SECRET_ADMIN, constants_1.LOGIN_TOKEN_EXPIRES_IN);
                 return {
                     success: true,
                     code: this.StatusCode.HTTP_OK,
@@ -183,7 +183,7 @@ class AdminAuthService extends abstract_service_1.default {
             if (email === verify_email) {
                 const hashed_pass = yield lib_1.default.hashValue(password);
                 const model = this.Model.UserModel();
-                const get_user = yield model.checkUser({
+                const [get_user] = yield model.checkUser({
                     email,
                     type: constants_1.USER_TYPE.ADMIN,
                 });

@@ -50,6 +50,52 @@ class JobSeekerModel extends schema_1.default {
                 .first();
         });
     }
+    getAllJobSeekerList(params) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { user_id, name, status, from_date, to_date, limit = 100, skip = 0, } = params;
+            const data = yield this.db("vw_full_job_seeker_profile")
+                .withSchema(this.JOB_SEEKER)
+                .select("user_id", "email", "name", "photo", "account_status", "user_created_at")
+                .where((qb) => {
+                if (user_id) {
+                    qb.andWhere("user_id", user_id);
+                }
+                if (name) {
+                    qb.andWhereILike("name", `%${name}%`).orWhere("email", name);
+                }
+                if (status) {
+                    qb.andWhere("account_status", status);
+                }
+                if (from_date && to_date) {
+                    qb.andWhereBetween("user_created_at", [from_date, to_date]);
+                }
+            })
+                .limit(limit)
+                .offset(skip);
+            const total = yield this.db("vw_full_job_seeker_profile")
+                .withSchema(this.JOB_SEEKER)
+                .count("user_id as total")
+                .where((qb) => {
+                if (user_id) {
+                    qb.andWhere("user_id", user_id);
+                }
+                if (name) {
+                    qb.andWhereILike("name", `%${name}%`).orWhere("email", name);
+                }
+                if (status) {
+                    qb.andWhere("account_status", status);
+                }
+                if (from_date && to_date) {
+                    qb.andWhereBetween("user_created_at", [from_date, to_date]);
+                }
+            })
+                .first();
+            return {
+                data,
+                total: total === null || total === void 0 ? void 0 : total.total,
+            };
+        });
+    }
     // get single job seeker details
     getJobSeekerDetails(where) {
         return __awaiter(this, void 0, void 0, function* () {
