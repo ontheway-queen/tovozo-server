@@ -1,5 +1,5 @@
-import AbstractServices from "../../../abstract/abstract.service";
 import { Request } from "express";
+import AbstractServices from "../../../abstract/abstract.service";
 import Lib from "../../../utils/lib/lib";
 import { IChangePasswordPayload } from "../../../utils/modelTypes/common/commonModelTypes";
 
@@ -32,6 +32,7 @@ class AdminProfileService extends AbstractServices {
       message: this.ResMsg.HTTP_OK,
       data: {
         ...userData,
+        role_id,
         permissions: rolePermission,
       },
     };

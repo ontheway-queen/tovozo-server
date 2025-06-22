@@ -3,6 +3,7 @@ import { GENDERS } from "../../../../utils/miscellaneous/constants";
 
 export class HotelierJobPostValidator {
   public createJobPostSchema = Joi.object({
+    vacancy: Joi.number().integer().required(),
     job_post: Joi.object({
       title: Joi.string().required(),
       details: Joi.string().optional(),
@@ -14,10 +15,15 @@ export class HotelierJobPostValidator {
         .optional(),
       requirements: Joi.string().optional(),
     }).required(),
-    job_post_details: Joi.object({
-      job_id: Joi.number().required(),
-      start_time: Joi.string().isoDate().required(),
-      end_time: Joi.string().isoDate().required(),
-    }),
+    job_post_details: Joi.array()
+      .items(
+        Joi.object({
+          job_id: Joi.number().required(),
+          start_time: Joi.string().isoDate().required(),
+          end_time: Joi.string().isoDate().required(),
+        })
+      )
+      .min(1)
+      .required(),
   });
 }

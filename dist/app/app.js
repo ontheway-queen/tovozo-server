@@ -75,7 +75,7 @@ class App {
             console.log(socket.id, "-", id, "-", type, " is connected ⚡");
             if (id && type) {
                 const model = new rootModel_1.default().UserModel();
-                yield model.updateProfile({ socket_id: socket.id }, id);
+                yield model.updateProfile({ socket_id: socket.id }, { id });
             }
             socket.on("disconnect", (event) => __awaiter(this, void 0, void 0, function* () {
                 console.log(socket.id, "-", id, "-", type, " disconnected...");

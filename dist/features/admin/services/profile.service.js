@@ -50,7 +50,7 @@ class AdminProfileService extends abstract_service_1.default {
                 success: true,
                 code: this.StatusCode.HTTP_OK,
                 message: this.ResMsg.HTTP_OK,
-                data: Object.assign(Object.assign({}, userData), { permissions: rolePermission }),
+                data: Object.assign(Object.assign({}, userData), { role_id, permissions: rolePermission }),
             };
         });
     }

@@ -94,8 +94,8 @@ export default class JobSeekerModel extends Schema {
           qb.andWhereBetween("user_created_at", [from_date, to_date]);
         }
       })
-      .limit(limit)
-      .offset(skip);
+      .limit(Number(limit))
+      .offset(Number(skip));
 
     const total = await this.db("vw_full_job_seeker_profile")
       .withSchema(this.JOB_SEEKER)

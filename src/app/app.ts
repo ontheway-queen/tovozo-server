@@ -67,7 +67,7 @@ class App {
       console.log(socket.id, "-", id, "-", type, " is connected ⚡");
       if (id && type) {
         const model = new Models().UserModel();
-        await model.updateProfile({ socket_id: socket.id }, id);
+        await model.updateProfile({ socket_id: socket.id }, { id });
       }
       socket.on("disconnect", async (event) => {
         console.log(socket.id, "-", id, "-", type, " disconnected...");

@@ -18,7 +18,9 @@ class JobPostModel extends Schema {
       .insert(payload, "id");
   }
 
-  public async createJobPostDetails(payload: IJobPostDetailsPayload) {
+  public async createJobPostDetails(
+    payload: IJobPostDetailsPayload | IJobPostDetailsPayload[]
+  ) {
     return await this.db(this.TABLES.job_post_details)
       .withSchema(this.DBO_SCHEMA)
       .insert(payload, "id");
@@ -32,6 +34,7 @@ class JobPostModel extends Schema {
       city_id,
       orderBy,
       orderTo,
+      status,
       limit,
       skip,
       need_total = true,
@@ -39,7 +42,7 @@ class JobPostModel extends Schema {
     const data = await this.db("job_post as jp")
       .withSchema(this.DBO_SCHEMA)
       .select(
-        "jp.id",
+        "jpd.id",
         "jp.organization_id",
         "jp.title",
         "j.title as job_category",
@@ -62,6 +65,7 @@ class JobPostModel extends Schema {
       .join("jobs as j", "j.id", "jpd.job_id")
       .leftJoin("vw_location as vwl", "vwl.location_id", "org.location_id")
       .where((qb) => {
+        qb.where("jp.status", status || "Live");
         if (user_id) {
           qb.andWhere("u.id", user_id);
         }
@@ -83,7 +87,7 @@ class JobPostModel extends Schema {
     if (need_total) {
       const totalQuery = await this.db("job_post as jp")
         .withSchema(this.DBO_SCHEMA)
-        .count("jp.id as total")
+        .count("jpd.id as total")
         .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
           `${this.HOTELIER}.${this.TABLES.organization}`,
         ])
@@ -93,6 +97,7 @@ class JobPostModel extends Schema {
         .join("jobs as j", "j.id", "jpd.job_id")
         .leftJoin("vw_location as vwl", "vwl.location_id", "org.location_id")
         .where((qb) => {
+          qb.where("jp.status", status || "Live");
           if (user_id) {
             qb.andWhere("u.id", user_id);
           }
@@ -114,6 +119,36 @@ class JobPostModel extends Schema {
       data,
       total,
     };
+  }
+
+  public async getSingleJobPos(id: number) {
+    return await this.db("job_post as jp")
+      .withSchema(this.DBO_SCHEMA)
+      .select(
+        "jpd.id",
+        "jp.organization_id",
+        "jp.title",
+        "j.title as job_category",
+        "jp.hourly_rate",
+        "jp.created_time",
+        "org.name as organization_name",
+        "vwl.location_id",
+        "vwl.location_name",
+        "vwl.location_address",
+        "vwl.city_name",
+        "vwl.state_name",
+        "vwl.country_name"
+      )
+      .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
+        `${this.HOTELIER}.${this.TABLES.organization}`,
+      ])
+
+      .join("user as u", "u.id", "org.user_id")
+      .join("job_post_details as jpd", "jp.id", "jpd.job_post_id")
+      .join("jobs as j", "j.id", "jpd.job_id")
+      .leftJoin("vw_location as vwl", "vwl.location_id", "org.location_id")
+      .where("jp.id", id)
+      .first();
   }
 }
 

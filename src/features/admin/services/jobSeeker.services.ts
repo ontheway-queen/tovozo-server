@@ -161,15 +161,21 @@ class AdminJobSeekerService extends AbstractServices {
   }
 
   public async getJobSeekers(req: Request) {
-    const { name, status, limit, skip, from_date, to_date } =
-      req.query as unknown as {
-        name?: string;
-        status?: UserStatusType;
-        limit?: number;
-        skip?: number;
-        from_date?: string;
-        to_date?: string;
-      };
+    const {
+      name,
+      status,
+      limit = 100,
+      skip = 0,
+      from_date,
+      to_date,
+    } = req.query as unknown as {
+      name?: string;
+      status?: UserStatusType;
+      limit?: number;
+      skip?: number;
+      from_date?: string;
+      to_date?: string;
+    };
     const model = this.Model.jobSeekerModel();
     const data = await model.getAllJobSeekerList({
       name,

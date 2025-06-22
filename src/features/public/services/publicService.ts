@@ -15,6 +15,7 @@ import {
   OTP_TYPE_VERIFY_HOTELIER,
   OTP_TYPE_VERIFY_JOB_SEEKER,
   USER_AUTHENTICATION_VIEW,
+  USER_TYPE,
 } from "../../../utils/miscellaneous/constants";
 import { IGetOTPPayload } from "../../../utils/modelTypes/common/commonModelTypes";
 import { sendEmailOtpTemplate } from "../../../utils/templates/sendEmailOtpTemplate";
@@ -295,6 +296,105 @@ class PublicService extends AbstractServices {
     };
   }
 
+  public async deleteNotification(req: Request) {
+    const { user_id, id } = req.query as unknown as {
+      user_id: number;
+      id?: number;
+    };
+
+    return await this.db.transaction(async (trx) => {
+      const model = this.Model.commonModel(trx);
+
+      const getMyNotification = await model.getNotification({
+        id: Number(id),
+        user_id,
+        limit: "1",
+        need_total: false,
+      });
+
+      if (!getMyNotification.data.length) {
+        return {
+          success: false,
+          message: this.ResMsg.HTTP_NOT_FOUND,
+          code: this.StatusCode.HTTP_NOT_FOUND,
+        };
+      }
+      if (
+        getMyNotification.data[0].user_type.toLowerCase() ===
+        USER_TYPE.ADMIN.toLowerCase()
+      ) {
+        await this.insertAdminAudit(trx, {
+          details: id
+            ? `Notification ${id} has been deleted`
+            : "All Notification has been deleted.",
+          created_by: user_id,
+          endpoint: req.originalUrl,
+          type: "DELETE",
+        });
+      }
+
+      const data = await model.deleteNotification({
+        notification_id: Number(id),
+        user_id,
+      });
+
+      return {
+        success: true,
+        message: this.ResMsg.HTTP_OK,
+        code: this.StatusCode.HTTP_OK,
+        ...data,
+      };
+    });
+  }
+  public async readNotification(req: Request) {
+    const { user_id, id } = req.query as unknown as {
+      user_id: number;
+      id?: number;
+    };
+    return await this.db.transaction(async (trx) => {
+      const model = this.Model.commonModel(trx);
+
+      const getMyNotification = await model.getNotification({
+        id: Number(id),
+        user_id,
+        limit: "1",
+        need_total: false,
+      });
+
+      if (!getMyNotification.data.length) {
+        return {
+          success: false,
+          message: this.ResMsg.HTTP_NOT_FOUND,
+          code: this.StatusCode.HTTP_NOT_FOUND,
+        };
+      }
+      if (
+        getMyNotification.data[0].user_type.toLowerCase() ===
+        USER_TYPE.ADMIN.toLowerCase()
+      ) {
+        await this.insertAdminAudit(trx, {
+          details: id
+            ? `Notification ${id} has been read`
+            : "All Notification has been read.",
+          created_by: user_id,
+          endpoint: req.originalUrl,
+          type: "UPDATE",
+        });
+      }
+
+      const data = await model.readNotification({
+        notification_id: Number(id),
+        user_id,
+      });
+
+      return {
+        success: true,
+        message: this.ResMsg.HTTP_OK,
+        code: this.StatusCode.HTTP_OK,
+      };
+    });
+  }
+
   //get all country
   public async getAllCountry(req: Request) {
     const query = req.query;
@@ -331,6 +431,7 @@ class PublicService extends AbstractServices {
       data: city_list,
     };
   }
+
   public async getAllStates(req: Request) {
     const { state_id, country_id, limit, skip, name } = req.query;
 

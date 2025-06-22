@@ -232,6 +232,10 @@ class PublicCommonValidator {
             limit: joi_1.default.number().integer().positive().optional(),
             skip: joi_1.default.number().integer().positive().optional(),
         });
+        this.mutationNotificationValidator = joi_1.default.object({
+            user_id: joi_1.default.number().integer().positive().required(),
+            id: joi_1.default.number().integer().positive().optional(),
+        });
     }
     // multiple params number validator
     multipleParamsNumValidator(fields) {
