@@ -74,18 +74,16 @@ class JobApplicationModel extends schema_1.default {
     }
     getMyJobApplication(_a) {
         return __awaiter(this, arguments, void 0, function* ({ job_application_id, job_seeker_id, }) {
-            console.log("Fetching job application for ID:", job_application_id, "and Job Seeker ID:", job_seeker_id);
             const data = yield this.db("job_applications as ja")
                 .withSchema(this.DBO_SCHEMA)
-                .select(
-            // Job application
-            "ja.id as job_application_id", "ja.job_seeker_id", "ja.job_post_details_id", "ja.status as application_status", "ja.created_at as applied_at", 
-            // Job post details
-            "jpd.id as job_post_details_id", "jpd.job_post_id", "jpd.start_time", "jpd.end_time", "jpd.status as job_post_details_status", 
-            // Job post (from main job_posts table)
-            "jp.id as job_post_id", "jp.title as job_post_title", "jp.details as job_details", "jp.hourly_rate", "jp.prefer_gender", "jp.requirements", "jp.expire_time")
+                .select("ja.id as job_application_id", "ja.job_post_details_id", "ja.status as job_application_status", "ja.created_at as applied_at", "jpd.id as job_post_details_id", "jpd.status as job_post_details_status", "jpd.job_post_id", "jpd.start_time", "jpd.end_time", "jpd.status as job_post_details_status", "jp.id as job_post_id", "jp.title as job_post_title", "org.id as organization_id", "org.name as organization_name", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.city_name", "vwl.state_name", "vwl.country_name")
                 .leftJoin("job_post_details as jpd", "ja.job_post_details_id", "jpd.id")
                 .leftJoin("job_post as jp", "jpd.job_post_id", "jp.id")
+                .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
+                `${this.HOTELIER}.${this.TABLES.organization}`,
+            ])
+                .join("jobs as j", "j.id", "jpd.job_id")
+                .leftJoin("vw_location as vwl", "vwl.location_id", "org.location_id")
                 .where({
                 "ja.id": job_application_id,
                 "ja.job_seeker_id": job_seeker_id,
