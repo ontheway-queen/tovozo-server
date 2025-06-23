@@ -86,6 +86,21 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 data,
             };
         });
+        this.cancelMyJobApplication = (req) => __awaiter(this, void 0, void 0, function* () {
+            const id = req.params.id;
+            const { user_id } = req.jobSeeker;
+            const model = this.Model.jobApplicationModel();
+            const data = yield model.cancelMyJobApplication(parseInt(id), user_id);
+            if (!data) {
+                throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
+            }
+            return {
+                success: true,
+                message: this.ResMsg.HTTP_SUCCESSFUL,
+                code: this.StatusCode.HTTP_OK,
+                data,
+            };
+        });
     }
 }
 exports.JobSeekerJobApplication = JobSeekerJobApplication;

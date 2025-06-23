@@ -96,4 +96,24 @@ export class JobSeekerJobApplication extends AbstractServices {
 			data,
 		};
 	};
+
+	public cancelMyJobApplication = async (req: Request) => {
+		const id = req.params.id;
+		const { user_id } = req.jobSeeker;
+		const model = this.Model.jobApplicationModel();
+		const data = await model.cancelMyJobApplication(parseInt(id), user_id);
+		if (!data) {
+			throw new CustomError(
+				this.ResMsg.HTTP_NOT_FOUND,
+				this.StatusCode.HTTP_NOT_FOUND
+			);
+		}
+
+		return {
+			success: true,
+			message: this.ResMsg.HTTP_SUCCESSFUL,
+			code: this.StatusCode.HTTP_OK,
+			data,
+		};
+	};
 }

@@ -161,4 +161,17 @@ export default class JobApplicationModel extends Schema {
 
 		return data;
 	}
+
+	public cancelMyJobApplication(
+		application_id: number,
+		job_seeker_id: number
+	) {
+		return this.db("job_applications")
+			.withSchema(this.DBO_SCHEMA)
+			.update({ status: JOB_POST_DETAILS_STATUS.CANCELLED })
+			.where({
+				id: application_id,
+				job_seeker_id: job_seeker_id,
+			});
+	}
 }

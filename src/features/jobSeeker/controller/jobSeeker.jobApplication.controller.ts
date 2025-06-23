@@ -40,4 +40,18 @@ export class JobSeekerJobApplicationController extends AbstractController {
 			res.status(code).json(data);
 		}
 	);
+
+	public cancelMyJobApplication = this.asyncWrapper.wrap(
+		{
+			paramSchema: Joi.object({ id: Joi.string().required() }),
+			querySchema: this.validator.cancellationReportTypeValidator,
+			bodySchema: this.validator.cancellationReportReasonValidator,
+		},
+		async (req: Request, res: Response) => {
+			const { code, ...data } = await this.service.cancelMyJobApplication(
+				req
+			);
+			res.status(code).json(data);
+		}
+	);
 }

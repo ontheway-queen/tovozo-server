@@ -15,6 +15,9 @@ export class JobSeekerJobApplicationRouter extends AbstractRouter {
 			.post(this.controller.createJobApplication)
 			.get(this.controller.getMyJobApplications);
 
-		this.router.route("/:id").get(this.controller.getMyJobApplication);
+		this.router
+			.route("/:id")
+			.get(this.controller.getMyJobApplication)
+			.delete(this.controller.cancelMyJobApplication);
 	}
 }

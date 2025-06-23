@@ -44,6 +44,8 @@ class JobPostModel extends Schema {
 			.select(
 				"jpd.id",
 				"jpd.status",
+				"jpd.start_time",
+				"jpd.end_time",
 				"jp.organization_id",
 				"jp.title",
 				"j.title as job_category",
@@ -55,12 +57,16 @@ class JobPostModel extends Schema {
 				"vwl.location_address",
 				"vwl.city_name",
 				"vwl.state_name",
-				"vwl.country_name"
+				"vwl.country_name",
+				this.db.raw(`json_build_object(
+                    'job_seeker_id', ja.job_seeker_id,
+                    'status', ja.status,
+                    'payment_status', ja.payment_status
+                ) as job_post_details`)
 			)
 			.joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
 				`${this.HOTELIER}.${this.TABLES.organization}`,
 			])
-
 			.join("user as u", "u.id", "org.user_id")
 			.join("job_post_details as jpd", "jp.id", "jpd.job_post_id")
 			.join("jobs as j", "j.id", "jpd.job_id")
@@ -69,8 +75,12 @@ class JobPostModel extends Schema {
 				"vwl.location_id",
 				"org.location_id"
 			)
+			.leftJoin(
+				"job_applications as ja",
+				"ja.job_post_details_id",
+				"jpd.id"
+			)
 			.where((qb) => {
-				// qb.where("jp.status", status || "Live");
 				if (user_id) {
 					qb.andWhere("u.id", user_id);
 				}
