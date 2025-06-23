@@ -473,5 +473,16 @@ class PublicService extends AbstractServices {
       ...data,
     };
   }
+
+  public async getAllJob(req: Request) {
+    const model = this.Model.jobModel();
+    const data = await model.getAllJobs(req.query);
+    return {
+      success: true,
+      message: this.ResMsg.HTTP_OK,
+      code: this.StatusCode.HTTP_OK,
+      ...data,
+    };
+  }
 }
 export default PublicService;

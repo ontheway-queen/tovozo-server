@@ -65,6 +65,14 @@ class PublicCommonValidator {
             limit: joi_1.default.number().integer().optional(),
             skip: joi_1.default.number().integer().optional(),
         });
+        this.getAllJobSchema = joi_1.default.object({
+            title: joi_1.default.string().min(1).max(255).optional(),
+            status: joi_1.default.boolean().optional(),
+            limit: joi_1.default.number().optional(),
+            skip: joi_1.default.number().optional(),
+            orderBy: joi_1.default.string().valid("title").optional(),
+            orderTo: joi_1.default.string().valid("asc", "desc").optional(),
+        });
         // common forget password input validator
         this.commonForgetPassInputValidation = joi_1.default.object({
             token: joi_1.default.string().required().messages({
