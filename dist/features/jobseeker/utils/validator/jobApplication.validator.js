@@ -9,6 +9,14 @@ class JobApplicationValidator {
         this.createJobApplicationValidator = joi_1.default.object({
             job_post_details_id: joi_1.default.number().integer().required(),
         });
+        this.cancellationReportTypeValidator = joi_1.default.object({
+            cancellation_report_type: joi_1.default.string()
+                .valid("cancel_application", "cancel_job_post")
+                .required(),
+        });
+        this.cancellationReportReasonValidator = joi_1.default.object({
+            reason: joi_1.default.string().required(),
+        });
     }
 }
 exports.default = JobApplicationValidator;

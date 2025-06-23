@@ -45,6 +45,14 @@ class JobSeekerJobApplicationController extends abstract_controller_1.default {
             const _a = yield this.service.getMyJobApplication(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
+        this.cancelMyJobApplication = this.asyncWrapper.wrap({
+            paramSchema: joi_1.default.object({ id: joi_1.default.string().required() }),
+            querySchema: this.validator.cancellationReportTypeValidator,
+            bodySchema: this.validator.cancellationReportReasonValidator,
+        }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.cancelMyJobApplication(req), { code } = _a, data = __rest(_a, ["code"]);
+            res.status(code).json(data);
+        }));
     }
 }
 exports.JobSeekerJobApplicationController = JobSeekerJobApplicationController;

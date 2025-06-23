@@ -12,6 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const constants_1 = require("../../utils/miscellaneous/constants");
 const schema_1 = __importDefault(require("../../utils/miscellaneous/schema"));
 class JobApplicationModel extends schema_1.default {
     constructor(db) {
@@ -90,6 +91,15 @@ class JobApplicationModel extends schema_1.default {
             })
                 .first();
             return data;
+        });
+    }
+    cancelMyJobApplication(application_id, job_seeker_id) {
+        return this.db("job_applications")
+            .withSchema(this.DBO_SCHEMA)
+            .update({ status: constants_1.JOB_POST_DETAILS_STATUS.CANCELLED })
+            .where({
+            id: application_id,
+            job_seeker_id: job_seeker_id,
         });
     }
 }
