@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GENDERS = exports.LOGIN_TOKEN_EXPIRES_IN = exports.BRITISH_ID = exports.OTP_FOR = exports.USER_TYPE = exports.USER_AUTHENTICATION_VIEW = exports.USER_STATUS = exports.OTP_TYPE_TWO_FA_HOTELIER = exports.OTP_TYPE_TWO_FA_ADMIN = exports.OTP_TYPE_TWO_FA_JOB_SEEKER = exports.OTP_TYPE_FORGET_HOTELIER = exports.OTP_TYPE_VERIFY_ADMIN = exports.OTP_TYPE_VERIFY_HOTELIER = exports.OTP_TYPE_VERIFY_JOB_SEEKER = exports.OTP_TYPE_FORGET_JOB_SEEKER = exports.OTP_TYPE_FORGET_ADMIN = exports.SOURCE_ADMIN = exports.SOURCE_EXTERNAL = exports.SOURCE_B2C = exports.SOURCE_AGENT_B2C = exports.SOURCE_SUB_AGENT = exports.SOURCE_AGENT = exports.ERROR_LEVEL_CRITICAL = exports.ERROR_LEVEL_ERROR = exports.ERROR_LEVEL_WARNING = exports.ERROR_LEVEL_INFO = exports.ERROR_LEVEL_DEBUG = exports.OTP_DEFAULT_EXPIRY = exports.DATA_LIMIT = exports.OTP_EMAIL_SUBJECT = exports.JOB_SEEKER_PLAY_STORE_URL = exports.JOB_SEEKER_APP_STORE_URL = exports.HOTELIER_PLAY_STORE_URL = exports.HOTELIER_APP_STORE_URL = exports.CLIENT_URL = exports.PROJECT_ADDRESS = exports.PROJECT_NUMBER = exports.PROJECT_EMAIL = exports.PROJECT_LINK = exports.APP_STORE_ICON = exports.PLAY_STORE_ICON = exports.PROJECT_ICON = exports.PROJECT_LOGO = exports.PROJECT_NAME = exports.OTP_TYPES = exports.origin = void 0;
+exports.JOB_POST_DETAILS_STATUS = exports.GENDERS = exports.LOGIN_TOKEN_EXPIRES_IN = exports.BRITISH_ID = exports.OTP_FOR = exports.USER_TYPE = exports.USER_AUTHENTICATION_VIEW = exports.USER_STATUS = exports.OTP_TYPE_TWO_FA_HOTELIER = exports.OTP_TYPE_TWO_FA_ADMIN = exports.OTP_TYPE_TWO_FA_JOB_SEEKER = exports.OTP_TYPE_FORGET_HOTELIER = exports.OTP_TYPE_VERIFY_ADMIN = exports.OTP_TYPE_VERIFY_HOTELIER = exports.OTP_TYPE_VERIFY_JOB_SEEKER = exports.OTP_TYPE_FORGET_JOB_SEEKER = exports.OTP_TYPE_FORGET_ADMIN = exports.SOURCE_ADMIN = exports.SOURCE_EXTERNAL = exports.SOURCE_B2C = exports.SOURCE_AGENT_B2C = exports.SOURCE_SUB_AGENT = exports.SOURCE_AGENT = exports.ERROR_LEVEL_CRITICAL = exports.ERROR_LEVEL_ERROR = exports.ERROR_LEVEL_WARNING = exports.ERROR_LEVEL_INFO = exports.ERROR_LEVEL_DEBUG = exports.OTP_DEFAULT_EXPIRY = exports.DATA_LIMIT = exports.OTP_EMAIL_SUBJECT = exports.JOB_SEEKER_PLAY_STORE_URL = exports.JOB_SEEKER_APP_STORE_URL = exports.HOTELIER_PLAY_STORE_URL = exports.HOTELIER_APP_STORE_URL = exports.CLIENT_URL = exports.PROJECT_ADDRESS = exports.PROJECT_NUMBER = exports.PROJECT_EMAIL = exports.PROJECT_LINK = exports.APP_STORE_ICON = exports.PLAY_STORE_ICON = exports.PROJECT_ICON = exports.PROJECT_LOGO = exports.PROJECT_NAME = exports.OTP_TYPES = exports.origin = void 0;
 exports.origin = [
     "http://localhost:3000",
     "http://localhost:3001",
@@ -90,3 +90,11 @@ exports.BRITISH_ID = 26;
 exports.LOGIN_TOKEN_EXPIRES_IN = "48h";
 // Gender
 exports.GENDERS = ["Male", "Female", "Other"];
+// Job post details status
+exports.JOB_POST_DETAILS_STATUS = {
+    Pending: "Pending",
+    Applied: "Applied",
+    Expired: "Expired",
+    Completed: "Completed",
+    WorkFinished: "Work Finished",
+};

@@ -1,14 +1,23 @@
 export interface JobApplication {
-  id: number;
-  job_post_details_id: number;
-  job_seeker_id: number;
-  status: 'approved' | 'cancelled' | 'hired' | 'rejected';
-  created_at: string;
-  is_deleted: boolean;
+	id: number;
+	job_post_details_id: number;
+	job_seeker_id: number;
+	status: "approved" | "cancelled" | "hired" | "rejected";
+	created_at: string;
+	is_deleted: boolean;
 }
 
-
 export interface ICreateJobApplicationPayload {
-  job_post_details_id: number;
-  job_seeker_id: number;
+	job_post_details_id: number;
+	job_seeker_id: number;
+}
+
+export interface IGetMyJobApplicationsParams {
+	user_id: number;
+	orderBy?: string;
+	orderTo?: "asc" | "desc";
+	status?: string;
+	limit?: number;
+	skip?: number;
+	need_total?: boolean;
 }

@@ -4,24 +4,25 @@ import HotelierJobPostService from "../services/hotelierJobPost.service";
 import { HotelierJobPostValidator } from "../utils/validator/hotelierJobPost.validator";
 
 export default class HotelierJobPostController extends AbstractController {
-  private service = new HotelierJobPostService();
-  private validator = new HotelierJobPostValidator();
-  constructor() {
-    super();
-  }
+	private service = new HotelierJobPostService();
+	private validator = new HotelierJobPostValidator();
+	constructor() {
+		super();
+	}
 
-  public createJobPost = this.asyncWrapper.wrap(
-    { bodySchema: this.validator.createJobPostSchema },
-    async (req: Request, res: Response) => {
-      const { code, ...data } = await this.service.createJobPost(req);
-      res.status(code).json(data);
-    }
-  );
-  public getJobPost = this.asyncWrapper.wrap(
-    { querySchema: this.commonValidator.getLimitSkipQueryValidator },
-    async (req: Request, res: Response) => {
-      const { code, ...data } = await this.service.getJobPost(req);
-      res.status(code).json(data);
-    }
-  );
+	public createJobPost = this.asyncWrapper.wrap(
+		{ bodySchema: this.validator.createJobPostSchema },
+		async (req: Request, res: Response) => {
+			const { code, ...data } = await this.service.createJobPost(req);
+			res.status(code).json(data);
+		}
+	);
+	public getJobPost = this.asyncWrapper.wrap(
+		// { querySchema: this.commonValidator.getLimitSkipQueryValidator },
+		null,
+		async (req: Request, res: Response) => {
+			const { code, ...data } = await this.service.getJobPost(req);
+			res.status(code).json(data);
+		}
+	);
 }
