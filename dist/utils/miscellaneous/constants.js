@@ -97,4 +97,5 @@ exports.JOB_POST_DETAILS_STATUS = {
     Expired: "Expired",
     Completed: "Completed",
     WorkFinished: "Work Finished",
+    CANCELLED: "CANCELLED",
 };
