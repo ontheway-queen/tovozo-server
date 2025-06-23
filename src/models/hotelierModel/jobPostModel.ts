@@ -147,7 +147,7 @@ class JobPostModel extends Schema {
       .join("job_post_details as jpd", "jp.id", "jpd.job_post_id")
       .join("jobs as j", "j.id", "jpd.job_id")
       .leftJoin("vw_location as vwl", "vwl.location_id", "org.location_id")
-      .where("jp.id", id)
+      .where("jpd.id", id)
       .first();
   }
 }

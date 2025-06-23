@@ -18,6 +18,8 @@ class PublicRouter extends AbstractRouter {
       this.Controller.matchEmailOtpController
     );
 
+    this.router.get("/category", this.Controller.getAllJob);
+
     this.router
       .route("/notification")
       .get(this.Controller.getAllNotification)

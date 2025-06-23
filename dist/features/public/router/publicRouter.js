@@ -16,6 +16,7 @@ class PublicRouter extends abstract_router_1.default {
         this.router.post("/send-email-otp", this.Controller.sendEmailOtpController);
         //match otp email
         this.router.post("/match-email-otp", this.Controller.matchEmailOtpController);
+        this.router.get("/category", this.Controller.getAllJob);
         this.router
             .route("/notification")
             .get(this.Controller.getAllNotification)

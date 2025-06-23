@@ -89,6 +89,15 @@ export default class PublicCommonValidator {
     skip: Joi.number().integer().optional(),
   });
 
+  public getAllJobSchema = Joi.object({
+    title: Joi.string().min(1).max(255).optional(),
+    status: Joi.boolean().optional(),
+    limit: Joi.number().optional(),
+    skip: Joi.number().optional(),
+    orderBy: Joi.string().valid("title").optional(),
+    orderTo: Joi.string().valid("asc", "desc").optional(),
+  });
+
   // common forget password input validator
   commonForgetPassInputValidation = Joi.object({
     token: Joi.string().required().messages({
