@@ -9,10 +9,6 @@ const constants_1 = require("../../../../utils/miscellaneous/constants");
 class HotelierJobPostValidator {
     constructor() {
         this.createJobPostSchema = joi_1.default.object({
-<<<<<<< HEAD
-=======
-            // vacancy: Joi.number().integer().required(),
->>>>>>> 3359673f5e5a6716a27504d6c95f55c422a1f71c
             job_post: joi_1.default.object({
                 title: joi_1.default.string().required(),
                 details: joi_1.default.string().optional(),
