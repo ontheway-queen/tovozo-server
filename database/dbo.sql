@@ -277,3 +277,27 @@ JOIN dbo.cities ci ON loc.city_id = ci.id
 JOIN dbo."states" st ON st.id = ci.state_id
 JOIN dbo."countries" c ON c.id = st.country_id
 WHERE loc.status = true;
+
+
+-- cancel report
+CREATE TYPE dbo.cancellation_report_type AS ENUM
+    ('CANCEL_APPLICATION', 'CANCEL_JOB_POST');
+
+-- Cancellation report status
+CREATE TYPE dbo.cancellation_report_status AS ENUM
+    ('PENDING', 'APPROVED', 'REJECTED');
+
+CREATE TABLE dbo.cancellation_reports (
+    id SERIAL PRIMARY KEY,
+    reporter_id INT NOT NULL REFERENCES dbo.user(id) ON DELETE CASCADE,
+    report_type dbo.cancellation_report_type NOT NULL,
+    related_id INT NOT NULL,
+    reason TEXT,
+    status dbo.cancellation_report_status DEFAULT 'PENDING',
+    reviewed_by INT REFERENCES dbo.user(id),
+    reviewed_at TIMESTAMP,
+    reject_reason TEXT,
+    before_24_hours boolean DEFAULT false,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
