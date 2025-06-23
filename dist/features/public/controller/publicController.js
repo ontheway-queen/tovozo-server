@@ -36,42 +36,42 @@ class PublicController extends abstract_controller_1.default {
         }));
         // match email otp
         this.matchEmailOtpController = this.asyncWrapper.wrap({ bodySchema: this.commonValidator.matchEmailOtpInputValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _b = yield this.services.matchEmailOtpService(req), { code } = _b, data = __rest(_b, ["code"]);
+            const _a = yield this.services.matchEmailOtpService(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         this.getAllNotification = this.asyncWrapper.wrap({ querySchema: this.commonValidator.getNotificationValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _c = yield this.services.getAllNotification(req), { code } = _c, data = __rest(_c, ["code"]);
+            const _a = yield this.services.getAllNotification(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         this.deleteNotification = this.asyncWrapper.wrap({
             querySchema: this.commonValidator.mutationNotificationValidator,
         }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _d = yield this.services.deleteNotification(req), { code } = _d, data = __rest(_d, ["code"]);
+            const _a = yield this.services.deleteNotification(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         this.readNotification = this.asyncWrapper.wrap({
             querySchema: this.commonValidator.mutationNotificationValidator,
         }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _e = yield this.services.readNotification(req), { code } = _e, data = __rest(_e, ["code"]);
+            const _a = yield this.services.readNotification(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         //get all country
         this.getAllCountry = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _f = yield this.services.getAllCountry(req), { code } = _f, data = __rest(_f, ["code"]);
+            const _a = yield this.services.getAllCountry(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         //get all city
         this.getAllCity = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _g = yield this.services.getAllCity(req), { code } = _g, data = __rest(_g, ["code"]);
+            const _a = yield this.services.getAllCity(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         // get all states
         this.getAllStates = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _h = yield this.services.getAllStates(req), { code } = _h, data = __rest(_h, ["code"]);
+            const _a = yield this.services.getAllStates(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         this.getAllNationality = this.asyncWrapper.wrap({ querySchema: this.commonValidator.getNationality }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _j = yield this.services.getAllNationality(req), { code } = _j, data = __rest(_j, ["code"]);
+            const _a = yield this.services.getAllNationality(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         this.getAllJob = this.asyncWrapper.wrap({ querySchema: this.commonValidator.getAllJobSchema }, (req, res) => __awaiter(this, void 0, void 0, function* () {
