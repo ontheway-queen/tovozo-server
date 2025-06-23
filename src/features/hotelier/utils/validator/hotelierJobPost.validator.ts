@@ -3,7 +3,6 @@ import { GENDERS } from "../../../../utils/miscellaneous/constants";
 
 export class HotelierJobPostValidator {
   public createJobPostSchema = Joi.object({
-    vacancy: Joi.number().integer().required(),
     job_post: Joi.object({
       title: Joi.string().required(),
       details: Joi.string().optional(),
