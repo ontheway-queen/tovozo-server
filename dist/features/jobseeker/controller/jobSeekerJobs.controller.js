@@ -31,7 +31,6 @@ class JobSeekerJobsController extends abstract_controller_1.default {
         super();
         this.service = new jobSeekerJobs_service_1.JobSeekerServices();
         this.getJobs = this.asyncWrapper.wrap({ querySchema: this.commonValidator.getLimitSkipQueryValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            console.log({ data: req });
             const _a = yield this.service.getJobs(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
