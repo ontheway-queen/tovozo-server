@@ -88,6 +88,14 @@ class PublicController extends AbstractController {
       res.status(code).json(data);
     }
   );
+
+  public getAllJob = this.asyncWrapper.wrap(
+    { querySchema: this.commonValidator.getAllJobSchema },
+    async (req: Request, res: Response) => {
+      const { code, ...data } = await this.services.getAllJob(req);
+      res.status(code).json(data);
+    }
+  );
 }
 
 export default PublicController;

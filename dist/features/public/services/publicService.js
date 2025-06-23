@@ -415,5 +415,12 @@ class PublicService extends abstract_service_1.default {
             return Object.assign({ success: true, code: this.StatusCode.HTTP_OK, message: this.ResMsg.HTTP_OK }, data);
         });
     }
+    getAllJob(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const model = this.Model.jobModel();
+            const data = yield model.getAllJobs(req.query);
+            return Object.assign({ success: true, message: this.ResMsg.HTTP_OK, code: this.StatusCode.HTTP_OK }, data);
+        });
+    }
 }
 exports.default = PublicService;

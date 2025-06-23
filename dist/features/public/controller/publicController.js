@@ -74,6 +74,10 @@ class PublicController extends abstract_controller_1.default {
             const _j = yield this.services.getAllNationality(req), { code } = _j, data = __rest(_j, ["code"]);
             res.status(code).json(data);
         }));
+        this.getAllJob = this.asyncWrapper.wrap({ querySchema: this.commonValidator.getAllJobSchema }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _k = yield this.services.getAllJob(req), { code } = _k, data = __rest(_k, ["code"]);
+            res.status(code).json(data);
+        }));
     }
 }
 exports.default = PublicController;
