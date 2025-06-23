@@ -26,12 +26,31 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.JobSeekerJobApplicationController = void 0;
 const abstract_controller_1 = __importDefault(require("../../../abstract/abstract.controller"));
 const jobSeeker_jobApplication_service_1 = require("../service/jobSeeker.jobApplication.service");
+const joi_1 = __importDefault(require("joi"));
+const jobApplication_validator_1 = __importDefault(require("../utils/validator/jobApplication.validator"));
 class JobSeekerJobApplicationController extends abstract_controller_1.default {
     constructor() {
         super();
         this.service = new jobSeeker_jobApplication_service_1.JobSeekerJobApplication();
-        this.createJobApplication = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
+        this.validator = new jobApplication_validator_1.default();
+        this.createJobApplication = this.asyncWrapper.wrap({ bodySchema: this.validator.createJobApplicationValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
             const _a = yield this.service.createJobApplication(req), { code } = _a, data = __rest(_a, ["code"]);
+            res.status(code).json(data);
+        }));
+        this.getMyJobApplications = this.asyncWrapper.wrap({ querySchema: joi_1.default.object().unknown(true) }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.getMyJobApplications(req), { code } = _a, data = __rest(_a, ["code"]);
+            res.status(code).json(data);
+        }));
+        this.getMyJobApplication = this.asyncWrapper.wrap({ paramSchema: joi_1.default.object({ id: joi_1.default.string().required() }) }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.getMyJobApplication(req), { code } = _a, data = __rest(_a, ["code"]);
+            res.status(code).json(data);
+        }));
+        this.cancelMyJobApplication = this.asyncWrapper.wrap({
+            paramSchema: joi_1.default.object({ id: joi_1.default.string().required() }),
+            querySchema: this.validator.cancellationReportTypeValidator,
+            bodySchema: this.validator.cancellationReportReasonValidator,
+        }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.cancelMyJobApplication(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }

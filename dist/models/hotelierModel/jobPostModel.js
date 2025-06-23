@@ -37,7 +37,11 @@ class JobPostModel extends schema_1.default {
             const { user_id, title, category_id, city_id, orderBy, orderTo, status, limit, skip, need_total = true, } = params;
             const data = yield this.db("job_post as jp")
                 .withSchema(this.DBO_SCHEMA)
-                .select("jpd.id", "jp.organization_id", "jp.title", "j.title as job_category", "jp.hourly_rate", "jp.created_time", "org.name as organization_name", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.city_name", "vwl.state_name", "vwl.country_name")
+                .select("jpd.id", "jpd.status", "jpd.start_time", "jpd.end_time", "jp.organization_id", "jp.title", "j.title as job_category", "jp.hourly_rate", "jp.created_time", "org.name as organization_name", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.city_name", "vwl.state_name", "vwl.country_name", this.db.raw(`json_build_object(
+                    'job_seeker_id', ja.job_seeker_id,
+                    'status', ja.status,
+                    'payment_status', ja.payment_status
+                ) as job_post_details`))
                 .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
                 `${this.HOTELIER}.${this.TABLES.organization}`,
             ])
@@ -45,8 +49,8 @@ class JobPostModel extends schema_1.default {
                 .join("job_post_details as jpd", "jp.id", "jpd.job_post_id")
                 .join("jobs as j", "j.id", "jpd.job_id")
                 .leftJoin("vw_location as vwl", "vwl.location_id", "org.location_id")
+                .leftJoin("job_applications as ja", "ja.job_post_details_id", "jpd.id")
                 .where((qb) => {
-                qb.where("jp.status", status || "Live");
                 if (user_id) {
                     qb.andWhere("u.id", user_id);
                 }
@@ -58,6 +62,9 @@ class JobPostModel extends schema_1.default {
                 }
                 if (title) {
                     qb.andWhereILike("jp.title", `%${title}%`);
+                }
+                if (status) {
+                    qb.andWhere("jpd.status", status);
                 }
             })
                 .orderBy(orderBy || "jp.id", orderTo || "desc")
@@ -76,7 +83,7 @@ class JobPostModel extends schema_1.default {
                     .join("jobs as j", "j.id", "jpd.job_id")
                     .leftJoin("vw_location as vwl", "vwl.location_id", "org.location_id")
                     .where((qb) => {
-                    qb.where("jp.status", status || "Live");
+                    // qb.where("jp.status", status || "Live");
                     if (user_id) {
                         qb.andWhere("u.id", user_id);
                     }
@@ -88,6 +95,9 @@ class JobPostModel extends schema_1.default {
                     }
                     if (title) {
                         qb.andWhereILike("jp.title", `%${title}%`);
+                    }
+                    if (status) {
+                        qb.andWhere("jpd.status", status);
                     }
                 })
                     .first();
@@ -103,7 +113,7 @@ class JobPostModel extends schema_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("job_post as jp")
                 .withSchema(this.DBO_SCHEMA)
-                .select("jpd.id", "jp.organization_id", "jp.title", "j.title as job_category", "jp.hourly_rate", "jp.created_time", "org.name as organization_name", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.city_name", "vwl.state_name", "vwl.country_name")
+                .select("jpd.id", "jpd.status", "jp.organization_id", "jp.title", "j.title as job_category", "jp.hourly_rate", "jp.created_time", "org.name as organization_name", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.city_name", "vwl.state_name", "vwl.country_name")
                 .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
                 `${this.HOTELIER}.${this.TABLES.organization}`,
             ])

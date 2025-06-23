@@ -1,42 +1,119 @@
-"use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.JobSeekerJobApplication = void 0;
-const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
-class JobSeekerJobApplication extends abstract_service_1.default {
-    constructor() {
-        super();
-        this.createJobApplication = (req) => __awaiter(this, void 0, void 0, function* () {
-            const { job_post_details_id } = req.query;
-            const { user_id } = req.jobSeeker;
-            const payload = {
-                job_post_details_id: Number(job_post_details_id),
-                job_seeker_id: user_id,
-            };
-            return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
-                var _a;
-                const model = this.Model.jobApplicationModel(trx);
-                const res = yield model.createJobApplication(payload);
-                yield model.markJobPostDetailAsApplied(Number(job_post_details_id));
-                return {
-                    success: true,
-                    message: this.ResMsg.HTTP_SUCCESSFUL,
-                    code: this.StatusCode.HTTP_SUCCESSFUL,
-                    data: (_a = res[0]) === null || _a === void 0 ? void 0 : _a.id,
-                };
-            }));
-        });
-    }
+import { Request } from "express";
+import AbstractServices from "../../../abstract/abstract.service";
+import { ICreateJobApplicationPayload } from "../../../utils/modelTypes/jobApplication/jobApplicationModel.types";
+import CustomError from "../../../utils/lib/customError";
+import JobPostModel from "../../../models/hotelierModel/jobPostModel";
+import { JOB_POST_DETAILS_STATUS } from "../../../utils/miscellaneous/constants";
+
+export class JobSeekerJobApplication extends AbstractServices {
+	constructor() {
+		super();
+	}
+
+	public createJobApplication = async (req: Request) => {
+		const { job_post_details_id } = req.body;
+		const { user_id } = req.jobSeeker;
+
+		const payload = {
+			job_post_details_id: Number(job_post_details_id),
+			job_seeker_id: user_id,
+		};
+
+		return await this.db.transaction(async (trx) => {
+			const jobPostModel = new JobPostModel(trx);
+			const jobPost = await jobPostModel.getSingleJobPos(
+				payload.job_post_details_id
+			);
+			if (!jobPost) {
+				throw new CustomError(
+					this.ResMsg.HTTP_NOT_FOUND,
+					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
+			if (jobPost.status !== JOB_POST_DETAILS_STATUS.Pending) {
+				throw new CustomError(
+					"This job post is no longer accepting applications.",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
+
+			const model = this.Model.jobApplicationModel(trx);
+
+			const res = await model.createJobApplication(
+				payload as ICreateJobApplicationPayload
+			);
+
+			await model.markJobPostDetailAsApplied(Number(job_post_details_id));
+			return {
+				success: true,
+				message: this.ResMsg.HTTP_SUCCESSFUL,
+				code: this.StatusCode.HTTP_SUCCESSFUL,
+				data: res[0]?.id,
+			};
+		});
+	};
+
+	public getMyJobApplications = async (req: Request) => {
+		const { orderBy, orderTo, status, limit, skip } = req.query;
+		const { user_id } = req.jobSeeker;
+
+		const model = this.Model.jobApplicationModel();
+		const { data, total } = await model.getMyJobApplications({
+			user_id,
+			status: status as string,
+			limit: limit ? Number(limit) : 100,
+			skip: skip ? Number(skip) : 0,
+			orderBy: orderBy as string,
+			orderTo: orderTo as "asc" | "desc",
+		});
+		return {
+			success: true,
+			message: this.ResMsg.HTTP_SUCCESSFUL,
+			code: this.StatusCode.HTTP_OK,
+			data,
+			total,
+		};
+	};
+
+	public getMyJobApplication = async (req: Request) => {
+		const id = req.params.id;
+		const { user_id } = req.jobSeeker;
+		const model = this.Model.jobApplicationModel();
+		const data = await model.getMyJobApplication({
+			job_application_id: parseInt(id),
+			job_seeker_id: user_id,
+		});
+		if (!data) {
+			throw new CustomError(
+				this.ResMsg.HTTP_NOT_FOUND,
+				this.StatusCode.HTTP_NOT_FOUND
+			);
+		}
+		return {
+			success: true,
+			message: this.ResMsg.HTTP_SUCCESSFUL,
+			code: this.StatusCode.HTTP_OK,
+			data,
+		};
+	};
+
+	public cancelMyJobApplication = async (req: Request) => {
+		const id = req.params.id;
+		const { user_id } = req.jobSeeker;
+		const model = this.Model.jobApplicationModel();
+		const data = await model.cancelMyJobApplication(parseInt(id), user_id);
+		if (!data) {
+			throw new CustomError(
+				this.ResMsg.HTTP_NOT_FOUND,
+				this.StatusCode.HTTP_NOT_FOUND
+			);
+		}
+
+		return {
+			success: true,
+			message: this.ResMsg.HTTP_SUCCESSFUL,
+			code: this.StatusCode.HTTP_OK,
+			data,
+		};
+	};
 }
-exports.JobSeekerJobApplication = JobSeekerJobApplication;
