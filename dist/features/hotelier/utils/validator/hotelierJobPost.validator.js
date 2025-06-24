@@ -29,6 +29,13 @@ class HotelierJobPostValidator {
                 .min(1)
                 .required(),
         });
+        this.getJobPostSchema = joi_1.default.object({
+            limit: joi_1.default.number().integer().optional(),
+            skip: joi_1.default.number().integer().optional(),
+            status: joi_1.default.string()
+                .valid("Pending", "Applied", "Expired", "Completed", "Work Finished")
+                .optional(),
+        });
     }
 }
 exports.HotelierJobPostValidator = HotelierJobPostValidator;

@@ -21,6 +21,7 @@ class Schema {
             organization: "organization",
             notification_seen: "notification_seen",
             notification_delete: "notification_delete",
+            job_seeker: "job_seeker",
         };
     }
 }

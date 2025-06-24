@@ -7,18 +7,17 @@ export class JobSeekerServices extends AbstractServices {
 	}
 
 	public getJobs = async (req: Request) => {
-		const { limit, skip, status } = req.query;
-		const { user_id } = req.jobSeeker;
-		console.log({ user_id, limit, skip });
 		const model = this.Model.jobPostModel();
 		const { data, total } = await model.getJobPostList({
 			...req,
+			limit: req.query.limit,
+			skip: req.query.skip,
 			status: "Pending",
 		});
 		return {
 			success: true,
 			message: this.ResMsg.HTTP_SUCCESSFUL,
-			code: this.StatusCode.HTTP_SUCCESSFUL,
+			code: this.StatusCode.HTTP_OK,
 			data,
 			total: total || 0,
 		};

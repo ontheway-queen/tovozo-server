@@ -18,7 +18,7 @@ export default class HotelierJobPostController extends AbstractController {
 		}
 	);
 	public getJobPost = this.asyncWrapper.wrap(
-		{ querySchema: this.commonValidator.getLimitSkipQueryValidator },
+		{ querySchema: this.validator.getJobPostSchema },
 		async (req: Request, res: Response) => {
 			const { code, ...data } = await this.service.getJobPost(req);
 			res.status(code).json(data);
