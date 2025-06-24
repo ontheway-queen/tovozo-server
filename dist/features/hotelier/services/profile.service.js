@@ -24,8 +24,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
-const constants_1 = require("../../../utils/miscellaneous/constants");
 const lib_1 = __importDefault(require("../../../utils/lib/lib"));
+const constants_1 = require("../../../utils/miscellaneous/constants");
 class HotelierProfileService extends abstract_service_1.default {
     constructor() {
         super();
@@ -40,7 +40,7 @@ class HotelierProfileService extends abstract_service_1.default {
                 user_id,
             }), { password_hash } = _a, rest = __rest(_a, ["password_hash"]);
             const [organization_amenities, organization_photos] = yield Promise.all([
-                organizationModel.getAmenities(rest.organization_id),
+                organizationModel.getAmenities({ organization_id: rest.organization_id }),
                 organizationModel.getPhotos(rest.organization_id),
             ]);
             return {

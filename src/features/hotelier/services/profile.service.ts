@@ -1,7 +1,7 @@
 import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
-import { USER_AUTHENTICATION_VIEW } from "../../../utils/miscellaneous/constants";
 import Lib from "../../../utils/lib/lib";
+import { USER_AUTHENTICATION_VIEW } from "../../../utils/miscellaneous/constants";
 import { IChangePasswordPayload } from "../../../utils/modelTypes/common/commonModelTypes";
 
 export default class HotelierProfileService extends AbstractServices {
@@ -22,7 +22,7 @@ export default class HotelierProfileService extends AbstractServices {
     });
 
     const [organization_amenities, organization_photos] = await Promise.all([
-      organizationModel.getAmenities(rest.organization_id),
+      organizationModel.getAmenities({ organization_id: rest.organization_id }),
       organizationModel.getPhotos(rest.organization_id),
     ]);
 
