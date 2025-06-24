@@ -28,6 +28,17 @@ class JobSeekerServices extends abstract_service_1.default {
                 total: total || 0,
             };
         });
+        this.getJob = (req) => __awaiter(this, void 0, void 0, function* () {
+            const { id } = req.params;
+            const model = this.Model.jobPostModel();
+            const data = yield model.getSingleJobPost(Number(id));
+            return {
+                success: true,
+                message: this.ResMsg.HTTP_SUCCESSFUL,
+                code: this.StatusCode.HTTP_OK,
+                data,
+            };
+        });
     }
 }
 exports.JobSeekerServices = JobSeekerServices;

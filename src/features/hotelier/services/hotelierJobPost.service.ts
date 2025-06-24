@@ -71,7 +71,7 @@ class HotelierJobPostService extends AbstractServices {
 		});
 	}
 
-	public async getJobPost(req: Request) {
+	public async getJobPostList(req: Request) {
 		const { limit, skip, status } = req.query;
 		const { user_id } = req.hotelier;
 		const model = this.Model.jobPostModel();
@@ -87,6 +87,86 @@ class HotelierJobPostService extends AbstractServices {
 			code: this.StatusCode.HTTP_OK,
 			...data,
 		};
+	}
+
+	public async getSingleJobPostWithJobSeekerDetails(req: Request) {
+		const { id } = req.params;
+		const { user_id } = req.hotelier;
+		const model = this.Model.jobPostModel();
+		const data = await model.getSingleJobPostWithJobSeekerDetails(
+			Number(id)
+		);
+		if (!data) {
+			throw new CustomError(
+				"Job post not found!",
+				this.StatusCode.HTTP_NOT_FOUND
+			);
+		}
+		return {
+			success: true,
+			message: this.ResMsg.HTTP_OK,
+			code: this.StatusCode.HTTP_OK,
+			data,
+		};
+	}
+
+	public async updateJobPost(req: Request) {
+		const { id } = req.params;
+		const body = req.body;
+
+		return await this.db.transaction(async (trx) => {
+			const model = this.Model.jobPostModel(trx);
+			const jobPost = await model.getSingleJobPost(Number(id));
+			if (!jobPost) {
+				throw new CustomError(
+					"Job post not found!",
+					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
+			const currentTime = new Date();
+			const startTime = new Date(jobPost.start_time);
+			const hoursDiff =
+				(startTime.getTime() - currentTime.getTime()) /
+				(1000 * 60 * 60);
+
+			if (hoursDiff < 24) {
+				throw new CustomError(
+					"Job post must be updated at least 24 hours in advance.",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
+
+			const { start_time, end_time } = body?.job_post_details[0] || {};
+			if (
+				start_time &&
+				end_time &&
+				new Date(start_time) >= new Date(end_time)
+			) {
+				throw new CustomError(
+					"Job post start time cannot be greater than or equal to end time.",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
+
+			const updatedJobPost = await model.updateJobPost(
+				Number(jobPost.id),
+				body.job_post
+			);
+
+			if (body.job_post_details && updatedJobPost) {
+				await model.updateJobPostDetails(
+					Number(id),
+					body.job_post_details
+				);
+			}
+
+			return {
+				success: true,
+				message: this.ResMsg.HTTP_SUCCESSFUL,
+				code: this.StatusCode.HTTP_OK,
+				data: updatedJobPost,
+			};
+		});
 	}
 }
 export default HotelierJobPostService;

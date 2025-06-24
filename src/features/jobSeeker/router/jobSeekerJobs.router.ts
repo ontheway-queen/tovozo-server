@@ -2,14 +2,16 @@ import AbstractRouter from "../../../abstract/abstract.router";
 import { JobSeekerJobsController } from "../controller/jobSeekerJobs.controller";
 
 export class JobSeekerJobsRouter extends AbstractRouter {
-    private controller = new JobSeekerJobsController();
+	private controller = new JobSeekerJobsController();
 
-    constructor(){
-        super();
-        this.callRouter();
-    }
+	constructor() {
+		super();
+		this.callRouter();
+	}
 
-    private callRouter(){
-        this.router.route("/").get(this.controller.getJobs)
-    }
+	private callRouter() {
+		this.router.route("/").get(this.controller.getJobs);
+
+		this.router.route("/:id").get(this.controller.getJob);
+	}
 }

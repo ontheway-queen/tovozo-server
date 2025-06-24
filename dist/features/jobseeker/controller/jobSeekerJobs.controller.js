@@ -34,6 +34,10 @@ class JobSeekerJobsController extends abstract_controller_1.default {
             const _a = yield this.service.getJobs(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
+        this.getJob = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.getSingleItemWithIdValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.getJob(req), { code } = _a, data = __rest(_a, ["code"]);
+            res.status(code).json(data);
+        }));
     }
 }
 exports.JobSeekerJobsController = JobSeekerJobsController;

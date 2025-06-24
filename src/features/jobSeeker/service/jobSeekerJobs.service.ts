@@ -22,4 +22,16 @@ export class JobSeekerServices extends AbstractServices {
 			total: total || 0,
 		};
 	};
+
+	public getJob = async (req: Request) => {
+		const { id } = req.params;
+		const model = this.Model.jobPostModel();
+		const data = await model.getSingleJobPost(Number(id));
+		return {
+			success: true,
+			message: this.ResMsg.HTTP_SUCCESSFUL,
+			code: this.StatusCode.HTTP_OK,
+			data,
+		};
+	};
 }

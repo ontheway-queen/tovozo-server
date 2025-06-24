@@ -22,7 +22,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
         super();
         this.createJobApplication = (req) => __awaiter(this, void 0, void 0, function* () {
             const { job_post_details_id } = req.body;
-            const { user_id } = req.jobSeeker;
+            const { user_id, gender } = req.jobSeeker;
             const payload = {
                 job_post_details_id: Number(job_post_details_id),
                 job_seeker_id: user_id,
@@ -30,9 +30,15 @@ class JobSeekerJobApplication extends abstract_service_1.default {
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 var _a;
                 const jobPostModel = new jobPostModel_1.default(trx);
-                const jobPost = yield jobPostModel.getSingleJobPos(payload.job_post_details_id);
+                const jobPost = yield jobPostModel.getSingleJobPost(payload.job_post_details_id);
                 if (!jobPost) {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
+                }
+                if (jobPost.gender !== constants_1.GENDER_TYPE.Other &&
+                    gender &&
+                    gender !== constants_1.GENDER_TYPE.Other &&
+                    gender !== jobPost.gender) {
+                    throw new customError_1.default("Your gender does not meet the eligibility criteria for this job.", this.StatusCode.HTTP_BAD_REQUEST);
                 }
                 if (jobPost.status !== constants_1.JOB_POST_DETAILS_STATUS.Pending) {
                     throw new customError_1.default("This job post is no longer accepting applications.", this.StatusCode.HTTP_BAD_REQUEST);
