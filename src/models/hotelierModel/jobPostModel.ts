@@ -28,6 +28,7 @@ class JobPostModel extends Schema {
 			.insert(payload, "id");
 	}
 
+	// for jobseeker
 	public async getJobPostList(params: any) {
 		const {
 			user_id,
@@ -139,11 +140,13 @@ class JobPostModel extends Schema {
 		};
 	}
 
+	// for jobseeker
 	public async getSingleJobPost(id: number) {
 		return await this.db("job_post as jp")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
 				"jpd.id",
+				"jp.id as job_post_id",
 				"jpd.start_time",
 				"jpd.end_time",
 				"jp.prefer_gender as gender",
@@ -414,6 +417,22 @@ class JobPostModel extends Schema {
 			.withSchema(this.DBO_SCHEMA)
 			.update(payload[0])
 			.where("id", id);
+	}
+
+	// cancel job post
+	// need to implement logic for canceling job post less than 24 hours before start time
+	public async cancelJobPost(id: number) {
+		return await this.db("job_post")
+			.withSchema(this.DBO_SCHEMA)
+			.update({ status: "Cancelled" })
+			.where("id", id);
+	}
+
+	public async cancelJobPostDetails(id: number) {
+		return await this.db("job_post_details")
+			.withSchema(this.DBO_SCHEMA)
+			.where("job_post_id", id)
+			.update({ status: "Cancelled" });
 	}
 }
 

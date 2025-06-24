@@ -50,6 +50,10 @@ class HotelierJobPostController extends abstract_controller_1.default {
             const _a = yield this.service.updateJobPost(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
+        this.cancelJobPost = this.asyncWrapper.wrap({ paramSchema: this.validator.getSingleJobPostSchema }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.cancelJobPost(req), { code } = _a, data = __rest(_a, ["code"]);
+            res.status(code).json(data);
+        }));
     }
 }
 exports.default = HotelierJobPostController;

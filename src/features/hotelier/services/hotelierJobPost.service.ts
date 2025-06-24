@@ -123,18 +123,19 @@ class HotelierJobPostService extends AbstractServices {
 					this.StatusCode.HTTP_NOT_FOUND
 				);
 			}
-			const currentTime = new Date();
-			const startTime = new Date(jobPost.start_time);
-			const hoursDiff =
-				(startTime.getTime() - currentTime.getTime()) /
-				(1000 * 60 * 60);
 
-			if (hoursDiff < 24) {
-				throw new CustomError(
-					"Job post must be updated at least 24 hours in advance.",
-					this.StatusCode.HTTP_BAD_REQUEST
-				);
-			}
+			// const currentTime = new Date();
+			// const startTime = new Date(jobPost.start_time);
+			// const hoursDiff =
+			// 	(startTime.getTime() - currentTime.getTime()) /
+			// 	(1000 * 60 * 60);
+
+			// if (hoursDiff < 24) {
+			// 	throw new CustomError(
+			// 		"Job post must be updated at least 24 hours in advance.",
+			// 		this.StatusCode.HTTP_BAD_REQUEST
+			// 	);
+			// }
 
 			const { start_time, end_time } = body?.job_post_details[0] || {};
 			if (
@@ -165,6 +166,45 @@ class HotelierJobPostService extends AbstractServices {
 				message: this.ResMsg.HTTP_SUCCESSFUL,
 				code: this.StatusCode.HTTP_OK,
 				data: updatedJobPost,
+			};
+		});
+	}
+
+	public async cancelJobPost(req: Request) {
+		return await this.db.transaction(async (trx) => {
+			const { id } = req.params;
+			const model = this.Model.jobPostModel(trx);
+			const jobPost = await model.getSingleJobPost(Number(id));
+			if (!jobPost) {
+				throw new CustomError(
+					"Job post not found!",
+					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
+
+			// const currentTime = new Date();
+			// const startTime = new Date(jobPost.start_time);
+			// const hoursDiff =
+			// 	(startTime.getTime() - currentTime.getTime()) /
+			// 	(1000 * 60 * 60);
+
+			// if (hoursDiff < 24) {
+			// 	throw new CustomError(
+			// 		"Job post must be cancelled at least 24 hours in advance.",
+			// 		this.StatusCode.HTTP_BAD_REQUEST
+			// 	);
+			// }
+
+			await model.cancelJobPost(Number(jobPost.job_post_id));
+			await model.cancelJobPostDetails(Number(jobPost.job_post_id));
+
+			const jobApplicationModel = this.Model.jobApplicationModel(trx);
+			await jobApplicationModel.cancelApplication(jobPost.job_post_id);
+
+			return {
+				success: true,
+				message: this.ResMsg.HTTP_SUCCESSFUL,
+				code: this.StatusCode.HTTP_OK,
 			};
 		});
 	}
