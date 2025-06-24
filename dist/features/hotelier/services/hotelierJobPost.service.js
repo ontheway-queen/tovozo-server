@@ -54,7 +54,7 @@ class HotelierJobPostService extends abstract_service_1.default {
             }));
         });
     }
-    getJobPost(req) {
+    getJobPostList(req) {
         return __awaiter(this, void 0, void 0, function* () {
             const { limit, skip, status } = req.query;
             const { user_id } = req.hotelier;
@@ -66,6 +66,59 @@ class HotelierJobPostService extends abstract_service_1.default {
                 status,
             });
             return Object.assign({ success: true, message: this.ResMsg.HTTP_OK, code: this.StatusCode.HTTP_OK }, data);
+        });
+    }
+    getSingleJobPostWithJobSeekerDetails(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { id } = req.params;
+            const { user_id } = req.hotelier;
+            const model = this.Model.jobPostModel();
+            const data = yield model.getSingleJobPostWithJobSeekerDetails(Number(id));
+            if (!data) {
+                throw new customError_1.default("Job post not found!", this.StatusCode.HTTP_NOT_FOUND);
+            }
+            return {
+                success: true,
+                message: this.ResMsg.HTTP_OK,
+                code: this.StatusCode.HTTP_OK,
+                data,
+            };
+        });
+    }
+    updateJobPost(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { id } = req.params;
+            const body = req.body;
+            return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const model = this.Model.jobPostModel(trx);
+                const jobPost = yield model.getSingleJobPost(Number(id));
+                if (!jobPost) {
+                    throw new customError_1.default("Job post not found!", this.StatusCode.HTTP_NOT_FOUND);
+                }
+                const currentTime = new Date();
+                const startTime = new Date(jobPost.start_time);
+                const hoursDiff = (startTime.getTime() - currentTime.getTime()) /
+                    (1000 * 60 * 60);
+                if (hoursDiff < 24) {
+                    throw new customError_1.default("Job post must be updated at least 24 hours in advance.", this.StatusCode.HTTP_BAD_REQUEST);
+                }
+                const { start_time, end_time } = (body === null || body === void 0 ? void 0 : body.job_post_details[0]) || {};
+                if (start_time &&
+                    end_time &&
+                    new Date(start_time) >= new Date(end_time)) {
+                    throw new customError_1.default("Job post start time cannot be greater than or equal to end time.", this.StatusCode.HTTP_BAD_REQUEST);
+                }
+                const updatedJobPost = yield model.updateJobPost(Number(jobPost.id), body.job_post);
+                if (body.job_post_details && updatedJobPost) {
+                    yield model.updateJobPostDetails(Number(id), body.job_post_details);
+                }
+                return {
+                    success: true,
+                    message: this.ResMsg.HTTP_SUCCESSFUL,
+                    code: this.StatusCode.HTTP_OK,
+                    data: updatedJobPost,
+                };
+            }));
         });
     }
 }

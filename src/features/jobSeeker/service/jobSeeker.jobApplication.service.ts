@@ -3,7 +3,10 @@ import AbstractServices from "../../../abstract/abstract.service";
 import { ICreateJobApplicationPayload } from "../../../utils/modelTypes/jobApplication/jobApplicationModel.types";
 import CustomError from "../../../utils/lib/customError";
 import JobPostModel from "../../../models/hotelierModel/jobPostModel";
-import { JOB_POST_DETAILS_STATUS } from "../../../utils/miscellaneous/constants";
+import {
+	GENDER_TYPE,
+	JOB_POST_DETAILS_STATUS,
+} from "../../../utils/miscellaneous/constants";
 
 export class JobSeekerJobApplication extends AbstractServices {
 	constructor() {
@@ -12,7 +15,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 
 	public createJobApplication = async (req: Request) => {
 		const { job_post_details_id } = req.body;
-		const { user_id } = req.jobSeeker;
+		const { user_id, gender } = req.jobSeeker;
 
 		const payload = {
 			job_post_details_id: Number(job_post_details_id),
@@ -21,15 +24,29 @@ export class JobSeekerJobApplication extends AbstractServices {
 
 		return await this.db.transaction(async (trx) => {
 			const jobPostModel = new JobPostModel(trx);
-			const jobPost = await jobPostModel.getSingleJobPos(
+			const jobPost = await jobPostModel.getSingleJobPost(
 				payload.job_post_details_id
 			);
+
 			if (!jobPost) {
 				throw new CustomError(
 					this.ResMsg.HTTP_NOT_FOUND,
 					this.StatusCode.HTTP_NOT_FOUND
 				);
 			}
+
+			if (
+				jobPost.gender !== GENDER_TYPE.Other &&
+				gender &&
+				gender !== GENDER_TYPE.Other &&
+				gender !== jobPost.gender
+			) {
+				throw new CustomError(
+					"Your gender does not meet the eligibility criteria for this job.",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
+
 			if (jobPost.status !== JOB_POST_DETAILS_STATUS.Pending) {
 				throw new CustomError(
 					"This job post is no longer accepting applications.",

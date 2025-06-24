@@ -244,6 +244,10 @@ class PublicCommonValidator {
             user_id: joi_1.default.number().integer().positive().required(),
             id: joi_1.default.number().integer().positive().optional(),
         });
+        // get single item with id validator
+        this.getSingleItemWithIdValidator = joi_1.default.object({
+            id: joi_1.default.number().integer().required(),
+        });
     }
     // multiple params number validator
     multipleParamsNumValidator(fields) {

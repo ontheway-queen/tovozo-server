@@ -1,5 +1,9 @@
 import Joi from "joi";
-import { GENDERS } from "../../../../utils/miscellaneous/constants";
+import {
+	GENDERS,
+	JOB_POST_DETAILS_STATUS,
+	JOB_POST_DETAILS_STATUS_ENUM,
+} from "../../../../utils/miscellaneous/constants";
 
 export class HotelierJobPostValidator {
 	public createJobPostSchema = Joi.object({
@@ -30,13 +34,33 @@ export class HotelierJobPostValidator {
 		limit: Joi.number().integer().optional(),
 		skip: Joi.number().integer().optional(),
 		status: Joi.string()
-			.valid(
-				"Pending",
-				"Applied",
-				"Expired",
-				"Completed",
-				"Work Finished"
+			.valid(...JOB_POST_DETAILS_STATUS_ENUM)
+			.optional(),
+	});
+
+	public getSingleJobPostSchema = Joi.object({
+		id: Joi.number().integer().required(),
+	}).required();
+
+	public updateJobPostSchema = Joi.object({
+		job_post: Joi.object({
+			title: Joi.string().optional(),
+			details: Joi.string().optional(),
+			expire_time: Joi.string().isoDate().optional(),
+			hourly_rate: Joi.number().optional(),
+			prefer_gender: Joi.string()
+				.valid(...GENDERS)
+				.optional(),
+			requirements: Joi.string().optional(),
+		}).required(),
+		job_post_details: Joi.array()
+			.items(
+				Joi.object({
+					start_time: Joi.string().isoDate().optional(),
+					end_time: Joi.string().isoDate().optional(),
+				})
 			)
+			.min(1)
 			.optional(),
 	});
 }

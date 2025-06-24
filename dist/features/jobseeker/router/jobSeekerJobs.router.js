@@ -14,6 +14,7 @@ class JobSeekerJobsRouter extends abstract_router_1.default {
     }
     callRouter() {
         this.router.route("/").get(this.controller.getJobs);
+        this.router.route("/:id").get(this.controller.getJob);
     }
 }
 exports.JobSeekerJobsRouter = JobSeekerJobsRouter;

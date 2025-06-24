@@ -286,4 +286,9 @@ export default class PublicCommonValidator {
 		user_id: Joi.number().integer().positive().required(),
 		id: Joi.number().integer().positive().optional(),
 	});
+
+	// get single item with id validator
+	public getSingleItemWithIdValidator = Joi.object({
+		id: Joi.number().integer().required(),
+	});
 }

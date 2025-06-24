@@ -104,11 +104,11 @@ class JobPostModel extends schema_1.default {
             };
         });
     }
-    getSingleJobPos(id) {
+    getSingleJobPost(id) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("job_post as jp")
                 .withSchema(this.DBO_SCHEMA)
-                .select("jpd.id", "jpd.status", "jp.organization_id", "jp.title", "j.title as job_category", "jp.hourly_rate", "jp.created_time", "org.name as organization_name", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.city_name", "vwl.state_name", "vwl.country_name")
+                .select("jpd.id", "jpd.start_time", "jpd.end_time", "jp.prefer_gender as gender", "jpd.status", "jp.organization_id", "jp.title", "j.title as job_category", "jp.hourly_rate", "jp.created_time", "org.name as organization_name", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.city_name", "vwl.state_name", "vwl.country_name")
                 .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
                 `${this.HOTELIER}.${this.TABLES.organization}`,
             ])
@@ -214,6 +214,60 @@ class JobPostModel extends schema_1.default {
                 data,
                 total,
             };
+        });
+    }
+    // get single job post with job seeker details for hotelier
+    getSingleJobPostWithJobSeekerDetails(id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const data = yield this.db("job_post as jp")
+                .withSchema(this.DBO_SCHEMA)
+                .select("jpd.id", "jpd.status as job_post_details_status", "jpd.start_time", "jpd.end_time", "jp.organization_id", "jp.title", "j.title as job_category", "jp.hourly_rate", "jp.created_time", "org.name as organization_name", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.city_name", "vwl.state_name", "vwl.country_name", this.db.raw(`json_build_object(
+                    'application_status', ja.status,
+                    'job_seeker_id', ja.job_seeker_id,
+                    'job_seeker_name', js.name,
+                    'gender', jsu.gender,
+                    'payment_status', ja.payment_status,
+                    'location_address', js_vwl.location_address,
+                    'city_name', js_vwl.city_name,
+                    'state_name', js_vwl.state_name,
+                    'country_name', js_vwl.country_name,
+                    'longitude', js_vwl.longitude,
+                    'latitude', js_vwl.latitude
+                ) as job_seeker_details`))
+                .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
+                `${this.HOTELIER}.${this.TABLES.organization}`,
+            ])
+                .join("user as u", "u.id", "org.user_id")
+                .join("job_post_details as jpd", "jp.id", "jpd.job_post_id")
+                .join("jobs as j", "j.id", "jpd.job_id")
+                .leftJoin("vw_location as vwl", "vwl.location_id", "org.location_id")
+                .leftJoin("job_applications as ja", "ja.job_post_details_id", "jpd.id")
+                .leftJoin("user as js", "js.id", "ja.job_seeker_id")
+                .joinRaw(`LEFT JOIN ?? as jsu ON jsu.user_id = js.id`, [
+                `${this.JOB_SEEKER}.${this.TABLES.job_seeker}`,
+            ])
+                .leftJoin("vw_location as js_vwl", "js_vwl.location_id", "jsu.location_id")
+                .where("jpd.id", id)
+                .first();
+            return data;
+        });
+    }
+    // update job post
+    updateJobPost(id, payload) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("job_post")
+                .withSchema(this.DBO_SCHEMA)
+                .update(payload)
+                .where("id", id);
+        });
+    }
+    // update job post details
+    updateJobPostDetails(id, payload) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("job_post_details")
+                .withSchema(this.DBO_SCHEMA)
+                .update(payload[0])
+                .where("id", id);
         });
     }
 }

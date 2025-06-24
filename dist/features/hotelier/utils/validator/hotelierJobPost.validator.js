@@ -33,7 +33,29 @@ class HotelierJobPostValidator {
             limit: joi_1.default.number().integer().optional(),
             skip: joi_1.default.number().integer().optional(),
             status: joi_1.default.string()
-                .valid("Pending", "Applied", "Expired", "Completed", "Work Finished")
+                .valid(...constants_1.JOB_POST_DETAILS_STATUS_ENUM)
+                .optional(),
+        });
+        this.getSingleJobPostSchema = joi_1.default.object({
+            id: joi_1.default.number().integer().required(),
+        }).required();
+        this.updateJobPostSchema = joi_1.default.object({
+            job_post: joi_1.default.object({
+                title: joi_1.default.string().optional(),
+                details: joi_1.default.string().optional(),
+                expire_time: joi_1.default.string().isoDate().optional(),
+                hourly_rate: joi_1.default.number().optional(),
+                prefer_gender: joi_1.default.string()
+                    .valid(...constants_1.GENDERS)
+                    .optional(),
+                requirements: joi_1.default.string().optional(),
+            }).required(),
+            job_post_details: joi_1.default.array()
+                .items(joi_1.default.object({
+                start_time: joi_1.default.string().isoDate().optional(),
+                end_time: joi_1.default.string().isoDate().optional(),
+            }))
+                .min(1)
                 .optional(),
         });
     }

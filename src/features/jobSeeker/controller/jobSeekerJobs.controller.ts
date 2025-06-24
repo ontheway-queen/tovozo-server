@@ -15,4 +15,12 @@ export class JobSeekerJobsController extends AbstractController {
 			res.status(code).json(data);
 		}
 	);
+
+	public getJob = this.asyncWrapper.wrap(
+		{ paramSchema: this.commonValidator.getSingleItemWithIdValidator },
+		async (req: Request, res: Response) => {
+			const { code, ...data } = await this.service.getJob(req);
+			res.status(code).json(data);
+		}
+	);
 }

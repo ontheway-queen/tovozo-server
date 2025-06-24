@@ -17,10 +17,30 @@ export default class HotelierJobPostController extends AbstractController {
 			res.status(code).json(data);
 		}
 	);
-	public getJobPost = this.asyncWrapper.wrap(
+	public getJobPostList = this.asyncWrapper.wrap(
 		{ querySchema: this.validator.getJobPostSchema },
 		async (req: Request, res: Response) => {
-			const { code, ...data } = await this.service.getJobPost(req);
+			const { code, ...data } = await this.service.getJobPostList(req);
+			res.status(code).json(data);
+		}
+	);
+
+	public getSingleJobPostWithJobSeekerDetails = this.asyncWrapper.wrap(
+		{ paramSchema: this.validator.getSingleJobPostSchema },
+		async (req: Request, res: Response) => {
+			const { code, ...data } =
+				await this.service.getSingleJobPostWithJobSeekerDetails(req);
+			res.status(code).json(data);
+		}
+	);
+
+	public updateJobPost = this.asyncWrapper.wrap(
+		{
+			paramSchema: this.validator.getSingleJobPostSchema,
+			bodySchema: this.validator.updateJobPostSchema,
+		},
+		async (req: Request, res: Response) => {
+			const { code, ...data } = await this.service.updateJobPost(req);
 			res.status(code).json(data);
 		}
 	);
