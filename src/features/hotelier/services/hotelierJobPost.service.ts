@@ -75,7 +75,7 @@ class HotelierJobPostService extends AbstractServices {
 		const { limit, skip, status } = req.query;
 		const { user_id } = req.hotelier;
 		const model = this.Model.jobPostModel();
-		const data = await model.getJobPostList({
+		const data = await model.getHotelierJobPostList({
 			user_id,
 			limit,
 			skip,

@@ -301,3 +301,43 @@ CREATE TABLE dbo.cancellation_reports (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Payment status
+CREATE TYPE dbo.payment_status AS ENUM ('UNPAID', 'PAID', 'FAILED', "PARTIAL_PAID");
+
+-- job status
+CREATE TYPE dbo.job_status AS ENUM ('PENDING', 'ASSIGNED', 'CANCELLED', 'COMPLETED');
+
+CREATE TABLE IF NOT EXISTS dbo.job_applications (
+    id SERIAL PRIMARY KEY,
+    job_post_details_id INTEGER NOT NULL REFERENCES dbo.job_post_details(id),
+    job_seeker_id INTEGER NOT NULL REFERENCES jobseeker.job_seeker(user_id),
+    status dbo.job_status DEFAULT 'PENDING',
+    payment_status dbo.payment_status DEFAULT 'UNPAID',
+    cancelled_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+
+CREATE TYPE dbo.job_task_activities_status AS ENUM (
+  'Requested',
+  'Rejected',
+  'InProgress',
+  'Completed'
+);
+
+CREATE TABLE IF NOT EXISTS dbo.job_task_activities (
+    id SERIAL PRIMARY KEY,
+    job_application_id INTEGER NOT NULL REFERENCES dbo.job_applications(id),
+    job_post_details_id INTEGER NOT NULL REFERENCES dbo.job_post_details(id),
+    job_seeker_id INTEGER NOT NULL REFERENCES jobseeker.job_seeker(user_id),
+    organization_id integer NOT NULL,
+    status dbo.job_task_activities_status DEFAULT 'Requested',
+    start_time TIMESTAMP,
+    end_time TIMESTAMP,
+    start_approved_time TIMESTAMP,
+    end_approved_time TIMESTAMP,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

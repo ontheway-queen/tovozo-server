@@ -39,6 +39,7 @@ class JobPostModel extends Schema {
 			skip,
 			need_total = true,
 		} = params;
+
 		const data = await this.db("job_post as jp")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
@@ -57,12 +58,7 @@ class JobPostModel extends Schema {
 				"vwl.location_address",
 				"vwl.city_name",
 				"vwl.state_name",
-				"vwl.country_name",
-				this.db.raw(`json_build_object(
-                    'job_seeker_id', ja.job_seeker_id,
-                    'status', ja.status,
-                    'payment_status', ja.payment_status
-                ) as job_post_details`)
+				"vwl.country_name"
 			)
 			.joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
 				`${this.HOTELIER}.${this.TABLES.organization}`,
@@ -74,11 +70,6 @@ class JobPostModel extends Schema {
 				"vw_location as vwl",
 				"vwl.location_id",
 				"org.location_id"
-			)
-			.leftJoin(
-				"job_applications as ja",
-				"ja.job_post_details_id",
-				"jpd.id"
 			)
 			.where((qb) => {
 				if (user_id) {
@@ -179,6 +170,156 @@ class JobPostModel extends Schema {
 			)
 			.where("jpd.id", id)
 			.first();
+	}
+
+	// hotelier job post with job seeker details
+	public async getHotelierJobPostList(params: any) {
+		const {
+			user_id,
+			title,
+			category_id,
+			city_id,
+			orderBy,
+			orderTo,
+			status,
+			limit,
+			skip,
+			need_total = true,
+		} = params;
+		const data = await this.db("job_post as jp")
+			.withSchema(this.DBO_SCHEMA)
+			.select(
+				"jpd.id",
+				"jpd.status as job_post_details_status",
+				"jpd.start_time",
+				"jpd.end_time",
+				"jp.organization_id",
+				"jp.title",
+				"j.title as job_category",
+				"jp.hourly_rate",
+				"jp.created_time",
+				"org.name as organization_name",
+				"vwl.location_id",
+				"vwl.location_name",
+				"vwl.location_address",
+				"vwl.city_name",
+				"vwl.state_name",
+				"vwl.country_name",
+				this.db.raw(`json_build_object(
+                    'application_status', ja.status,
+                    'job_seeker_id', ja.job_seeker_id,
+                    'job_seeker_name', js.name,
+                    'gender', jsu.gender,
+                    'payment_status', ja.payment_status,
+                    'location_address', js_vwl.location_address,
+                    'city_name', js_vwl.city_name,
+                    'state_name', js_vwl.state_name,
+                    'country_name', js_vwl.country_name,
+                    'longitude', js_vwl.longitude,
+                    'latitude', js_vwl.latitude
+                ) as job_seeker_details`)
+			)
+			.joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
+				`${this.HOTELIER}.${this.TABLES.organization}`,
+			])
+			.join("user as u", "u.id", "org.user_id")
+			.join("job_post_details as jpd", "jp.id", "jpd.job_post_id")
+			.join("jobs as j", "j.id", "jpd.job_id")
+			.leftJoin(
+				"vw_location as vwl",
+				"vwl.location_id",
+				"org.location_id"
+			)
+			.leftJoin(
+				"job_applications as ja",
+				"ja.job_post_details_id",
+				"jpd.id"
+			)
+			.leftJoin("user as js", "js.id", "ja.job_seeker_id")
+			.joinRaw(`LEFT JOIN ?? as jsu ON jsu.user_id = js.id`, [
+				`${this.JOB_SEEKER}.${this.TABLES.job_seeker}`,
+			])
+			.leftJoin(
+				"vw_location as js_vwl",
+				"js_vwl.location_id",
+				"jsu.location_id"
+			)
+			.where((qb) => {
+				if (user_id) {
+					qb.andWhere("u.id", user_id);
+				}
+				if (category_id) {
+					qb.andWhere("j.id", category_id);
+				}
+				if (city_id) {
+					qb.andWhere("vwl.city_id", city_id);
+				}
+				if (title) {
+					qb.andWhereILike("jp.title", `%${title}%`);
+				}
+				if (status) {
+					qb.andWhere("jpd.status", status);
+				}
+			})
+			.orderBy(orderBy || "jp.id", orderTo || "desc")
+			.limit(limit || 100)
+			.offset(skip || 0);
+
+		let total;
+		if (need_total) {
+			const totalQuery = await this.db("job_post as jp")
+				.withSchema(this.DBO_SCHEMA)
+				.count("jpd.id as total")
+				.joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
+					`${this.HOTELIER}.${this.TABLES.organization}`,
+				])
+				.join("user as u", "u.id", "org.user_id")
+				.join("job_post_details as jpd", "jp.id", "jpd.job_post_id")
+				.join("jobs as j", "j.id", "jpd.job_id")
+				.leftJoin(
+					"vw_location as vwl",
+					"vwl.location_id",
+					"org.location_id"
+				)
+				.leftJoin(
+					"job_applications as ja",
+					"ja.job_post_details_id",
+					"jpd.id"
+				)
+				.leftJoin("user as js", "js.id", "ja.job_seeker_id")
+				.joinRaw(`LEFT JOIN ?? as jsu ON jsu.user_id = js.id`, [
+					`${this.JOB_SEEKER}.${this.TABLES.job_seeker}`,
+				])
+				.leftJoin(
+					"vw_location as js_vwl",
+					"js_vwl.location_id",
+					"jsu.location_id"
+				)
+				.where((qb) => {
+					if (user_id) {
+						qb.andWhere("u.id", user_id);
+					}
+					if (category_id) {
+						qb.andWhere("j.id", category_id);
+					}
+					if (city_id) {
+						qb.andWhere("vwl.city_id", city_id);
+					}
+					if (title) {
+						qb.andWhereILike("jp.title", `%${title}%`);
+					}
+					if (status) {
+						qb.andWhere("jpd.status", status);
+					}
+				})
+				.first();
+			total = totalQuery?.total ? Number(totalQuery.total) : 0;
+		}
+
+		return {
+			data,
+			total,
+		};
 	}
 }
 
