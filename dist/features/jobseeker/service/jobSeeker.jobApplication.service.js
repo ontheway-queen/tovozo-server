@@ -23,14 +23,10 @@ class JobSeekerJobApplication extends abstract_service_1.default {
         this.createJobApplication = (req) => __awaiter(this, void 0, void 0, function* () {
             const { job_post_details_id } = req.body;
             const { user_id, gender } = req.jobSeeker;
-            const payload = {
-                job_post_details_id: Number(job_post_details_id),
-                job_seeker_id: user_id,
-            };
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 var _a;
                 const jobPostModel = new jobPostModel_1.default(trx);
-                const jobPost = yield jobPostModel.getSingleJobPost(payload.job_post_details_id);
+                const jobPost = yield jobPostModel.getSingleJobPost(job_post_details_id);
                 if (!jobPost) {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
                 }
@@ -44,6 +40,11 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     throw new customError_1.default("This job post is no longer accepting applications.", this.StatusCode.HTTP_BAD_REQUEST);
                 }
                 const model = this.Model.jobApplicationModel(trx);
+                const payload = {
+                    job_post_details_id: Number(job_post_details_id),
+                    job_seeker_id: user_id,
+                    job_post_id: jobPost.job_post_id,
+                };
                 const res = yield model.createJobApplication(payload);
                 yield model.markJobPostDetailAsApplied(Number(job_post_details_id));
                 return {

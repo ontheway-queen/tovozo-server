@@ -19,7 +19,8 @@ class HotelierJobPostRouter extends abstract_router_1.default {
         this.router
             .route("/:id")
             .get(this.controller.getSingleJobPostWithJobSeekerDetails)
-            .patch(this.controller.updateJobPost);
+            .patch(this.controller.updateJobPost)
+            .delete(this.controller.cancelJobPost);
     }
 }
 exports.default = HotelierJobPostRouter;

@@ -10,6 +10,7 @@ export interface JobApplication {
 export interface ICreateJobApplicationPayload {
 	job_post_details_id: number;
 	job_seeker_id: number;
+	job_post_id: number;
 }
 
 export interface IGetMyJobApplicationsParams {

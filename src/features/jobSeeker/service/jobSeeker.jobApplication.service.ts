@@ -17,15 +17,10 @@ export class JobSeekerJobApplication extends AbstractServices {
 		const { job_post_details_id } = req.body;
 		const { user_id, gender } = req.jobSeeker;
 
-		const payload = {
-			job_post_details_id: Number(job_post_details_id),
-			job_seeker_id: user_id,
-		};
-
 		return await this.db.transaction(async (trx) => {
 			const jobPostModel = new JobPostModel(trx);
 			const jobPost = await jobPostModel.getSingleJobPost(
-				payload.job_post_details_id
+				job_post_details_id
 			);
 
 			if (!jobPost) {
@@ -56,6 +51,11 @@ export class JobSeekerJobApplication extends AbstractServices {
 
 			const model = this.Model.jobApplicationModel(trx);
 
+			const payload = {
+				job_post_details_id: Number(job_post_details_id),
+				job_seeker_id: user_id,
+				job_post_id: jobPost.job_post_id,
+			};
 			const res = await model.createJobApplication(
 				payload as ICreateJobApplicationPayload
 			);

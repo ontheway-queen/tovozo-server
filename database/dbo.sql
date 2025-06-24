@@ -138,7 +138,7 @@ CREATE TABLE IF NOT EXISTS dbo.job_post
     CONSTRAINT job_post_pkey PRIMARY KEY (id)
 );
 
-CREATE TYPE dbo.job_post_details_status AS ENUM('Pending','Applied','Expired', 'Completed','Work Finished');
+CREATE TYPE dbo.job_post_details_status AS ENUM('Pending','Applied','Expired', 'Completed','Work Finished', 'Cancelled');
 
 CREATE TABLE IF NOT EXISTS dbo.job_post_details
 (
@@ -311,6 +311,7 @@ CREATE TYPE dbo.job_status AS ENUM ('PENDING', 'ASSIGNED', 'CANCELLED', 'COMPLET
 CREATE TABLE IF NOT EXISTS dbo.job_applications (
     id SERIAL PRIMARY KEY,
     job_post_details_id INTEGER NOT NULL REFERENCES dbo.job_post_details(id),
+    job_post_id INTEGER NOT NULL REFERENCES dbo.job_post(id),
     job_seeker_id INTEGER NOT NULL REFERENCES jobseeker.job_seeker(user_id),
     status dbo.job_status DEFAULT 'PENDING',
     payment_status dbo.payment_status DEFAULT 'UNPAID',

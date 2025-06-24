@@ -162,16 +162,28 @@ export default class JobApplicationModel extends Schema {
 		return data;
 	}
 
-	public cancelMyJobApplication(
+	public async cancelMyJobApplication(
 		application_id: number,
 		job_seeker_id: number
 	) {
 		return this.db("job_applications")
 			.withSchema(this.DBO_SCHEMA)
-			.update({ status: JOB_POST_DETAILS_STATUS.CANCELLED })
+			.update({ status: JOB_POST_DETAILS_STATUS.Cancelled })
 			.where({
 				id: application_id,
 				job_seeker_id: job_seeker_id,
+			});
+	}
+
+	// cancel all job application if hotelier cancel the job.
+	public async cancelApplication(job_post_id: number) {
+		console.log("job_post_id", job_post_id);
+		return await this.db("job_applications")
+			.withSchema(this.DBO_SCHEMA)
+			.where("job_post_id", job_post_id)
+			.update({
+				status: "CANCELLED",
+				cancelled_at: new Date(),
 			});
 	}
 }

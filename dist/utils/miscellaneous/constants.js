@@ -97,7 +97,7 @@ exports.JOB_POST_DETAILS_STATUS = {
     Expired: "Expired",
     Completed: "Completed",
     WorkFinished: "Work Finished",
-    CANCELLED: "CANCELLED",
+    Cancelled: "Cancelled",
 };
 exports.JOB_POST_DETAILS_STATUS_ENUM = [
     "Pending",
@@ -105,7 +105,7 @@ exports.JOB_POST_DETAILS_STATUS_ENUM = [
     "Expired",
     "Completed",
     "Work Finished",
-    "CANCELLED",
+    "Cancelled",
 ];
 exports.GENDER_TYPE = {
     Male: "Male",

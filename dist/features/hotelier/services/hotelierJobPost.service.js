@@ -95,13 +95,17 @@ class HotelierJobPostService extends abstract_service_1.default {
                 if (!jobPost) {
                     throw new customError_1.default("Job post not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }
-                const currentTime = new Date();
-                const startTime = new Date(jobPost.start_time);
-                const hoursDiff = (startTime.getTime() - currentTime.getTime()) /
-                    (1000 * 60 * 60);
-                if (hoursDiff < 24) {
-                    throw new customError_1.default("Job post must be updated at least 24 hours in advance.", this.StatusCode.HTTP_BAD_REQUEST);
-                }
+                // const currentTime = new Date();
+                // const startTime = new Date(jobPost.start_time);
+                // const hoursDiff =
+                // 	(startTime.getTime() - currentTime.getTime()) /
+                // 	(1000 * 60 * 60);
+                // if (hoursDiff < 24) {
+                // 	throw new CustomError(
+                // 		"Job post must be updated at least 24 hours in advance.",
+                // 		this.StatusCode.HTTP_BAD_REQUEST
+                // 	);
+                // }
                 const { start_time, end_time } = (body === null || body === void 0 ? void 0 : body.job_post_details[0]) || {};
                 if (start_time &&
                     end_time &&
@@ -117,6 +121,38 @@ class HotelierJobPostService extends abstract_service_1.default {
                     message: this.ResMsg.HTTP_SUCCESSFUL,
                     code: this.StatusCode.HTTP_OK,
                     data: updatedJobPost,
+                };
+            }));
+        });
+    }
+    cancelJobPost(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const { id } = req.params;
+                const model = this.Model.jobPostModel(trx);
+                const jobPost = yield model.getSingleJobPost(Number(id));
+                if (!jobPost) {
+                    throw new customError_1.default("Job post not found!", this.StatusCode.HTTP_NOT_FOUND);
+                }
+                // const currentTime = new Date();
+                // const startTime = new Date(jobPost.start_time);
+                // const hoursDiff =
+                // 	(startTime.getTime() - currentTime.getTime()) /
+                // 	(1000 * 60 * 60);
+                // if (hoursDiff < 24) {
+                // 	throw new CustomError(
+                // 		"Job post must be cancelled at least 24 hours in advance.",
+                // 		this.StatusCode.HTTP_BAD_REQUEST
+                // 	);
+                // }
+                yield model.cancelJobPost(Number(jobPost.job_post_id));
+                yield model.cancelJobPostDetails(Number(jobPost.job_post_id));
+                const jobApplicationModel = this.Model.jobApplicationModel(trx);
+                yield jobApplicationModel.cancelApplication(jobPost.job_post_id);
+                return {
+                    success: true,
+                    message: this.ResMsg.HTTP_SUCCESSFUL,
+                    code: this.StatusCode.HTTP_OK,
                 };
             }));
         });
