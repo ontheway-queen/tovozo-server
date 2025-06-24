@@ -21,14 +21,14 @@ class OrganizationModel extends schema_1.default {
     createOrganization(payload) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("organization")
-                .withSchema("hotelier")
+                .withSchema(this.HOTELIER)
                 .insert(payload, "id");
         });
     }
     updateOrganization(payload, where) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("organization")
-                .withSchema("hotelier")
+                .withSchema(this.HOTELIER)
                 .update(payload)
                 .where((qb) => {
                 if (where.id)
@@ -41,7 +41,7 @@ class OrganizationModel extends schema_1.default {
     getOrganization(where) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("organization")
-                .withSchema("hotelier")
+                .withSchema(this.HOTELIER)
                 .select("*")
                 .where((qb) => {
                 if (where.id)
@@ -52,10 +52,60 @@ class OrganizationModel extends schema_1.default {
                 .first();
         });
     }
+    getOrganizationList(params) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const data = yield this.db("organization")
+                .withSchema(this.HOTELIER)
+                .select("*")
+                .where((qb) => {
+                if (params.id)
+                    qb.andWhere("id", params.id);
+                if (params.user_id)
+                    qb.andWhere("user_id", params.user_id);
+                if (params.status)
+                    qb.andWhere("status", params.status);
+                if (params.name)
+                    qb.andWhereILike("name", `%${params.name}%`);
+                if (params.from_date && params.to_date)
+                    qb.andWhereBetween("created_at", [params.from_date, params.to_date]);
+            })
+                .limit(params.limit || 100)
+                .offset(params.skip || 0);
+            const total = yield this.db("organization")
+                .withSchema(this.HOTELIER)
+                .count("id as total")
+                .where((qb) => {
+                if (params.id)
+                    qb.andWhere("id", params.id);
+                if (params.user_id)
+                    qb.andWhere("user_id", params.user_id);
+                if (params.status)
+                    qb.andWhere("status", params.status);
+                if (params.name)
+                    qb.andWhereILike("name", `%${params.name}%`);
+                if (params.from_date && params.to_date)
+                    qb.andWhereBetween("created_at", [params.from_date, params.to_date]);
+            })
+                .first();
+            return {
+                data,
+                total: (total === null || total === void 0 ? void 0 : total.total) ? Number(total.total) : 0,
+            };
+        });
+    }
+    getSingleOrganization(id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("organization")
+                .withSchema(this.HOTELIER)
+                .select("*")
+                .where({ id })
+                .first();
+        });
+    }
     deleteOrganization(where) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("organization")
-                .withSchema("hotelier")
+                .withSchema(this.HOTELIER)
                 .where((qb) => {
                 if (where.id)
                     qb.andWhere("id", where.id);
@@ -69,14 +119,14 @@ class OrganizationModel extends schema_1.default {
     addPhoto(payload) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("organization_photos")
-                .withSchema("hotelier")
+                .withSchema(this.HOTELIER)
                 .insert(payload);
         });
     }
     getPhotos(organization_id) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("organization_photos")
-                .withSchema("hotelier")
+                .withSchema(this.HOTELIER)
                 .select("*")
                 .where({ organization_id, is_deleted: false });
         });
@@ -84,7 +134,7 @@ class OrganizationModel extends schema_1.default {
     deletePhoto(id) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("organization_photos")
-                .withSchema("hotelier")
+                .withSchema(this.HOTELIER)
                 .where({ id })
                 .update({ is_deleted: true });
         });
@@ -93,24 +143,52 @@ class OrganizationModel extends schema_1.default {
     addAmenities(payload) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("organization_amenities")
-                .withSchema("hotelier")
+                .withSchema(this.HOTELIER)
                 .insert(payload);
         });
     }
-    getAmenities(organization_id) {
-        return __awaiter(this, void 0, void 0, function* () {
+    getAmenities(_a) {
+        return __awaiter(this, arguments, void 0, function* ({ organization_id, id, amenity, }) {
             return yield this.db("organization_amenities")
-                .withSchema("hotelier")
+                .withSchema(this.HOTELIER)
                 .select("*")
-                .where({ organization_id });
+                .where((qb) => {
+                if (organization_id) {
+                    qb.where({ organization_id });
+                }
+                if (amenity) {
+                    qb.andWhere({ amenity });
+                }
+                if (id) {
+                    qb.andWhere({ id });
+                }
+            });
         });
     }
-    deleteAmenities(organization_id) {
+    deleteAmenities(_a) {
+        return __awaiter(this, arguments, void 0, function* ({ organization_id, id, ids, }) {
+            return yield this.db("organization_amenities")
+                .withSchema(this.HOTELIER)
+                .where((qb) => {
+                if (ids && ids.length) {
+                    qb.whereIn("id", ids);
+                }
+                if (organization_id) {
+                    qb.andWhere({ organization_id });
+                }
+                if (id) {
+                    qb.andWhere({ id });
+                }
+            })
+                .del();
+        });
+    }
+    updateAmenities(amenity, organization_id) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("organization_amenities")
-                .withSchema("hotelier")
-                .where({ organization_id })
-                .del();
+                .withSchema(this.HOTELIER)
+                .update({ amenity })
+                .where({ organization_id });
         });
     }
 }

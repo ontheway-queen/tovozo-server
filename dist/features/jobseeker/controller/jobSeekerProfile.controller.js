@@ -37,12 +37,12 @@ class JobSeekerProfileController extends abstract_controller_1.default {
             res.status(code).json(data);
         }));
         this.updateProfile = this.asyncWrapper.wrap({ bodySchema: this.validator.updateJobSeekerValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.profileService.updateProfile(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _b = yield this.profileService.updateProfile(req), { code } = _b, data = __rest(_b, ["code"]);
             res.status(code).json(data);
         }));
         //change password
         this.changePassword = this.asyncWrapper.wrap({ bodySchema: this.commonValidator.changePassInputValidation }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.profileService.changePassword(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _c = yield this.profileService.changePassword(req), { code } = _c, data = __rest(_c, ["code"]);
             res.status(code).json(data);
         }));
     }
