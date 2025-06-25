@@ -24,28 +24,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_controller_1 = __importDefault(require("../../../abstract/abstract.controller"));
-const profile_service_1 = __importDefault(require("../services/profile.service"));
-const administration_validator_1 = __importDefault(require("../utils/validator/administration.validator"));
-class AdminProfileController extends abstract_controller_1.default {
+const adminJob_validator_1 = __importDefault(require("../utils/validator/adminJob.validator"));
+const adminCancellationReport_service_1 = __importDefault(require("../services/adminCancellationReport.service"));
+class AdminCancellationReportController extends abstract_controller_1.default {
     constructor() {
         super();
-        this.service = new profile_service_1.default();
-        this.validator = new administration_validator_1.default();
-        //get profile
-        this.getProfile = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.getProfile(req), { code } = _a, data = __rest(_a, ["code"]);
-            res.status(code).json(data);
-        }));
-        //edit profile
-        this.editProfile = this.asyncWrapper.wrap({ bodySchema: this.validator.editUserProfileValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.editProfile(req), { code } = _a, data = __rest(_a, ["code"]);
-            res.status(code).json(data);
-        }));
-        //change password
-        this.changePassword = this.asyncWrapper.wrap({ bodySchema: this.commonValidator.changePassInputValidation }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.changePassword(req), { code } = _a, data = __rest(_a, ["code"]);
+        this.service = new adminCancellationReport_service_1.default();
+        this.validator = new adminJob_validator_1.default();
+        this.updateCancellationReportStatus = this.asyncWrapper.wrap({ bodySchema: this.validator.cancellationReportSchema }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.updateCancellationReportStatus(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }
 }
-exports.default = AdminProfileController;
+exports.default = AdminCancellationReportController;

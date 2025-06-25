@@ -9,47 +9,53 @@ import JobModel from "./jobModel/jobModel";
 import JobSeekerModel from "./jobSeekerModel/jobSeekerModel";
 import UserModel from "./userModel/userModel";
 import JobApplicationModel from "./jobApplicationModel/jobApplicationModel";
+import CancellationReportModel from "./cancellationReportModel/cancellationReportModel";
 
 export default class Models {
-  public UserModel(trx?: Knex.Transaction) {
-    return new UserModel(trx || db);
-  }
-  public AdminModel(trx?: Knex.Transaction) {
-    return new AdminModel(trx || db);
-  }
+	public UserModel(trx?: Knex.Transaction) {
+		return new UserModel(trx || db);
+	}
+	public AdminModel(trx?: Knex.Transaction) {
+		return new AdminModel(trx || db);
+	}
 
-  // job seeker model
-  public jobSeekerModel(trx?: Knex.Transaction) {
-    return new JobSeekerModel(trx || db);
-  }
+	// job seeker model
+	public jobSeekerModel(trx?: Knex.Transaction) {
+		return new JobSeekerModel(trx || db);
+	}
 
-  // common models
-  public commonModel(trx?: Knex.Transaction) {
-    return new CommonModel(trx || db);
-  }
+	// common models
+	public commonModel(trx?: Knex.Transaction) {
+		return new CommonModel(trx || db);
+	}
 
-  // organization model
-  public organizationModel(trx?: Knex.Transaction) {
-    return new OrganizationModel(trx || db);
-  }
+	// organization model
+	public organizationModel(trx?: Knex.Transaction) {
+		return new OrganizationModel(trx || db);
+	}
 
-  //administration model
-  public administrationModel(trx?: Knex.Transaction) {
-    return new AdministrationModel(trx || db);
-  }
+	//administration model
+	public administrationModel(trx?: Knex.Transaction) {
+		return new AdministrationModel(trx || db);
+	}
 
-  // job model
-  public jobModel(trx?: Knex.Transaction) {
-    return new JobModel(trx || db);
-  }
+	// job model
+	public jobModel(trx?: Knex.Transaction) {
+		return new JobModel(trx || db);
+	}
 
-  // jobPost model
-  public jobPostModel(trx?: Knex.Transaction) {
-    return new JobPostModel(trx || db);
-  }
+	// jobPost model
+	public jobPostModel(trx?: Knex.Transaction) {
+		return new JobPostModel(trx || db);
+	}
 
-  // job application model
-  public jobApplicationModel(trx?: Knex.Transaction) {
-    return new JobApplicationModel(trx || db);
-  }
+	// job application model
+	public jobApplicationModel(trx?: Knex.Transaction) {
+		return new JobApplicationModel(trx || db);
+	}
+
+	// cancellation report model
+	public cancellationReportModel(trx?: Knex.Transaction) {
+		return new CancellationReportModel(trx || db);
+	}
 }

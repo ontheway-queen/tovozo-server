@@ -37,3 +37,7 @@ export interface IJobPostDetails {
 	start_time?: string;
 	end_time?: string;
 }
+
+export interface ICancelJobPostPayload {
+	report_type: "CANCEL_JOB_POST";
+}

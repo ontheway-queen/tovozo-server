@@ -12,6 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const constants_1 = require("../../utils/miscellaneous/constants");
 const schema_1 = __importDefault(require("../../utils/miscellaneous/schema"));
 class JobPostModel extends schema_1.default {
     constructor(db) {
@@ -171,7 +172,7 @@ class JobPostModel extends schema_1.default {
                     qb.andWhere("jpd.status", status);
                 }
             })
-                .orderBy(orderBy || "jp.id", orderTo || "desc")
+                .orderBy(orderBy || "jpd.id", orderTo || "desc")
                 .limit(limit || 100)
                 .offset(skip || 0);
             let total;
@@ -273,12 +274,11 @@ class JobPostModel extends schema_1.default {
         });
     }
     // cancel job post
-    // need to implement logic for canceling job post less than 24 hours before start time
     cancelJobPost(id) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("job_post")
                 .withSchema(this.DBO_SCHEMA)
-                .update({ status: "Cancelled" })
+                .update({ status: constants_1.JOB_POST_DETAILS_STATUS.Cancelled })
                 .where("id", id);
         });
     }
@@ -287,7 +287,16 @@ class JobPostModel extends schema_1.default {
             return yield this.db("job_post_details")
                 .withSchema(this.DBO_SCHEMA)
                 .where("job_post_id", id)
-                .update({ status: "Cancelled" });
+                .update({ status: constants_1.JOB_POST_DETAILS_STATUS.Cancelled });
+        });
+    }
+    markAsPendingJobPostDetails(id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            console.log({ id });
+            return yield this.db("job_post_details")
+                .withSchema(this.DBO_SCHEMA)
+                .where("id", id)
+                .update({ status: constants_1.JOB_POST_DETAILS_STATUS.Pending });
         });
     }
 }

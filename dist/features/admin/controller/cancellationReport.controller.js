@@ -24,28 +24,29 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_controller_1 = __importDefault(require("../../../abstract/abstract.controller"));
-const profile_service_1 = __importDefault(require("../services/profile.service"));
-const administration_validator_1 = __importDefault(require("../utils/validator/administration.validator"));
-class AdminProfileController extends abstract_controller_1.default {
+const cancellationReport_validator_1 = __importDefault(require("../utils/validator/cancellationReport.validator"));
+const cancellationReport_service_1 = __importDefault(require("../services/cancellationReport.service"));
+class CancellationReportController extends abstract_controller_1.default {
     constructor() {
         super();
-        this.service = new profile_service_1.default();
-        this.validator = new administration_validator_1.default();
-        //get profile
-        this.getProfile = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.getProfile(req), { code } = _a, data = __rest(_a, ["code"]);
+        this.service = new cancellationReport_service_1.default();
+        this.validator = new cancellationReport_validator_1.default();
+        this.getReports = this.asyncWrapper.wrap({ querySchema: this.validator.reportQuerySchema }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.getReports(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
-        //edit profile
-        this.editProfile = this.asyncWrapper.wrap({ bodySchema: this.validator.editUserProfileValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.editProfile(req), { code } = _a, data = __rest(_a, ["code"]);
+        this.getSingleReport = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.getSingleItemWithIdValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.getSingleReport(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
-        //change password
-        this.changePassword = this.asyncWrapper.wrap({ bodySchema: this.commonValidator.changePassInputValidation }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.changePassword(req), { code } = _a, data = __rest(_a, ["code"]);
+        this.updateCancellationReportStatus = this.asyncWrapper.wrap({
+            bodySchema: this.validator.cancellationReportSchema,
+            paramSchema: this.commonValidator.getSingleItemWithIdValidator,
+            querySchema: this.validator.reportTypeQuerySchema,
+        }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.updateCancellationReportStatus(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }
 }
-exports.default = AdminProfileController;
+exports.default = CancellationReportController;

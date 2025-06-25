@@ -138,3 +138,43 @@ export const GENDER_TYPE = {
 	Female: "Female",
 	Other: "Other",
 } as const;
+
+export const CANCEL_JOB_POST_ENUM = ["CANCEL_JOB_POST"] as const;
+
+export const CANCEL_APPLICATION_ENUM = ["CANCEL_APPLICATION"] as const;
+
+export const REPORT_TYPE_ENUM = [
+	"CANCEL_JOB_POST",
+	"CANCEL_APPLICATION",
+] as const;
+
+export const REPORT_TYPE = {
+	CANCEL_JOB_POST: "CANCEL_JOB_POST",
+	CANCEL_APPLICATION: "CANCEL_APPLICATION",
+} as const;
+
+export const CANCELLATION_REPORT_STATUS_ENUM = [
+	"PENDING",
+	"APPROVED",
+	"REJECTED",
+] as const;
+
+export const CANCELLATION_REPORT_STATUS = {
+	PENDING: "PENDING",
+	APPROVED: "APPROVED",
+	REJECTED: "REJECTED",
+};
+
+export const JOB_APPLICATION_STATUS = {
+	PENDING: "PENDING",
+	ASSIGNED: "ASSIGNED",
+	CANCELLED: "CANCELLED",
+	COMPLETED: "COMPLETED",
+} as const;
+
+export const JOB_APPLICATION_STATUS_ENUM = [
+	"PENDING",
+	"ASSIGNED",
+	"CANCELLED",
+	"COMPLETED",
+];

@@ -5,6 +5,10 @@ import {
 	IJobPostDetailsPayload,
 	IJobPostPayload,
 } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
+import {
+	JOB_POST_DETAILS_STATUS,
+	REPORT_TYPE,
+} from "../../../utils/miscellaneous/constants";
 
 class HotelierJobPostService extends AbstractServices {
 	public async createJobPost(req: Request) {
@@ -173,7 +177,12 @@ class HotelierJobPostService extends AbstractServices {
 	public async cancelJobPost(req: Request) {
 		return await this.db.transaction(async (trx) => {
 			const { id } = req.params;
+			const body = req.body;
+			const user = req.hotelier;
 			const model = this.Model.jobPostModel(trx);
+			const cancellationReportModel =
+				this.Model.cancellationReportModel(trx);
+
 			const jobPost = await model.getSingleJobPost(Number(id));
 			if (!jobPost) {
 				throw new CustomError(
@@ -181,31 +190,70 @@ class HotelierJobPostService extends AbstractServices {
 					this.StatusCode.HTTP_NOT_FOUND
 				);
 			}
+			if (jobPost.status === JOB_POST_DETAILS_STATUS.Cancelled) {
+				throw new CustomError(
+					"Job post already cancelled",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
+			const report =
+				await cancellationReportModel.getSingleReportWithRelatedId(
+					jobPost.id
+				);
+			if (report) {
+				throw new CustomError(
+					this.ResMsg.HTTP_CONFLICT,
+					this.StatusCode.HTTP_CONFLICT
+				);
+			}
+			const currentTime = new Date();
+			const startTime = new Date(jobPost.start_time);
+			const hoursDiff =
+				(startTime.getTime() - currentTime.getTime()) /
+				(1000 * 60 * 60);
 
-			// const currentTime = new Date();
-			// const startTime = new Date(jobPost.start_time);
-			// const hoursDiff =
-			// 	(startTime.getTime() - currentTime.getTime()) /
-			// 	(1000 * 60 * 60);
+			if (hoursDiff > 24) {
+				await model.cancelJobPost(Number(jobPost.job_post_id));
+				await model.cancelJobPostDetails(Number(jobPost.job_post_id));
 
-			// if (hoursDiff < 24) {
-			// 	throw new CustomError(
-			// 		"Job post must be cancelled at least 24 hours in advance.",
-			// 		this.StatusCode.HTTP_BAD_REQUEST
-			// 	);
-			// }
+				const jobApplicationModel = this.Model.jobApplicationModel(trx);
+				await jobApplicationModel.cancelApplication(
+					jobPost.job_post_id
+				);
 
-			await model.cancelJobPost(Number(jobPost.job_post_id));
-			await model.cancelJobPostDetails(Number(jobPost.job_post_id));
+				return {
+					success: true,
+					message: this.ResMsg.HTTP_SUCCESSFUL,
+					code: this.StatusCode.HTTP_OK,
+				};
+			} else {
+				if (
+					body.report_type !== REPORT_TYPE.CANCEL_JOB_POST ||
+					!body.reason
+				) {
+					throw new CustomError(
+						this.ResMsg.HTTP_UNPROCESSABLE_ENTITY,
+						this.StatusCode.HTTP_UNPROCESSABLE_ENTITY
+					);
+				}
 
-			const jobApplicationModel = this.Model.jobApplicationModel(trx);
-			await jobApplicationModel.cancelApplication(jobPost.job_post_id);
+				body.reporter_id = user.user_id;
+				body.related_id = id;
 
-			return {
-				success: true,
-				message: this.ResMsg.HTTP_SUCCESSFUL,
-				code: this.StatusCode.HTTP_OK,
-			};
+				const cancellationReportModel =
+					this.Model.cancellationReportModel(trx);
+				const data =
+					await cancellationReportModel.requestForCancellationReport(
+						body
+					);
+
+				return {
+					success: true,
+					message: this.ResMsg.HTTP_SUCCESSFUL,
+					code: this.StatusCode.HTTP_OK,
+					data: data[0].id,
+				};
+			}
 		});
 	}
 }

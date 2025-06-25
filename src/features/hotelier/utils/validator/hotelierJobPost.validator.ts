@@ -1,5 +1,6 @@
 import Joi from "joi";
 import {
+	CANCEL_JOB_POST_ENUM,
 	GENDERS,
 	JOB_POST_DETAILS_STATUS,
 	JOB_POST_DETAILS_STATUS_ENUM,
@@ -41,6 +42,12 @@ export class HotelierJobPostValidator {
 	public getSingleJobPostSchema = Joi.object({
 		id: Joi.number().integer().required(),
 	}).required();
+
+	public cancelJobPostSchema = Joi.object({
+		related_id: Joi.number().integer(),
+		report_type: Joi.string().valid(...CANCEL_JOB_POST_ENUM),
+		reason: Joi.string(),
+	});
 
 	public updateJobPostSchema = Joi.object({
 		job_post: Joi.object({
