@@ -39,6 +39,11 @@ class HotelierJobPostValidator {
         this.getSingleJobPostSchema = joi_1.default.object({
             id: joi_1.default.number().integer().required(),
         }).required();
+        this.cancelJobPostSchema = joi_1.default.object({
+            related_id: joi_1.default.number().integer(),
+            report_type: joi_1.default.string().valid(...constants_1.CANCEL_JOB_POST_ENUM),
+            reason: joi_1.default.string(),
+        });
         this.updateJobPostSchema = joi_1.default.object({
             job_post: joi_1.default.object({
                 title: joi_1.default.string().optional(),

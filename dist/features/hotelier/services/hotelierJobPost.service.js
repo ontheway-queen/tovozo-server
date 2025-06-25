@@ -14,6 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
 const customError_1 = __importDefault(require("../../../utils/lib/customError"));
+const constants_1 = require("../../../utils/miscellaneous/constants");
 class HotelierJobPostService extends abstract_service_1.default {
     createJobPost(req) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -129,31 +130,52 @@ class HotelierJobPostService extends abstract_service_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const { id } = req.params;
+                const body = req.body;
+                const user = req.hotelier;
                 const model = this.Model.jobPostModel(trx);
+                const cancellationReportModel = this.Model.cancellationReportModel(trx);
                 const jobPost = yield model.getSingleJobPost(Number(id));
                 if (!jobPost) {
                     throw new customError_1.default("Job post not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }
-                // const currentTime = new Date();
-                // const startTime = new Date(jobPost.start_time);
-                // const hoursDiff =
-                // 	(startTime.getTime() - currentTime.getTime()) /
-                // 	(1000 * 60 * 60);
-                // if (hoursDiff < 24) {
-                // 	throw new CustomError(
-                // 		"Job post must be cancelled at least 24 hours in advance.",
-                // 		this.StatusCode.HTTP_BAD_REQUEST
-                // 	);
-                // }
-                yield model.cancelJobPost(Number(jobPost.job_post_id));
-                yield model.cancelJobPostDetails(Number(jobPost.job_post_id));
-                const jobApplicationModel = this.Model.jobApplicationModel(trx);
-                yield jobApplicationModel.cancelApplication(jobPost.job_post_id);
-                return {
-                    success: true,
-                    message: this.ResMsg.HTTP_SUCCESSFUL,
-                    code: this.StatusCode.HTTP_OK,
-                };
+                if (jobPost.status === constants_1.JOB_POST_DETAILS_STATUS.Cancelled) {
+                    throw new customError_1.default("Job post already cancelled", this.StatusCode.HTTP_BAD_REQUEST);
+                }
+                const report = yield cancellationReportModel.getSingleReportWithRelatedId(jobPost.id);
+                if (report) {
+                    throw new customError_1.default(this.ResMsg.HTTP_CONFLICT, this.StatusCode.HTTP_CONFLICT);
+                }
+                const currentTime = new Date();
+                const startTime = new Date(jobPost.start_time);
+                const hoursDiff = (startTime.getTime() - currentTime.getTime()) /
+                    (1000 * 60 * 60);
+                if (hoursDiff > 24) {
+                    yield model.cancelJobPost(Number(jobPost.job_post_id));
+                    yield model.cancelJobPostDetails(Number(jobPost.job_post_id));
+                    const jobApplicationModel = this.Model.jobApplicationModel(trx);
+                    yield jobApplicationModel.cancelApplication(jobPost.job_post_id);
+                    return {
+                        success: true,
+                        message: this.ResMsg.HTTP_SUCCESSFUL,
+                        code: this.StatusCode.HTTP_OK,
+                    };
+                }
+                else {
+                    if (body.report_type !== constants_1.REPORT_TYPE.CANCEL_JOB_POST ||
+                        !body.reason) {
+                        throw new customError_1.default(this.ResMsg.HTTP_UNPROCESSABLE_ENTITY, this.StatusCode.HTTP_UNPROCESSABLE_ENTITY);
+                    }
+                    body.reporter_id = user.user_id;
+                    body.related_id = id;
+                    const cancellationReportModel = this.Model.cancellationReportModel(trx);
+                    const data = yield cancellationReportModel.requestForCancellationReport(body);
+                    return {
+                        success: true,
+                        message: this.ResMsg.HTTP_SUCCESSFUL,
+                        code: this.StatusCode.HTTP_OK,
+                        data: data[0].id,
+                    };
+                }
             }));
         });
     }

@@ -46,7 +46,10 @@ export default class HotelierJobPostController extends AbstractController {
 	);
 
 	public cancelJobPost = this.asyncWrapper.wrap(
-		{ paramSchema: this.validator.getSingleJobPostSchema },
+		{
+			paramSchema: this.validator.getSingleJobPostSchema,
+			bodySchema: this.validator.cancelJobPostSchema,
+		},
 		async (req: Request, res: Response) => {
 			const { code, ...data } = await this.service.cancelJobPost(req);
 			res.status(code).json(data);

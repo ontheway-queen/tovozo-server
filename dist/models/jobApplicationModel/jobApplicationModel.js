@@ -95,13 +95,16 @@ class JobApplicationModel extends schema_1.default {
     }
     cancelMyJobApplication(application_id, job_seeker_id) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.db("job_applications")
+            var _a;
+            const [updated] = yield this.db("job_applications")
                 .withSchema(this.DBO_SCHEMA)
-                .update({ status: constants_1.JOB_POST_DETAILS_STATUS.Cancelled })
+                .update({ status: constants_1.JOB_APPLICATION_STATUS.CANCELLED })
                 .where({
                 id: application_id,
                 job_seeker_id: job_seeker_id,
-            });
+            })
+                .returning("job_post_details_id");
+            return (_a = updated === null || updated === void 0 ? void 0 : updated.job_post_details_id) !== null && _a !== void 0 ? _a : null;
         });
     }
     // cancel all job application if hotelier cancel the job.

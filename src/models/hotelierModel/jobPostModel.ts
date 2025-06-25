@@ -1,4 +1,5 @@
 import { TDB } from "../../features/public/utils/types/publicCommon.types";
+import { JOB_POST_DETAILS_STATUS } from "../../utils/miscellaneous/constants";
 import Schema from "../../utils/miscellaneous/schema";
 import {
 	IJobPost,
@@ -272,7 +273,7 @@ class JobPostModel extends Schema {
 					qb.andWhere("jpd.status", status);
 				}
 			})
-			.orderBy(orderBy || "jp.id", orderTo || "desc")
+			.orderBy(orderBy || "jpd.id", orderTo || "desc")
 			.limit(limit || 100)
 			.offset(skip || 0);
 
@@ -420,11 +421,10 @@ class JobPostModel extends Schema {
 	}
 
 	// cancel job post
-	// need to implement logic for canceling job post less than 24 hours before start time
 	public async cancelJobPost(id: number) {
 		return await this.db("job_post")
 			.withSchema(this.DBO_SCHEMA)
-			.update({ status: "Cancelled" })
+			.update({ status: JOB_POST_DETAILS_STATUS.Cancelled })
 			.where("id", id);
 	}
 
@@ -432,7 +432,15 @@ class JobPostModel extends Schema {
 		return await this.db("job_post_details")
 			.withSchema(this.DBO_SCHEMA)
 			.where("job_post_id", id)
-			.update({ status: "Cancelled" });
+			.update({ status: JOB_POST_DETAILS_STATUS.Cancelled });
+	}
+
+	public async markAsPendingJobPostDetails(id: number) {
+		console.log({ id });
+		return await this.db("job_post_details")
+			.withSchema(this.DBO_SCHEMA)
+			.where("id", id)
+			.update({ status: JOB_POST_DETAILS_STATUS.Pending });
 	}
 }
 
