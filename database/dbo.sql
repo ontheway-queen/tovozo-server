@@ -285,7 +285,7 @@ CREATE TYPE dbo.cancellation_report_type AS ENUM
 
 -- Cancellation report status
 CREATE TYPE dbo.cancellation_report_status AS ENUM
-    ('PENDING', 'APPROVED', 'REJECTED');
+    ('PENDING', 'APPROVED', 'REJECTED', "CANCELLED");
 
 CREATE TABLE dbo.cancellation_reports (
     id SERIAL PRIMARY KEY,
@@ -297,7 +297,6 @@ CREATE TABLE dbo.cancellation_reports (
     reviewed_by INT REFERENCES dbo.user(id),
     reviewed_at TIMESTAMP,
     reject_reason TEXT,
-    before_24_hours boolean DEFAULT false,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

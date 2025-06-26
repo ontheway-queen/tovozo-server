@@ -17,6 +17,7 @@ const abstract_service_1 = __importDefault(require("../../../abstract/abstract.s
 const customError_1 = __importDefault(require("../../../utils/lib/customError"));
 const jobPostModel_1 = __importDefault(require("../../../models/hotelierModel/jobPostModel"));
 const constants_1 = require("../../../utils/miscellaneous/constants");
+const cancellationReportModel_1 = __importDefault(require("../../../models/cancellationReportModel/cancellationReportModel"));
 class JobSeekerJobApplication extends abstract_service_1.default {
     constructor() {
         super();
@@ -26,9 +27,14 @@ class JobSeekerJobApplication extends abstract_service_1.default {
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 var _a;
                 const jobPostModel = new jobPostModel_1.default(trx);
+                const cancellationReportModel = new cancellationReportModel_1.default(trx);
                 const jobPost = yield jobPostModel.getSingleJobPost(job_post_details_id);
                 if (!jobPost) {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
+                }
+                const jobPostReport = yield cancellationReportModel.getSingleJobPostReport(null, constants_1.REPORT_TYPE.CANCEL_JOB_POST, job_post_details_id);
+                if (jobPostReport.status === constants_1.CANCELLATION_REPORT_STATUS.PENDING) {
+                    throw new customError_1.default("A cancellation request is already pending for this job post.", this.StatusCode.HTTP_CONFLICT);
                 }
                 if (jobPost.gender !== constants_1.GENDER_TYPE.Other &&
                     gender &&
