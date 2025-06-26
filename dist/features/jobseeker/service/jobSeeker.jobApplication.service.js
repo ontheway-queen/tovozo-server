@@ -124,7 +124,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 if (hoursDiff > 24) {
                     const data = yield applicationModel.cancelMyJobApplication(parseInt(id), user_id);
                     if (!data) {
-                        throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
+                        throw new customError_1.default("Application data with the requested id not found", this.StatusCode.HTTP_NOT_FOUND);
                     }
                     yield jobPostModel.updateJobPostDetailsStatus(data.job_post_id, constants_1.JOB_POST_DETAILS_STATUS.Pending);
                     return {

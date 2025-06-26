@@ -299,7 +299,7 @@ class JobPostModel extends schema_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("job_post_details")
                 .withSchema(this.DBO_SCHEMA)
-                .where("job_post_id", id)
+                .where("id", id)
                 .update({ status });
         });
     }

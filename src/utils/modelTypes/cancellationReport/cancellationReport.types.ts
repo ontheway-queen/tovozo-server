@@ -38,6 +38,8 @@ export interface ICancellationReportRes {
 	report_type: ICancellationReportType;
 	status: ICancellationReportStatus;
 	reporter_name: string;
+	related_id: number;
+	reporter_id: number;
 	title: string;
 	details: string;
 	requirements: string;

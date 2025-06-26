@@ -11,6 +11,9 @@ export default class HotelierCancellationReportRouter extends AbstractRouter {
 	private callRouter() {
 		this.router.route("/").get(this.controller.getCancellationReports);
 
-		this.router.route("/:id").get(this.controller.getCancellationReport);
+		this.router
+			.route("/:id")
+			.get(this.controller.getCancellationReport)
+			.delete(this.controller.cancelJobPostReport);
 	}
 }

@@ -80,6 +80,7 @@ class CancellationReportService extends abstract_service_1.default {
                 if (!report) {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
                 }
+                console.log({ report });
                 if (report.status !== constants_1.CANCELLATION_REPORT_STATUS.PENDING) {
                     throw new customError_1.default(`${report.status} status can't be ${body.status} again`, this.StatusCode.HTTP_BAD_REQUEST);
                 }
@@ -99,7 +100,7 @@ class CancellationReportService extends abstract_service_1.default {
                     }
                     else if (report_type === constants_1.REPORT_TYPE.CANCEL_APPLICATION) {
                         const application = yield jobApplicationModel.cancelMyJobApplication(report.related_id, report.reporter_id);
-                        yield jobPostModel.updateJobPostDetailsStatus(application, constants_1.JOB_POST_DETAILS_STATUS.Applied);
+                        yield jobPostModel.updateJobPostDetailsStatus(application.job_post_details_id, constants_1.JOB_POST_DETAILS_STATUS.Pending);
                     }
                 }
                 else {

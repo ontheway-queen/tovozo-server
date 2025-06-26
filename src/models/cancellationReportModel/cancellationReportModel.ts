@@ -3,6 +3,7 @@ import Schema from "../../utils/miscellaneous/schema";
 import {
 	ICancellationReportRes,
 	ICancellationReportResponse,
+	ICancellationReportStatus,
 	IGetReportsQuery,
 } from "../../utils/modelTypes/cancellationReport/cancellationReport.types";
 
@@ -257,7 +258,10 @@ class CancellationReportModel extends Schema {
 			.first();
 	}
 
-	public async updateCancellationReportStatus(id: number, payload: any) {
+	public async updateCancellationReportStatus(
+		id: number,
+		payload: { status: ICancellationReportStatus }
+	) {
 		return await this.db("cancellation_reports")
 			.withSchema(this.DBO_SCHEMA)
 			.where("id", id)

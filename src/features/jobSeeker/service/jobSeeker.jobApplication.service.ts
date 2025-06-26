@@ -181,7 +181,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 
 				if (!data) {
 					throw new CustomError(
-						this.ResMsg.HTTP_NOT_FOUND,
+						"Application data with the requested id not found",
 						this.StatusCode.HTTP_NOT_FOUND
 					);
 				}
