@@ -1,6 +1,6 @@
 import { UserStatusType } from "../../../public/utils/types/publicCommon.types";
 
-export interface IAdminAuthView extends IAdmin {
+export interface IAdminAuthView extends IGetAdminTable {
   username: string;
   email: string;
   password_hash: string;
@@ -11,7 +11,7 @@ export interface IAdminAuthView extends IAdmin {
   user_deleted: boolean;
 }
 
-export interface IAdmin {
+export interface IGetAdminTable {
   user_id: number;
   role_id: number;
   is_main: boolean;

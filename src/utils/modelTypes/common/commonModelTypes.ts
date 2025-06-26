@@ -93,6 +93,12 @@ export interface IGetOTPPayload extends OTPType {
   email: string;
 }
 
+export interface IGetOTP {
+  id: number;
+  hashed_otp: string;
+  tried: number;
+}
+
 export interface ILocationPayload {
   city_id: number;
   name: string;
@@ -136,8 +142,78 @@ export interface INotificationUserPayload {
   notification_id: number;
 }
 
+export interface IGetNotificationParams {
+  id?: number;
+  limit?: string;
+  skip?: string;
+  user_id: number;
+  need_total?: boolean;
+}
+
+export interface IGetNotification {
+  id: number;
+  user_id: number;
+  content: string;
+  created_at: string;
+  related_id: number | null;
+  type: string;
+  user_type: string;
+  is_read: boolean;
+}
+
 export enum TypeEmitNotification {
   ADMIN_NEW_NOTIFICATION = "ADMIN_NEW_NOTIFICATION",
   HOTELIER_NEW_NOTIFICATION = "HOTELIER_NEW_NOTIFICATION",
   JOB_SEEKER_NEW_NOTIFICATION = "JOB_SEEKER_NEW_NOTIFICATION",
+}
+
+export interface IGetAllStatesParams {
+  country_id?: number;
+  state_id?: number;
+  limit?: number;
+  skip?: number;
+  filter?: string;
+  name?: string;
+}
+
+export interface IGetState {
+  id: number;
+  name: string;
+}
+export interface IGetAllCityParams {
+  country_id?: number;
+  state_id?: number;
+  city_id?: number;
+  limit?: number;
+  skip?: number;
+  filter?: string;
+  name?: string;
+}
+
+export interface IGetCity {
+  id: number;
+  name: string;
+}
+export interface IGetAllCountryParams {
+  id?: number;
+  name?: string;
+  iso2?: string;
+  iso3?: string;
+}
+
+export interface IGetCountry {
+  id: number;
+  name: string;
+  iso2: string;
+  iso3: string;
+  phonecode: string;
+  currency: string;
+  currency_name: string;
+  numeric_code: string;
+}
+
+export interface IGetNationality {
+  name?: string;
+  limit?: number;
+  skip?: number;
 }

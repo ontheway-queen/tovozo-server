@@ -15,6 +15,7 @@ import {
   IForgetPasswordPayload,
   NotificationTypeEnum,
 } from "../../../utils/modelTypes/common/commonModelTypes";
+import { GenderType } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
 import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
 import { registrationJobSeekerTemplate } from "../../../utils/templates/jobSeekerRegistrationTemplate";
 import { IJobSeekerAuthView } from "../utils/types/jobSeekerAuth.types";
@@ -28,30 +29,37 @@ class JobSeekerAuthService extends AbstractServices {
       const parseInput = (key: string) =>
         Lib.safeParseJSON(req.body[key]) || {};
 
-      const userInput = parseInput("user");
-      const jobSeekerInput = parseInput("job_seeker");
-      // const jobPreferencesInput = parseInput("job_preferences");
-      // const jobLocationsInput = parseInput("job_locations");
-      // const ownAddressInput = parseInput("own_address");
-      // const jobShiftingInput = parseInput("job_shifting");
-      const jobSeekerInfoInput = parseInput("job_seeker_info");
+      const userInput = parseInput("user") as {
+        name: string;
+        email: string;
+        password: string;
+        gender: GenderType;
+        phone_number: string;
+        photo: string;
+      };
+      const jobSeekerInput = parseInput("job_seeker") as {
+        nationality: number;
+      };
+      const jobSeekerInfoInput = parseInput("job_seeker_info") as {
+        visa_copy: string;
+        id_copy: string;
+        passport_copy: string;
+      };
 
-      // const validFileFields = ["visa_copy", "passport_copy", "resume", "photo"];
+      const validFileFields = ["visa_copy", "id_copy", "photo"];
 
-      // Attach file references
       files.forEach(({ fieldname, filename }) => {
-        // if (!validFileFields.includes(fieldname)) {
-        //   throw new CustomError(
-        //     this.ResMsg.UNKNOWN_FILE_FIELD,
-        //     this.StatusCode.HTTP_BAD_REQUEST,
-        //     "ERROR"
-        //   );
-        // }
+        if (!validFileFields.includes(fieldname)) {
+          throw new CustomError(
+            this.ResMsg.UNKNOWN_FILE_FIELD,
+            this.StatusCode.HTTP_BAD_REQUEST,
+            "ERROR"
+          );
+        }
 
         if (fieldname === "photo") {
           userInput.photo = filename;
         } else {
-          // console.log({ filename, fieldname });
           if (jobSeekerInput.nationality === BRITISH_ID) {
             if (fieldname !== "id_copy") {
               throw new CustomError(
@@ -71,17 +79,13 @@ class JobSeekerAuthService extends AbstractServices {
         }
       });
 
-      const { email, phone_number, username, password, ...restUserData } =
-        userInput;
+      const { email, phone_number, password, ...restUserData } = userInput;
 
       const userModel = this.Model.UserModel(trx);
       const jobSeekerModel = this.Model.jobSeekerModel(trx);
-      // const commonModel = this.Model.commonModel(trx);
-
       const existingUser = await userModel.checkUser({
         email,
         phone_number,
-        username,
         type: USER_TYPE.JOB_SEEKER,
       });
       if (existingUser && existingUser.length) {
@@ -93,13 +97,7 @@ class JobSeekerAuthService extends AbstractServices {
               message: this.ResMsg.EMAIL_ALREADY_EXISTS,
             };
           }
-          // if (user.username === username) {
-          //   return {
-          //     success: false,
-          //     code: this.StatusCode.HTTP_BAD_REQUEST,
-          //     message: this.ResMsg.USERNAME_ALREADY_EXISTS,
-          //   };
-          // }
+
           if (user.phone_number === phone_number) {
             return {
               success: false,
@@ -116,7 +114,6 @@ class JobSeekerAuthService extends AbstractServices {
         ...restUserData,
         email,
         phone_number,
-        username,
         password_hash,
         type: USER_TYPE.JOB_SEEKER,
       });
@@ -129,49 +126,12 @@ class JobSeekerAuthService extends AbstractServices {
         );
       }
 
-      // const [ownAddressId] = await commonModel.createLocation({
-      //   ...ownAddressInput,
-      //   is_home_address: true,
-      // });
-
       const jobSeekerId = registration[0].id;
-
-      // console.log({ jobSeekerId, ownAddressId: ownAddressId.id });
 
       await jobSeekerModel.createJobSeeker({
         ...jobSeekerInput,
-        // location_id: ownAddressId.id,
         user_id: jobSeekerId,
       });
-
-      // const createdLocations = await commonModel.createLocation(
-      //   jobLocationsInput
-      // );
-      // const preferenceLocationIds = [
-      //   ...createdLocations.map((loc) => loc.id),
-      //   ownAddressId.id,
-      // ];
-
-      // const jobPreferences = jobPreferencesInput.map((job_id: number) => ({
-      //   job_seeker_id: jobSeekerId,
-      //   job_id,
-      // }));
-
-      // const jobLocations = preferenceLocationIds.map((location_id: number) => ({
-      //   job_seeker_id: jobSeekerId,
-      //   location_id,
-      // }));
-
-      // const jobShifts = jobShiftingInput.map((shift: string) => ({
-      //   job_seeker_id: jobSeekerId,
-      //   shift,
-      // }));
-
-      // await Promise.all([
-      //   jobSeekerModel.setJobPreferences(jobPreferences),
-      //   jobSeekerModel.setJobLocations(jobLocations),
-      //   jobSeekerModel.setJobShifting(jobShifts),
-      // ]);
 
       await jobSeekerModel.createJobSeekerInfo({
         ...jobSeekerInfoInput,
@@ -180,7 +140,6 @@ class JobSeekerAuthService extends AbstractServices {
 
       const tokenPayload = {
         user_id: jobSeekerId,
-        username,
         name: userInput.name,
         gender: userInput.gender,
         user_email: email,
@@ -192,7 +151,7 @@ class JobSeekerAuthService extends AbstractServices {
 
       await this.insertNotification(trx, TypeUser.ADMIN, {
         user_id: jobSeekerId,
-        content: `New job seeker "${userInput.name}" (${username}) has registered and is awaiting verification.`,
+        content: `New job seeker "${userInput.name}" has registered and is awaiting verification.`,
         related_id: jobSeekerId,
         type: NotificationTypeEnum.JOB_SEEKER_VERIFICATION,
       });

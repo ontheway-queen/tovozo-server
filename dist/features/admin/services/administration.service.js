@@ -369,7 +369,7 @@ class AdminAdministrationService extends abstract_service_1.default {
                 const [existingUser] = yield AdminModel().getSingleAdmin({
                     username: req.body.username,
                 });
-                if (existingUser && existingUser.id !== id) {
+                if (existingUser && existingUser.user_id !== id) {
                     return {
                         success: false,
                         code: this.StatusCode.HTTP_CONFLICT,
@@ -382,7 +382,7 @@ class AdminAdministrationService extends abstract_service_1.default {
                 const [existingPhone] = yield AdminModel().getSingleAdmin({
                     phone_number: req.body.phone_number,
                 });
-                if (existingPhone && existingPhone.id !== id) {
+                if (existingPhone && existingPhone.user_id !== id) {
                     return {
                         success: false,
                         code: this.StatusCode.HTTP_CONFLICT,

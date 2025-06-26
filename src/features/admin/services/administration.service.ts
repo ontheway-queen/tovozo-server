@@ -397,7 +397,7 @@ class AdminAdministrationService extends AbstractServices {
       const [existingUser] = await AdminModel().getSingleAdmin({
         username: req.body.username,
       });
-      if (existingUser && existingUser.id !== id) {
+      if (existingUser && existingUser.user_id !== id) {
         return {
           success: false,
           code: this.StatusCode.HTTP_CONFLICT,
@@ -411,7 +411,7 @@ class AdminAdministrationService extends AbstractServices {
       const [existingPhone] = await AdminModel().getSingleAdmin({
         phone_number: req.body.phone_number,
       });
-      if (existingPhone && existingPhone.id !== id) {
+      if (existingPhone && existingPhone.user_id !== id) {
         return {
           success: false,
           code: this.StatusCode.HTTP_CONFLICT,

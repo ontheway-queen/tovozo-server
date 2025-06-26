@@ -5,9 +5,12 @@ import {
 import Schema from "../../utils/miscellaneous/schema";
 import {
   ICreateJobSeekerPayload,
+  IGetJobPreference,
+  IGetJobSeeker,
   IJobLocationPayload,
   IJobPreferencePayload,
   IJobSeekerInfoPayload,
+  IJobSeekerProfile,
   IJobShiftPayload,
   IUpdateJobSeekerPayload,
 } from "../../utils/modelTypes/jobSeeker/jobSeekerModelTypes";
@@ -40,7 +43,9 @@ export default class JobSeekerModel extends Schema {
       });
   }
 
-  public async getJobSeeker(where: { user_id: number }) {
+  public async getJobSeeker(where: {
+    user_id: number;
+  }): Promise<IGetJobSeeker> {
     return await this.db("job_seeker")
       .withSchema(this.JOB_SEEKER)
       .select("*")
@@ -60,7 +65,7 @@ export default class JobSeekerModel extends Schema {
     status?: UserStatusType;
     from_date?: string;
     to_date?: string;
-  }) {
+  }): Promise<{ data: IJobSeekerProfile[]; total?: number | string }> {
     const {
       user_id,
       name,
@@ -123,7 +128,9 @@ export default class JobSeekerModel extends Schema {
   }
 
   // get single job seeker details
-  public async getJobSeekerDetails(where: { user_id: number }) {
+  public async getJobSeekerDetails(where: {
+    user_id: number;
+  }): Promise<IJobSeekerProfile> {
     return await this.db("vw_full_job_seeker_profile")
       .withSchema(this.JOB_SEEKER)
       .select("*")
@@ -188,7 +195,9 @@ export default class JobSeekerModel extends Schema {
       .insert(payload);
   }
 
-  public async getJobPreferences(job_seeker_id: number) {
+  public async getJobPreferences(
+    job_seeker_id: number
+  ): Promise<IGetJobPreference[]> {
     return await this.db("job_preferences AS jp")
       .withSchema(this.JOB_SEEKER)
       .select("jp.*", "j.title")
@@ -199,7 +208,7 @@ export default class JobSeekerModel extends Schema {
   public async getSingleJobPreference(query: {
     job_seeker_id: number;
     job_id: number;
-  }) {
+  }): Promise<IGetJobPreference> {
     return await this.db("job_preferences AS jp")
       .withSchema(this.JOB_SEEKER)
       .select("jp.*", "j.title")

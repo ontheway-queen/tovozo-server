@@ -195,7 +195,7 @@ class PublicService extends AbstractServices {
         };
       }
 
-      const { id: email_otp_id, otp: hashed_otp, tried } = checkOtp[0];
+      const { id: email_otp_id, hashed_otp, tried } = checkOtp[0];
 
       if (tried > 3) {
         return {
@@ -348,6 +348,7 @@ class PublicService extends AbstractServices {
       };
     });
   }
+
   public async readNotification(req: Request) {
     const { user_id, id } = req.query as unknown as {
       user_id: number;

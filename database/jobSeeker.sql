@@ -108,8 +108,10 @@ JOIN jobSeeker.job_seeker js ON u.id = js.user_id
 WHERE u.type = 'JOB_SEEKER' AND u.is_deleted = false;
 
 
+-- JOb seeker profile
+CREATE OR REPLACE VIEW jobseeker.vw_full_job_seeker_profile
+ AS
  SELECT u.id AS user_id,
-    u.username,
     u.email,
     u.name,
     u.phone_number,

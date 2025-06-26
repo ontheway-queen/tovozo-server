@@ -1,9 +1,9 @@
 import { TDB } from "../../features/public/utils/types/publicCommon.types";
 import Schema from "../../utils/miscellaneous/schema";
 import {
-  IAdminSearchQuery,
-  IGetAdminListFilterQuery,
+  IGetSingleRole,
   IPermission,
+  IPermissionList,
   IRole,
 } from "../../utils/modelTypes/admin/administrationType";
 
@@ -69,7 +69,7 @@ class AdministrationModel extends Schema {
     id?: number;
     name?: string;
     permission_id?: number;
-  }) {
+  }): Promise<IGetSingleRole[]> {
     return await this.db("roles as rol")
       .withSchema(this.ADMIN_SCHEMA)
       .select(
@@ -126,7 +126,7 @@ class AdministrationModel extends Schema {
     name?: string;
     limit?: number;
     skip?: number;
-  }) {
+  }): Promise<{ data: IPermissionList[]; total?: number | string }> {
     const data = await this.db("permissions as per")
       .withSchema(this.ADMIN_SCHEMA)
       .select(
@@ -208,7 +208,5 @@ class AdministrationModel extends Schema {
       .where({ role_id })
       .andWhere({ permission_id });
   }
-
- 
 }
 export default AdministrationModel;

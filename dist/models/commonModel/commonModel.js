@@ -22,7 +22,7 @@ class CommonModel extends schema_1.default {
     // get otp
     getOTP(payload) {
         return __awaiter(this, void 0, void 0, function* () {
-            const check = yield this.db("email_otp")
+            return yield this.db("email_otp")
                 .withSchema(this.DBO_SCHEMA)
                 .select("id", "hashed_otp as otp", "tried")
                 .andWhere("email", payload.email)
@@ -30,7 +30,6 @@ class CommonModel extends schema_1.default {
                 .andWhere("matched", 0)
                 .andWhere("tried", "<", 3)
                 .andWhereRaw(`"create_date" + interval '3 minutes' > NOW()`);
-            return check;
         });
     }
     // insert OTP
@@ -100,7 +99,6 @@ class CommonModel extends schema_1.default {
     //get all city
     getAllCity(_a) {
         return __awaiter(this, arguments, void 0, function* ({ country_id, city_id, limit, skip, state_id, name, }) {
-            // console.log({ city_id });
             return yield this.db("cities")
                 .withSchema(this.DBO_SCHEMA)
                 .select("id", "name")
@@ -126,7 +124,6 @@ class CommonModel extends schema_1.default {
     // get all states
     getAllStates(_a) {
         return __awaiter(this, arguments, void 0, function* ({ country_id, state_id, limit, skip, name, }) {
-            // console.log({ city_id });
             return yield this.db("states")
                 .withSchema(this.DBO_SCHEMA)
                 .select("id", "name")
@@ -177,7 +174,7 @@ class CommonModel extends schema_1.default {
             const { limit = 100, skip = 0, id, user_id, need_total = true } = params;
             const data = yield this.db(`${this.TABLES.notification} as n`)
                 .withSchema(this.DBO_SCHEMA)
-                .select("n.*", "u.type as user_type", this.db.raw(`
+                .select("n.id", "n.user_id", "n.content", "n.created_at", "n.related_id", "n.type", "u.type as user_type", this.db.raw(`
         CASE
           WHEN ns.user_id IS NOT NULL THEN true
           ELSE false

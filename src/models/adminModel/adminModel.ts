@@ -1,12 +1,12 @@
 import { TDB } from "../../features/public/utils/types/publicCommon.types";
 import Schema from "../../utils/miscellaneous/schema";
+
 import {
   IAdminSearchQuery,
-  IGetAdminListFilterQuery,
-} from "../../utils/modelTypes/admin/administrationType";
-import {
   ICreateAdmin,
   ICreateAdminAuditTrailPayload,
+  IGetAdminListFilterQuery,
+  IGetSingleAdmin,
 } from "../../utils/modelTypes/admin/adminModelTypes";
 
 export default class AdminModel extends Schema {
@@ -118,7 +118,9 @@ export default class AdminModel extends Schema {
   }
 
   //get single admin
-  public async getSingleAdmin(payload: IAdminSearchQuery) {
+  public async getSingleAdmin(
+    payload: IAdminSearchQuery
+  ): Promise<IGetSingleAdmin[]> {
     return await this.db("admin as ua")
       .select(
         "ua.*",

@@ -40,26 +40,16 @@ class JobSeekerAuthService extends abstract_service_1.default {
                 const parseInput = (key) => lib_1.default.safeParseJSON(req.body[key]) || {};
                 const userInput = parseInput("user");
                 const jobSeekerInput = parseInput("job_seeker");
-                // const jobPreferencesInput = parseInput("job_preferences");
-                // const jobLocationsInput = parseInput("job_locations");
-                // const ownAddressInput = parseInput("own_address");
-                // const jobShiftingInput = parseInput("job_shifting");
                 const jobSeekerInfoInput = parseInput("job_seeker_info");
-                // const validFileFields = ["visa_copy", "passport_copy", "resume", "photo"];
-                // Attach file references
+                const validFileFields = ["visa_copy", "id_copy", "photo"];
                 files.forEach(({ fieldname, filename }) => {
-                    // if (!validFileFields.includes(fieldname)) {
-                    //   throw new CustomError(
-                    //     this.ResMsg.UNKNOWN_FILE_FIELD,
-                    //     this.StatusCode.HTTP_BAD_REQUEST,
-                    //     "ERROR"
-                    //   );
-                    // }
+                    if (!validFileFields.includes(fieldname)) {
+                        throw new customError_1.default(this.ResMsg.UNKNOWN_FILE_FIELD, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
+                    }
                     if (fieldname === "photo") {
                         userInput.photo = filename;
                     }
                     else {
-                        // console.log({ filename, fieldname });
                         if (jobSeekerInput.nationality === constants_1.BRITISH_ID) {
                             if (fieldname !== "id_copy") {
                                 throw new customError_1.default("id_copy required for British Nationality", this.StatusCode.HTTP_BAD_REQUEST);
@@ -73,14 +63,12 @@ class JobSeekerAuthService extends abstract_service_1.default {
                         jobSeekerInfoInput[fieldname] = filename;
                     }
                 });
-                const { email, phone_number, username, password } = userInput, restUserData = __rest(userInput, ["email", "phone_number", "username", "password"]);
+                const { email, phone_number, password } = userInput, restUserData = __rest(userInput, ["email", "phone_number", "password"]);
                 const userModel = this.Model.UserModel(trx);
                 const jobSeekerModel = this.Model.jobSeekerModel(trx);
-                // const commonModel = this.Model.commonModel(trx);
                 const existingUser = yield userModel.checkUser({
                     email,
                     phone_number,
-                    username,
                     type: constants_1.USER_TYPE.JOB_SEEKER,
                 });
                 if (existingUser && existingUser.length) {
@@ -92,13 +80,6 @@ class JobSeekerAuthService extends abstract_service_1.default {
                                 message: this.ResMsg.EMAIL_ALREADY_EXISTS,
                             };
                         }
-                        // if (user.username === username) {
-                        //   return {
-                        //     success: false,
-                        //     code: this.StatusCode.HTTP_BAD_REQUEST,
-                        //     message: this.ResMsg.USERNAME_ALREADY_EXISTS,
-                        //   };
-                        // }
                         if (user.phone_number === phone_number) {
                             return {
                                 success: false,
@@ -111,48 +92,15 @@ class JobSeekerAuthService extends abstract_service_1.default {
                 const password_hash = yield lib_1.default.hashValue(password);
                 const registration = yield userModel.createUser(Object.assign(Object.assign({}, restUserData), { email,
                     phone_number,
-                    username,
                     password_hash, type: constants_1.USER_TYPE.JOB_SEEKER }));
                 if (!registration.length) {
                     throw new customError_1.default(this.ResMsg.HTTP_BAD_REQUEST, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
                 }
-                // const [ownAddressId] = await commonModel.createLocation({
-                //   ...ownAddressInput,
-                //   is_home_address: true,
-                // });
                 const jobSeekerId = registration[0].id;
-                // console.log({ jobSeekerId, ownAddressId: ownAddressId.id });
-                yield jobSeekerModel.createJobSeeker(Object.assign(Object.assign({}, jobSeekerInput), { 
-                    // location_id: ownAddressId.id,
-                    user_id: jobSeekerId }));
-                // const createdLocations = await commonModel.createLocation(
-                //   jobLocationsInput
-                // );
-                // const preferenceLocationIds = [
-                //   ...createdLocations.map((loc) => loc.id),
-                //   ownAddressId.id,
-                // ];
-                // const jobPreferences = jobPreferencesInput.map((job_id: number) => ({
-                //   job_seeker_id: jobSeekerId,
-                //   job_id,
-                // }));
-                // const jobLocations = preferenceLocationIds.map((location_id: number) => ({
-                //   job_seeker_id: jobSeekerId,
-                //   location_id,
-                // }));
-                // const jobShifts = jobShiftingInput.map((shift: string) => ({
-                //   job_seeker_id: jobSeekerId,
-                //   shift,
-                // }));
-                // await Promise.all([
-                //   jobSeekerModel.setJobPreferences(jobPreferences),
-                //   jobSeekerModel.setJobLocations(jobLocations),
-                //   jobSeekerModel.setJobShifting(jobShifts),
-                // ]);
+                yield jobSeekerModel.createJobSeeker(Object.assign(Object.assign({}, jobSeekerInput), { user_id: jobSeekerId }));
                 yield jobSeekerModel.createJobSeekerInfo(Object.assign(Object.assign({}, jobSeekerInfoInput), { job_seeker_id: jobSeekerId }));
                 const tokenPayload = {
                     user_id: jobSeekerId,
-                    username,
                     name: userInput.name,
                     gender: userInput.gender,
                     user_email: email,
@@ -163,7 +111,7 @@ class JobSeekerAuthService extends abstract_service_1.default {
                 };
                 yield this.insertNotification(trx, userModelTypes_1.TypeUser.ADMIN, {
                     user_id: jobSeekerId,
-                    content: `New job seeker "${userInput.name}" (${username}) has registered and is awaiting verification.`,
+                    content: `New job seeker "${userInput.name}" has registered and is awaiting verification.`,
                     related_id: jobSeekerId,
                     type: commonModelTypes_1.NotificationTypeEnum.JOB_SEEKER_VERIFICATION,
                 });

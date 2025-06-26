@@ -114,7 +114,7 @@ export default class UserModel extends Schema {
   }
 
   //get last  user Id
-  public async getLastUserID() {
+  public async getLastUserID(): Promise<number> {
     const data = await this.db("user")
       .withSchema(this.DBO_SCHEMA)
       .select("id")

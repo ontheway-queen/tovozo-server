@@ -44,7 +44,7 @@ class AdminProfileService extends abstract_service_1.default {
             }
             const { password_hash, created_by, role_id } = profile, userData = __rest(profile, ["password_hash", "created_by", "role_id"]);
             const [rolePermission = {}] = yield administrationModel.getSingleRole({
-                id: parseInt(role_id),
+                id: role_id,
             });
             return {
                 success: true,

@@ -23,7 +23,7 @@ class AdminProfileService extends AbstractServices {
 
     const { password_hash, created_by, role_id, ...userData } = profile;
     const [rolePermission = {}] = await administrationModel.getSingleRole({
-      id: parseInt(role_id),
+      id: role_id,
     });
 
     return {

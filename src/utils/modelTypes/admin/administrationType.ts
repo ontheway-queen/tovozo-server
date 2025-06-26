@@ -10,17 +10,26 @@ export interface IPermission {
   created_by: number;
 }
 
-export interface IGetAdminListFilterQuery {
-  filter?:string;
-  role?:number;
-  limit?:number;
-  skip?:number;
-  status?:string;
+export interface IRolePermission {
+  permission_id: number;
+  permission_name: string;
+  read: boolean;
+  write: boolean;
+  update: boolean;
+  delete: boolean;
 }
 
-export interface IAdminSearchQuery {
-  email?: string;
-  id?: number;
-  phone_number?: string;
-  username?: string;
+export interface IGetSingleRole {
+  role_id: number;
+  role_name: string;
+  status: string;
+  is_main_role: boolean;
+  permissions: IRolePermission[];
+}
+
+export interface IPermissionList {
+  permission_id: number;
+  permission_name: string;
+  created_by: number;
+  date: string | Date;
 }

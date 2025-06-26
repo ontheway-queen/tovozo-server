@@ -2,9 +2,19 @@ import { db } from "../../app/database";
 import { TDB } from "../../features/public/utils/types/publicCommon.types";
 import Schema from "../../utils/miscellaneous/schema";
 import {
+  IGetAllCityParams,
+  IGetAllCountryParams,
+  IGetAllStatesParams,
+  IGetCity,
+  IGetCountry,
   IGetLastIdData,
   IGetLastIdParams,
+  IGetNationality,
+  IGetNotification,
+  IGetNotificationParams,
+  IGetOTP,
   IGetOTPPayload,
+  IGetState,
   IInsertLastNoPayload,
   IInsertOTPPayload,
   ILocationPayload,
@@ -23,8 +33,8 @@ export default class CommonModel extends Schema {
   }
 
   // get otp
-  public async getOTP(payload: IGetOTPPayload) {
-    const check = await this.db("email_otp")
+  public async getOTP(payload: IGetOTPPayload): Promise<IGetOTP[]> {
+    return await this.db("email_otp")
       .withSchema(this.DBO_SCHEMA)
       .select("id", "hashed_otp as otp", "tried")
       .andWhere("email", payload.email)
@@ -32,8 +42,6 @@ export default class CommonModel extends Schema {
       .andWhere("matched", 0)
       .andWhere("tried", "<", 3)
       .andWhereRaw(`"create_date" + interval '3 minutes' > NOW()`);
-
-    return check;
   }
 
   // insert OTP
@@ -78,12 +86,9 @@ export default class CommonModel extends Schema {
   }
 
   //get all country
-  public async getAllCountry(payload: {
-    id?: number;
-    name?: string;
-    iso2?: string;
-    iso3?: string;
-  }) {
+  public async getAllCountry(
+    payload: IGetAllCountryParams
+  ): Promise<IGetCountry[]> {
     return await this.db("countries")
       .withSchema(this.DBO_SCHEMA)
       .select(
@@ -121,16 +126,7 @@ export default class CommonModel extends Schema {
     skip,
     state_id,
     name,
-  }: {
-    country_id?: number;
-    state_id?: number;
-    city_id?: number;
-    limit?: number;
-    skip?: number;
-    filter?: string;
-    name?: string;
-  }) {
-    // console.log({ city_id });
+  }: IGetAllCityParams): Promise<IGetCity[]> {
     return await this.db("cities")
       .withSchema(this.DBO_SCHEMA)
       .select("id", "name")
@@ -161,15 +157,7 @@ export default class CommonModel extends Schema {
     limit,
     skip,
     name,
-  }: {
-    country_id?: number;
-    state_id?: number;
-    limit?: number;
-    skip?: number;
-    filter?: string;
-    name?: string;
-  }) {
-    // console.log({ city_id });
+  }: IGetAllStatesParams): Promise<IGetState[]> {
     return await this.db("states")
       .withSchema(this.DBO_SCHEMA)
       .select("id", "name")
@@ -220,19 +208,20 @@ export default class CommonModel extends Schema {
       .insert(payload);
   }
 
-  public async getNotification(params: {
-    id?: number;
-    limit?: string;
-    skip?: string;
-    user_id: number;
-    need_total?: boolean;
-  }) {
+  public async getNotification(
+    params: IGetNotificationParams
+  ): Promise<{ data: IGetNotification[]; total?: number | string }> {
     const { limit = 100, skip = 0, id, user_id, need_total = true } = params;
 
     const data = await this.db(`${this.TABLES.notification} as n`)
       .withSchema(this.DBO_SCHEMA)
       .select(
-        "n.*",
+        "n.id",
+        "n.user_id",
+        "n.content",
+        "n.created_at",
+        "n.related_id",
+        "n.type",
         "u.type as user_type",
         this.db.raw(`
         CASE
@@ -306,11 +295,7 @@ export default class CommonModel extends Schema {
       .insert(payload);
   }
 
-  public async getAllNationality(params: {
-    name?: string;
-    limit?: number;
-    skip?: number;
-  }) {
+  public async getAllNationality(params: IGetNationality) {
     const { name, limit = 100, skip = 0 } = params;
     const data = await this.db(this.TABLES.nationality)
       .withSchema(this.DBO_SCHEMA)

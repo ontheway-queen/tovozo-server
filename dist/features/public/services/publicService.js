@@ -188,7 +188,7 @@ class PublicService extends abstract_service_1.default {
                         message: this.ResMsg.OTP_EXPIRED,
                     };
                 }
-                const { id: email_otp_id, otp: hashed_otp, tried } = checkOtp[0];
+                const { id: email_otp_id, hashed_otp, tried } = checkOtp[0];
                 if (tried > 3) {
                     return {
                         success: false,
