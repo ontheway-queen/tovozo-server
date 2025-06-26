@@ -96,6 +96,7 @@ class JobApplicationModel extends schema_1.default {
     }
     cancelMyJobApplication(application_id, job_seeker_id) {
         return __awaiter(this, void 0, void 0, function* () {
+            console.log({ application_id, job_seeker_id });
             const [updated] = yield this.db("job_applications")
                 .withSchema(this.DBO_SCHEMA)
                 .update({ status: constants_1.JOB_APPLICATION_STATUS.CANCELLED })

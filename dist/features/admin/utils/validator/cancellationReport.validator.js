@@ -18,6 +18,7 @@ class CancellationReportValidator {
             }),
         });
         this.reportQuerySchema = joi_1.default.object({
+            user_id: joi_1.default.number().optional(),
             report_type: joi_1.default.string()
                 .valid(...constants_1.REPORT_TYPE_ENUM)
                 .optional(),

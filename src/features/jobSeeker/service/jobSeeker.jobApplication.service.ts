@@ -4,6 +4,7 @@ import { ICreateJobApplicationPayload } from "../../../utils/modelTypes/jobAppli
 import CustomError from "../../../utils/lib/customError";
 import JobPostModel from "../../../models/hotelierModel/jobPostModel";
 import {
+	CANCELLATION_REPORT_STATUS,
 	GENDER_TYPE,
 	JOB_APPLICATION_STATUS,
 	JOB_POST_DETAILS_STATUS,
@@ -14,6 +15,7 @@ import {
 	IJobPostDetailsStatus,
 	IJobSeekerJob,
 } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
+import CancellationReportModel from "../../../models/cancellationReportModel/cancellationReportModel";
 
 export class JobSeekerJobApplication extends AbstractServices {
 	constructor() {
@@ -26,6 +28,8 @@ export class JobSeekerJobApplication extends AbstractServices {
 
 		return await this.db.transaction(async (trx) => {
 			const jobPostModel = new JobPostModel(trx);
+			const cancellationReportModel = new CancellationReportModel(trx);
+
 			const jobPost = await jobPostModel.getSingleJobPost(
 				job_post_details_id
 			);
@@ -34,6 +38,19 @@ export class JobSeekerJobApplication extends AbstractServices {
 				throw new CustomError(
 					this.ResMsg.HTTP_NOT_FOUND,
 					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
+
+			const jobPostReport =
+				await cancellationReportModel.getSingleJobPostReport(
+					null,
+					REPORT_TYPE.CANCEL_JOB_POST,
+					job_post_details_id
+				);
+			if (jobPostReport.status === CANCELLATION_REPORT_STATUS.PENDING) {
+				throw new CustomError(
+					"A cancellation request is already pending for this job post.",
+					this.StatusCode.HTTP_CONFLICT
 				);
 			}
 
@@ -164,7 +181,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 
 				if (!data) {
 					throw new CustomError(
-						this.ResMsg.HTTP_NOT_FOUND,
+						"Application data with the requested id not found",
 						this.StatusCode.HTTP_NOT_FOUND
 					);
 				}

@@ -1,6 +1,12 @@
 import { TDB } from "../../features/public/utils/types/publicCommon.types";
 import Schema from "../../utils/miscellaneous/schema";
-import { IGetReportsQuery } from "../../utils/modelTypes/cancellationReport/cancellationReport.types";
+import {
+	ICancellationReportRes,
+	ICancellationReportResponse,
+	ICancellationReportStatus,
+	ICancellationReportType,
+	IGetReportsQuery,
+} from "../../utils/modelTypes/cancellationReport/cancellationReport.types";
 
 class CancellationReportModel extends Schema {
 	private db: TDB;
@@ -10,8 +16,11 @@ class CancellationReportModel extends Schema {
 	}
 
 	// get job post reports list
-	public async getJobPostReports(query: IGetReportsQuery) {
+	public async getJobPostReports(
+		query: IGetReportsQuery
+	): Promise<ICancellationReportResponse> {
 		const {
+			user_id,
 			report_type,
 			status,
 			limit,
@@ -23,6 +32,7 @@ class CancellationReportModel extends Schema {
 			.withSchema(this.DBO_SCHEMA)
 			.select(
 				"cr.id",
+				"cr.related_id as related_job_post_details",
 				"cr.report_type",
 				"cr.status",
 				"u.name as reporter_name",
@@ -31,12 +41,15 @@ class CancellationReportModel extends Schema {
 				"jp.requirements",
 				"jp.hourly_rate",
 				"jp.prefer_gender",
-				"jp.expire_time"
+				"cr.created_at as reported_at"
 			)
 			.leftJoin("user as u", "u.id", "cr.reporter_id")
 			.leftJoin("job_post_details as jpd", "cr.related_id", "jpd.id")
 			.leftJoin("job_post as jp", "jpd.job_post_id", "jp.id")
 			.where((qb) => {
+				if (user_id) {
+					qb.andWhere("cr.reporter_id", user_id);
+				}
 				if (search_text) {
 					qb.andWhereILike("jp.title", `%${search_text}%`);
 				}
@@ -59,6 +72,9 @@ class CancellationReportModel extends Schema {
 				.leftJoin("job_post_details as jpd", "cr.related_id", "jpd.id")
 				.leftJoin("job_post as jp", "jpd.job_post_id", "jp.id")
 				.where((qb) => {
+					if (user_id) {
+						qb.andWhere("cr.reporter_id", user_id);
+					}
 					if (search_text) {
 						qb.andWhereILike("jp.title", `%${search_text}%`);
 					}
@@ -75,9 +91,47 @@ class CancellationReportModel extends Schema {
 		return { data, total };
 	}
 
+	public async getSingleJobPostReport(
+		id: number | null,
+		report_type: ICancellationReportType,
+		related_id?: number
+	): Promise<ICancellationReportRes> {
+		return await this.db("cancellation_reports as cr")
+			.withSchema(this.DBO_SCHEMA)
+			.select(
+				"cr.id",
+				"cr.related_id as related_job_post_details",
+				"cr.report_type",
+				"cr.status",
+				"u.name as reporter_name",
+				"jp.title",
+				"jp.details",
+				"jp.requirements",
+				"jp.hourly_rate",
+				"jp.prefer_gender",
+				"cr.created_at as reported_at"
+			)
+			.leftJoin("user as u", "u.id", "cr.reporter_id")
+			.leftJoin("job_post_details as jpd", "cr.related_id", "jpd.id")
+			.leftJoin("job_post as jp", "jpd.job_post_id", "jp.id")
+			.where("cr.report_type", report_type)
+			.modify((qb) => {
+				if (id) {
+					qb.andWhere("cr.id", id);
+				}
+				if (related_id) {
+					qb.andWhere("cr.related_id", related_id);
+				}
+			})
+			.first();
+	}
+
 	// JOB APPLICATION REPORTS
-	public async getJobApplicationReports(query: IGetReportsQuery) {
+	public async getJobApplicationReports(
+		query: IGetReportsQuery
+	): Promise<ICancellationReportResponse> {
 		const {
+			user_id,
 			report_type,
 			status,
 			limit,
@@ -111,6 +165,9 @@ class CancellationReportModel extends Schema {
 			)
 			.leftJoin("job_post as jp", "jp.id", "jpd.job_post_id")
 			.where((qb) => {
+				if (user_id) {
+					qb.andWhere("cr.reporter_id", user_id);
+				}
 				if (search_text) {
 					qb.andWhereILike("jp.title", `%${search_text}%`);
 				}
@@ -138,6 +195,9 @@ class CancellationReportModel extends Schema {
 				)
 				.leftJoin("job_post as jp", "jp.id", "jpd.job_post_id")
 				.where((qb) => {
+					if (user_id) {
+						qb.andWhere("cr.reporter_id", user_id);
+					}
 					if (search_text) {
 						qb.andWhereILike("jp.title", `%${search_text}%`);
 					}
@@ -154,41 +214,12 @@ class CancellationReportModel extends Schema {
 		return { data, total };
 	}
 
-	public async requestForCancellationReport(payload: any) {
-		return await this.db("cancellation_reports")
-			.withSchema(this.DBO_SCHEMA)
-			.insert(payload, "id");
-	}
-
-	public async getSingleJobPostReport(
-		id: number,
-		report_type: "CANCEL_JOB_POST"
-	) {
-		return await this.db("cancellation_reports as cr")
-			.withSchema(this.DBO_SCHEMA)
-			.select(
-				"cr.id",
-				"cr.report_type",
-				"cr.status",
-				"u.name as reporter_name",
-				"jp.title",
-				"jp.details",
-				"jp.requirements",
-				"jp.hourly_rate",
-				"jp.prefer_gender",
-				"jp.expire_time"
-			)
-			.leftJoin("user as u", "u.id", "cr.reporter_id")
-			.leftJoin("job_post_details as jpd", "cr.related_id", "jpd.id")
-			.leftJoin("job_post as jp", "jpd.job_post_id", "jp.id")
-			.where({ "cr.id": id, "cr.report_type": report_type })
-			.first();
-	}
-
 	public async getSingleJobApplicationReport(
-		id: number,
-		report_type: "CANCEL_APPLICATION"
-	) {
+		id: number | null,
+		report_type: ICancellationReportType,
+		related_id?: number | null,
+		reporter_id?: number
+	): Promise<ICancellationReportRes> {
 		return await this.db("cancellation_reports as cr")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
@@ -202,11 +233,11 @@ class CancellationReportModel extends Schema {
 				"cr.reporter_id",
 				"cr.related_id",
 				this.db.raw(`json_build_object(
-                    'id', jp.id,
-                    'title', jp.title,
-                    'details', jp.details,
-                    'requirements', jp.requirements
-                ) as job_post`)
+				    'id', jp.id,
+				    'title', jp.title,
+				    'details', jp.details,
+				    'requirements', jp.requirements
+				) as job_post`)
 			)
 			.leftJoin("user as u", "u.id", "cr.reporter_id")
 			.leftJoin("job_applications as ja", "cr.related_id", "ja.id")
@@ -216,8 +247,25 @@ class CancellationReportModel extends Schema {
 				"ja.job_post_details_id"
 			)
 			.leftJoin("job_post as jp", "jp.id", "jpd.job_post_id")
-			.where({ "cr.id": id, "cr.report_type": report_type })
+			.where("cr.report_type", report_type)
+			.modify((qb) => {
+				if (id) {
+					qb.andWhere("cr.id", id);
+				}
+				if (related_id) {
+					qb.andWhere("cr.related_id", related_id);
+				}
+				if (reporter_id) {
+					qb.andWhere("cr.reporter_id", reporter_id);
+				}
+			})
 			.first();
+	}
+
+	public async requestForCancellationReport(payload: any) {
+		return await this.db("cancellation_reports")
+			.withSchema(this.DBO_SCHEMA)
+			.insert(payload, "id");
 	}
 
 	public async getSingleReportWithRelatedId(id: number) {
@@ -227,7 +275,10 @@ class CancellationReportModel extends Schema {
 			.first();
 	}
 
-	public async updateCancellationReportStatus(id: number, payload: any) {
+	public async updateCancellationReportStatus(
+		id: number,
+		payload: { status: ICancellationReportStatus }
+	) {
 		return await this.db("cancellation_reports")
 			.withSchema(this.DBO_SCHEMA)
 			.where("id", id)

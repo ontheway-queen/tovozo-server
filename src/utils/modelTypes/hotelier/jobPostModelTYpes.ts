@@ -115,6 +115,7 @@ export interface JobSeekerDetails {
 
 export interface IHoiteleirJob {
 	id: number;
+	job_post_id: number;
 	job_post_details_status: string;
 	start_time: string;
 	end_time: string;

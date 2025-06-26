@@ -138,7 +138,6 @@ class HotelierJobPostService extends AbstractServices {
 					this.StatusCode.HTTP_BAD_REQUEST
 				);
 			}
-
 			const hasJobPost =
 				body.job_post && Object.keys(body.job_post).length > 0;
 			const hasJobPostDetails =
@@ -146,7 +145,10 @@ class HotelierJobPostService extends AbstractServices {
 				Object.keys(body.job_post_details).length > 0;
 
 			if (hasJobPost) {
-				await model.updateJobPost(Number(jobPost.id), body.job_post);
+				await model.updateJobPost(
+					Number(jobPost.job_post_id),
+					body.job_post
+				);
 			}
 			if (hasJobPostDetails) {
 				const { start_time, end_time } = body.job_post_details;
