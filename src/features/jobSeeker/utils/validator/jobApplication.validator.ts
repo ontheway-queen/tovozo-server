@@ -1,4 +1,8 @@
 import Joi from "joi";
+import {
+	CANCEL_APPLICATION_ENUM,
+	REPORT_TYPE_ENUM,
+} from "../../../../utils/miscellaneous/constants";
 
 export default class JobApplicationValidator {
 	createJobApplicationValidator = Joi.object({
@@ -7,11 +11,14 @@ export default class JobApplicationValidator {
 
 	cancellationReportTypeValidator = Joi.object({
 		cancellation_report_type: Joi.string()
-			.valid("cancel_application", "cancel_job_post")
-			.required(),
+			.valid(...REPORT_TYPE_ENUM)
+			.optional(),
 	});
 
 	cancellationReportReasonValidator = Joi.object({
-		reason: Joi.string().required(),
+		report_type: Joi.string()
+			.valid(...CANCEL_APPLICATION_ENUM)
+			.optional(),
+		reason: Joi.string().optional(),
 	});
 }

@@ -84,7 +84,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 job_seeker_id: user_id,
             });
             if (!data) {
-                throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
+                throw new customError_1.default(`The job application with ID ${id} was not found.`, this.StatusCode.HTTP_NOT_FOUND);
             }
             return {
                 success: true,
@@ -94,19 +94,57 @@ class JobSeekerJobApplication extends abstract_service_1.default {
             };
         });
         this.cancelMyJobApplication = (req) => __awaiter(this, void 0, void 0, function* () {
-            const id = req.params.id;
-            const { user_id } = req.jobSeeker;
-            const model = this.Model.jobApplicationModel();
-            const data = yield model.cancelMyJobApplication(parseInt(id), user_id);
-            if (!data) {
-                throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
-            }
-            return {
-                success: true,
-                message: this.ResMsg.HTTP_SUCCESSFUL,
-                code: this.StatusCode.HTTP_OK,
-                data,
-            };
+            return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const id = req.params.id;
+                const { user_id } = req.jobSeeker;
+                const body = req.body;
+                const applicationModel = this.Model.jobApplicationModel(trx);
+                const jobPostModel = this.Model.jobPostModel(trx);
+                const application = yield applicationModel.getMyJobApplication({
+                    job_application_id: Number(id),
+                    job_seeker_id: Number(user_id),
+                });
+                if (!application) {
+                    throw new customError_1.default("Application not found!", this.StatusCode.HTTP_NOT_FOUND);
+                }
+                if (application.job_application_status !==
+                    constants_1.JOB_APPLICATION_STATUS.PENDING) {
+                    throw new customError_1.default("This application cannot be cancelled because it has already been processed.", this.StatusCode.HTTP_BAD_REQUEST);
+                }
+                const currentTime = new Date();
+                const startTime = new Date(application.start_time);
+                const hoursDiff = (startTime.getTime() - currentTime.getTime()) /
+                    (1000 * 60 * 60);
+                if (hoursDiff > 24) {
+                    const data = yield applicationModel.cancelMyJobApplication(parseInt(id), user_id);
+                    if (!data) {
+                        throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
+                    }
+                    yield jobPostModel.updateJobPostDetailsStatus(data.job_post_id, constants_1.JOB_POST_DETAILS_STATUS.Pending);
+                    return {
+                        success: true,
+                        message: this.ResMsg.HTTP_SUCCESSFUL,
+                        code: this.StatusCode.HTTP_OK,
+                        data: data.id,
+                    };
+                }
+                else {
+                    if (body.report_type !== constants_1.REPORT_TYPE.CANCEL_APPLICATION ||
+                        !body.reason) {
+                        throw new customError_1.default(this.ResMsg.HTTP_UNPROCESSABLE_ENTITY, this.StatusCode.HTTP_UNPROCESSABLE_ENTITY);
+                    }
+                    body.reporter_id = user_id;
+                    body.related_id = id;
+                    const cancellationReportModel = this.Model.cancellationReportModel(trx);
+                    const data = yield cancellationReportModel.requestForCancellationReport(body);
+                    return {
+                        success: true,
+                        message: this.ResMsg.HTTP_SUCCESSFUL,
+                        code: this.StatusCode.HTTP_OK,
+                        data: data[0].id,
+                    };
+                }
+            }));
         });
     }
 }

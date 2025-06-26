@@ -2,9 +2,16 @@ import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
 import CustomError from "../../../utils/lib/customError";
 import {
+	IGetJobPostListParams,
+	IHoiteleirJob,
 	IJobPostDetailsPayload,
+	IJobPostDetailsStatus,
 	IJobPostPayload,
 } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
+import {
+	JOB_POST_DETAILS_STATUS,
+	REPORT_TYPE,
+} from "../../../utils/miscellaneous/constants";
 
 class HotelierJobPostService extends AbstractServices {
 	public async createJobPost(req: Request) {
@@ -80,7 +87,7 @@ class HotelierJobPostService extends AbstractServices {
 			limit,
 			skip,
 			status,
-		});
+		} as IGetJobPostListParams);
 		return {
 			success: true,
 			message: this.ResMsg.HTTP_OK,
@@ -91,7 +98,6 @@ class HotelierJobPostService extends AbstractServices {
 
 	public async getSingleJobPostWithJobSeekerDetails(req: Request) {
 		const { id } = req.params;
-		const { user_id } = req.hotelier;
 		const model = this.Model.jobPostModel();
 		const data = await model.getSingleJobPostWithJobSeekerDetails(
 			Number(id)
@@ -113,51 +119,56 @@ class HotelierJobPostService extends AbstractServices {
 	public async updateJobPost(req: Request) {
 		const { id } = req.params;
 		const body = req.body;
-
 		return await this.db.transaction(async (trx) => {
 			const model = this.Model.jobPostModel(trx);
-			const jobPost = await model.getSingleJobPost(Number(id));
+			const jobPost: IHoiteleirJob =
+				await model.getSingleJobPostWithJobSeekerDetails(Number(id));
 			if (!jobPost) {
 				throw new CustomError(
 					"Job post not found!",
 					this.StatusCode.HTTP_NOT_FOUND
 				);
 			}
-
-			// const currentTime = new Date();
-			// const startTime = new Date(jobPost.start_time);
-			// const hoursDiff =
-			// 	(startTime.getTime() - currentTime.getTime()) /
-			// 	(1000 * 60 * 60);
-
-			// if (hoursDiff < 24) {
-			// 	throw new CustomError(
-			// 		"Job post must be updated at least 24 hours in advance.",
-			// 		this.StatusCode.HTTP_BAD_REQUEST
-			// 	);
-			// }
-
-			const { start_time, end_time } = body?.job_post_details[0] || {};
 			if (
-				start_time &&
-				end_time &&
-				new Date(start_time) >= new Date(end_time)
+				jobPost.job_post_details_status !==
+				JOB_POST_DETAILS_STATUS.Pending
 			) {
 				throw new CustomError(
-					"Job post start time cannot be greater than or equal to end time.",
+					"The job post cannot be updated because its status is not 'Pending'.",
 					this.StatusCode.HTTP_BAD_REQUEST
 				);
 			}
 
-			const updatedJobPost = await model.updateJobPost(
-				Number(jobPost.id),
-				body.job_post
-			);
+			const hasJobPost =
+				body.job_post && Object.keys(body.job_post).length > 0;
+			const hasJobPostDetails =
+				body.job_post_details &&
+				Object.keys(body.job_post_details).length > 0;
 
-			if (body.job_post_details && updatedJobPost) {
+			if (hasJobPost) {
+				await model.updateJobPost(Number(jobPost.id), body.job_post);
+			}
+			if (hasJobPostDetails) {
+				const { start_time, end_time } = body.job_post_details;
+				if (
+					start_time &&
+					end_time &&
+					new Date(start_time) >= new Date(end_time)
+				) {
+					throw new CustomError(
+						"Job post start time cannot be greater than or equal to end time.",
+						this.StatusCode.HTTP_BAD_REQUEST
+					);
+				}
 				await model.updateJobPostDetails(
 					Number(id),
 					body.job_post_details
+				);
+			}
+			if (!hasJobPost && !hasJobPostDetails) {
+				throw new CustomError(
+					"No values provided to update.",
+					this.StatusCode.HTTP_BAD_REQUEST
 				);
 			}
 
@@ -165,7 +176,6 @@ class HotelierJobPostService extends AbstractServices {
 				success: true,
 				message: this.ResMsg.HTTP_SUCCESSFUL,
 				code: this.StatusCode.HTTP_OK,
-				data: updatedJobPost,
 			};
 		});
 	}
@@ -173,7 +183,12 @@ class HotelierJobPostService extends AbstractServices {
 	public async cancelJobPost(req: Request) {
 		return await this.db.transaction(async (trx) => {
 			const { id } = req.params;
+			const body = req.body;
+			const user = req.hotelier;
 			const model = this.Model.jobPostModel(trx);
+			const cancellationReportModel =
+				this.Model.cancellationReportModel(trx);
+
 			const jobPost = await model.getSingleJobPost(Number(id));
 			if (!jobPost) {
 				throw new CustomError(
@@ -181,31 +196,73 @@ class HotelierJobPostService extends AbstractServices {
 					this.StatusCode.HTTP_NOT_FOUND
 				);
 			}
+			if (jobPost.status === JOB_POST_DETAILS_STATUS.Cancelled) {
+				throw new CustomError(
+					"Job post already cancelled",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
+			const report =
+				await cancellationReportModel.getSingleReportWithRelatedId(
+					jobPost.id
+				);
+			if (report) {
+				throw new CustomError(
+					this.ResMsg.HTTP_CONFLICT,
+					this.StatusCode.HTTP_CONFLICT
+				);
+			}
+			const currentTime = new Date();
+			const startTime = new Date(jobPost.start_time);
+			const hoursDiff =
+				(startTime.getTime() - currentTime.getTime()) /
+				(1000 * 60 * 60);
 
-			// const currentTime = new Date();
-			// const startTime = new Date(jobPost.start_time);
-			// const hoursDiff =
-			// 	(startTime.getTime() - currentTime.getTime()) /
-			// 	(1000 * 60 * 60);
+			if (hoursDiff > 24) {
+				await model.cancelJobPost(Number(jobPost.job_post_id));
+				await model.updateJobPostDetailsStatus(
+					Number(jobPost.job_post_id),
+					JOB_POST_DETAILS_STATUS.Cancelled as unknown as IJobPostDetailsStatus
+				);
 
-			// if (hoursDiff < 24) {
-			// 	throw new CustomError(
-			// 		"Job post must be cancelled at least 24 hours in advance.",
-			// 		this.StatusCode.HTTP_BAD_REQUEST
-			// 	);
-			// }
+				const jobApplicationModel = this.Model.jobApplicationModel(trx);
+				await jobApplicationModel.cancelApplication(
+					jobPost.job_post_id
+				);
 
-			await model.cancelJobPost(Number(jobPost.job_post_id));
-			await model.cancelJobPostDetails(Number(jobPost.job_post_id));
+				return {
+					success: true,
+					message: "Your job post has been successfully cancelled.",
+					code: this.StatusCode.HTTP_OK,
+				};
+			} else {
+				if (
+					body.report_type !== REPORT_TYPE.CANCEL_JOB_POST ||
+					!body.reason
+				) {
+					throw new CustomError(
+						"Invalid request: 'report_type' and 'reason' is required.",
+						this.StatusCode.HTTP_UNPROCESSABLE_ENTITY
+					);
+				}
 
-			const jobApplicationModel = this.Model.jobApplicationModel(trx);
-			await jobApplicationModel.cancelApplication(jobPost.job_post_id);
+				body.reporter_id = user.user_id;
+				body.related_id = id;
 
-			return {
-				success: true,
-				message: this.ResMsg.HTTP_SUCCESSFUL,
-				code: this.StatusCode.HTTP_OK,
-			};
+				const cancellationReportModel =
+					this.Model.cancellationReportModel(trx);
+				const data =
+					await cancellationReportModel.requestForCancellationReport(
+						body
+					);
+
+				return {
+					success: true,
+					message: this.ResMsg.HTTP_SUCCESSFUL,
+					code: this.StatusCode.HTTP_OK,
+					data: data[0].id,
+				};
+			}
 		});
 	}
 }

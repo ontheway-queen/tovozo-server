@@ -5,8 +5,15 @@ import CustomError from "../../../utils/lib/customError";
 import JobPostModel from "../../../models/hotelierModel/jobPostModel";
 import {
 	GENDER_TYPE,
+	JOB_APPLICATION_STATUS,
 	JOB_POST_DETAILS_STATUS,
+	REPORT_TYPE,
 } from "../../../utils/miscellaneous/constants";
+import app from "../../../server";
+import {
+	IJobPostDetailsStatus,
+	IJobSeekerJob,
+} from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
 
 export class JobSeekerJobApplication extends AbstractServices {
 	constructor() {
@@ -102,7 +109,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 		});
 		if (!data) {
 			throw new CustomError(
-				this.ResMsg.HTTP_NOT_FOUND,
+				`The job application with ID ${id} was not found.`,
 				this.StatusCode.HTTP_NOT_FOUND
 			);
 		}
@@ -115,22 +122,91 @@ export class JobSeekerJobApplication extends AbstractServices {
 	};
 
 	public cancelMyJobApplication = async (req: Request) => {
-		const id = req.params.id;
-		const { user_id } = req.jobSeeker;
-		const model = this.Model.jobApplicationModel();
-		const data = await model.cancelMyJobApplication(parseInt(id), user_id);
-		if (!data) {
-			throw new CustomError(
-				this.ResMsg.HTTP_NOT_FOUND,
-				this.StatusCode.HTTP_NOT_FOUND
-			);
-		}
+		return await this.db.transaction(async (trx) => {
+			const id = req.params.id;
+			const { user_id } = req.jobSeeker;
+			const body = req.body;
 
-		return {
-			success: true,
-			message: this.ResMsg.HTTP_SUCCESSFUL,
-			code: this.StatusCode.HTTP_OK,
-			data,
-		};
+			const applicationModel = this.Model.jobApplicationModel(trx);
+			const jobPostModel = this.Model.jobPostModel(trx);
+			const application = await applicationModel.getMyJobApplication({
+				job_application_id: Number(id),
+				job_seeker_id: Number(user_id),
+			});
+
+			if (!application) {
+				throw new CustomError(
+					"Application not found!",
+					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
+			if (
+				application.job_application_status !==
+				JOB_APPLICATION_STATUS.PENDING
+			) {
+				throw new CustomError(
+					"This application cannot be cancelled because it has already been processed.",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
+
+			const currentTime = new Date();
+			const startTime = new Date(application.start_time);
+			const hoursDiff =
+				(startTime.getTime() - currentTime.getTime()) /
+				(1000 * 60 * 60);
+
+			if (hoursDiff > 24) {
+				const data = await applicationModel.cancelMyJobApplication(
+					parseInt(id),
+					user_id
+				);
+
+				if (!data) {
+					throw new CustomError(
+						this.ResMsg.HTTP_NOT_FOUND,
+						this.StatusCode.HTTP_NOT_FOUND
+					);
+				}
+
+				await jobPostModel.updateJobPostDetailsStatus(
+					data.job_post_id,
+					JOB_POST_DETAILS_STATUS.Pending as unknown as IJobPostDetailsStatus
+				);
+
+				return {
+					success: true,
+					message: this.ResMsg.HTTP_SUCCESSFUL,
+					code: this.StatusCode.HTTP_OK,
+					data: data.id,
+				};
+			} else {
+				if (
+					body.report_type !== REPORT_TYPE.CANCEL_APPLICATION ||
+					!body.reason
+				) {
+					throw new CustomError(
+						this.ResMsg.HTTP_UNPROCESSABLE_ENTITY,
+						this.StatusCode.HTTP_UNPROCESSABLE_ENTITY
+					);
+				}
+				body.reporter_id = user_id;
+				body.related_id = id;
+
+				const cancellationReportModel =
+					this.Model.cancellationReportModel(trx);
+				const data =
+					await cancellationReportModel.requestForCancellationReport(
+						body
+					);
+
+				return {
+					success: true,
+					message: this.ResMsg.HTTP_SUCCESSFUL,
+					code: this.StatusCode.HTTP_OK,
+					data: data[0].id,
+				};
+			}
+		});
 	};
 }

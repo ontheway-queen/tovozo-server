@@ -1,5 +1,6 @@
 import Joi from "joi";
 import {
+	CANCEL_JOB_POST_ENUM,
 	GENDERS,
 	JOB_POST_DETAILS_STATUS,
 	JOB_POST_DETAILS_STATUS_ENUM,
@@ -42,6 +43,12 @@ export class HotelierJobPostValidator {
 		id: Joi.number().integer().required(),
 	}).required();
 
+	public cancelJobPostSchema = Joi.object({
+		related_id: Joi.number().integer(),
+		report_type: Joi.string().valid(...CANCEL_JOB_POST_ENUM),
+		reason: Joi.string(),
+	});
+
 	public updateJobPostSchema = Joi.object({
 		job_post: Joi.object({
 			title: Joi.string().optional(),
@@ -53,14 +60,10 @@ export class HotelierJobPostValidator {
 				.optional(),
 			requirements: Joi.string().optional(),
 		}).required(),
-		job_post_details: Joi.array()
-			.items(
-				Joi.object({
-					start_time: Joi.string().isoDate().optional(),
-					end_time: Joi.string().isoDate().optional(),
-				})
-			)
-			.min(1)
-			.optional(),
+		job_post_details: Joi.object({
+			job_id: Joi.number().optional(),
+			start_time: Joi.string().isoDate().optional(),
+			end_time: Joi.string().isoDate().optional(),
+		}).optional(),
 	});
 }

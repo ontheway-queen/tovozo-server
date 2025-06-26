@@ -1,6 +1,9 @@
 import { TDB } from "../../features/public/utils/types/publicCommon.types";
 import CustomError from "../../utils/lib/customError";
-import { JOB_POST_DETAILS_STATUS } from "../../utils/miscellaneous/constants";
+import {
+	JOB_APPLICATION_STATUS,
+	JOB_POST_DETAILS_STATUS,
+} from "../../utils/miscellaneous/constants";
 import Schema from "../../utils/miscellaneous/schema";
 import {
 	ICreateJobApplicationPayload,
@@ -38,7 +41,6 @@ export default class JobApplicationModel extends Schema {
 			skip,
 			need_total = true,
 		} = params;
-
 		const data = await this.db("job_applications as ja")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
@@ -72,7 +74,7 @@ export default class JobApplicationModel extends Schema {
 			.joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
 				`${this.HOTELIER}.${this.TABLES.organization}`,
 			])
-			.join("jobs as j", "j.id", "jpd.job_id")
+			// .join("jobs as j", "j.id", "jpd.job_id")
 			.leftJoin(
 				"vw_location as vwl",
 				"vwl.location_id",
@@ -103,7 +105,7 @@ export default class JobApplicationModel extends Schema {
 
 			total = totalQuery?.total ? Number(totalQuery.total) : 0;
 		}
-
+		console.log({ data });
 		return { data, total };
 	}
 
@@ -147,7 +149,7 @@ export default class JobApplicationModel extends Schema {
 			.joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
 				`${this.HOTELIER}.${this.TABLES.organization}`,
 			])
-			.join("jobs as j", "j.id", "jpd.job_id")
+			// .join("jobs as j", "j.id", "jpd.job_id")
 			.leftJoin(
 				"vw_location as vwl",
 				"vwl.location_id",
@@ -166,13 +168,16 @@ export default class JobApplicationModel extends Schema {
 		application_id: number,
 		job_seeker_id: number
 	) {
-		return this.db("job_applications")
+		const [updated] = await this.db("job_applications")
 			.withSchema(this.DBO_SCHEMA)
-			.update({ status: JOB_POST_DETAILS_STATUS.Cancelled })
+			.update({ status: JOB_APPLICATION_STATUS.CANCELLED })
 			.where({
 				id: application_id,
 				job_seeker_id: job_seeker_id,
-			});
+			})
+			.returning("*");
+
+		return updated ?? null;
 	}
 
 	// cancel all job application if hotelier cancel the job.

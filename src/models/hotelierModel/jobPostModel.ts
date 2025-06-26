@@ -1,10 +1,15 @@
 import { TDB } from "../../features/public/utils/types/publicCommon.types";
+import { JOB_POST_DETAILS_STATUS } from "../../utils/miscellaneous/constants";
 import Schema from "../../utils/miscellaneous/schema";
 import {
+	IGetJobPostListParams,
 	IJobPost,
 	IJobPostDetails,
 	IJobPostDetailsPayload,
+	IJobPostDetailsStatus,
 	IJobPostPayload,
+	IJobSeekerJob,
+	IJobSeekerJobList,
 } from "../../utils/modelTypes/hotelier/jobPostModelTYpes";
 
 class JobPostModel extends Schema {
@@ -29,7 +34,9 @@ class JobPostModel extends Schema {
 	}
 
 	// for jobseeker
-	public async getJobPostList(params: any) {
+	public async getJobPostList(
+		params: IGetJobPostListParams
+	): Promise<IJobSeekerJobList> {
 		const {
 			user_id,
 			title,
@@ -47,11 +54,16 @@ class JobPostModel extends Schema {
 			.withSchema(this.DBO_SCHEMA)
 			.select(
 				"jpd.id",
-				"jpd.status",
+				"jp.id as job_post_id",
 				"jpd.start_time",
 				"jpd.end_time",
+				"jp.prefer_gender as gender",
+				"jpd.status",
 				"jp.organization_id",
-				"jp.title",
+				"jp.title as job_title",
+				"jp.details as job_details",
+				"jp.requirements as job_requirements",
+				"jp.prefer_gender",
 				"j.title as job_category",
 				"jp.hourly_rate",
 				"jp.created_time",
@@ -141,7 +153,7 @@ class JobPostModel extends Schema {
 	}
 
 	// for jobseeker
-	public async getSingleJobPost(id: number) {
+	public async getSingleJobPost(id: number): Promise<IJobSeekerJob> {
 		return await this.db("job_post as jp")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
@@ -184,7 +196,7 @@ class JobPostModel extends Schema {
 	}
 
 	// hotelier job post with job seeker details
-	public async getHotelierJobPostList(params: any) {
+	public async getHotelierJobPostList(params: IGetJobPostListParams) {
 		const {
 			user_id,
 			title,
@@ -206,9 +218,15 @@ class JobPostModel extends Schema {
 				"jpd.end_time",
 				"jp.organization_id",
 				"jp.title",
-				"j.title as job_category",
+				this.db.raw(`json_build_object(
+                    'id', j.id,
+                    'title', j.title,
+                    'details', j.details,
+                    'status', j.status
+                ) as job_category`),
 				"jp.hourly_rate",
 				"jp.created_time",
+				"jp.prefer_gender",
 				"org.name as organization_name",
 				"vwl.location_id",
 				"vwl.location_name",
@@ -216,6 +234,9 @@ class JobPostModel extends Schema {
 				"vwl.city_name",
 				"vwl.state_name",
 				"vwl.country_name",
+				this.db.raw(
+					`COUNT(*) OVER (PARTITION BY jpd.job_post_id) AS vacancy`
+				),
 				this.db.raw(`json_build_object(
                     'application_status', ja.status,
                     'job_seeker_id', ja.job_seeker_id,
@@ -272,7 +293,7 @@ class JobPostModel extends Schema {
 					qb.andWhere("jpd.status", status);
 				}
 			})
-			.orderBy(orderBy || "jp.id", orderTo || "desc")
+			.orderBy(orderBy || "jpd.id", orderTo || "desc")
 			.limit(limit || 100)
 			.offset(skip || 0);
 
@@ -335,7 +356,7 @@ class JobPostModel extends Schema {
 
 	// get single job post with job seeker details for hotelier
 	public async getSingleJobPostWithJobSeekerDetails(id: number) {
-		const data = await this.db("job_post as jp")
+		return await this.db("job_post as jp")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
 				"jpd.id",
@@ -344,7 +365,12 @@ class JobPostModel extends Schema {
 				"jpd.end_time",
 				"jp.organization_id",
 				"jp.title",
-				"j.title as job_category",
+				this.db.raw(`json_build_object(
+                    'id', j.id,
+                    'title', j.title,
+                    'details', j.details,
+                    'status', j.status
+                ) as job_category`),
 				"jp.hourly_rate",
 				"jp.title as job_title",
 				"jp.details as job_details",
@@ -358,6 +384,11 @@ class JobPostModel extends Schema {
 				"vwl.city_name",
 				"vwl.state_name",
 				"vwl.country_name",
+				this.db.raw(`(
+                    SELECT COUNT(*) 
+                    FROM dbo.job_post_details 
+                    WHERE job_post_id = jpd.job_post_id
+                ) AS vacancy`),
 				this.db.raw(`json_build_object(
                     'application_status', ja.status,
                     'job_seeker_id', ja.job_seeker_id,
@@ -399,8 +430,6 @@ class JobPostModel extends Schema {
 			)
 			.where("jpd.id", id)
 			.first();
-
-		return data;
 	}
 
 	// update job post
@@ -412,27 +441,29 @@ class JobPostModel extends Schema {
 	}
 
 	// update job post details
-	public async updateJobPostDetails(id: number, payload: IJobPostDetails[]) {
+	public async updateJobPostDetails(id: number, payload: IJobPostDetails) {
 		return await this.db("job_post_details")
 			.withSchema(this.DBO_SCHEMA)
-			.update(payload[0])
+			.update(payload)
 			.where("id", id);
 	}
 
 	// cancel job post
-	// need to implement logic for canceling job post less than 24 hours before start time
 	public async cancelJobPost(id: number) {
 		return await this.db("job_post")
 			.withSchema(this.DBO_SCHEMA)
-			.update({ status: "Cancelled" })
+			.update({ status: JOB_POST_DETAILS_STATUS.Cancelled })
 			.where("id", id);
 	}
 
-	public async cancelJobPostDetails(id: number) {
+	public async updateJobPostDetailsStatus(
+		id: number,
+		status: IJobPostDetailsStatus
+	) {
 		return await this.db("job_post_details")
 			.withSchema(this.DBO_SCHEMA)
 			.where("job_post_id", id)
-			.update({ status: "Cancelled" });
+			.update({ status });
 	}
 }
 

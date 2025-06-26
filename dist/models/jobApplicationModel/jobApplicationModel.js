@@ -45,7 +45,7 @@ class JobApplicationModel extends schema_1.default {
                 .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
                 `${this.HOTELIER}.${this.TABLES.organization}`,
             ])
-                .join("jobs as j", "j.id", "jpd.job_id")
+                // .join("jobs as j", "j.id", "jpd.job_id")
                 .leftJoin("vw_location as vwl", "vwl.location_id", "org.location_id")
                 .where("ja.job_seeker_id", job_seeker_id)
                 .modify((qb) => {
@@ -70,6 +70,7 @@ class JobApplicationModel extends schema_1.default {
                     .first();
                 total = (totalQuery === null || totalQuery === void 0 ? void 0 : totalQuery.total) ? Number(totalQuery.total) : 0;
             }
+            console.log({ data });
             return { data, total };
         });
     }
@@ -83,7 +84,7 @@ class JobApplicationModel extends schema_1.default {
                 .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
                 `${this.HOTELIER}.${this.TABLES.organization}`,
             ])
-                .join("jobs as j", "j.id", "jpd.job_id")
+                // .join("jobs as j", "j.id", "jpd.job_id")
                 .leftJoin("vw_location as vwl", "vwl.location_id", "org.location_id")
                 .where({
                 "ja.id": job_application_id,
@@ -95,13 +96,15 @@ class JobApplicationModel extends schema_1.default {
     }
     cancelMyJobApplication(application_id, job_seeker_id) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.db("job_applications")
+            const [updated] = yield this.db("job_applications")
                 .withSchema(this.DBO_SCHEMA)
-                .update({ status: constants_1.JOB_POST_DETAILS_STATUS.Cancelled })
+                .update({ status: constants_1.JOB_APPLICATION_STATUS.CANCELLED })
                 .where({
                 id: application_id,
                 job_seeker_id: job_seeker_id,
-            });
+            })
+                .returning("*");
+            return updated !== null && updated !== void 0 ? updated : null;
         });
     }
     // cancel all job application if hotelier cancel the job.
