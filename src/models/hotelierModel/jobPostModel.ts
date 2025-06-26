@@ -360,6 +360,7 @@ class JobPostModel extends Schema {
 			.withSchema(this.DBO_SCHEMA)
 			.select(
 				"jpd.id",
+				"jpd.job_post_id",
 				"jpd.status as job_post_details_status",
 				"jpd.start_time",
 				"jpd.end_time",

@@ -103,7 +103,7 @@ class HotelierJobPostService extends abstract_service_1.default {
                 const hasJobPostDetails = body.job_post_details &&
                     Object.keys(body.job_post_details).length > 0;
                 if (hasJobPost) {
-                    yield model.updateJobPost(Number(jobPost.id), body.job_post);
+                    yield model.updateJobPost(Number(jobPost.job_post_id), body.job_post);
                 }
                 if (hasJobPostDetails) {
                     const { start_time, end_time } = body.job_post_details;

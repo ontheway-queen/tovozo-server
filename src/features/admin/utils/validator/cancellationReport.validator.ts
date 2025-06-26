@@ -17,19 +17,19 @@ class CancellationReportValidator {
     }),
   });
 
-  public reportQuerySchema = Joi.object({
-    report_type: Joi.string()
-      .valid(...REPORT_TYPE_ENUM)
-      .optional(),
+	public reportQuerySchema = Joi.object({
+		user_id: Joi.number().optional(),
+		report_type: Joi.string()
+			.valid(...REPORT_TYPE_ENUM)
+			.optional(),
+		status: Joi.string()
+			.valid(...CANCELLATION_REPORT_STATUS_ENUM)
+			.optional(),
+		limit: Joi.number().integer().min(1).max(1000).optional(),
+		skip: Joi.number().integer().min(0).optional(),
+		search_text: Joi.string().allow("").optional(),
+	});
 
-    status: Joi.string()
-      .valid(...CANCELLATION_REPORT_STATUS_ENUM)
-      .optional(),
-
-    limit: Joi.number().integer().min(1).max(1000).optional(),
-    skip: Joi.number().integer().min(0).optional(),
-    search_text: Joi.string().allow("").optional(),
-  });
 
   public reportTypeQuerySchema = Joi.object({
     report_type: Joi.string()

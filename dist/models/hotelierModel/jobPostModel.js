@@ -229,7 +229,7 @@ class JobPostModel extends schema_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("job_post as jp")
                 .withSchema(this.DBO_SCHEMA)
-                .select("jpd.id", "jpd.status as job_post_details_status", "jpd.start_time", "jpd.end_time", "jp.organization_id", "jp.title", this.db.raw(`json_build_object(
+                .select("jpd.id", "jpd.job_post_id", "jpd.status as job_post_details_status", "jpd.start_time", "jpd.end_time", "jp.organization_id", "jp.title", this.db.raw(`json_build_object(
                     'id', j.id,
                     'title', j.title,
                     'details', j.details,

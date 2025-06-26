@@ -1,3 +1,8 @@
+import {
+	CANCELLATION_REPORT_STATUS,
+	REPORT_TYPE,
+} from "../../miscellaneous/constants";
+
 export type ICancellationReport = {
 	id: number;
 	reporter_id: number;
@@ -14,10 +19,34 @@ export type ICancellationReport = {
 };
 
 export interface IGetReportsQuery {
-	report_type: "CANCEL_APPLICATION" | "CANCEL_JOB_POST";
-	status: "PENDING" | "APPROVED" | "REJECTED";
+	user_id?: number;
+	report_type: ICancellationReportType;
+	status: ICancellationReportStatus;
 	limit: number;
 	skip: number;
 	need_total: boolean;
 	search_text: string;
+}
+
+export type ICancellationReportType = keyof typeof REPORT_TYPE;
+
+export type ICancellationReportStatus = keyof typeof CANCELLATION_REPORT_STATUS;
+
+export interface ICancellationReportRes {
+	id: number;
+	related_job_post_details: number;
+	report_type: ICancellationReportType;
+	status: ICancellationReportStatus;
+	reporter_name: string;
+	title: string;
+	details: string;
+	requirements: string;
+	hourly_rate: string;
+	prefer_gender: string;
+	reported_at: string;
+}
+
+export interface ICancellationReportResponse {
+	data: ICancellationReportRes[];
+	total: number | undefined;
 }
