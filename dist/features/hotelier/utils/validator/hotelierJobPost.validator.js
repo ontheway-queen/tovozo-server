@@ -55,13 +55,11 @@ class HotelierJobPostValidator {
                     .optional(),
                 requirements: joi_1.default.string().optional(),
             }).required(),
-            job_post_details: joi_1.default.array()
-                .items(joi_1.default.object({
+            job_post_details: joi_1.default.object({
+                job_id: joi_1.default.number().optional(),
                 start_time: joi_1.default.string().isoDate().optional(),
                 end_time: joi_1.default.string().isoDate().optional(),
-            }))
-                .min(1)
-                .optional(),
+            }).optional(),
         });
     }
 }

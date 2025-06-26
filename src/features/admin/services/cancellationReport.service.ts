@@ -3,6 +3,7 @@ import AbstractServices from "../../../abstract/abstract.service";
 import {
 	CANCELLATION_REPORT_STATUS,
 	CANCELLATION_REPORT_STATUS_ENUM,
+	JOB_POST_DETAILS_STATUS,
 	REPORT_TYPE,
 } from "../../../utils/miscellaneous/constants";
 import CustomError from "../../../utils/lib/customError";
@@ -10,6 +11,7 @@ import {
 	ICancellationReport,
 	IGetReportsQuery,
 } from "../../../utils/modelTypes/cancellationReport/cancellationReport.types";
+import { IJobPostDetailsStatus } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
 
 class CancellationReportService extends AbstractServices {
 	// get reports
@@ -129,8 +131,9 @@ class CancellationReportService extends AbstractServices {
 					await jobPostModel.cancelJobPost(
 						Number(jobPost.job_post_id)
 					);
-					await jobPostModel.cancelJobPostDetails(
-						Number(jobPost.job_post_id)
+					await jobPostModel.updateJobPostDetailsStatus(
+						Number(jobPost.job_post_id),
+						JOB_POST_DETAILS_STATUS.Cancelled as unknown as IJobPostDetailsStatus
 					);
 					await jobApplicationModel.cancelApplication(
 						Number(jobPost.job_post_id)
@@ -141,8 +144,10 @@ class CancellationReportService extends AbstractServices {
 							report.related_id,
 							report.reporter_id
 						);
-					// If cancelMyJobApplication returns a number (job_post_details_id), use it directly
-					await jobPostModel.markAsPendingJobPostDetails(application);
+					await jobPostModel.updateJobPostDetailsStatus(
+						application,
+						JOB_POST_DETAILS_STATUS.Applied as unknown as IJobPostDetailsStatus
+					);
 				}
 			} else {
 				await reportModel.updateCancellationReportStatus(

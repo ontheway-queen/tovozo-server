@@ -84,7 +84,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 job_seeker_id: user_id,
             });
             if (!data) {
-                throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
+                throw new customError_1.default(`The job application with ID ${id} was not found.`, this.StatusCode.HTTP_NOT_FOUND);
             }
             return {
                 success: true,
@@ -99,6 +99,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 const { user_id } = req.jobSeeker;
                 const body = req.body;
                 const applicationModel = this.Model.jobApplicationModel(trx);
+                const jobPostModel = this.Model.jobPostModel(trx);
                 const application = yield applicationModel.getMyJobApplication({
                     job_application_id: Number(id),
                     job_seeker_id: Number(user_id),
@@ -119,11 +120,12 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     if (!data) {
                         throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
                     }
+                    yield jobPostModel.updateJobPostDetailsStatus(data.job_post_id, constants_1.JOB_POST_DETAILS_STATUS.Pending);
                     return {
                         success: true,
                         message: this.ResMsg.HTTP_SUCCESSFUL,
                         code: this.StatusCode.HTTP_OK,
-                        data,
+                        data: data.id,
                     };
                 }
                 else {

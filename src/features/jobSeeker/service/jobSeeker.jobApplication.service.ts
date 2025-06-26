@@ -10,6 +10,10 @@ import {
 	REPORT_TYPE,
 } from "../../../utils/miscellaneous/constants";
 import app from "../../../server";
+import {
+	IJobPostDetailsStatus,
+	IJobSeekerJob,
+} from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
 
 export class JobSeekerJobApplication extends AbstractServices {
 	constructor() {
@@ -105,7 +109,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 		});
 		if (!data) {
 			throw new CustomError(
-				this.ResMsg.HTTP_NOT_FOUND,
+				`The job application with ID ${id} was not found.`,
 				this.StatusCode.HTTP_NOT_FOUND
 			);
 		}
@@ -124,6 +128,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 			const body = req.body;
 
 			const applicationModel = this.Model.jobApplicationModel(trx);
+			const jobPostModel = this.Model.jobPostModel(trx);
 			const application = await applicationModel.getMyJobApplication({
 				job_application_id: Number(id),
 				job_seeker_id: Number(user_id),
@@ -156,6 +161,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 					parseInt(id),
 					user_id
 				);
+
 				if (!data) {
 					throw new CustomError(
 						this.ResMsg.HTTP_NOT_FOUND,
@@ -163,11 +169,16 @@ export class JobSeekerJobApplication extends AbstractServices {
 					);
 				}
 
+				await jobPostModel.updateJobPostDetailsStatus(
+					data.job_post_id,
+					JOB_POST_DETAILS_STATUS.Pending as unknown as IJobPostDetailsStatus
+				);
+
 				return {
 					success: true,
 					message: this.ResMsg.HTTP_SUCCESSFUL,
 					code: this.StatusCode.HTTP_OK,
-					data,
+					data: data.id,
 				};
 			} else {
 				if (

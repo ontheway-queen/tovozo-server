@@ -1,5 +1,6 @@
 import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
+import { IGetJobPostListParams } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
 
 export class JobSeekerServices extends AbstractServices {
 	constructor() {
@@ -13,7 +14,7 @@ export class JobSeekerServices extends AbstractServices {
 			limit: req.query.limit,
 			skip: req.query.skip,
 			status: "Pending",
-		});
+		} as IGetJobPostListParams);
 		return {
 			success: true,
 			message: this.ResMsg.HTTP_SUCCESSFUL,
