@@ -36,12 +36,12 @@ class AdminAuthController extends abstract_controller_1.default {
         }));
         // forget pass
         this.forgetPassword = this.asyncWrapper.wrap({ bodySchema: this.commonValidator.commonForgetPassInputValidation }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _b = yield this.services.forgetPassword(req), { code } = _b, data = __rest(_b, ["code"]);
+            const _a = yield this.services.forgetPassword(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         // get login data
         this.loginData = this.asyncWrapper.wrap({ bodySchema: this.commonValidator.commonTwoFAInputValidation }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _c = yield this.services.LoginData(req), { code } = _c, data = __rest(_c, ["code"]);
+            const _a = yield this.services.LoginData(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }
