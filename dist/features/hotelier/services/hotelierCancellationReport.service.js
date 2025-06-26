@@ -47,6 +47,27 @@ class HotelierCancellationReportService extends abstract_service_1.default {
                 data,
             };
         });
+        this.cancelJobPostReport = (req) => __awaiter(this, void 0, void 0, function* () {
+            return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const { id } = req.params;
+                const model = this.Model.cancellationReportModel(trx);
+                const jobPostReport = yield model.getSingleJobPostReport(Number(id), constants_1.REPORT_TYPE.CANCEL_JOB_POST);
+                if (!jobPostReport) {
+                    throw new customError_1.default("Job post cancellation report not found", this.StatusCode.HTTP_NOT_FOUND);
+                }
+                if (jobPostReport.status !== constants_1.CANCELLATION_REPORT_STATUS.PENDING) {
+                    throw new customError_1.default(`Only reports with status 'PENDING' can be cancelled. Current status is '${jobPostReport.status}'.`, this.StatusCode.HTTP_BAD_REQUEST);
+                }
+                yield model.updateCancellationReportStatus(Number(id), {
+                    status: constants_1.CANCELLATION_REPORT_STATUS.CANCELLED,
+                });
+                return {
+                    success: true,
+                    code: this.StatusCode.HTTP_OK,
+                    message: this.ResMsg.HTTP_OK,
+                };
+            }));
+        });
     }
 }
 exports.default = HotelierCancellationReportService;

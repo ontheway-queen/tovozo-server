@@ -168,6 +168,7 @@ export default class JobApplicationModel extends Schema {
 		application_id: number,
 		job_seeker_id: number
 	) {
+		console.log({ application_id, job_seeker_id });
 		const [updated] = await this.db("job_applications")
 			.withSchema(this.DBO_SCHEMA)
 			.update({ status: JOB_APPLICATION_STATUS.CANCELLED })

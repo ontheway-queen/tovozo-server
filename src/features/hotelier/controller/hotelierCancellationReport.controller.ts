@@ -31,4 +31,14 @@ export default class HotelierCancellationReportController extends AbstractContro
 			res.status(code).json(data);
 		}
 	);
+
+	public cancelJobPostReport = this.asyncWrapper.wrap(
+		null,
+		async (req: Request, res: Response) => {
+			const { code, ...data } = await this.service.cancelJobPostReport(
+				req
+			);
+			res.status(code).json(data);
+		}
+	);
 }

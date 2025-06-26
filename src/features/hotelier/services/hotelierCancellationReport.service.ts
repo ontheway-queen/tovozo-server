@@ -1,7 +1,13 @@
 import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
-import { REPORT_TYPE } from "../../../utils/miscellaneous/constants";
-import { IGetReportsQuery } from "../../../utils/modelTypes/cancellationReport/cancellationReport.types";
+import {
+	CANCELLATION_REPORT_STATUS,
+	REPORT_TYPE,
+} from "../../../utils/miscellaneous/constants";
+import {
+	ICancellationReportStatus,
+	IGetReportsQuery,
+} from "../../../utils/modelTypes/cancellationReport/cancellationReport.types";
 import CustomError from "../../../utils/lib/customError";
 
 export default class HotelierCancellationReportService extends AbstractServices {
@@ -52,5 +58,40 @@ export default class HotelierCancellationReportService extends AbstractServices 
 			message: this.ResMsg.HTTP_OK,
 			data,
 		};
+	};
+
+	public cancelJobPostReport = async (req: Request) => {
+		return await this.db.transaction(async (trx) => {
+			const { id } = req.params;
+			const model = this.Model.cancellationReportModel(trx);
+
+			const jobPostReport = await model.getSingleJobPostReport(
+				Number(id),
+				REPORT_TYPE.CANCEL_JOB_POST
+			);
+			if (!jobPostReport) {
+				throw new CustomError(
+					"Job post cancellation report not found",
+					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
+
+			if (jobPostReport.status !== CANCELLATION_REPORT_STATUS.PENDING) {
+				throw new CustomError(
+					`Only reports with status 'PENDING' can be cancelled. Current status is '${jobPostReport.status}'.`,
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
+
+			await model.updateCancellationReportStatus(Number(id), {
+				status: CANCELLATION_REPORT_STATUS.CANCELLED as unknown as ICancellationReportStatus,
+			});
+
+			return {
+				success: true,
+				code: this.StatusCode.HTTP_OK,
+				message: this.ResMsg.HTTP_OK,
+			};
+		});
 	};
 }

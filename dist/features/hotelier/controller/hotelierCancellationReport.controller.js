@@ -41,6 +41,10 @@ class HotelierCancellationReportController extends abstract_controller_1.default
             const _a = yield this.service.getCancellationReport(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
+        this.cancelJobPostReport = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.cancelJobPostReport(req), { code } = _a, data = __rest(_a, ["code"]);
+            res.status(code).json(data);
+        }));
     }
 }
 exports.default = HotelierCancellationReportController;

@@ -457,13 +457,10 @@ class JobPostModel extends Schema {
 			.where("id", id);
 	}
 
-	public async updateJobPostDetailsStatus(
-		id: number,
-		status: IJobPostDetailsStatus
-	) {
+	public async updateJobPostDetailsStatus(id: number, status: any) {
 		return await this.db("job_post_details")
 			.withSchema(this.DBO_SCHEMA)
-			.where("job_post_id", id)
+			.where("id", id)
 			.update({ status });
 	}
 }
