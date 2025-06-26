@@ -127,7 +127,7 @@ class AdminHotelierService extends abstract_service_1.default {
                 });
                 yield this.insertAdminAudit(trx, {
                     created_by: user_id,
-                    details: `Hotelier (${user.name}) has been created.`,
+                    details: `Hotelier Account (${user.name}) has been created.`,
                     endpoint: req.originalUrl,
                     type: "CREATE",
                     payload: req.body,
