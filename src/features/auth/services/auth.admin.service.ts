@@ -8,6 +8,7 @@ import {
   USER_TYPE,
 } from "../../../utils/miscellaneous/constants";
 import { IForgetPasswordPayload } from "../../../utils/modelTypes/common/commonModelTypes";
+import { IAdminAuthView } from "../utils/types/adminAuth.types";
 
 class AdminAuthService extends AbstractServices {
   //login
@@ -15,11 +16,13 @@ class AdminAuthService extends AbstractServices {
     const { email, password } = req.body as { email: string; password: string };
     return await this.db.transaction(async (trx) => {
       const userModel = this.Model.UserModel(trx);
-      const checkUser = await userModel.getSingleCommonAuthUser({
-        schema_name: "admin",
-        table_name: USER_AUTHENTICATION_VIEW.ADMIN,
-        email,
-      });
+      const checkUser = await userModel.getSingleCommonAuthUser<IAdminAuthView>(
+        {
+          schema_name: "admin",
+          table_name: USER_AUTHENTICATION_VIEW.ADMIN,
+          email,
+        }
+      );
 
       if (!checkUser) {
         return {
@@ -69,7 +72,6 @@ class AdminAuthService extends AbstractServices {
           user_id: rest.user_id,
           username: rest.username,
           name: rest.name,
-          gender: rest.gender,
           phone_number: rest.phone_number,
           role_id: rest.role_id,
           photo: rest.photo,
@@ -108,11 +110,12 @@ class AdminAuthService extends AbstractServices {
 
     const { email: verify_email } = token_verify;
     if (email === verify_email) {
-      const checkUser = await user_model.getSingleCommonAuthUser({
-        schema_name: "admin",
-        table_name: USER_AUTHENTICATION_VIEW.ADMIN,
-        email,
-      });
+      const checkUser =
+        await user_model.getSingleCommonAuthUser<IAdminAuthView>({
+          schema_name: "admin",
+          table_name: USER_AUTHENTICATION_VIEW.ADMIN,
+          email,
+        });
 
       if (!checkUser) {
         return {
@@ -122,7 +125,7 @@ class AdminAuthService extends AbstractServices {
         };
       }
 
-      const { password_hash: hashPass, agency_id, ...rest } = checkUser;
+      const { password_hash: hashPass, ...rest } = checkUser;
 
       if (!rest.user_status) {
         return {
@@ -136,7 +139,6 @@ class AdminAuthService extends AbstractServices {
         user_id: rest.user_id,
         username: rest.username,
         name: rest.name,
-        gender: rest.gender,
         phone_number: rest.phone_number,
         role_id: rest.role_id,
         photo: rest.photo,

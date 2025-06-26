@@ -19,6 +19,7 @@ import {
 } from "../../../utils/miscellaneous/constants";
 import { IGetOTPPayload } from "../../../utils/modelTypes/common/commonModelTypes";
 import { sendEmailOtpTemplate } from "../../../utils/templates/sendEmailOtpTemplate";
+import { IAdminAuthView } from "../../auth/utils/types/adminAuth.types";
 
 class PublicService extends AbstractServices {
   constructor() {
@@ -237,11 +238,12 @@ class PublicService extends AbstractServices {
         ) {
           secret = config.JWT_SECRET_JOB_SEEKER;
         } else if (type == OTP_TYPE_TWO_FA_ADMIN) {
-          const checkUser = await userModel.getSingleCommonAuthUser({
-            email,
-            schema_name: "admin",
-            table_name: USER_AUTHENTICATION_VIEW.ADMIN,
-          });
+          const checkUser =
+            await userModel.getSingleCommonAuthUser<IAdminAuthView>({
+              email,
+              schema_name: "admin",
+              table_name: USER_AUTHENTICATION_VIEW.ADMIN,
+            });
           if (checkUser) {
             await this.insertAdminAudit(trx, {
               details: `Admin User ${checkUser.username}(${checkUser.email}) has logged in.`,

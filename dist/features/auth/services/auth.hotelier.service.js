@@ -39,23 +39,23 @@ class HotelierAuthService extends abstract_service_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             return this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const files = req.files || [];
-                const _a = lib_1.default.safeParseJSON(req.body.user), { designation } = _a, user = __rest(_a, ["designation"]);
-                const organization = lib_1.default.safeParseJSON(req.body.organization);
-                const organizationAddress = lib_1.default.safeParseJSON(req.body.organization_address);
+                const body = req.body;
+                const _a = lib_1.default.safeParseJSON(body.user), { designation } = _a, user = __rest(_a, ["designation"]);
+                const organization = lib_1.default.safeParseJSON(body.organization);
+                const organizationAddress = lib_1.default.safeParseJSON(body.organization_address);
                 const amenitiesInput = lib_1.default.safeParseJSON(req.body.organization_amenities) || [];
                 for (const file of files) {
                     if (file.fieldname === "photo") {
                         user.photo = file.filename;
                     }
                 }
-                const { email, phone_number, username, password } = user, userData = __rest(user, ["email", "phone_number", "username", "password"]);
+                const { email, phone_number, password } = user, userData = __rest(user, ["email", "phone_number", "password"]);
                 const userModel = this.Model.UserModel(trx);
                 const organizationModel = this.Model.organizationModel(trx);
                 const commonModel = this.Model.commonModel(trx);
                 const [existingUser] = yield userModel.checkUser({
                     email,
                     phone_number,
-                    username,
                     type: constants_1.USER_TYPE.HOTELIER,
                 });
                 if (existingUser) {
@@ -66,13 +66,6 @@ class HotelierAuthService extends abstract_service_1.default {
                             message: this.ResMsg.EMAIL_ALREADY_EXISTS,
                         };
                     }
-                    // if (existingUser.username === username) {
-                    //   return {
-                    //     success: false,
-                    //     code: this.StatusCode.HTTP_BAD_REQUEST,
-                    //     message: this.ResMsg.USERNAME_ALREADY_EXISTS,
-                    //   };
-                    // }
                     if (existingUser.phone_number === phone_number) {
                         return {
                             success: false,
@@ -84,7 +77,6 @@ class HotelierAuthService extends abstract_service_1.default {
                 const password_hash = yield lib_1.default.hashValue(password);
                 const registration = yield userModel.createUser(Object.assign(Object.assign({}, userData), { email,
                     phone_number,
-                    username,
                     password_hash, type: constants_1.USER_TYPE.HOTELIER }));
                 if (!registration.length) {
                     throw new customError_1.default(this.ResMsg.HTTP_BAD_REQUEST, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
@@ -114,7 +106,6 @@ class HotelierAuthService extends abstract_service_1.default {
                 }
                 const tokenData = {
                     user_id: userId,
-                    username,
                     name: user.name,
                     user_email: email,
                     phone_number,
@@ -124,7 +115,7 @@ class HotelierAuthService extends abstract_service_1.default {
                 };
                 yield this.insertNotification(trx, userModelTypes_1.TypeUser.ADMIN, {
                     user_id: userId,
-                    content: `New hotelier "${user.name}" (${username}) has registered and is awaiting verification.`,
+                    content: `New hotelier "${user.name}" has registered and is awaiting verification.`,
                     related_id: userId,
                     type: commonModelTypes_1.NotificationTypeEnum.HOTELIER_VERIFICATION,
                 });
@@ -191,11 +182,8 @@ class HotelierAuthService extends abstract_service_1.default {
             else {
                 const token_data = {
                     user_id: rest.user_id,
-                    username: rest.username,
                     name: rest.name,
-                    gender: rest.gender,
                     phone_number: rest.phone_number,
-                    role_id: rest.role_id,
                     photo: rest.photo,
                     status: rest.user_status,
                     email: rest.email,
@@ -232,7 +220,6 @@ class HotelierAuthService extends abstract_service_1.default {
                     table_name: constants_1.USER_AUTHENTICATION_VIEW.HOTELIER,
                     email,
                 });
-                console.log({ checkUser });
                 if (!checkUser) {
                     return {
                         success: false,
@@ -240,7 +227,7 @@ class HotelierAuthService extends abstract_service_1.default {
                         message: this.ResMsg.WRONG_CREDENTIALS,
                     };
                 }
-                const { password_hash: hashPass } = checkUser, rest = __rest(checkUser, ["password_hash"]);
+                const rest = __rest(checkUser, []);
                 if (rest.organization_status !== constants_1.USER_STATUS.ACTIVE) {
                     return {
                         success: false,
@@ -250,11 +237,8 @@ class HotelierAuthService extends abstract_service_1.default {
                 }
                 const token_data = {
                     user_id: rest.user_id,
-                    username: rest.username,
                     name: rest.name,
-                    gender: rest.gender,
                     phone_number: rest.phone_number,
-                    role_id: rest.role_id,
                     photo: rest.photo,
                     status: rest.user_status,
                     email: rest.email,

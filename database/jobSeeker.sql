@@ -87,7 +87,6 @@ CREATE TABLE IF NOT EXISTS jobSeeker.job_seeker_info (
 CREATE OR REPLACE VIEW jobSeeker.job_seeker_auth_view AS
 SELECT
     u.id AS user_id,
-    u.username,
     u.name,
     u.email,
     u.password_hash,

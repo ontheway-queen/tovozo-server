@@ -193,7 +193,6 @@ class JobSeekerAuthService extends abstract_service_1.default {
                 table_name: constants_1.USER_AUTHENTICATION_VIEW.JOB_SEEKER,
                 email,
             });
-            console.log({ checkUser });
             if (!checkUser) {
                 return {
                     success: false,
@@ -231,11 +230,9 @@ class JobSeekerAuthService extends abstract_service_1.default {
             else {
                 const token_data = {
                     user_id: rest.user_id,
-                    username: rest.username,
                     name: rest.name,
                     gender: rest.gender,
                     phone_number: rest.phone_number,
-                    role_id: rest.role_id,
                     photo: rest.photo,
                     status: rest.user_status,
                     email: rest.email,
@@ -272,8 +269,6 @@ class JobSeekerAuthService extends abstract_service_1.default {
                     table_name: constants_1.USER_AUTHENTICATION_VIEW.JOB_SEEKER,
                     email,
                 });
-                console.log({ checkUser });
-                console.log({ checkUser });
                 if (!checkUser) {
                     return {
                         success: false,
@@ -281,7 +276,7 @@ class JobSeekerAuthService extends abstract_service_1.default {
                         message: this.ResMsg.WRONG_CREDENTIALS,
                     };
                 }
-                const { password_hash: hashPass, agency_id } = checkUser, rest = __rest(checkUser, ["password_hash", "agency_id"]);
+                const { password_hash: hashPass } = checkUser, rest = __rest(checkUser, ["password_hash"]);
                 if (rest.account_status !== constants_1.USER_STATUS.ACTIVE) {
                     return {
                         success: false,
@@ -291,11 +286,9 @@ class JobSeekerAuthService extends abstract_service_1.default {
                 }
                 const token_data = {
                     user_id: rest.user_id,
-                    username: rest.username,
                     name: rest.name,
                     gender: rest.gender,
                     phone_number: rest.phone_number,
-                    role_id: rest.role_id,
                     photo: rest.photo,
                     status: rest.user_status,
                     email: rest.email,
