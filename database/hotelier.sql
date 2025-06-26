@@ -47,7 +47,6 @@ CREATE TABLE hotelier.organization_amenities (
 CREATE OR REPLACE VIEW hotelier.vw_hotelier_auth AS
 SELECT
     u.id AS user_id,
-    u.username,
     u.email,
     u.password_hash,
     u.phone_number,
@@ -56,7 +55,7 @@ SELECT
     u.status AS user_status,
     u.is_deleted AS user_deleted,
     u.type AS user_type,
-
+    md.designation,
     o.id AS organization_id,
     o.name AS organization_name,
     o.details,
@@ -64,7 +63,6 @@ SELECT
     o.is_deleted AS organization_deleted,
     o.created_at AS organization_created_at,
     o.is_2fa_on,
-
     l.id AS location_id,
     l.city_id,
     l.name AS location_name,
@@ -79,9 +77,11 @@ SELECT
     l.updated_at AS location_updated_at
 
 FROM dbo."user" u
-JOIN hotelier.organization o ON u.id = o.user_id
-LEFT JOIN dbo.location l ON o.location_id = l.id
+INNER JOIN hotelier.organization o ON o.user_id = u.id
+LEFT JOIN hotelier.maintenance_designation md ON md.user_id = u.id
+LEFT JOIN dbo.location l ON l.id = o.location_id
 WHERE u.is_deleted = false;
+
 
 ALTER TABLE hotelier.vw_hotelier_auth
     OWNER TO postgres;

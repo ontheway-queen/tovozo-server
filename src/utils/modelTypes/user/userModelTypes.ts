@@ -4,7 +4,7 @@ export enum TypeUser {
   JOB_SEEKER = "JOB_SEEKER",
 }
 export interface ICreateUserPayload {
-  username: string;
+  username?: string;
   name: string;
   email: string;
   password_hash: string;

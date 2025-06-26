@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import AbstractController from "../../../abstract/abstract.controller";
-import AdminAuthService from "../services/auth.admin.servide";
+import AdminAuthService from "../services/auth.admin.service";
 
 export default class AdminAuthController extends AbstractController {
   private services = new AdminAuthService();

@@ -78,7 +78,7 @@ export default class UserModel extends Schema {
       });
   }
 
-  public async getSingleCommonAuthUser({
+  public async getSingleCommonAuthUser<T>({
     schema_name,
     table_name,
     user_id,
@@ -92,7 +92,7 @@ export default class UserModel extends Schema {
     user_name?: string;
     email?: string;
     phone_number?: string;
-  }) {
+  }): Promise<T> {
     return await this.db(table_name)
       .withSchema(schema_name)
       .select("*")

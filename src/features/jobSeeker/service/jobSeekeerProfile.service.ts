@@ -7,6 +7,7 @@ import {
   USER_TYPE,
 } from "../../../utils/miscellaneous/constants";
 import { IChangePasswordPayload } from "../../../utils/modelTypes/common/commonModelTypes";
+import { IJobSeekerAuthView } from "../../auth/utils/types/jobSeekerAuth.types";
 
 export default class JobSeekerProfileService extends AbstractServices {
   constructor() {
@@ -246,11 +247,12 @@ export default class JobSeekerProfileService extends AbstractServices {
     const { old_password, new_password } = req.body as IChangePasswordPayload;
 
     const model = this.Model.UserModel();
-    const user_details = await model.getSingleCommonAuthUser({
-      schema_name: "jobseeker",
-      table_name: USER_AUTHENTICATION_VIEW.JOB_SEEKER,
-      user_id,
-    });
+    const user_details =
+      await model.getSingleCommonAuthUser<IJobSeekerAuthView>({
+        schema_name: "jobseeker",
+        table_name: USER_AUTHENTICATION_VIEW.JOB_SEEKER,
+        user_id,
+      });
     if (!user_details) {
       return {
         success: false,
