@@ -17,6 +17,7 @@ import {
 } from "../../../utils/modelTypes/common/commonModelTypes";
 import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
 import { registrationJobSeekerTemplate } from "../../../utils/templates/jobSeekerRegistrationTemplate";
+import { IJobSeekerAuthView } from "../utils/types/jobSeekerAuth.types";
 
 class JobSeekerAuthService extends AbstractServices {
   //registration service
@@ -222,13 +223,12 @@ class JobSeekerAuthService extends AbstractServices {
   public async loginService(req: Request) {
     const { email, password } = req.body as { email: string; password: string };
     const userModel = this.Model.UserModel();
-    const checkUser = await userModel.getSingleCommonAuthUser({
-      schema_name: "jobseeker",
-      table_name: USER_AUTHENTICATION_VIEW.JOB_SEEKER,
-      email,
-    });
-
-    console.log({ checkUser });
+    const checkUser =
+      await userModel.getSingleCommonAuthUser<IJobSeekerAuthView>({
+        schema_name: "jobseeker",
+        table_name: USER_AUTHENTICATION_VIEW.JOB_SEEKER,
+        email,
+      });
 
     if (!checkUser) {
       return {
@@ -270,11 +270,9 @@ class JobSeekerAuthService extends AbstractServices {
     } else {
       const token_data = {
         user_id: rest.user_id,
-        username: rest.username,
         name: rest.name,
         gender: rest.gender,
         phone_number: rest.phone_number,
-        role_id: rest.role_id,
         photo: rest.photo,
         status: rest.user_status,
         email: rest.email,
@@ -314,15 +312,12 @@ class JobSeekerAuthService extends AbstractServices {
 
     const { email: verify_email } = token_verify;
     if (email === verify_email) {
-      const checkUser = await user_model.getSingleCommonAuthUser({
-        schema_name: "jobseeker",
-        table_name: USER_AUTHENTICATION_VIEW.JOB_SEEKER,
-        email,
-      });
-
-      console.log({ checkUser });
-
-      console.log({ checkUser });
+      const checkUser =
+        await user_model.getSingleCommonAuthUser<IJobSeekerAuthView>({
+          schema_name: "jobseeker",
+          table_name: USER_AUTHENTICATION_VIEW.JOB_SEEKER,
+          email,
+        });
 
       if (!checkUser) {
         return {
@@ -332,7 +327,7 @@ class JobSeekerAuthService extends AbstractServices {
         };
       }
 
-      const { password_hash: hashPass, agency_id, ...rest } = checkUser;
+      const { password_hash: hashPass, ...rest } = checkUser;
 
       if (rest.account_status !== USER_STATUS.ACTIVE) {
         return {
@@ -344,11 +339,9 @@ class JobSeekerAuthService extends AbstractServices {
 
       const token_data = {
         user_id: rest.user_id,
-        username: rest.username,
         name: rest.name,
         gender: rest.gender,
         phone_number: rest.phone_number,
-        role_id: rest.role_id,
         photo: rest.photo,
         status: rest.user_status,
         email: rest.email,

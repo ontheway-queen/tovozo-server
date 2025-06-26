@@ -24,11 +24,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_controller_1 = __importDefault(require("../../../abstract/abstract.controller"));
-const auth_admin_servide_1 = __importDefault(require("../services/auth.admin.servide"));
+const auth_admin_service_1 = __importDefault(require("../services/auth.admin.service"));
 class AdminAuthController extends abstract_controller_1.default {
     constructor() {
         super();
-        this.services = new auth_admin_servide_1.default();
+        this.services = new auth_admin_service_1.default();
         // login
         this.login = this.asyncWrapper.wrap({ bodySchema: this.commonValidator.loginValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
             const _a = yield this.services.loginService(req), { code } = _a, data = __rest(_a, ["code"]);
@@ -36,12 +36,12 @@ class AdminAuthController extends abstract_controller_1.default {
         }));
         // forget pass
         this.forgetPassword = this.asyncWrapper.wrap({ bodySchema: this.commonValidator.commonForgetPassInputValidation }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.services.forgetPassword(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _b = yield this.services.forgetPassword(req), { code } = _b, data = __rest(_b, ["code"]);
             res.status(code).json(data);
         }));
         // get login data
         this.loginData = this.asyncWrapper.wrap({ bodySchema: this.commonValidator.commonTwoFAInputValidation }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.services.LoginData(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _c = yield this.services.LoginData(req), { code } = _c, data = __rest(_c, ["code"]);
             res.status(code).json(data);
         }));
     }

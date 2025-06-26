@@ -3,6 +3,8 @@ import AbstractServices from "../../../abstract/abstract.service";
 import Lib from "../../../utils/lib/lib";
 import { USER_AUTHENTICATION_VIEW } from "../../../utils/miscellaneous/constants";
 import { IChangePasswordPayload } from "../../../utils/modelTypes/common/commonModelTypes";
+import { IHotelierAuthView } from "../../auth/utils/types/hotelierAuth.types";
+import { IJobSeekerAuthView } from "../../auth/utils/types/jobSeekerAuth.types";
 
 export default class HotelierProfileService extends AbstractServices {
   constructor() {
@@ -15,11 +17,12 @@ export default class HotelierProfileService extends AbstractServices {
     const userModel = this.Model.UserModel();
     const organizationModel = this.Model.organizationModel();
 
-    const { password_hash, ...rest } = await userModel.getSingleCommonAuthUser({
-      table_name: USER_AUTHENTICATION_VIEW.HOTELIER,
-      schema_name: "hotelier",
-      user_id,
-    });
+    const { password_hash, ...rest } =
+      await userModel.getSingleCommonAuthUser<IHotelierAuthView>({
+        table_name: USER_AUTHENTICATION_VIEW.HOTELIER,
+        schema_name: "hotelier",
+        user_id,
+      });
 
     const [organization_amenities, organization_photos] = await Promise.all([
       organizationModel.getAmenities({ organization_id: rest.organization_id }),
@@ -44,11 +47,12 @@ export default class HotelierProfileService extends AbstractServices {
     const { old_password, new_password } = req.body as IChangePasswordPayload;
 
     const model = this.Model.UserModel();
-    const user_details = await model.getSingleCommonAuthUser({
-      schema_name: "hotelier",
-      table_name: USER_AUTHENTICATION_VIEW.HOTELIER,
-      user_id,
-    });
+    const user_details =
+      await model.getSingleCommonAuthUser<IJobSeekerAuthView>({
+        schema_name: "hotelier",
+        table_name: USER_AUTHENTICATION_VIEW.HOTELIER,
+        user_id,
+      });
     if (!user_details) {
       return {
         success: false,

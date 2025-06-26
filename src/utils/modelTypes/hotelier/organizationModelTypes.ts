@@ -2,10 +2,10 @@ import { UserStatusType } from "../../../features/public/utils/types/publicCommo
 
 export interface ICreateOrganizationPayload {
   name: string;
-  address: string;
   user_id: number;
   details?: string;
   status?: string;
+  location_id: number;
   is_deleted?: boolean;
 }
 

@@ -13,15 +13,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
-const constants_1 = require("../../../utils/miscellaneous/constants");
 const customError_1 = __importDefault(require("../../../utils/lib/customError"));
+const constants_1 = require("../../../utils/miscellaneous/constants");
 class CancellationReportService extends abstract_service_1.default {
     // get reports
     getReports(req) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = req.query;
             const model = this.Model.cancellationReportModel();
-            console.log(query);
             if (query.report_type !== constants_1.REPORT_TYPE.CANCEL_APPLICATION &&
                 query.report_type !== constants_1.REPORT_TYPE.CANCEL_JOB_POST) {
                 throw new customError_1.default("Report type is invalid. Please add report type in the query", this.StatusCode.HTTP_BAD_REQUEST);

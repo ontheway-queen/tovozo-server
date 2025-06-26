@@ -16,6 +16,14 @@ import {
 } from "../../../utils/modelTypes/common/commonModelTypes";
 import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
 import { registrationHotelierTemplate } from "../../../utils/templates/registrationHotelierTemplate";
+import {
+  IHotelierAuthView,
+  IHotelierRegistrationBodyPayload,
+  IHotelierUser,
+  IOrganizationAddressPayload,
+  IOrganizationAmenitiesType,
+  IOrganizationName,
+} from "../utils/types/hotelierAuth.types";
 
 export default class HotelierAuthService extends AbstractServices {
   constructor() {
@@ -25,14 +33,20 @@ export default class HotelierAuthService extends AbstractServices {
   public async organizationRegistrationService(req: Request) {
     return this.db.transaction(async (trx) => {
       const files = (req.files as Express.Multer.File[]) || [];
-
-      const { designation, ...user } = Lib.safeParseJSON(req.body.user);
-      const organization = Lib.safeParseJSON(req.body.organization);
+      const body = req.body as IHotelierRegistrationBodyPayload;
+      const { designation, ...user } = Lib.safeParseJSON(
+        body.user
+      ) as IHotelierUser;
+      const organization = Lib.safeParseJSON(
+        body.organization
+      ) as IOrganizationName;
       const organizationAddress = Lib.safeParseJSON(
-        req.body.organization_address
-      );
+        body.organization_address
+      ) as IOrganizationAddressPayload;
       const amenitiesInput =
-        Lib.safeParseJSON(req.body.organization_amenities) || [];
+        (Lib.safeParseJSON(
+          req.body.organization_amenities
+        ) as IOrganizationAmenitiesType[]) || [];
 
       for (const file of files) {
         if (file.fieldname === "photo") {
@@ -40,7 +54,7 @@ export default class HotelierAuthService extends AbstractServices {
         }
       }
 
-      const { email, phone_number, username, password, ...userData } = user;
+      const { email, phone_number, password, ...userData } = user;
 
       const userModel = this.Model.UserModel(trx);
       const organizationModel = this.Model.organizationModel(trx);
@@ -49,7 +63,6 @@ export default class HotelierAuthService extends AbstractServices {
       const [existingUser] = await userModel.checkUser({
         email,
         phone_number,
-        username,
         type: USER_TYPE.HOTELIER,
       });
 
@@ -61,13 +74,6 @@ export default class HotelierAuthService extends AbstractServices {
             message: this.ResMsg.EMAIL_ALREADY_EXISTS,
           };
         }
-        // if (existingUser.username === username) {
-        //   return {
-        //     success: false,
-        //     code: this.StatusCode.HTTP_BAD_REQUEST,
-        //     message: this.ResMsg.USERNAME_ALREADY_EXISTS,
-        //   };
-        // }
         if (existingUser.phone_number === phone_number) {
           return {
             success: false,
@@ -83,7 +89,6 @@ export default class HotelierAuthService extends AbstractServices {
         ...userData,
         email,
         phone_number,
-        username,
         password_hash,
         type: USER_TYPE.HOTELIER,
       });
@@ -134,7 +139,6 @@ export default class HotelierAuthService extends AbstractServices {
 
       const tokenData = {
         user_id: userId,
-        username,
         name: user.name,
         user_email: email,
         phone_number,
@@ -144,7 +148,7 @@ export default class HotelierAuthService extends AbstractServices {
       };
       await this.insertNotification(trx, TypeUser.ADMIN, {
         user_id: userId,
-        content: `New hotelier "${user.name}" (${username}) has registered and is awaiting verification.`,
+        content: `New hotelier "${user.name}" has registered and is awaiting verification.`,
         related_id: userId,
         type: NotificationTypeEnum.HOTELIER_VERIFICATION,
       });
@@ -174,11 +178,12 @@ export default class HotelierAuthService extends AbstractServices {
   public async loginService(req: Request) {
     const { email, password } = req.body as { email: string; password: string };
     const userModel = this.Model.UserModel();
-    const checkUser = await userModel.getSingleCommonAuthUser({
-      schema_name: "hotelier",
-      table_name: USER_AUTHENTICATION_VIEW.HOTELIER,
-      email,
-    });
+    const checkUser =
+      await userModel.getSingleCommonAuthUser<IHotelierAuthView>({
+        schema_name: "hotelier",
+        table_name: USER_AUTHENTICATION_VIEW.HOTELIER,
+        email,
+      });
 
     if (!checkUser) {
       return {
@@ -220,11 +225,8 @@ export default class HotelierAuthService extends AbstractServices {
     } else {
       const token_data = {
         user_id: rest.user_id,
-        username: rest.username,
         name: rest.name,
-        gender: rest.gender,
         phone_number: rest.phone_number,
-        role_id: rest.role_id,
         photo: rest.photo,
         status: rest.user_status,
         email: rest.email,
@@ -262,13 +264,12 @@ export default class HotelierAuthService extends AbstractServices {
 
     const { email: verify_email } = token_verify;
     if (email === verify_email) {
-      const checkUser = await user_model.getSingleCommonAuthUser({
-        schema_name: "hotelier",
-        table_name: USER_AUTHENTICATION_VIEW.HOTELIER,
-        email,
-      });
-
-      console.log({ checkUser });
+      const checkUser =
+        await user_model.getSingleCommonAuthUser<IHotelierAuthView>({
+          schema_name: "hotelier",
+          table_name: USER_AUTHENTICATION_VIEW.HOTELIER,
+          email,
+        });
 
       if (!checkUser) {
         return {
@@ -278,7 +279,7 @@ export default class HotelierAuthService extends AbstractServices {
         };
       }
 
-      const { password_hash: hashPass, ...rest } = checkUser;
+      const { ...rest } = checkUser;
 
       if (rest.organization_status !== USER_STATUS.ACTIVE) {
         return {
@@ -290,11 +291,8 @@ export default class HotelierAuthService extends AbstractServices {
 
       const token_data = {
         user_id: rest.user_id,
-        username: rest.username,
         name: rest.name,
-        gender: rest.gender,
         phone_number: rest.phone_number,
-        role_id: rest.role_id,
         photo: rest.photo,
         status: rest.user_status,
         email: rest.email,
