@@ -134,6 +134,9 @@ class CancellationReportModel extends schema_1.default {
                     .leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
                     .leftJoin("job_post as jp", "jp.id", "jpd.job_post_id")
                     .where((qb) => {
+                    if (user_id) {
+                        qb.andWhere("cr.reporter_id", user_id);
+                    }
                     if (search_text) {
                         qb.andWhereILike("jp.title", `%${search_text}%`);
                     }
@@ -150,21 +153,32 @@ class CancellationReportModel extends schema_1.default {
             return { data, total };
         });
     }
-    getSingleJobApplicationReport(id, report_type) {
+    getSingleJobApplicationReport(id, report_type, related_id, reporter_id) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("cancellation_reports as cr")
                 .withSchema(this.DBO_SCHEMA)
                 .select("cr.id", "u.name as reporter_name", "u.phone_number as reporter_phone_number", "cr.report_type", "cr.status", "cr.reason as cancellation_reason", "cr.reject_reason", "cr.reporter_id", "cr.related_id", this.db.raw(`json_build_object(
-                    'id', jp.id,
-                    'title', jp.title,
-                    'details', jp.details,
-                    'requirements', jp.requirements
-                ) as job_post`))
+				    'id', jp.id,
+				    'title', jp.title,
+				    'details', jp.details,
+				    'requirements', jp.requirements
+				) as job_post`))
                 .leftJoin("user as u", "u.id", "cr.reporter_id")
                 .leftJoin("job_applications as ja", "cr.related_id", "ja.id")
                 .leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
                 .leftJoin("job_post as jp", "jp.id", "jpd.job_post_id")
-                .where({ "cr.id": id, "cr.report_type": report_type })
+                .where("cr.report_type", report_type)
+                .modify((qb) => {
+                if (id) {
+                    qb.andWhere("cr.id", id);
+                }
+                if (related_id) {
+                    qb.andWhere("cr.related_id", related_id);
+                }
+                if (reporter_id) {
+                    qb.andWhere("cr.reporter_id", reporter_id);
+                }
+            })
                 .first();
         });
     }

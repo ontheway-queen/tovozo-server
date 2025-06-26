@@ -4,6 +4,7 @@ import {
 	ICancellationReportRes,
 	ICancellationReportResponse,
 	ICancellationReportStatus,
+	ICancellationReportType,
 	IGetReportsQuery,
 } from "../../utils/modelTypes/cancellationReport/cancellationReport.types";
 
@@ -92,7 +93,7 @@ class CancellationReportModel extends Schema {
 
 	public async getSingleJobPostReport(
 		id: number | null,
-		report_type: "CANCEL_JOB_POST",
+		report_type: ICancellationReportType,
 		related_id?: number
 	): Promise<ICancellationReportRes> {
 		return await this.db("cancellation_reports as cr")
@@ -194,6 +195,9 @@ class CancellationReportModel extends Schema {
 				)
 				.leftJoin("job_post as jp", "jp.id", "jpd.job_post_id")
 				.where((qb) => {
+					if (user_id) {
+						qb.andWhere("cr.reporter_id", user_id);
+					}
 					if (search_text) {
 						qb.andWhereILike("jp.title", `%${search_text}%`);
 					}
@@ -211,8 +215,10 @@ class CancellationReportModel extends Schema {
 	}
 
 	public async getSingleJobApplicationReport(
-		id: number,
-		report_type: "CANCEL_APPLICATION"
+		id: number | null,
+		report_type: ICancellationReportType,
+		related_id?: number | null,
+		reporter_id?: number
 	): Promise<ICancellationReportRes> {
 		return await this.db("cancellation_reports as cr")
 			.withSchema(this.DBO_SCHEMA)
@@ -227,11 +233,11 @@ class CancellationReportModel extends Schema {
 				"cr.reporter_id",
 				"cr.related_id",
 				this.db.raw(`json_build_object(
-                    'id', jp.id,
-                    'title', jp.title,
-                    'details', jp.details,
-                    'requirements', jp.requirements
-                ) as job_post`)
+				    'id', jp.id,
+				    'title', jp.title,
+				    'details', jp.details,
+				    'requirements', jp.requirements
+				) as job_post`)
 			)
 			.leftJoin("user as u", "u.id", "cr.reporter_id")
 			.leftJoin("job_applications as ja", "cr.related_id", "ja.id")
@@ -241,7 +247,18 @@ class CancellationReportModel extends Schema {
 				"ja.job_post_details_id"
 			)
 			.leftJoin("job_post as jp", "jp.id", "jpd.job_post_id")
-			.where({ "cr.id": id, "cr.report_type": report_type })
+			.where("cr.report_type", report_type)
+			.modify((qb) => {
+				if (id) {
+					qb.andWhere("cr.id", id);
+				}
+				if (related_id) {
+					qb.andWhere("cr.related_id", related_id);
+				}
+				if (reporter_id) {
+					qb.andWhere("cr.reporter_id", reporter_id);
+				}
+			})
 			.first();
 	}
 
