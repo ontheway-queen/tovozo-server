@@ -60,14 +60,10 @@ export class HotelierJobPostValidator {
 				.optional(),
 			requirements: Joi.string().optional(),
 		}).required(),
-		job_post_details: Joi.array()
-			.items(
-				Joi.object({
-					start_time: Joi.string().isoDate().optional(),
-					end_time: Joi.string().isoDate().optional(),
-				})
-			)
-			.min(1)
-			.optional(),
+		job_post_details: Joi.object({
+			job_id: Joi.number().optional(),
+			start_time: Joi.string().isoDate().optional(),
+			end_time: Joi.string().isoDate().optional(),
+		}).optional(),
 	});
 }

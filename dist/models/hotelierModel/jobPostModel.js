@@ -39,7 +39,7 @@ class JobPostModel extends schema_1.default {
             const { user_id, title, category_id, city_id, orderBy, orderTo, status, limit, skip, need_total = true, } = params;
             const data = yield this.db("job_post as jp")
                 .withSchema(this.DBO_SCHEMA)
-                .select("jpd.id", "jpd.status", "jpd.start_time", "jpd.end_time", "jp.organization_id", "jp.title", "j.title as job_category", "jp.hourly_rate", "jp.created_time", "org.name as organization_name", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.city_name", "vwl.state_name", "vwl.country_name")
+                .select("jpd.id", "jp.id as job_post_id", "jpd.start_time", "jpd.end_time", "jp.prefer_gender as gender", "jpd.status", "jp.organization_id", "jp.title as job_title", "jp.details as job_details", "jp.requirements as job_requirements", "jp.prefer_gender", "j.title as job_category", "jp.hourly_rate", "jp.created_time", "org.name as organization_name", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.city_name", "vwl.state_name", "vwl.country_name")
                 .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
                 `${this.HOTELIER}.${this.TABLES.organization}`,
             ])
@@ -129,7 +129,12 @@ class JobPostModel extends schema_1.default {
             const { user_id, title, category_id, city_id, orderBy, orderTo, status, limit, skip, need_total = true, } = params;
             const data = yield this.db("job_post as jp")
                 .withSchema(this.DBO_SCHEMA)
-                .select("jpd.id", "jpd.status as job_post_details_status", "jpd.start_time", "jpd.end_time", "jp.organization_id", "jp.title", "j.title as job_category", "jp.hourly_rate", "jp.created_time", "org.name as organization_name", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.city_name", "vwl.state_name", "vwl.country_name", this.db.raw(`json_build_object(
+                .select("jpd.id", "jpd.status as job_post_details_status", "jpd.start_time", "jpd.end_time", "jp.organization_id", "jp.title", this.db.raw(`json_build_object(
+                    'id', j.id,
+                    'title', j.title,
+                    'details', j.details,
+                    'status', j.status
+                ) as job_category`), "jp.hourly_rate", "jp.created_time", "jp.prefer_gender", "org.name as organization_name", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.city_name", "vwl.state_name", "vwl.country_name", this.db.raw(`COUNT(*) OVER (PARTITION BY jpd.job_post_id) AS vacancy`), this.db.raw(`json_build_object(
                     'application_status', ja.status,
                     'job_seeker_id', ja.job_seeker_id,
                     'job_seeker_name', js.name,
@@ -222,9 +227,18 @@ class JobPostModel extends schema_1.default {
     // get single job post with job seeker details for hotelier
     getSingleJobPostWithJobSeekerDetails(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            const data = yield this.db("job_post as jp")
+            return yield this.db("job_post as jp")
                 .withSchema(this.DBO_SCHEMA)
-                .select("jpd.id", "jpd.status as job_post_details_status", "jpd.start_time", "jpd.end_time", "jp.organization_id", "jp.title", "j.title as job_category", "jp.hourly_rate", "jp.title as job_title", "jp.details as job_details", "jp.requirements as job_requirements", "jp.prefer_gender", "jp.created_time", "org.name as organization_name", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.city_name", "vwl.state_name", "vwl.country_name", this.db.raw(`json_build_object(
+                .select("jpd.id", "jpd.status as job_post_details_status", "jpd.start_time", "jpd.end_time", "jp.organization_id", "jp.title", this.db.raw(`json_build_object(
+                    'id', j.id,
+                    'title', j.title,
+                    'details', j.details,
+                    'status', j.status
+                ) as job_category`), "jp.hourly_rate", "jp.title as job_title", "jp.details as job_details", "jp.requirements as job_requirements", "jp.prefer_gender", "jp.created_time", "org.name as organization_name", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.city_name", "vwl.state_name", "vwl.country_name", this.db.raw(`(
+                    SELECT COUNT(*) 
+                    FROM dbo.job_post_details 
+                    WHERE job_post_id = jpd.job_post_id
+                ) AS vacancy`), this.db.raw(`json_build_object(
                     'application_status', ja.status,
                     'job_seeker_id', ja.job_seeker_id,
                     'job_seeker_name', js.name,
@@ -252,7 +266,6 @@ class JobPostModel extends schema_1.default {
                 .leftJoin("vw_location as js_vwl", "js_vwl.location_id", "jsu.location_id")
                 .where("jpd.id", id)
                 .first();
-            return data;
         });
     }
     // update job post
@@ -269,7 +282,7 @@ class JobPostModel extends schema_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("job_post_details")
                 .withSchema(this.DBO_SCHEMA)
-                .update(payload[0])
+                .update(payload)
                 .where("id", id);
         });
     }
@@ -282,21 +295,12 @@ class JobPostModel extends schema_1.default {
                 .where("id", id);
         });
     }
-    cancelJobPostDetails(id) {
+    updateJobPostDetailsStatus(id, status) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("job_post_details")
                 .withSchema(this.DBO_SCHEMA)
                 .where("job_post_id", id)
-                .update({ status: constants_1.JOB_POST_DETAILS_STATUS.Cancelled });
-        });
-    }
-    markAsPendingJobPostDetails(id) {
-        return __awaiter(this, void 0, void 0, function* () {
-            console.log({ id });
-            return yield this.db("job_post_details")
-                .withSchema(this.DBO_SCHEMA)
-                .where("id", id)
-                .update({ status: constants_1.JOB_POST_DETAILS_STATUS.Pending });
+                .update({ status });
         });
     }
 }
