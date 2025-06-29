@@ -21,15 +21,15 @@ class CancellationReportService extends abstract_service_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             const query = req.query;
             const model = this.Model.cancellationReportModel();
-            if (query.report_type !== constants_1.REPORT_TYPE.CANCEL_APPLICATION &&
-                query.report_type !== constants_1.REPORT_TYPE.CANCEL_JOB_POST) {
+            if (query.report_type !== constants_1.CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION &&
+                query.report_type !== constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST) {
                 throw new customError_1.default("Report type is invalid. Please add report type in the query", this.StatusCode.HTTP_BAD_REQUEST);
             }
             let data;
-            if (query.report_type === constants_1.REPORT_TYPE.CANCEL_JOB_POST) {
+            if (query.report_type === constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST) {
                 data = yield model.getJobPostReports(query);
             }
-            else if (query.report_type === constants_1.REPORT_TYPE.CANCEL_APPLICATION) {
+            else if (query.report_type === constants_1.CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION) {
                 data = yield model.getJobApplicationReports(query);
             }
             return Object.assign({ success: true, code: this.StatusCode.HTTP_OK, message: this.ResMsg.HTTP_OK }, data);
@@ -42,10 +42,10 @@ class CancellationReportService extends abstract_service_1.default {
             const { report_type } = req.query;
             const model = this.Model.cancellationReportModel();
             let data;
-            if (report_type === constants_1.REPORT_TYPE.CANCEL_APPLICATION) {
+            if (report_type === constants_1.CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION) {
                 data = yield model.getSingleJobApplicationReport(id, report_type);
             }
-            else if (report_type === constants_1.REPORT_TYPE.CANCEL_JOB_POST) {
+            else if (report_type === constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST) {
                 data = yield model.getSingleJobPostReport(id, report_type);
             }
             if (!data) {
@@ -71,10 +71,10 @@ class CancellationReportService extends abstract_service_1.default {
                 const jobPostModel = this.Model.jobPostModel(trx);
                 const jobApplicationModel = this.Model.jobApplicationModel(trx);
                 let report;
-                if (report_type === constants_1.REPORT_TYPE.CANCEL_JOB_POST) {
+                if (report_type === constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST) {
                     report = yield reportModel.getSingleJobPostReport(Number(id), report_type);
                 }
-                else if (report_type === constants_1.REPORT_TYPE.CANCEL_APPLICATION) {
+                else if (report_type === constants_1.CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION) {
                     report = yield reportModel.getSingleJobApplicationReport(Number(id), report_type);
                 }
                 if (!report) {
@@ -92,13 +92,13 @@ class CancellationReportService extends abstract_service_1.default {
                         : null;
                 if (body.status === constants_1.CANCELLATION_REPORT_STATUS.APPROVED) {
                     yield reportModel.updateCancellationReportStatus(Number(id), body);
-                    if (report_type === constants_1.REPORT_TYPE.CANCEL_JOB_POST) {
+                    if (report_type === constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST) {
                         const jobPost = yield jobPostModel.getSingleJobPost(report.id);
                         yield jobPostModel.cancelJobPost(Number(jobPost.job_post_id));
                         yield jobPostModel.updateJobPostDetailsStatus(Number(jobPost.job_post_id), constants_1.JOB_POST_DETAILS_STATUS.Cancelled);
                         yield jobApplicationModel.cancelApplication(Number(jobPost.job_post_id));
                     }
-                    else if (report_type === constants_1.REPORT_TYPE.CANCEL_APPLICATION) {
+                    else if (report_type === constants_1.CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION) {
                         const application = yield jobApplicationModel.updateMyJobApplicationStatus(report.related_id, report.reporter_id, constants_1.JOB_APPLICATION_STATUS.CANCELLED);
                         yield jobPostModel.updateJobPostDetailsStatus(application.job_post_details_id, constants_1.JOB_POST_DETAILS_STATUS.Pending);
                     }

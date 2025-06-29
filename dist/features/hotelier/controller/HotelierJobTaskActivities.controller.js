@@ -24,21 +24,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_controller_1 = __importDefault(require("../../../abstract/abstract.controller"));
-const jobTaskActivities_service_1 = __importDefault(require("../service/jobTaskActivities.service"));
-const jobTaskActivities_validator_1 = __importDefault(require("../utils/validator/jobTaskActivities.validator"));
-class JobTaskActivitiesController extends abstract_controller_1.default {
+const hotelierJobTaskActivities_service_1 = __importDefault(require("../services/hotelierJobTaskActivities.service"));
+class HotelierJobTaskActivitiesController extends abstract_controller_1.default {
     constructor() {
         super();
-        this.service = new jobTaskActivities_service_1.default();
-        this.validator = new jobTaskActivities_validator_1.default();
-        this.startJobTaskActivity = this.asyncWrapper.wrap({ bodySchema: this.validator.createJobTaskActivity }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.startJobTaskActivities(req), { code } = _a, data = __rest(_a, ["code"]);
-            res.status(code).json(data);
-        }));
-        this.endJobTaskActivity = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.endJobTaskActivities(req), { code } = _a, data = __rest(_a, ["code"]);
+        this.hotelierJobTaskActivitiesService = new hotelierJobTaskActivities_service_1.default();
+        this.approveJobTaskActivity = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.hotelierJobTaskActivitiesService.approveJobTaskActivity(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }
 }
-exports.default = JobTaskActivitiesController;
+exports.default = HotelierJobTaskActivitiesController;

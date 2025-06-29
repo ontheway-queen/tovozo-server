@@ -13,43 +13,32 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const schema_1 = __importDefault(require("../../utils/miscellaneous/schema"));
-class JobTaskActivitiesModel extends schema_1.default {
+class ReportModel extends schema_1.default {
     constructor(db) {
         super();
         this.db = db;
     }
-    // job seeker
-    createJobTaskActivity(payload) {
+    submitReport(payload) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db("job_task_activities")
+            return yield this.db("reports")
                 .withSchema(this.DBO_SCHEMA)
                 .insert(payload, "id");
         });
     }
-    getSingleTaskActivity(id, job_post_details_id) {
+    getSingleReport(job_post_details_id) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db("job_task_activities as jta")
+            return yield this.db("reports")
                 .withSchema(this.DBO_SCHEMA)
-                .select("jta.id", "jta.job_application_id", "jta.job_post_details_id", "jta.start_time", "jta.end_time", "jta.approved_at", "ja.status as application_status", "ja.job_seeker_id")
-                .leftJoin("job_applications as ja", "ja.job_post_details_id", "jta.job_post_details_id")
-                .modify((qb) => {
-                if (id) {
-                    qb.where("jta.id", id);
-                }
-                else if (job_post_details_id) {
-                    qb.where("jta.job_post_details_id", job_post_details_id);
-                }
-            })
+                .where({ job_post_details_id })
                 .first();
         });
     }
-    updateJobTaskActivity(id, payload) {
+    getReports() {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db("job_task_activities")
+            const data = yield this.db("reports")
                 .withSchema(this.DBO_SCHEMA)
-                .where("id", id)
-                .update(payload);
+                .select();
         });
     }
 }
-exports.default = JobTaskActivitiesModel;
+exports.default = ReportModel;

@@ -5,6 +5,7 @@ import CustomError from "../../../utils/lib/customError";
 import JobPostModel from "../../../models/hotelierModel/jobPostModel";
 import {
 	CANCELLATION_REPORT_STATUS,
+	CANCELLATION_REPORT_TYPE,
 	GENDER_TYPE,
 	JOB_APPLICATION_STATUS,
 	JOB_POST_DETAILS_STATUS,
@@ -40,7 +41,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 			const jobPostReport =
 				await cancellationReportModel.getSingleJobPostReport(
 					null,
-					REPORT_TYPE.CANCEL_JOB_POST,
+					CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST,
 					job_post_details_id
 				);
 			if (jobPostReport.status === CANCELLATION_REPORT_STATUS.PENDING) {
@@ -200,7 +201,8 @@ export class JobSeekerJobApplication extends AbstractServices {
 				};
 			} else {
 				if (
-					body.report_type !== REPORT_TYPE.CANCEL_APPLICATION ||
+					body.report_type !==
+						CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION ||
 					!body.reason
 				) {
 					throw new CustomError(

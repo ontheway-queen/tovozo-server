@@ -113,7 +113,6 @@ class JobApplicationModel extends schema_1.default {
     }
     updateMyJobApplicationStatus(application_id, job_seeker_id, status) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log({ application_id, job_seeker_id });
             const [updated] = yield this.db("job_applications")
                 .withSchema(this.DBO_SCHEMA)
                 .update({ status: status })

@@ -10,11 +10,22 @@ export default class JobTaskActivitiesController extends AbstractController {
 		super();
 	}
 
-	public createJobTaskActivity = this.asyncWrapper.wrap(
+	public startJobTaskActivity = this.asyncWrapper.wrap(
 		{ bodySchema: this.validator.createJobTaskActivity },
 		async (req: Request, res: Response) => {
-			const { code, ...data } =
-				await this.service.createJobTaskActivities(req);
+			const { code, ...data } = await this.service.startJobTaskActivities(
+				req
+			);
+			res.status(code).json(data);
+		}
+	);
+
+	public endJobTaskActivity = this.asyncWrapper.wrap(
+		null,
+		async (req: Request, res: Response) => {
+			const { code, ...data } = await this.service.endJobTaskActivities(
+				req
+			);
 			res.status(code).json(data);
 		}
 	);

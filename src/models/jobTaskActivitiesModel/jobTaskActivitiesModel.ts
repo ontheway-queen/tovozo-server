@@ -17,10 +17,41 @@ export default class JobTaskActivitiesModel extends Schema {
 			.insert(payload, "id");
 	}
 
-	public async getSingleTaskActivity(id: number) {
+	public async getSingleTaskActivity(
+		id?: number | null,
+		job_post_details_id?: number | null
+	) {
+		return await this.db("job_task_activities as jta")
+			.withSchema(this.DBO_SCHEMA)
+			.select(
+				"jta.id",
+				"jta.job_application_id",
+				"jta.job_post_details_id",
+				"jta.start_time",
+				"jta.end_time",
+				"jta.approved_at",
+				"ja.status as application_status",
+				"ja.job_seeker_id"
+			)
+			.leftJoin(
+				"job_applications as ja",
+				"ja.job_post_details_id",
+				"jta.job_post_details_id"
+			)
+			.modify((qb) => {
+				if (id) {
+					qb.where("jta.id", id);
+				} else if (job_post_details_id) {
+					qb.where("jta.job_post_details_id", job_post_details_id);
+				}
+			})
+			.first();
+	}
+
+	public async updateJobTaskActivity(id: number, payload: any) {
 		return await this.db("job_task_activities")
 			.withSchema(this.DBO_SCHEMA)
-			.where({ job_post_details_id: id })
-			.first();
+			.where("id", id)
+			.update(payload);
 	}
 }

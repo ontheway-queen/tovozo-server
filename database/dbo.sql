@@ -347,8 +347,9 @@ CREATE TYPE dbo.report_type as ENUM (
 )
 
 CREATE TABLE IF NOT EXISTS dbo.reports (
-  id SERIAL PRIMARY KEY,  
-  related_id INTEGER, -- application_id
+  id SERIAL PRIMARY KEY,    
+  job_post_details_id INTEGER NOT NULL REFERENCES dbo.job_post_details(id),
+  related_id INTEGER NOT NULL REFERENCES dbo.job_applications(id),
   report_type dbo.report_type NOT NULL,
   reason TEXT NOT NULL,            
   status dbo.report_status DEFAULT 'Pending',

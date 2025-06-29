@@ -32,7 +32,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 if (!jobPost) {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
                 }
-                const jobPostReport = yield cancellationReportModel.getSingleJobPostReport(null, constants_1.REPORT_TYPE.CANCEL_JOB_POST, job_post_details_id);
+                const jobPostReport = yield cancellationReportModel.getSingleJobPostReport(null, constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST, job_post_details_id);
                 if (jobPostReport.status === constants_1.CANCELLATION_REPORT_STATUS.PENDING) {
                     throw new customError_1.default("A cancellation request is already pending for this job post.", this.StatusCode.HTTP_CONFLICT);
                 }
@@ -136,7 +136,8 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     };
                 }
                 else {
-                    if (body.report_type !== constants_1.REPORT_TYPE.CANCEL_APPLICATION ||
+                    if (body.report_type !==
+                        constants_1.CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION ||
                         !body.reason) {
                         throw new customError_1.default(this.ResMsg.HTTP_UNPROCESSABLE_ENTITY, this.StatusCode.HTTP_UNPROCESSABLE_ENTITY);
                     }

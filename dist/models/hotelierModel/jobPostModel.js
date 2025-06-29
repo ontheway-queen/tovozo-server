@@ -245,6 +245,7 @@ class JobPostModel extends schema_1.default {
                     FROM dbo.job_post_details 
                     WHERE job_post_id = jpd.job_post_id
                 ) AS vacancy`), this.db.raw(`json_build_object(
+                    'application_id', ja.id,
                     'application_status', ja.status,
                     'job_seeker_id', ja.job_seeker_id,
                     'job_seeker_name', js.name,

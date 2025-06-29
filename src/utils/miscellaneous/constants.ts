@@ -143,12 +143,12 @@ export const CANCEL_JOB_POST_ENUM = ["CANCEL_JOB_POST"] as const;
 
 export const CANCEL_APPLICATION_ENUM = ["CANCEL_APPLICATION"] as const;
 
-export const REPORT_TYPE_ENUM = [
+export const CANCELLATION_REPORT_TYPE_ENUM = [
 	"CANCEL_JOB_POST",
 	"CANCEL_APPLICATION",
 ] as const;
 
-export const REPORT_TYPE = {
+export const CANCELLATION_REPORT_TYPE = {
 	CANCEL_JOB_POST: "CANCEL_JOB_POST",
 	CANCEL_APPLICATION: "CANCEL_APPLICATION",
 } as const;
@@ -197,4 +197,25 @@ export const PAYMENT_STATUS_ENUM = [
 	"PAID",
 	"FAILED",
 	"PARTIAL_PAID",
+] as const;
+
+export const REPORT_TYPE = {
+	TaskActivity: "TaskActivity",
+	JobPost: "JobPost",
+} as const;
+
+export const REPORT_TYPE_ENUM = ["TaskActivity", "JobPost"] as const;
+
+export const REPORT_STATUS = {
+	Pending: "Pending",
+	Reviewed: "Reviewed",
+	Resolved: "Resolved",
+	Rejected: "Rejected",
+} as const;
+
+export const REPORT_STATUS_ENUM = [
+	"Pending",
+	"Reviewed",
+	"Resolved",
+	"Rejected",
 ] as const;

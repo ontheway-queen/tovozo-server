@@ -3,6 +3,7 @@ import AbstractServices from "../../../abstract/abstract.service";
 import CustomError from "../../../utils/lib/customError";
 import {
 	CANCELLATION_REPORT_STATUS,
+	CANCELLATION_REPORT_TYPE,
 	JOB_APPLICATION_STATUS,
 	JOB_POST_DETAILS_STATUS,
 	REPORT_TYPE,
@@ -16,8 +17,8 @@ class CancellationReportService extends AbstractServices {
 		const query: IGetReportsQuery = req.query as any;
 		const model = this.Model.cancellationReportModel();
 		if (
-			query.report_type !== REPORT_TYPE.CANCEL_APPLICATION &&
-			query.report_type !== REPORT_TYPE.CANCEL_JOB_POST
+			query.report_type !== CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION &&
+			query.report_type !== CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST
 		) {
 			throw new CustomError(
 				"Report type is invalid. Please add report type in the query",
@@ -26,9 +27,11 @@ class CancellationReportService extends AbstractServices {
 		}
 
 		let data;
-		if (query.report_type === REPORT_TYPE.CANCEL_JOB_POST) {
+		if (query.report_type === CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST) {
 			data = await model.getJobPostReports(query);
-		} else if (query.report_type === REPORT_TYPE.CANCEL_APPLICATION) {
+		} else if (
+			query.report_type === CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION
+		) {
 			data = await model.getJobApplicationReports(query);
 		}
 
@@ -47,9 +50,9 @@ class CancellationReportService extends AbstractServices {
 		const model = this.Model.cancellationReportModel();
 
 		let data;
-		if (report_type === REPORT_TYPE.CANCEL_APPLICATION) {
+		if (report_type === CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION) {
 			data = await model.getSingleJobApplicationReport(id, report_type);
-		} else if (report_type === REPORT_TYPE.CANCEL_JOB_POST) {
+		} else if (report_type === CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST) {
 			data = await model.getSingleJobPostReport(id, report_type);
 		}
 
@@ -81,12 +84,14 @@ class CancellationReportService extends AbstractServices {
 			const jobApplicationModel = this.Model.jobApplicationModel(trx);
 
 			let report;
-			if (report_type === REPORT_TYPE.CANCEL_JOB_POST) {
+			if (report_type === CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST) {
 				report = await reportModel.getSingleJobPostReport(
 					Number(id),
 					report_type
 				);
-			} else if (report_type === REPORT_TYPE.CANCEL_APPLICATION) {
+			} else if (
+				report_type === CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION
+			) {
 				report = await reportModel.getSingleJobApplicationReport(
 					Number(id),
 					report_type
@@ -119,7 +124,7 @@ class CancellationReportService extends AbstractServices {
 					Number(id),
 					body
 				);
-				if (report_type === REPORT_TYPE.CANCEL_JOB_POST) {
+				if (report_type === CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST) {
 					const jobPost = await jobPostModel.getSingleJobPost(
 						report.id
 					);
@@ -134,7 +139,9 @@ class CancellationReportService extends AbstractServices {
 					await jobApplicationModel.cancelApplication(
 						Number(jobPost.job_post_id)
 					);
-				} else if (report_type === REPORT_TYPE.CANCEL_APPLICATION) {
+				} else if (
+					report_type === CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION
+				) {
 					const application =
 						await jobApplicationModel.updateMyJobApplicationStatus(
 							report.related_id,

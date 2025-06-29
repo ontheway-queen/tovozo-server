@@ -18,8 +18,7 @@ const customError_1 = __importDefault(require("../../../utils/lib/customError"))
 class JobTaskActivitiesService extends abstract_service_1.default {
     constructor() {
         super();
-        this.model = this.Model.jobTaskActivitiesModel();
-        this.createJobTaskActivities = (req) => __awaiter(this, void 0, void 0, function* () {
+        this.startJobTaskActivities = (req) => __awaiter(this, void 0, void 0, function* () {
             const { user_id } = req.jobSeeker;
             const { job_application_id, job_post_details_id } = req.body;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
@@ -39,7 +38,7 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                 if (now < startTime) {
                     throw new customError_1.default(`You cannot start the task before the scheduled start time.`, this.StatusCode.HTTP_FORBIDDEN);
                 }
-                const exitingTaskActivities = yield jobTaskActivitiesModel.getSingleTaskActivity(job_post_details_id);
+                const exitingTaskActivities = yield jobTaskActivitiesModel.getSingleTaskActivity(null, job_post_details_id);
                 if (exitingTaskActivities) {
                     throw new customError_1.default(`A task activity already exists for this job.`, this.StatusCode.HTTP_CONFLICT);
                 }
@@ -55,6 +54,33 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                     message: this.ResMsg.HTTP_SUCCESSFUL,
                     code: this.StatusCode.HTTP_SUCCESSFUL,
                     data: (_a = res[0]) === null || _a === void 0 ? void 0 : _a.id,
+                };
+            }));
+        });
+        this.endJobTaskActivities = (req) => __awaiter(this, void 0, void 0, function* () {
+            const id = req.params.id;
+            const { user_id } = req.jobSeeker;
+            return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const jobApplicationModel = this.Model.jobApplicationModel(trx);
+                const jobTaskActivitiesModel = this.Model.jobTaskActivitiesModel(trx);
+                const taskActivity = yield jobTaskActivitiesModel.getSingleTaskActivity(Number(id), null);
+                if (taskActivity.application_status !==
+                    constants_1.JOB_APPLICATION_STATUS.IN_PROGRESS) {
+                    throw new customError_1.default(`You cannot perform this action because the application is not in progress.`, this.StatusCode.HTTP_FORBIDDEN);
+                }
+                const myApplication = yield jobApplicationModel.getMyJobApplication({
+                    job_application_id: taskActivity.job_application_id,
+                    job_seeker_id: taskActivity.job_seeker_id,
+                });
+                if (!myApplication) {
+                    throw new customError_1.default(`Job application not found or does not belong to you.`, this.StatusCode.HTTP_NOT_FOUND);
+                }
+                yield jobApplicationModel.updateMyJobApplicationStatus(taskActivity.job_application_id, user_id, constants_1.JOB_APPLICATION_STATUS.ENDED);
+                yield jobTaskActivitiesModel.updateJobTaskActivity(taskActivity.id, { end_time: new Date().toISOString() });
+                return {
+                    success: true,
+                    message: this.ResMsg.HTTP_SUCCESSFUL,
+                    code: this.StatusCode.HTTP_SUCCESSFUL,
                 };
             }));
         });

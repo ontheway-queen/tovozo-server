@@ -12,7 +12,8 @@ class JobTaskActivityRouter extends abstract_router_1.default {
         this.callRouter();
     }
     callRouter() {
-        this.router.route("/").post(this.controller.createJobTaskActivity);
+        this.router.route("/").post(this.controller.startJobTaskActivity);
+        this.router.route("/:id").patch(this.controller.endJobTaskActivity);
     }
 }
 exports.default = JobTaskActivityRouter;

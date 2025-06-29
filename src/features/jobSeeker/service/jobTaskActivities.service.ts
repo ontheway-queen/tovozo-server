@@ -4,12 +4,11 @@ import { JOB_APPLICATION_STATUS } from "../../../utils/miscellaneous/constants";
 import CustomError from "../../../utils/lib/customError";
 
 export default class JobTaskActivitiesService extends AbstractServices {
-	private model = this.Model.jobTaskActivitiesModel();
 	constructor() {
 		super();
 	}
 
-	public createJobTaskActivities = async (req: Request) => {
+	public startJobTaskActivities = async (req: Request) => {
 		const { user_id } = req.jobSeeker;
 		const { job_application_id, job_post_details_id } = req.body;
 
@@ -45,6 +44,7 @@ export default class JobTaskActivitiesService extends AbstractServices {
 
 			const exitingTaskActivities =
 				await jobTaskActivitiesModel.getSingleTaskActivity(
+					null,
 					job_post_details_id
 				);
 			if (exitingTaskActivities) {
@@ -73,6 +73,63 @@ export default class JobTaskActivitiesService extends AbstractServices {
 				message: this.ResMsg.HTTP_SUCCESSFUL,
 				code: this.StatusCode.HTTP_SUCCESSFUL,
 				data: res[0]?.id,
+			};
+		});
+	};
+
+	public endJobTaskActivities = async (req: Request) => {
+		const id = req.params.id;
+		const { user_id } = req.jobSeeker;
+
+		return await this.db.transaction(async (trx) => {
+			const jobApplicationModel = this.Model.jobApplicationModel(trx);
+			const jobTaskActivitiesModel =
+				this.Model.jobTaskActivitiesModel(trx);
+
+			const taskActivity =
+				await jobTaskActivitiesModel.getSingleTaskActivity(
+					Number(id),
+					null
+				);
+			if (
+				taskActivity.application_status !==
+				JOB_APPLICATION_STATUS.IN_PROGRESS
+			) {
+				throw new CustomError(
+					`You cannot perform this action because the application is not in progress.`,
+					this.StatusCode.HTTP_FORBIDDEN
+				);
+			}
+
+			const myApplication = await jobApplicationModel.getMyJobApplication(
+				{
+					job_application_id: taskActivity.job_application_id,
+					job_seeker_id: taskActivity.job_seeker_id,
+				}
+			);
+
+			if (!myApplication) {
+				throw new CustomError(
+					`Job application not found or does not belong to you.`,
+					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
+
+			await jobApplicationModel.updateMyJobApplicationStatus(
+				taskActivity.job_application_id,
+				user_id,
+				JOB_APPLICATION_STATUS.ENDED
+			);
+
+			await jobTaskActivitiesModel.updateJobTaskActivity(
+				taskActivity.id,
+				{ end_time: new Date().toISOString() }
+			);
+
+			return {
+				success: true,
+				message: this.ResMsg.HTTP_SUCCESSFUL,
+				code: this.StatusCode.HTTP_SUCCESSFUL,
 			};
 		});
 	};
