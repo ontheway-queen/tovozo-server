@@ -26,7 +26,7 @@ class HotelierCancellationReportService extends abstract_service_1.default {
             const data = yield model.getJobPostReports({
                 user_id,
                 status,
-                report_type: report_type || constants_1.REPORT_TYPE.CANCEL_JOB_POST,
+                report_type: report_type || constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST,
                 limit,
                 skip,
                 search_text,
@@ -36,7 +36,7 @@ class HotelierCancellationReportService extends abstract_service_1.default {
         this.getCancellationReport = (req) => __awaiter(this, void 0, void 0, function* () {
             const { id } = req.params;
             const model = this.Model.cancellationReportModel();
-            const data = yield model.getSingleJobPostReport(Number(id), constants_1.REPORT_TYPE.CANCEL_JOB_POST);
+            const data = yield model.getSingleJobPostReport(Number(id), constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST);
             if (!data) {
                 throw new customError_1.default("Job post cancellation report not found", this.StatusCode.HTTP_NOT_FOUND);
             }
@@ -51,7 +51,7 @@ class HotelierCancellationReportService extends abstract_service_1.default {
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const { id } = req.params;
                 const model = this.Model.cancellationReportModel(trx);
-                const jobPostReport = yield model.getSingleJobPostReport(Number(id), constants_1.REPORT_TYPE.CANCEL_JOB_POST);
+                const jobPostReport = yield model.getSingleJobPostReport(Number(id), constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST);
                 if (!jobPostReport) {
                     throw new customError_1.default("Job post cancellation report not found", this.StatusCode.HTTP_NOT_FOUND);
                 }

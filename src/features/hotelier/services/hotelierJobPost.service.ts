@@ -8,8 +8,8 @@ import {
 	IJobPostPayload,
 } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
 import {
+	CANCELLATION_REPORT_TYPE,
 	JOB_POST_DETAILS_STATUS,
-	REPORT_TYPE,
 } from "../../../utils/miscellaneous/constants";
 import { IHoiteleirJob } from "../utils/types/hotelierJobPostTypes";
 
@@ -242,7 +242,8 @@ class HotelierJobPostService extends AbstractServices {
 				};
 			} else {
 				if (
-					body.report_type !== REPORT_TYPE.CANCEL_JOB_POST ||
+					body.report_type !==
+						CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST ||
 					!body.reason
 				) {
 					throw new CustomError(

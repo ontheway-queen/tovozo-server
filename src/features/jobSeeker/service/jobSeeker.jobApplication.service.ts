@@ -5,12 +5,12 @@ import CustomError from "../../../utils/lib/customError";
 import JobPostModel from "../../../models/hotelierModel/jobPostModel";
 import {
 	CANCELLATION_REPORT_STATUS,
+	CANCELLATION_REPORT_TYPE,
 	GENDER_TYPE,
 	JOB_APPLICATION_STATUS,
 	JOB_POST_DETAILS_STATUS,
 	REPORT_TYPE,
 } from "../../../utils/miscellaneous/constants";
-import app from "../../../server";
 import { IJobPostDetailsStatus } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
 import CancellationReportModel from "../../../models/cancellationReportModel/cancellationReportModel";
 
@@ -41,7 +41,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 			const jobPostReport =
 				await cancellationReportModel.getSingleJobPostReport(
 					null,
-					REPORT_TYPE.CANCEL_JOB_POST,
+					CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST,
 					job_post_details_id
 				);
 			if (jobPostReport.status === CANCELLATION_REPORT_STATUS.PENDING) {
@@ -87,8 +87,8 @@ export class JobSeekerJobApplication extends AbstractServices {
 			await model.markJobPostDetailAsApplied(Number(job_post_details_id));
 			return {
 				success: true,
-				message: this.ResMsg.HTTP_SUCCESSFUL,
-				code: this.StatusCode.HTTP_SUCCESSFUL,
+				message: this.ResMsg.HTTP_OK,
+				code: this.StatusCode.HTTP_OK,
 				data: res[0]?.id,
 			};
 		});
@@ -109,7 +109,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 		});
 		return {
 			success: true,
-			message: this.ResMsg.HTTP_SUCCESSFUL,
+			message: this.ResMsg.HTTP_OK,
 			code: this.StatusCode.HTTP_OK,
 			data,
 			total,
@@ -132,7 +132,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 		}
 		return {
 			success: true,
-			message: this.ResMsg.HTTP_SUCCESSFUL,
+			message: this.ResMsg.HTTP_OK,
 			code: this.StatusCode.HTTP_OK,
 			data,
 		};
@@ -168,16 +168,18 @@ export class JobSeekerJobApplication extends AbstractServices {
 			}
 
 			const currentTime = new Date();
-			const startTime = new Date(application.start_time);
+			const startTime = new Date(application?.start_time);
 			const hoursDiff =
 				(startTime.getTime() - currentTime.getTime()) /
 				(1000 * 60 * 60);
 
 			if (hoursDiff > 24) {
-				const data = await applicationModel.cancelMyJobApplication(
-					parseInt(id),
-					user_id
-				);
+				const data =
+					await applicationModel.updateMyJobApplicationStatus(
+						parseInt(id),
+						user_id,
+						JOB_APPLICATION_STATUS.CANCELLED
+					);
 
 				if (!data) {
 					throw new CustomError(
@@ -193,13 +195,14 @@ export class JobSeekerJobApplication extends AbstractServices {
 
 				return {
 					success: true,
-					message: this.ResMsg.HTTP_SUCCESSFUL,
+					message: this.ResMsg.HTTP_OK,
 					code: this.StatusCode.HTTP_OK,
 					data: data.id,
 				};
 			} else {
 				if (
-					body.report_type !== REPORT_TYPE.CANCEL_APPLICATION ||
+					body.report_type !==
+						CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION ||
 					!body.reason
 				) {
 					throw new CustomError(
@@ -219,7 +222,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 
 				return {
 					success: true,
-					message: this.ResMsg.HTTP_SUCCESSFUL,
+					message: this.ResMsg.HTTP_OK,
 					code: this.StatusCode.HTTP_OK,
 					data: data[0].id,
 				};

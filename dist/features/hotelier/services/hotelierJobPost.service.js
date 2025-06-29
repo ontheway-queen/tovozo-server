@@ -161,7 +161,8 @@ class HotelierJobPostService extends abstract_service_1.default {
                     };
                 }
                 else {
-                    if (body.report_type !== constants_1.REPORT_TYPE.CANCEL_JOB_POST ||
+                    if (body.report_type !==
+                        constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST ||
                         !body.reason) {
                         throw new customError_1.default("Invalid request: 'report_type' and 'reason' is required.", this.StatusCode.HTTP_UNPROCESSABLE_ENTITY);
                     }

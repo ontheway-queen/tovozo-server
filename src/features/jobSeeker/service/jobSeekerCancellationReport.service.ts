@@ -2,7 +2,7 @@ import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
 import { IGetJobPostListParams } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
 import { IGetReportsQuery } from "../../../utils/modelTypes/cancellationReport/cancellationReport.types";
-import { REPORT_TYPE } from "../../../utils/miscellaneous/constants";
+import { CANCELLATION_REPORT_TYPE } from "../../../utils/miscellaneous/constants";
 
 export class JobSeekerCancellationReportServices extends AbstractServices {
 	constructor() {
@@ -34,7 +34,7 @@ export class JobSeekerCancellationReportServices extends AbstractServices {
 		const model = this.Model.cancellationReportModel();
 		const data = await model.getSingleJobApplicationReport(
 			Number(id),
-			REPORT_TYPE.CANCEL_APPLICATION,
+			CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION,
 			null,
 			user_id
 		);

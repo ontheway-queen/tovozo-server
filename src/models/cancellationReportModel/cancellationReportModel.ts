@@ -1,3 +1,4 @@
+import { IJobCancellationReport } from "../../features/hotelier/utils/types/hotelierJobCancellationReportTypes";
 import { TDB } from "../../features/public/utils/types/publicCommon.types";
 import Schema from "../../utils/miscellaneous/schema";
 import {
@@ -18,7 +19,7 @@ class CancellationReportModel extends Schema {
 	// get job post reports list
 	public async getJobPostReports(
 		query: IGetReportsQuery
-	): Promise<ICancellationReportResponse> {
+	): Promise<{ data: IJobCancellationReport[]; total?: number }> {
 		const {
 			user_id,
 			report_type,
@@ -36,16 +37,28 @@ class CancellationReportModel extends Schema {
 				"cr.report_type",
 				"cr.status",
 				"u.name as reporter_name",
-				"jp.title",
-				"jp.details",
-				"jp.requirements",
-				"jp.hourly_rate",
-				"jp.prefer_gender",
+				this.db.raw(`json_build_object(
+                    'title', jp.title,
+                    'details', jp.details,
+                    'requirements',jp.requirements,
+                    'prefer_gender', jp.prefer_gender,
+                    'hourly_rate', jp.hourly_rate,
+                    'start_time', jpd.start_time,
+                    'end_time', jpd.end_time
+                ) as job_post_details`),
+				this.db.raw(`json_build_object(
+                    'id', category.id,
+                    'title', category.title,
+                    'details', category.details,
+                    'status', category.status,
+                    'is_deleted', category.is_deleted
+                    ) as category`),
 				"cr.created_at as reported_at"
 			)
 			.leftJoin("user as u", "u.id", "cr.reporter_id")
 			.leftJoin("job_post_details as jpd", "cr.related_id", "jpd.id")
 			.leftJoin("job_post as jp", "jpd.job_post_id", "jp.id")
+			.leftJoin("jobs as category", "jpd.job_id", "category.id")
 			.where((qb) => {
 				if (user_id) {
 					qb.andWhere("cr.reporter_id", user_id);
@@ -71,6 +84,7 @@ class CancellationReportModel extends Schema {
 				.leftJoin("user as u", "u.id", "cr.reporter_id")
 				.leftJoin("job_post_details as jpd", "cr.related_id", "jpd.id")
 				.leftJoin("job_post as jp", "jpd.job_post_id", "jp.id")
+				.leftJoin("jobs as category", "jpd.job_id", "category.id")
 				.where((qb) => {
 					if (user_id) {
 						qb.andWhere("cr.reporter_id", user_id);
@@ -104,16 +118,28 @@ class CancellationReportModel extends Schema {
 				"cr.report_type",
 				"cr.status",
 				"u.name as reporter_name",
-				"jp.title",
-				"jp.details",
-				"jp.requirements",
-				"jp.hourly_rate",
-				"jp.prefer_gender",
+				this.db.raw(`json_build_object(
+                    'title', jp.title,
+                    'details', jp.details,
+                    'requirements',jp.requirements,
+                    'prefer_gender', jp.prefer_gender,
+                    'hourly_rate', jp.hourly_rate,
+                    'start_time', jpd.start_time,
+                    'end_time', jpd.end_time
+                ) as job_post_details`),
+				this.db.raw(`json_build_object(
+                    'id', category.id,
+                    'title', category.title,
+                    'details', category.details,
+                    'status', category.status,
+                    'is_deleted', category.is_deleted
+                    ) as category`),
 				"cr.created_at as reported_at"
 			)
 			.leftJoin("user as u", "u.id", "cr.reporter_id")
 			.leftJoin("job_post_details as jpd", "cr.related_id", "jpd.id")
 			.leftJoin("job_post as jp", "jpd.job_post_id", "jp.id")
+			.leftJoin("jobs as category", "jpd.job_id", "category.id")
 			.where("cr.report_type", report_type)
 			.modify((qb) => {
 				if (id) {
