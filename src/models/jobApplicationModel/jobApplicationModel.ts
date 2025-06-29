@@ -1,13 +1,10 @@
+import { IJobSeekerJobApplication } from "../../features/jobSeeker/utils/types/jobSeekerJobApplicationTypes";
 import { TDB } from "../../features/public/utils/types/publicCommon.types";
-import CustomError from "../../utils/lib/customError";
-import {
-	JOB_APPLICATION_STATUS,
-	JOB_POST_DETAILS_STATUS,
-} from "../../utils/miscellaneous/constants";
 import Schema from "../../utils/miscellaneous/schema";
 import {
 	ICreateJobApplicationPayload,
 	IGetMyJobApplicationsParams,
+	IJobApplicationStatus,
 } from "../../utils/modelTypes/jobApplication/jobApplicationModel.types";
 
 export default class JobApplicationModel extends Schema {
@@ -31,7 +28,9 @@ export default class JobApplicationModel extends Schema {
 			.where({ id: job_post_detail_id });
 	}
 
-	public async getMyJobApplications(params: IGetMyJobApplicationsParams) {
+	public async getMyJobApplications(
+		params: IGetMyJobApplicationsParams
+	): Promise<{ data: IJobSeekerJobApplication[]; total?: number }> {
 		const {
 			user_id: job_seeker_id,
 			orderBy,
@@ -45,25 +44,32 @@ export default class JobApplicationModel extends Schema {
 			.withSchema(this.DBO_SCHEMA)
 			.select(
 				"ja.id as job_application_id",
-				"ja.job_post_details_id",
 				"ja.status as job_application_status",
+				"ja.payment_status",
 				"ja.created_at as applied_at",
 				"jpd.id as job_post_details_id",
 				"jpd.status as job_post_details_status",
-				"jpd.job_post_id",
 				"jpd.start_time",
 				"jpd.end_time",
-				"jpd.status as job_post_details_status",
-				"jp.id as job_post_id",
+				"jpd.job_post_id",
 				"jp.title as job_post_title",
+				"jp.details as job_post_details",
+				"jp.requirements as job_post_requirements",
 				"org.id as organization_id",
 				"org.name as organization_name",
 				"vwl.location_id",
 				"vwl.location_name",
 				"vwl.location_address",
-				"vwl.city_name",
+				"vwl.country_name",
 				"vwl.state_name",
-				"vwl.country_name"
+				"vwl.city_name",
+				this.db.raw(`json_build_object(
+                    'id', j.id,
+                    'title', j.title,
+                    'details', j.details,
+                    'status', j.status,
+                    'is_deleted', j.is_deleted
+                ) as category`)
 			)
 			.leftJoin(
 				"job_post_details as jpd",
@@ -74,12 +80,12 @@ export default class JobApplicationModel extends Schema {
 			.joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
 				`${this.HOTELIER}.${this.TABLES.organization}`,
 			])
-			// .join("jobs as j", "j.id", "jpd.job_id")
 			.leftJoin(
 				"vw_location as vwl",
 				"vwl.location_id",
 				"org.location_id"
 			)
+			.leftJoin("jobs as j", "jpd.job_id", "j.id")
 			.where("ja.job_seeker_id", job_seeker_id)
 			.modify((qb) => {
 				if (status) {
@@ -115,30 +121,43 @@ export default class JobApplicationModel extends Schema {
 	}: {
 		job_application_id: number;
 		job_seeker_id: number;
-	}) {
+	}): Promise<IJobSeekerJobApplication> {
 		const data = await this.db("job_applications as ja")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
 				"ja.id as job_application_id",
-				"ja.job_post_details_id",
 				"ja.status as job_application_status",
+				"ja.payment_status",
 				"ja.created_at as applied_at",
 				"jpd.id as job_post_details_id",
 				"jpd.status as job_post_details_status",
-				"jpd.job_post_id",
 				"jpd.start_time",
 				"jpd.end_time",
-				"jpd.status as job_post_details_status",
-				"jp.id as job_post_id",
+				"jpd.job_post_id",
 				"jp.title as job_post_title",
+				"jp.details as job_post_details",
+				"jp.requirements as job_post_requirements",
 				"org.id as organization_id",
 				"org.name as organization_name",
 				"vwl.location_id",
 				"vwl.location_name",
 				"vwl.location_address",
-				"vwl.city_name",
+				"vwl.country_name",
 				"vwl.state_name",
-				"vwl.country_name"
+				"vwl.city_name",
+				this.db.raw(`json_build_object(
+                    'id', j.id,
+                    'title', j.title,
+                    'details', j.details,
+                    'status', j.status,
+                    'is_deleted', j.is_deleted
+                ) as category`),
+				this.db.raw(`json_build_object(
+                    'id', jta.id,
+                    'start_time', jta.start_time,
+                    'end_time', jta.end_time,
+                    'approved_at', jta.approved_at
+                ) as job_task_activity`)
 			)
 			.leftJoin(
 				"job_post_details as jpd",
@@ -149,11 +168,16 @@ export default class JobApplicationModel extends Schema {
 			.joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
 				`${this.HOTELIER}.${this.TABLES.organization}`,
 			])
-			// .join("jobs as j", "j.id", "jpd.job_id")
 			.leftJoin(
 				"vw_location as vwl",
 				"vwl.location_id",
 				"org.location_id"
+			)
+			.leftJoin("jobs as j", "jpd.job_id", "j.id")
+			.leftJoin(
+				"job_task_activities as jta",
+				"jta.job_application_id",
+				"ja.id"
 			)
 			.where({
 				"ja.id": job_application_id,
@@ -164,14 +188,15 @@ export default class JobApplicationModel extends Schema {
 		return data;
 	}
 
-	public async cancelMyJobApplication(
+	public async updateMyJobApplicationStatus(
 		application_id: number,
-		job_seeker_id: number
+		job_seeker_id: number,
+		status: IJobApplicationStatus
 	) {
 		console.log({ application_id, job_seeker_id });
 		const [updated] = await this.db("job_applications")
 			.withSchema(this.DBO_SCHEMA)
-			.update({ status: JOB_APPLICATION_STATUS.CANCELLED })
+			.update({ status: status })
 			.where({
 				id: application_id,
 				job_seeker_id: job_seeker_id,

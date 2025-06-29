@@ -12,7 +12,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const constants_1 = require("../../utils/miscellaneous/constants");
 const schema_1 = __importDefault(require("../../utils/miscellaneous/schema"));
 class JobApplicationModel extends schema_1.default {
     constructor(db) {
@@ -39,14 +38,20 @@ class JobApplicationModel extends schema_1.default {
             const { user_id: job_seeker_id, orderBy, orderTo, status, limit, skip, need_total = true, } = params;
             const data = yield this.db("job_applications as ja")
                 .withSchema(this.DBO_SCHEMA)
-                .select("ja.id as job_application_id", "ja.job_post_details_id", "ja.status as job_application_status", "ja.created_at as applied_at", "jpd.id as job_post_details_id", "jpd.status as job_post_details_status", "jpd.job_post_id", "jpd.start_time", "jpd.end_time", "jpd.status as job_post_details_status", "jp.id as job_post_id", "jp.title as job_post_title", "org.id as organization_id", "org.name as organization_name", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.city_name", "vwl.state_name", "vwl.country_name")
+                .select("ja.id as job_application_id", "ja.status as job_application_status", "ja.payment_status", "ja.created_at as applied_at", "jpd.id as job_post_details_id", "jpd.status as job_post_details_status", "jpd.start_time", "jpd.end_time", "jpd.job_post_id", "jp.title as job_post_title", "jp.details as job_post_details", "jp.requirements as job_post_requirements", "org.id as organization_id", "org.name as organization_name", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.country_name", "vwl.state_name", "vwl.city_name", this.db.raw(`json_build_object(
+                    'id', j.id,
+                    'title', j.title,
+                    'details', j.details,
+                    'status', j.status,
+                    'is_deleted', j.is_deleted
+                ) as category`))
                 .leftJoin("job_post_details as jpd", "ja.job_post_details_id", "jpd.id")
                 .leftJoin("job_post as jp", "jpd.job_post_id", "jp.id")
                 .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
                 `${this.HOTELIER}.${this.TABLES.organization}`,
             ])
-                // .join("jobs as j", "j.id", "jpd.job_id")
                 .leftJoin("vw_location as vwl", "vwl.location_id", "org.location_id")
+                .leftJoin("jobs as j", "jpd.job_id", "j.id")
                 .where("ja.job_seeker_id", job_seeker_id)
                 .modify((qb) => {
                 if (status) {
@@ -78,14 +83,26 @@ class JobApplicationModel extends schema_1.default {
         return __awaiter(this, arguments, void 0, function* ({ job_application_id, job_seeker_id, }) {
             const data = yield this.db("job_applications as ja")
                 .withSchema(this.DBO_SCHEMA)
-                .select("ja.id as job_application_id", "ja.job_post_details_id", "ja.status as job_application_status", "ja.created_at as applied_at", "jpd.id as job_post_details_id", "jpd.status as job_post_details_status", "jpd.job_post_id", "jpd.start_time", "jpd.end_time", "jpd.status as job_post_details_status", "jp.id as job_post_id", "jp.title as job_post_title", "org.id as organization_id", "org.name as organization_name", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.city_name", "vwl.state_name", "vwl.country_name")
+                .select("ja.id as job_application_id", "ja.status as job_application_status", "ja.payment_status", "ja.created_at as applied_at", "jpd.id as job_post_details_id", "jpd.status as job_post_details_status", "jpd.start_time", "jpd.end_time", "jpd.job_post_id", "jp.title as job_post_title", "jp.details as job_post_details", "jp.requirements as job_post_requirements", "org.id as organization_id", "org.name as organization_name", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.country_name", "vwl.state_name", "vwl.city_name", this.db.raw(`json_build_object(
+                    'id', j.id,
+                    'title', j.title,
+                    'details', j.details,
+                    'status', j.status,
+                    'is_deleted', j.is_deleted
+                ) as category`), this.db.raw(`json_build_object(
+                    'id', jta.id,
+                    'start_time', jta.start_time,
+                    'end_time', jta.end_time,
+                    'approved_at', jta.approved_at
+                ) as job_task_activity`))
                 .leftJoin("job_post_details as jpd", "ja.job_post_details_id", "jpd.id")
                 .leftJoin("job_post as jp", "jpd.job_post_id", "jp.id")
                 .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
                 `${this.HOTELIER}.${this.TABLES.organization}`,
             ])
-                // .join("jobs as j", "j.id", "jpd.job_id")
                 .leftJoin("vw_location as vwl", "vwl.location_id", "org.location_id")
+                .leftJoin("jobs as j", "jpd.job_id", "j.id")
+                .leftJoin("job_task_activities as jta", "jta.job_application_id", "ja.id")
                 .where({
                 "ja.id": job_application_id,
                 "ja.job_seeker_id": job_seeker_id,
@@ -94,12 +111,12 @@ class JobApplicationModel extends schema_1.default {
             return data;
         });
     }
-    cancelMyJobApplication(application_id, job_seeker_id) {
+    updateMyJobApplicationStatus(application_id, job_seeker_id, status) {
         return __awaiter(this, void 0, void 0, function* () {
             console.log({ application_id, job_seeker_id });
             const [updated] = yield this.db("job_applications")
                 .withSchema(this.DBO_SCHEMA)
-                .update({ status: constants_1.JOB_APPLICATION_STATUS.CANCELLED })
+                .update({ status: status })
                 .where({
                 id: application_id,
                 job_seeker_id: job_seeker_id,

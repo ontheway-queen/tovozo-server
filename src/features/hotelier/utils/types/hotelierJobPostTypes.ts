@@ -3,13 +3,8 @@ import {
 	IJobPostDetailsStatus,
 	IPaymentStatus,
 } from "../../../../utils/modelTypes/hotelier/jobPostModelTYpes";
-
-export interface JobCategory {
-	id: number;
-	title: string;
-	details: string | null;
-	status: boolean;
-}
+import { IJobTaskActivity } from "../../../../utils/modelTypes/jobTaskActivities/jobTaskActivitiesModel.types";
+import { IGetJobResponse } from "./hotelierJobTypes";
 
 export interface JobSeekerDetails {
 	application_status: string | null;
@@ -33,7 +28,7 @@ export interface IHoiteleirJob {
 	end_time: string;
 	organization_id: number;
 	title: string;
-	job_category: JobCategory;
+	job_category: IGetJobResponse;
 	hourly_rate: string;
 	created_time: string;
 	prefer_gender: IGenderType;
@@ -46,6 +41,7 @@ export interface IHoiteleirJob {
 	country_name: string;
 	vacancy: string;
 	job_seeker_details: JobSeekerDetails;
+	job_task_activities: IJobTaskActivity;
 }
 
 export interface IHoiteleirJobList {

@@ -99,7 +99,7 @@ class CancellationReportService extends abstract_service_1.default {
                         yield jobApplicationModel.cancelApplication(Number(jobPost.job_post_id));
                     }
                     else if (report_type === constants_1.REPORT_TYPE.CANCEL_APPLICATION) {
-                        const application = yield jobApplicationModel.cancelMyJobApplication(report.related_id, report.reporter_id);
+                        const application = yield jobApplicationModel.updateMyJobApplicationStatus(report.related_id, report.reporter_id, constants_1.JOB_APPLICATION_STATUS.CANCELLED);
                         yield jobPostModel.updateJobPostDetailsStatus(application.job_post_details_id, constants_1.JOB_POST_DETAILS_STATUS.Pending);
                     }
                 }

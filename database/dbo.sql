@@ -320,24 +320,41 @@ CREATE TABLE IF NOT EXISTS dbo.job_applications (
 );
 
 
-CREATE TYPE dbo.job_task_activities_status AS ENUM (
-  'Requested',
-  'Rejected',
-  'InProgress',
-  'Completed'
-);
-
 CREATE TABLE IF NOT EXISTS dbo.job_task_activities (
     id SERIAL PRIMARY KEY,
     job_application_id INTEGER NOT NULL REFERENCES dbo.job_applications(id),
     job_post_details_id INTEGER NOT NULL REFERENCES dbo.job_post_details(id),
-    job_seeker_id INTEGER NOT NULL REFERENCES jobseeker.job_seeker(user_id),
-    organization_id integer NOT NULL,
-    status dbo.job_task_activities_status DEFAULT 'Requested',
+    -- job_seeker_id INTEGER NOT NULL REFERENCES jobseeker.job_seeker(user_id),
+    -- organization_id integer NOT NULL REFERENCES hotelier.organization(id),
     start_time TIMESTAMP,
     end_time TIMESTAMP,
-    start_approved_time TIMESTAMP,
-    end_approved_time TIMESTAMP,
+    approved_at TIMESTAMP,
     is_deleted BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- report
+CREATE TYPE dbo.report_status AS ENUM (
+  'Pending',
+  'Reviewed',
+  'Resolved',
+  'Rejected'
+);
+
+CREATE TYPE dbo.report_type as ENUM (
+    'TaskActivity', -- for hotelier
+    'JobPost' -- for job seeker
+)
+
+CREATE TABLE IF NOT EXISTS dbo.reports (
+  id SERIAL PRIMARY KEY,  
+  related_id INTEGER, -- application_id
+  report_type dbo.report_type NOT NULL,
+  reason TEXT NOT NULL,            
+  status dbo.report_status DEFAULT 'Pending',
+  resolution TEXT,                   
+  resolved_by INTEGER,               
+  resolved_at TIMESTAMP,             
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
 );

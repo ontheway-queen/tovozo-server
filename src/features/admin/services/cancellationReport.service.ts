@@ -3,6 +3,7 @@ import AbstractServices from "../../../abstract/abstract.service";
 import CustomError from "../../../utils/lib/customError";
 import {
 	CANCELLATION_REPORT_STATUS,
+	JOB_APPLICATION_STATUS,
 	JOB_POST_DETAILS_STATUS,
 	REPORT_TYPE,
 } from "../../../utils/miscellaneous/constants";
@@ -135,9 +136,10 @@ class CancellationReportService extends AbstractServices {
 					);
 				} else if (report_type === REPORT_TYPE.CANCEL_APPLICATION) {
 					const application =
-						await jobApplicationModel.cancelMyJobApplication(
+						await jobApplicationModel.updateMyJobApplicationStatus(
 							report.related_id,
-							report.reporter_id
+							report.reporter_id,
+							JOB_APPLICATION_STATUS.CANCELLED
 						);
 					await jobPostModel.updateJobPostDetailsStatus(
 						application.job_post_details_id,

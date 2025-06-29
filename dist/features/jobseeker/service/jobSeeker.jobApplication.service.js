@@ -56,8 +56,8 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 yield model.markJobPostDetailAsApplied(Number(job_post_details_id));
                 return {
                     success: true,
-                    message: this.ResMsg.HTTP_SUCCESSFUL,
-                    code: this.StatusCode.HTTP_SUCCESSFUL,
+                    message: this.ResMsg.HTTP_OK,
+                    code: this.StatusCode.HTTP_OK,
                     data: (_a = res[0]) === null || _a === void 0 ? void 0 : _a.id,
                 };
             }));
@@ -76,7 +76,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
             });
             return {
                 success: true,
-                message: this.ResMsg.HTTP_SUCCESSFUL,
+                message: this.ResMsg.HTTP_OK,
                 code: this.StatusCode.HTTP_OK,
                 data,
                 total,
@@ -95,7 +95,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
             }
             return {
                 success: true,
-                message: this.ResMsg.HTTP_SUCCESSFUL,
+                message: this.ResMsg.HTTP_OK,
                 code: this.StatusCode.HTTP_OK,
                 data,
             };
@@ -119,18 +119,18 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     throw new customError_1.default("This application cannot be cancelled because it has already been processed.", this.StatusCode.HTTP_BAD_REQUEST);
                 }
                 const currentTime = new Date();
-                const startTime = new Date(application.start_time);
+                const startTime = new Date(application === null || application === void 0 ? void 0 : application.start_time);
                 const hoursDiff = (startTime.getTime() - currentTime.getTime()) /
                     (1000 * 60 * 60);
                 if (hoursDiff > 24) {
-                    const data = yield applicationModel.cancelMyJobApplication(parseInt(id), user_id);
+                    const data = yield applicationModel.updateMyJobApplicationStatus(parseInt(id), user_id, constants_1.JOB_APPLICATION_STATUS.CANCELLED);
                     if (!data) {
                         throw new customError_1.default("Application data with the requested id not found", this.StatusCode.HTTP_NOT_FOUND);
                     }
                     yield jobPostModel.updateJobPostDetailsStatus(data.job_post_id, constants_1.JOB_POST_DETAILS_STATUS.Pending);
                     return {
                         success: true,
-                        message: this.ResMsg.HTTP_SUCCESSFUL,
+                        message: this.ResMsg.HTTP_OK,
                         code: this.StatusCode.HTTP_OK,
                         data: data.id,
                     };
@@ -146,7 +146,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     const data = yield cancellationReportModel.requestForCancellationReport(body);
                     return {
                         success: true,
-                        message: this.ResMsg.HTTP_SUCCESSFUL,
+                        message: this.ResMsg.HTTP_OK,
                         code: this.StatusCode.HTTP_OK,
                         data: data[0].id,
                     };

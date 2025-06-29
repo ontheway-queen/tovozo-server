@@ -1,4 +1,4 @@
-import { IGetJobResponse } from "../../features/jobSeeker/utils/types/jobSeekerJobsTypes";
+import { IGetJobResponse } from "../../features/hotelier/utils/types/hotelierJobTypes";
 import { TDB } from "../../features/public/utils/types/publicCommon.types";
 import Schema from "../../utils/miscellaneous/schema";
 import {

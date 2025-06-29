@@ -146,7 +146,12 @@ class JobPostModel extends schema_1.default {
                     'country_name', js_vwl.country_name,
                     'longitude', js_vwl.longitude,
                     'latitude', js_vwl.latitude
-                ) as job_seeker_details`))
+                ) as job_seeker_details`), this.db.raw(`json_build_object(
+                    'id', jta.id,
+                    'start_time', jta.start_time,
+                    'end_time', jta.end_time,
+                    'approved_at', jta.approved_at
+                ) as job_task_activity`))
                 .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
                 `${this.HOTELIER}.${this.TABLES.organization}`,
             ])
@@ -160,6 +165,7 @@ class JobPostModel extends schema_1.default {
                 `${this.JOB_SEEKER}.${this.TABLES.job_seeker}`,
             ])
                 .leftJoin("vw_location as js_vwl", "js_vwl.location_id", "jsu.location_id")
+                .leftJoin("job_task_activities as jta", "jta.job_application_id", "ja.id")
                 .where((qb) => {
                 if (user_id) {
                     qb.andWhere("u.id", user_id);
@@ -250,7 +256,12 @@ class JobPostModel extends schema_1.default {
                     'country_name', js_vwl.country_name,
                     'longitude', js_vwl.longitude,
                     'latitude', js_vwl.latitude
-                ) as job_seeker_details`))
+                ) as job_seeker_details`), this.db.raw(`json_build_object(
+                    'id', jta.id,
+                    'start_time', jta.start_time,
+                    'end_time', jta.end_time,
+                    'approved_at', jta.approved_at
+                ) as job_task_activity`))
                 .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
                 `${this.HOTELIER}.${this.TABLES.organization}`,
             ])
@@ -264,6 +275,7 @@ class JobPostModel extends schema_1.default {
                 `${this.JOB_SEEKER}.${this.TABLES.job_seeker}`,
             ])
                 .leftJoin("vw_location as js_vwl", "js_vwl.location_id", "jsu.location_id")
+                .leftJoin("job_task_activities as jta", "jta.job_application_id", "ja.id")
                 .where("jpd.id", id)
                 .first();
         });
