@@ -1,3 +1,11 @@
+import {
+	IHoiteleirJob,
+	IHoiteleirJobList,
+} from "../../features/hotelier/utils/types/hotelierJobPostTypes";
+import {
+	IJobSeekerJob,
+	IJobSeekerJobList,
+} from "../../features/jobSeeker/utils/types/jobSeekerJobPostTypes";
 import { TDB } from "../../features/public/utils/types/publicCommon.types";
 import { JOB_POST_DETAILS_STATUS } from "../../utils/miscellaneous/constants";
 import Schema from "../../utils/miscellaneous/schema";
@@ -8,8 +16,6 @@ import {
 	IJobPostDetailsPayload,
 	IJobPostDetailsStatus,
 	IJobPostPayload,
-	IJobSeekerJob,
-	IJobSeekerJobList,
 } from "../../utils/modelTypes/hotelier/jobPostModelTYpes";
 
 class JobPostModel extends Schema {
@@ -196,7 +202,9 @@ class JobPostModel extends Schema {
 	}
 
 	// hotelier job post with job seeker details
-	public async getHotelierJobPostList(params: IGetJobPostListParams) {
+	public async getHotelierJobPostList(
+		params: IGetJobPostListParams
+	): Promise<IHoiteleirJobList> {
 		const {
 			user_id,
 			title,
@@ -355,7 +363,9 @@ class JobPostModel extends Schema {
 	}
 
 	// get single job post with job seeker details for hotelier
-	public async getSingleJobPostWithJobSeekerDetails(id: number) {
+	public async getSingleJobPostWithJobSeekerDetails(
+		id: number
+	): Promise<IHoiteleirJob> {
 		return await this.db("job_post as jp")
 			.withSchema(this.DBO_SCHEMA)
 			.select(

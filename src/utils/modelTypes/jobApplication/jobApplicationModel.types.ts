@@ -1,8 +1,12 @@
-export interface JobApplication {
+import { JOB_APPLICATION_STATUS } from "../../miscellaneous/constants";
+
+export type IJobApplicationStatus = keyof typeof JOB_APPLICATION_STATUS;
+
+export interface IJobApplication {
 	id: number;
 	job_post_details_id: number;
 	job_seeker_id: number;
-	status: "approved" | "cancelled" | "hired" | "rejected";
+	status: IJobApplicationStatus;
 	created_at: string;
 	is_deleted: boolean;
 }

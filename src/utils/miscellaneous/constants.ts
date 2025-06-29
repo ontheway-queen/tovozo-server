@@ -180,3 +180,17 @@ export const JOB_APPLICATION_STATUS_ENUM = [
 	"CANCELLED",
 	"COMPLETED",
 ];
+
+export const PAYMENT_STATUS = {
+	UNPAID: "UNPAID",
+	PAID: "PAID",
+	FAILED: "FAILED",
+	PARTIAL_PAID: "PARTIAL_PAID",
+} as const;
+
+export const PAYMENT_STATUS_ENUM = [
+	"UNPAID",
+	"PAID",
+	"FAILED",
+	"PARTIAL_PAID",
+] as const;

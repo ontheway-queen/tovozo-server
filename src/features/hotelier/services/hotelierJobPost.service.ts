@@ -3,7 +3,6 @@ import AbstractServices from "../../../abstract/abstract.service";
 import CustomError from "../../../utils/lib/customError";
 import {
 	IGetJobPostListParams,
-	IHoiteleirJob,
 	IJobPostDetailsPayload,
 	IJobPostDetailsStatus,
 	IJobPostPayload,
@@ -12,6 +11,7 @@ import {
 	JOB_POST_DETAILS_STATUS,
 	REPORT_TYPE,
 } from "../../../utils/miscellaneous/constants";
+import { IHoiteleirJob } from "../utils/types/hotelierJobPostTypes";
 
 class HotelierJobPostService extends AbstractServices {
 	public async createJobPost(req: Request) {
@@ -131,7 +131,7 @@ class HotelierJobPostService extends AbstractServices {
 			}
 			if (
 				jobPost.job_post_details_status !==
-				JOB_POST_DETAILS_STATUS.Pending
+				(JOB_POST_DETAILS_STATUS.Pending as unknown as IJobPostDetailsStatus)
 			) {
 				throw new CustomError(
 					"The job post cannot be updated because its status is not 'Pending'.",
@@ -198,7 +198,10 @@ class HotelierJobPostService extends AbstractServices {
 					this.StatusCode.HTTP_NOT_FOUND
 				);
 			}
-			if (jobPost.status === JOB_POST_DETAILS_STATUS.Cancelled) {
+			if (
+				jobPost.status ===
+				(JOB_POST_DETAILS_STATUS.Cancelled as unknown as typeof jobPost.status)
+			) {
 				throw new CustomError(
 					"Job post already cancelled",
 					this.StatusCode.HTTP_BAD_REQUEST

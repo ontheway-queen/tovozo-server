@@ -137,7 +137,8 @@ class HotelierJobPostService extends abstract_service_1.default {
                 if (!jobPost) {
                     throw new customError_1.default("Job post not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }
-                if (jobPost.status === constants_1.JOB_POST_DETAILS_STATUS.Cancelled) {
+                if (jobPost.status ===
+                    constants_1.JOB_POST_DETAILS_STATUS.Cancelled) {
                     throw new customError_1.default("Job post already cancelled", this.StatusCode.HTTP_BAD_REQUEST);
                 }
                 const report = yield cancellationReportModel.getSingleReportWithRelatedId(jobPost.id);
