@@ -11,10 +11,7 @@ import {
 	REPORT_TYPE,
 } from "../../../utils/miscellaneous/constants";
 import app from "../../../server";
-import {
-	IJobPostDetailsStatus,
-	IJobSeekerJob,
-} from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
+import { IJobPostDetailsStatus } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
 import CancellationReportModel from "../../../models/cancellationReportModel/cancellationReportModel";
 
 export class JobSeekerJobApplication extends AbstractServices {
@@ -66,7 +63,10 @@ export class JobSeekerJobApplication extends AbstractServices {
 				);
 			}
 
-			if (jobPost.status !== JOB_POST_DETAILS_STATUS.Pending) {
+			if (
+				jobPost.status !==
+				(JOB_POST_DETAILS_STATUS.Pending as unknown as IJobPostDetailsStatus)
+			) {
 				throw new CustomError(
 					"This job post is no longer accepting applications.",
 					this.StatusCode.HTTP_BAD_REQUEST

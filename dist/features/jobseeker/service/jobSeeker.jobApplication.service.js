@@ -42,7 +42,8 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     gender !== jobPost.gender) {
                     throw new customError_1.default("Your gender does not meet the eligibility criteria for this job.", this.StatusCode.HTTP_BAD_REQUEST);
                 }
-                if (jobPost.status !== constants_1.JOB_POST_DETAILS_STATUS.Pending) {
+                if (jobPost.status !==
+                    constants_1.JOB_POST_DETAILS_STATUS.Pending) {
                     throw new customError_1.default("This job post is no longer accepting applications.", this.StatusCode.HTTP_BAD_REQUEST);
                 }
                 const model = this.Model.jobApplicationModel(trx);
