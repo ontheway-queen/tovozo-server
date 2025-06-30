@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
 const constants_1 = require("../../../utils/miscellaneous/constants");
 const customError_1 = __importDefault(require("../../../utils/lib/customError"));
+const dayjs_1 = __importDefault(require("dayjs"));
 class JobTaskActivitiesService extends abstract_service_1.default {
     constructor() {
         super();
@@ -45,7 +46,7 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                 const payload = {
                     job_application_id,
                     job_post_details_id,
-                    start_time: new Date().toISOString(),
+                    start_time: now,
                 };
                 yield jobApplicationModel.updateMyJobApplicationStatus(job_application_id, user_id, constants_1.JOB_APPLICATION_STATUS.IN_PROGRESS);
                 const res = yield jobTaskActivitiesModel.createJobTaskActivity(payload);
@@ -61,9 +62,14 @@ class JobTaskActivitiesService extends abstract_service_1.default {
             const id = req.params.id;
             const { user_id } = req.jobSeeker;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                var _a;
                 const jobApplicationModel = this.Model.jobApplicationModel(trx);
                 const jobTaskActivitiesModel = this.Model.jobTaskActivitiesModel(trx);
+                const jobPostModel = this.Model.jobPostModel(trx);
                 const taskActivity = yield jobTaskActivitiesModel.getSingleTaskActivity(Number(id), null);
+                if (!taskActivity) {
+                    throw new customError_1.default("Task activity not found", this.StatusCode.HTTP_NOT_FOUND);
+                }
                 if (taskActivity.application_status !==
                     constants_1.JOB_APPLICATION_STATUS.IN_PROGRESS) {
                     throw new customError_1.default(`You cannot perform this action because the application is not in progress.`, this.StatusCode.HTTP_FORBIDDEN);
@@ -75,12 +81,20 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                 if (!myApplication) {
                     throw new customError_1.default(`Job application not found or does not belong to you.`, this.StatusCode.HTTP_NOT_FOUND);
                 }
+                const startTime = (0, dayjs_1.default)(taskActivity.start_time).valueOf();
+                const endTime = (0, dayjs_1.default)((_a = taskActivity.end_time) !== null && _a !== void 0 ? _a : new Date()).valueOf();
+                const totalWorkingHours = Number(((endTime - startTime) / (1000 * 60 * 60)).toFixed(2));
+                console.log({ totalWorkingHours });
                 yield jobApplicationModel.updateMyJobApplicationStatus(taskActivity.job_application_id, user_id, constants_1.JOB_APPLICATION_STATUS.ENDED);
-                yield jobTaskActivitiesModel.updateJobTaskActivity(taskActivity.id, { end_time: new Date().toISOString() });
+                yield jobTaskActivitiesModel.updateJobTaskActivity(taskActivity.id, {
+                    end_time: new Date(),
+                    total_working_hours: totalWorkingHours,
+                });
+                yield jobPostModel.updateJobPostDetailsStatus(myApplication.job_post_details_id, constants_1.JOB_POST_DETAILS_STATUS.WorkFinished);
                 return {
                     success: true,
-                    message: this.ResMsg.HTTP_SUCCESSFUL,
-                    code: this.StatusCode.HTTP_SUCCESSFUL,
+                    message: this.ResMsg.HTTP_OK,
+                    code: this.StatusCode.HTTP_OK,
                 };
             }));
         });

@@ -1,7 +1,12 @@
 import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
-import { JOB_APPLICATION_STATUS } from "../../../utils/miscellaneous/constants";
+import {
+	JOB_APPLICATION_STATUS,
+	JOB_POST_DETAILS_STATUS,
+} from "../../../utils/miscellaneous/constants";
 import CustomError from "../../../utils/lib/customError";
+import { IJobPostDetailsStatus } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
+import dayjs from "dayjs";
 
 export default class JobTaskActivitiesService extends AbstractServices {
 	constructor() {
@@ -57,7 +62,7 @@ export default class JobTaskActivitiesService extends AbstractServices {
 			const payload = {
 				job_application_id,
 				job_post_details_id,
-				start_time: new Date().toISOString(),
+				start_time: now,
 			};
 
 			await jobApplicationModel.updateMyJobApplicationStatus(
@@ -85,12 +90,20 @@ export default class JobTaskActivitiesService extends AbstractServices {
 			const jobApplicationModel = this.Model.jobApplicationModel(trx);
 			const jobTaskActivitiesModel =
 				this.Model.jobTaskActivitiesModel(trx);
+			const jobPostModel = this.Model.jobPostModel(trx);
 
 			const taskActivity =
 				await jobTaskActivitiesModel.getSingleTaskActivity(
 					Number(id),
 					null
 				);
+
+			if (!taskActivity) {
+				throw new CustomError(
+					"Task activity not found",
+					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
 			if (
 				taskActivity.application_status !==
 				JOB_APPLICATION_STATUS.IN_PROGRESS
@@ -115,6 +128,17 @@ export default class JobTaskActivitiesService extends AbstractServices {
 				);
 			}
 
+			const startTime = dayjs(taskActivity.start_time).valueOf();
+			const endTime = dayjs(
+				taskActivity.end_time ?? new Date()
+			).valueOf();
+
+			const totalWorkingHours = Number(
+				((endTime - startTime) / (1000 * 60 * 60)).toFixed(2)
+			);
+
+			console.log({ totalWorkingHours });
+
 			await jobApplicationModel.updateMyJobApplicationStatus(
 				taskActivity.job_application_id,
 				user_id,
@@ -123,13 +147,21 @@ export default class JobTaskActivitiesService extends AbstractServices {
 
 			await jobTaskActivitiesModel.updateJobTaskActivity(
 				taskActivity.id,
-				{ end_time: new Date().toISOString() }
+				{
+					end_time: new Date(),
+					total_working_hours: totalWorkingHours,
+				}
+			);
+
+			await jobPostModel.updateJobPostDetailsStatus(
+				myApplication.job_post_details_id,
+				JOB_POST_DETAILS_STATUS.WorkFinished as unknown as IJobPostDetailsStatus
 			);
 
 			return {
 				success: true,
-				message: this.ResMsg.HTTP_SUCCESSFUL,
-				code: this.StatusCode.HTTP_SUCCESSFUL,
+				message: this.ResMsg.HTTP_OK,
+				code: this.StatusCode.HTTP_OK,
 			};
 		});
 	};

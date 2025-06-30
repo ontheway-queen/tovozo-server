@@ -93,6 +93,7 @@ class JobApplicationModel extends schema_1.default {
                     'id', jta.id,
                     'start_time', jta.start_time,
                     'end_time', jta.end_time,
+                    'total_working_hours', jta.total_working_hours,
                     'approved_at', jta.approved_at
                 ) as job_task_activity`))
                 .leftJoin("job_post_details as jpd", "ja.job_post_details_id", "jpd.id")
