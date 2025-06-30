@@ -2,7 +2,7 @@ import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
 import {
 	CANCELLATION_REPORT_STATUS,
-	REPORT_TYPE,
+	CANCELLATION_REPORT_TYPE,
 } from "../../../utils/miscellaneous/constants";
 import {
 	ICancellationReportStatus,
@@ -24,7 +24,8 @@ export default class HotelierCancellationReportService extends AbstractServices 
 		const data = await model.getJobPostReports({
 			user_id,
 			status,
-			report_type: report_type || REPORT_TYPE.CANCEL_JOB_POST,
+			report_type:
+				report_type || CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST,
 			limit,
 			skip,
 			search_text,
@@ -44,7 +45,7 @@ export default class HotelierCancellationReportService extends AbstractServices 
 
 		const data = await model.getSingleJobPostReport(
 			Number(id),
-			REPORT_TYPE.CANCEL_JOB_POST
+			CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST
 		);
 		if (!data) {
 			throw new CustomError(
@@ -67,7 +68,7 @@ export default class HotelierCancellationReportService extends AbstractServices 
 
 			const jobPostReport = await model.getSingleJobPostReport(
 				Number(id),
-				REPORT_TYPE.CANCEL_JOB_POST
+				CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST
 			);
 			if (!jobPostReport) {
 				throw new CustomError(

@@ -1,6 +1,6 @@
 import {
 	CANCELLATION_REPORT_STATUS,
-	REPORT_TYPE,
+	CANCELLATION_REPORT_TYPE,
 } from "../../miscellaneous/constants";
 
 export type ICancellationReport = {
@@ -28,7 +28,7 @@ export interface IGetReportsQuery {
 	search_text: string;
 }
 
-export type ICancellationReportType = keyof typeof REPORT_TYPE;
+export type ICancellationReportType = keyof typeof CANCELLATION_REPORT_TYPE;
 
 export type ICancellationReportStatus = keyof typeof CANCELLATION_REPORT_STATUS;
 

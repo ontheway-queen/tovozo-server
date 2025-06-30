@@ -1,3 +1,11 @@
+import {
+	IHoiteleirJob,
+	IHoiteleirJobList,
+} from "../../features/hotelier/utils/types/hotelierJobPostTypes";
+import {
+	IJobSeekerJob,
+	IJobSeekerJobList,
+} from "../../features/jobSeeker/utils/types/jobSeekerJobPostTypes";
 import { TDB } from "../../features/public/utils/types/publicCommon.types";
 import { JOB_POST_DETAILS_STATUS } from "../../utils/miscellaneous/constants";
 import Schema from "../../utils/miscellaneous/schema";
@@ -8,8 +16,6 @@ import {
 	IJobPostDetailsPayload,
 	IJobPostDetailsStatus,
 	IJobPostPayload,
-	IJobSeekerJob,
-	IJobSeekerJobList,
 } from "../../utils/modelTypes/hotelier/jobPostModelTYpes";
 
 class JobPostModel extends Schema {
@@ -196,7 +202,9 @@ class JobPostModel extends Schema {
 	}
 
 	// hotelier job post with job seeker details
-	public async getHotelierJobPostList(params: IGetJobPostListParams) {
+	public async getHotelierJobPostList(
+		params: IGetJobPostListParams
+	): Promise<IHoiteleirJobList> {
 		const {
 			user_id,
 			title,
@@ -249,7 +257,13 @@ class JobPostModel extends Schema {
                     'country_name', js_vwl.country_name,
                     'longitude', js_vwl.longitude,
                     'latitude', js_vwl.latitude
-                ) as job_seeker_details`)
+                ) as job_seeker_details`),
+				this.db.raw(`json_build_object(
+                    'id', jta.id,
+                    'start_time', jta.start_time,
+                    'end_time', jta.end_time,
+                    'approved_at', jta.approved_at
+                ) as job_task_activity`)
 			)
 			.joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
 				`${this.HOTELIER}.${this.TABLES.organization}`,
@@ -275,6 +289,11 @@ class JobPostModel extends Schema {
 				"vw_location as js_vwl",
 				"js_vwl.location_id",
 				"jsu.location_id"
+			)
+			.leftJoin(
+				"job_task_activities as jta",
+				"jta.job_application_id",
+				"ja.id"
 			)
 			.where((qb) => {
 				if (user_id) {
@@ -355,7 +374,9 @@ class JobPostModel extends Schema {
 	}
 
 	// get single job post with job seeker details for hotelier
-	public async getSingleJobPostWithJobSeekerDetails(id: number) {
+	public async getSingleJobPostWithJobSeekerDetails(
+		id: number
+	): Promise<IHoiteleirJob> {
 		return await this.db("job_post as jp")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
@@ -391,6 +412,7 @@ class JobPostModel extends Schema {
                     WHERE job_post_id = jpd.job_post_id
                 ) AS vacancy`),
 				this.db.raw(`json_build_object(
+                    'application_id', ja.id,
                     'application_status', ja.status,
                     'job_seeker_id', ja.job_seeker_id,
                     'job_seeker_name', js.name,
@@ -402,7 +424,13 @@ class JobPostModel extends Schema {
                     'country_name', js_vwl.country_name,
                     'longitude', js_vwl.longitude,
                     'latitude', js_vwl.latitude
-                ) as job_seeker_details`)
+                ) as job_seeker_details`),
+				this.db.raw(`json_build_object(
+                    'id', jta.id,
+                    'start_time', jta.start_time,
+                    'end_time', jta.end_time,
+                    'approved_at', jta.approved_at
+                ) as job_task_activity`)
 			)
 			.joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
 				`${this.HOTELIER}.${this.TABLES.organization}`,
@@ -428,6 +456,11 @@ class JobPostModel extends Schema {
 				"vw_location as js_vwl",
 				"js_vwl.location_id",
 				"jsu.location_id"
+			)
+			.leftJoin(
+				"job_task_activities as jta",
+				"jta.job_application_id",
+				"ja.id"
 			)
 			.where("jpd.id", id)
 			.first();

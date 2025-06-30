@@ -118,7 +118,9 @@ class JobSeekerAuthService extends abstract_service_1.default {
                 yield lib_1.default.sendEmailDefault({
                     email,
                     emailSub: `Your registration with ${constants_1.PROJECT_NAME} is under review`,
-                    emailBody: (0, jobSeekerRegistrationTemplate_1.registrationJobSeekerTemplate)({ name: userInput.name }),
+                    emailBody: (0, jobSeekerRegistrationTemplate_1.registrationJobSeekerTemplate)({
+                        name: userInput.name,
+                    }),
                 });
                 const token = lib_1.default.createToken(tokenPayload, config_1.default.JWT_SECRET_JOB_SEEKER, constants_1.LOGIN_TOKEN_EXPIRES_IN);
                 return {

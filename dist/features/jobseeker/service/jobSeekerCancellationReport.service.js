@@ -34,7 +34,7 @@ class JobSeekerCancellationReportServices extends abstract_service_1.default {
             const { user_id } = req.jobSeeker;
             const { id } = req.params;
             const model = this.Model.cancellationReportModel();
-            const data = yield model.getSingleJobApplicationReport(Number(id), constants_1.REPORT_TYPE.CANCEL_APPLICATION, null, user_id);
+            const data = yield model.getSingleJobApplicationReport(Number(id), constants_1.CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION, null, user_id);
             if (!data) {
                 return {
                     success: false,

@@ -155,7 +155,9 @@ class JobSeekerAuthService extends AbstractServices {
       await Lib.sendEmailDefault({
         email,
         emailSub: `Your registration with ${PROJECT_NAME} is under review`,
-        emailBody: registrationJobSeekerTemplate({ name: userInput.name }),
+        emailBody: registrationJobSeekerTemplate({
+          name: userInput.name,
+        }),
       });
 
       const token = Lib.createToken(
@@ -176,7 +178,10 @@ class JobSeekerAuthService extends AbstractServices {
 
   //login
   public async loginService(req: Request) {
-    const { email, password } = req.body as { email: string; password: string };
+    const { email, password } = req.body as {
+      email: string;
+      password: string;
+    };
     const userModel = this.Model.UserModel();
     const checkUser =
       await userModel.getSingleCommonAuthUser<IJobSeekerAuthView>({

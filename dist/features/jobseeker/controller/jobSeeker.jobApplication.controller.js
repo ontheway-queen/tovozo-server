@@ -38,11 +38,11 @@ class JobSeekerJobApplicationController extends abstract_controller_1.default {
             res.status(code).json(data);
         }));
         this.getMyJobApplications = this.asyncWrapper.wrap({ querySchema: joi_1.default.object().unknown(true) }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _b = yield this.service.getMyJobApplications(req), { code } = _b, data = __rest(_b, ["code"]);
+            const _a = yield this.service.getMyJobApplications(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         this.getMyJobApplication = this.asyncWrapper.wrap({ paramSchema: joi_1.default.object({ id: joi_1.default.string().required() }) }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _c = yield this.service.getMyJobApplication(req), { code } = _c, data = __rest(_c, ["code"]);
+            const _a = yield this.service.getMyJobApplication(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         this.cancelMyJobApplication = this.asyncWrapper.wrap({
@@ -50,7 +50,7 @@ class JobSeekerJobApplicationController extends abstract_controller_1.default {
             querySchema: this.validator.cancellationReportTypeValidator,
             bodySchema: this.validator.cancellationReportReasonValidator,
         }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _d = yield this.service.cancelMyJobApplication(req), { code } = _d, data = __rest(_d, ["code"]);
+            const _a = yield this.service.cancelMyJobApplication(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }
