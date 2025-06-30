@@ -10,6 +10,14 @@ CREATE SCHEMA IF NOT EXISTS jobSeeker;
 --Create Tables ---------------------------------------------------------------------------------
 
 -- Job Seeker basic info
+CREATE TYPE jobSeeker.job_seeker_account_status AS ENUM (
+	'active',
+	'inactive',
+	'pending',
+	'blocked',
+	'under-review'
+);
+
 CREATE TABLE IF NOT EXISTS jobSeeker.job_seeker (
     user_id INTEGER PRIMARY KEY,
     date_of_birth DATE,
@@ -18,7 +26,7 @@ CREATE TABLE IF NOT EXISTS jobSeeker.job_seeker (
     address TEXT,
     location_id INT,
     work_permit BOOLEAN,
-    account_status VARCHAR(42) DEFAULT 'Pending',
+    account_status jobSeeker.job_seeker_account_status DEFAULT 'pending',
     criminal_convictions BOOLEAN,
     FOREIGN KEY (user_id) REFERENCES dbo."user" (id) ON DELETE CASCADE
 );

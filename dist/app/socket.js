@@ -3,7 +3,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAllOnlineSocketIds = exports.removeOnlineUser = exports.addOnlineUser = exports.SocketServer = exports.io = void 0;
+exports.SocketServer = exports.io = void 0;
+exports.addOnlineUser = addOnlineUser;
+exports.removeOnlineUser = removeOnlineUser;
+exports.getAllOnlineSocketIds = getAllOnlineSocketIds;
 const http_1 = __importDefault(require("http"));
 const socket_io_1 = require("socket.io");
 const constants_1 = require("../utils/miscellaneous/constants");
@@ -23,7 +26,6 @@ function addOnlineUser(userId, socketId, type) {
     }
     (_a = onlineUsers.get(userId)) === null || _a === void 0 ? void 0 : _a.sockets.add(socketId);
 }
-exports.addOnlineUser = addOnlineUser;
 function removeOnlineUser(userId, socketId) {
     const user = onlineUsers.get(userId);
     if (!user)
@@ -34,7 +36,6 @@ function removeOnlineUser(userId, socketId) {
         console.log(`User ${userId} (${user.type}) is now offline`);
     }
 }
-exports.removeOnlineUser = removeOnlineUser;
 function getAllOnlineSocketIds({ user_id, type, }) {
     const results = [];
     for (const [id, { sockets, type: userType }] of onlineUsers.entries()) {
@@ -46,4 +47,3 @@ function getAllOnlineSocketIds({ user_id, type, }) {
     }
     return results;
 }
-exports.getAllOnlineSocketIds = getAllOnlineSocketIds;

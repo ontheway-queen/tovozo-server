@@ -36,7 +36,7 @@ class CancellationReportController extends abstract_controller_1.default {
             res.status(code).json(data);
         }));
         this.getSingleReport = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.getSingleItemWithIdValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _b = yield this.service.getSingleReport(req), { code } = _b, data = __rest(_b, ["code"]);
+            const _a = yield this.service.getSingleReport(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         this.updateCancellationReportStatus = this.asyncWrapper.wrap({
@@ -44,7 +44,7 @@ class CancellationReportController extends abstract_controller_1.default {
             paramSchema: this.commonValidator.getSingleItemWithIdValidator,
             querySchema: this.validator.reportTypeQuerySchema,
         }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _c = yield this.service.updateCancellationReportStatus(req), { code } = _c, data = __rest(_c, ["code"]);
+            const _a = yield this.service.updateCancellationReportStatus(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }
