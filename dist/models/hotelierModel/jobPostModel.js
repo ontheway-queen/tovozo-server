@@ -150,6 +150,7 @@ class JobPostModel extends schema_1.default {
                     'id', jta.id,
                     'start_time', jta.start_time,
                     'end_time', jta.end_time,
+                    'total_working_hours', jta.total_working_hours,
                     'approved_at', jta.approved_at
                 ) as job_task_activity`))
                 .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
@@ -261,6 +262,7 @@ class JobPostModel extends schema_1.default {
                     'id', jta.id,
                     'start_time', jta.start_time,
                     'end_time', jta.end_time,
+                    'total_working_hours', jta.total_working_hours,
                     'approved_at', jta.approved_at
                 ) as job_task_activity`))
                 .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [

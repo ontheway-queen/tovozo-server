@@ -262,6 +262,7 @@ class JobPostModel extends Schema {
                     'id', jta.id,
                     'start_time', jta.start_time,
                     'end_time', jta.end_time,
+                    'total_working_hours', jta.total_working_hours,
                     'approved_at', jta.approved_at
                 ) as job_task_activity`)
 			)
@@ -429,6 +430,7 @@ class JobPostModel extends Schema {
                     'id', jta.id,
                     'start_time', jta.start_time,
                     'end_time', jta.end_time,
+                    'total_working_hours', jta.total_working_hours,
                     'approved_at', jta.approved_at
                 ) as job_task_activity`)
 			)
@@ -490,7 +492,10 @@ class JobPostModel extends Schema {
 			.where("id", id);
 	}
 
-	public async updateJobPostDetailsStatus(id: number, status: any) {
+	public async updateJobPostDetailsStatus(
+		id: number,
+		status: IJobPostDetailsStatus
+	) {
 		return await this.db("job_post_details")
 			.withSchema(this.DBO_SCHEMA)
 			.where("id", id)
