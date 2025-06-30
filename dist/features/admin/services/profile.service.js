@@ -35,7 +35,6 @@ class AdminProfileService extends abstract_service_1.default {
             const [profile] = yield adminModel.getSingleAdmin({
                 id: user_id,
             });
-            console.log("Profile data:", profile);
             if (!profile) {
                 return {
                     success: false,

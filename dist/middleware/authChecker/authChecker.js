@@ -47,7 +47,7 @@ class AuthChecker {
                 });
                 return;
             }
-            console.log("Admin verification successful:", verify);
+            // console.log("Admin verification successful:", verify);
             req.admin = verify;
             return next();
         });

@@ -80,7 +80,11 @@ class JobSeekerModel extends schema_1.default {
                     qb.andWhere("user_id", user_id);
                 }
                 if (name) {
-                    qb.andWhereILike("name", `%${name}%`).orWhere("email", name);
+                    qb.andWhere((subQb) => {
+                        subQb
+                            .whereILike("name", `%${name}%`)
+                            .orWhere("email", name);
+                    });
                 }
                 if (status) {
                     qb.andWhere("account_status", status);

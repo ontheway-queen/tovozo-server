@@ -108,7 +108,7 @@ class AdminModel extends schema_1.default {
     //get single admin
     getSingleAdmin(payload) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log("Payload for getSingleAdmin:", payload);
+            // console.log("Payload for getSingleAdmin:", payload);
             return yield this.db("admin as ua")
                 .select("ua.*", "u.username", "u.name", "u.email", "u.phone_number", "u.photo", "u.password_hash", "u.status", "u.socket_id", "rl.name as role", "rl.id as role_id")
                 .withSchema(this.ADMIN_SCHEMA)

@@ -56,6 +56,7 @@ export interface ICancelJobPostPayload {
 export type IPaymentStatus = keyof typeof PAYMENT_STATUS;
 
 export interface IGetJobPostListParams {
+	organization_id?: number;
 	user_id?: number;
 	title?: string;
 	category_id?: number;
