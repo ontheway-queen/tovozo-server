@@ -24,12 +24,13 @@ class CommonModel extends schema_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("email_otp")
                 .withSchema(this.DBO_SCHEMA)
-                .select("id", "hashed_otp as otp", "tried")
+                .select("id", "hashed_otp", "tried")
                 .andWhere("email", payload.email)
                 .andWhere("type", payload.type)
                 .andWhere("matched", 0)
                 .andWhere("tried", "<", 3)
-                .andWhereRaw(`"create_date" + interval '3 minutes' > NOW()`);
+                .andWhereRaw(`"create_date" + interval '3 minutes' > NOW()`)
+                .orderBy("id", "desc");
         });
     }
     // insert OTP

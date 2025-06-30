@@ -3,11 +3,10 @@ import express, { Application, NextFunction, Request, Response } from "express";
 import { Server } from "http";
 import morgan from "morgan";
 import ErrorHandler from "../middleware/errorHandler/errorHandler";
-import Models from "../models/rootModel";
 import CustomError from "../utils/lib/customError";
 import { origin } from "../utils/miscellaneous/constants";
 import RootRouter from "./router";
-import { SocketServer, io } from "./socket";
+import { SocketServer, addOnlineUser, io, removeOnlineUser } from "./socket";
 
 class App {
   public app: Application = express();
@@ -65,12 +64,17 @@ class App {
     io.on("connection", async (socket) => {
       const { id, type } = socket.handshake.auth;
       console.log(socket.id, "-", id, "-", type, " is connected ⚡");
+      // if (id && type) {
+      //   const model = new Models().UserModel();
+      //   await model.updateProfile({ socket_id: socket.id }, { id });
+      // }
+
       if (id && type) {
-        const model = new Models().UserModel();
-        await model.updateProfile({ socket_id: socket.id }, { id });
+        addOnlineUser(id, socket.id, type);
       }
       socket.on("disconnect", async (event) => {
         console.log(socket.id, "-", id, "-", type, " disconnected...");
+        removeOnlineUser(id, socket.id);
         socket.disconnect();
       });
     });

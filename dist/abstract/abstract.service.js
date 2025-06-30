@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const database_1 = require("../app/database");
+const socket_1 = require("../app/socket");
 const socketService_1 = __importDefault(require("../features/public/services/socketService"));
 const rootModel_1 = __importDefault(require("../models/rootModel"));
 const manageFile_1 = __importDefault(require("../utils/lib/manageFile"));
@@ -41,29 +42,51 @@ class AbstractServices {
             const commonModel = this.Model.commonModel(trx);
             const notificationPayload = [];
             if (userType === userModelTypes_1.TypeUser.ADMIN) {
-                const adminModel = this.Model.AdminModel(trx);
-                const getAllAdmin = yield adminModel.getAllAdmin({});
-                if (!getAllAdmin.data.length) {
+                const getAllAdminSocketIds = (0, socket_1.getAllOnlineSocketIds)({
+                    type: userType,
+                });
+                if (!getAllAdminSocketIds.length)
                     return;
-                }
-                for (const admin of getAllAdmin.data) {
+                const seenUserIds = new Set();
+                for (const { user_id, socketId } of getAllAdminSocketIds) {
+                    if (seenUserIds.has(user_id)) {
+                        this.socketService.emitNotification({
+                            user_id,
+                            socketId,
+                            content: payload.content,
+                            related_id: payload.related_id,
+                            type: payload.type,
+                            emitType: commonModelTypes_1.TypeEmitNotificationEnum.ADMIN_NEW_NOTIFICATION,
+                        });
+                        continue;
+                    }
+                    seenUserIds.add(user_id);
                     notificationPayload.push({
-                        user_id: admin.user_id,
+                        user_id,
                         content: payload.content,
                         related_id: payload.related_id,
                         type: payload.type,
-                    });
-                    this.socketService.emitNotification({
-                        socket_id: admin.socket_id,
-                        user_id: admin.user_id,
-                        content: payload.content,
-                        related_id: payload.related_id,
-                        type: payload.type,
-                        emitType: commonModelTypes_1.TypeEmitNotification.ADMIN_NEW_NOTIFICATION,
                     });
                 }
-                yield commonModel.createNotification(notificationPayload);
             }
+            else {
+                const getUserSocketIds = (0, socket_1.getAllOnlineSocketIds)({ type: userType });
+                if (!getUserSocketIds.length)
+                    return;
+                for (const { user_id, socketId } of getUserSocketIds) {
+                    this.socketService.emitNotification({
+                        user_id,
+                        socketId,
+                        content: payload.content,
+                        related_id: payload.related_id,
+                        type: payload.type,
+                        emitType: userType === userModelTypes_1.TypeUser.HOTELIER
+                            ? commonModelTypes_1.TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION
+                            : commonModelTypes_1.TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION,
+                    });
+                }
+            }
+            yield commonModel.createNotification(notificationPayload);
         });
     }
 }

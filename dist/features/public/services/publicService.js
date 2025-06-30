@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
 const config_1 = __importDefault(require("../../../app/config"));
 const lib_1 = __importDefault(require("../../../utils/lib/lib"));
+const customError_1 = __importDefault(require("../../../utils/lib/customError"));
 const constants_1 = require("../../../utils/miscellaneous/constants");
 const sendEmailOtpTemplate_1 = require("../../../utils/templates/sendEmailOtpTemplate");
 class PublicService extends abstract_service_1.default {
@@ -26,39 +27,31 @@ class PublicService extends abstract_service_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const { email, type } = req.body;
-                if (type === constants_1.OTP_TYPE_FORGET_JOB_SEEKER) {
+                const userModel = this.Model.UserModel(trx);
+                if (type === constants_1.OTP_TYPE_FORGET_JOB_SEEKER ||
+                    type === constants_1.OTP_TYPE_TWO_FA_JOB_SEEKER) {
                     // --check if the user exist
-                    const userModel = this.Model.UserModel();
                     const checkUser = yield userModel.getSingleCommonAuthUser({
                         email,
                         schema_name: "jobseeker",
                         table_name: constants_1.USER_AUTHENTICATION_VIEW.JOB_SEEKER,
                     });
                     if (!checkUser) {
-                        return {
-                            success: false,
-                            code: this.StatusCode.HTTP_NOT_FOUND,
-                            message: "No user has been found with this email",
-                        };
+                        throw new customError_1.default(this.ResMsg.NOT_FOUND_USER_WITH_EMAIL, this.StatusCode.HTTP_NOT_FOUND);
                     }
                 }
-                else if (type === constants_1.OTP_TYPE_FORGET_ADMIN) {
-                    const model = this.Model.UserModel(trx);
-                    const admin_details = yield model.getSingleCommonAuthUser({
+                else if (type === constants_1.OTP_TYPE_FORGET_ADMIN ||
+                    type === constants_1.OTP_TYPE_TWO_FA_ADMIN) {
+                    const admin_details = yield userModel.getSingleCommonAuthUser({
                         email,
                         schema_name: "admin",
                         table_name: constants_1.USER_AUTHENTICATION_VIEW.ADMIN,
                     });
                     if (!admin_details) {
-                        return {
-                            success: false,
-                            code: this.StatusCode.HTTP_NOT_FOUND,
-                            message: this.ResMsg.NOT_FOUND_USER_WITH_EMAIL,
-                        };
+                        throw new customError_1.default(this.ResMsg.NOT_FOUND_USER_WITH_EMAIL, this.StatusCode.HTTP_NOT_FOUND);
                     }
                 }
                 else if (type === constants_1.OTP_TYPE_VERIFY_JOB_SEEKER) {
-                    const userModel = this.Model.UserModel();
                     const checkUser = yield userModel.getSingleCommonAuthUser({
                         email,
                         schema_name: "jobseeker",
@@ -73,7 +66,6 @@ class PublicService extends abstract_service_1.default {
                     }
                 }
                 else if (type === constants_1.OTP_TYPE_VERIFY_HOTELIER) {
-                    const userModel = this.Model.UserModel();
                     const checkUser = yield userModel.getSingleCommonAuthUser({
                         email,
                         schema_name: "hotelier",
@@ -87,35 +79,16 @@ class PublicService extends abstract_service_1.default {
                         };
                     }
                 }
-                else if (type === constants_1.OTP_TYPE_FORGET_HOTELIER) {
+                else if (type === constants_1.OTP_TYPE_FORGET_HOTELIER ||
+                    type === constants_1.OTP_TYPE_TWO_FA_HOTELIER) {
                     // --check if the user exist
-                    const userModel = this.Model.UserModel();
                     const checkUser = yield userModel.getSingleCommonAuthUser({
                         email,
                         schema_name: "hotelier",
                         table_name: constants_1.USER_AUTHENTICATION_VIEW.HOTELIER,
                     });
                     if (!checkUser) {
-                        return {
-                            success: false,
-                            code: this.StatusCode.HTTP_NOT_FOUND,
-                            message: "No user found.",
-                        };
-                    }
-                }
-                else if (type === constants_1.OTP_TYPE_TWO_FA_JOB_SEEKER) {
-                    const userModel = this.Model.UserModel();
-                    const checkAgent = yield userModel.getSingleCommonAuthUser({
-                        email,
-                        schema_name: "jobseeker",
-                        table_name: constants_1.USER_AUTHENTICATION_VIEW.JOB_SEEKER,
-                    });
-                    if (!checkAgent) {
-                        return {
-                            success: false,
-                            code: this.StatusCode.HTTP_NOT_FOUND,
-                            message: "No user found.",
-                        };
+                        throw new customError_1.default(this.ResMsg.NOT_FOUND_USER_WITH_EMAIL, this.StatusCode.HTTP_NOT_FOUND);
                     }
                 }
                 const commonModel = this.Model.commonModel(trx);
@@ -197,29 +170,34 @@ class PublicService extends abstract_service_1.default {
                     };
                 }
                 const otpValidation = yield lib_1.default.compareHashValue(otp.toString(), hashed_otp);
-                if (otpValidation) {
+                if (!otpValidation) {
+                    yield commonModel.updateOTP({
+                        tried: tried + 1,
+                    }, { id: email_otp_id });
+                    return {
+                        success: false,
+                        code: this.StatusCode.HTTP_UNAUTHORIZED,
+                        message: this.ResMsg.OTP_INVALID,
+                    };
+                }
+                else {
                     yield commonModel.updateOTP({
                         tried: tried + 1,
                         matched: 1,
                     }, { id: email_otp_id });
                     //--change it for member
                     let secret = config_1.default.JWT_SECRET_ADMIN;
-                    if (type === constants_1.OTP_TYPE_FORGET_JOB_SEEKER) {
+                    if (type === constants_1.OTP_TYPE_FORGET_JOB_SEEKER ||
+                        type === constants_1.OTP_TYPE_VERIFY_JOB_SEEKER ||
+                        type === constants_1.OTP_TYPE_TWO_FA_JOB_SEEKER) {
+                        if (type === constants_1.OTP_TYPE_VERIFY_JOB_SEEKER) {
+                        }
                         secret = config_1.default.JWT_SECRET_JOB_SEEKER;
                     }
-                    else if (type === constants_1.OTP_TYPE_VERIFY_JOB_SEEKER) {
-                        secret = config_1.default.JWT_SECRET_JOB_SEEKER;
-                    }
-                    else if (type === constants_1.OTP_TYPE_FORGET_HOTELIER) {
+                    else if (type === constants_1.OTP_TYPE_FORGET_HOTELIER ||
+                        type === constants_1.OTP_TYPE_VERIFY_HOTELIER ||
+                        type === constants_1.OTP_TYPE_TWO_FA_HOTELIER) {
                         secret = config_1.default.JWT_SECRET_HOTEL;
-                    }
-                    else if (type === constants_1.OTP_TYPE_TWO_FA_HOTELIER ||
-                        constants_1.OTP_TYPE_VERIFY_HOTELIER) {
-                        secret = config_1.default.JWT_SECRET_HOTEL;
-                    }
-                    else if (type === constants_1.OTP_TYPE_TWO_FA_JOB_SEEKER ||
-                        constants_1.OTP_TYPE_VERIFY_JOB_SEEKER) {
-                        secret = config_1.default.JWT_SECRET_JOB_SEEKER;
                     }
                     else if (type == constants_1.OTP_TYPE_TWO_FA_ADMIN) {
                         const checkUser = yield userModel.getSingleCommonAuthUser({
@@ -246,16 +224,6 @@ class PublicService extends abstract_service_1.default {
                         message: this.ResMsg.OTP_MATCHED,
                         type,
                         token,
-                    };
-                }
-                else {
-                    yield commonModel.updateOTP({
-                        tried: tried + 1,
-                    }, { id: email_otp_id });
-                    return {
-                        success: false,
-                        code: this.StatusCode.HTTP_UNAUTHORIZED,
-                        message: this.ResMsg.OTP_INVALID,
                     };
                 }
             }));

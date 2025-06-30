@@ -77,7 +77,9 @@ export interface OTPType {
     | "verify_hotelier"
     | "verify_admin"
     | "verify_user"
-    | "2fa_user";
+    | "2fa_job_seeker"
+    | "2fa_hotelier"
+    | "2fa_admin";
 }
 
 export interface IChangePasswordPayload {
@@ -91,6 +93,11 @@ export interface IInsertOTPPayload extends OTPType {
 
 export interface IGetOTPPayload extends OTPType {
   email: string;
+}
+
+export interface IMatchOTPPayload extends OTPType {
+  email: string;
+  otp: string;
 }
 
 export interface IGetOTP {
@@ -161,11 +168,13 @@ export interface IGetNotification {
   is_read: boolean;
 }
 
-export enum TypeEmitNotification {
+export enum TypeEmitNotificationEnum {
   ADMIN_NEW_NOTIFICATION = "ADMIN_NEW_NOTIFICATION",
   HOTELIER_NEW_NOTIFICATION = "HOTELIER_NEW_NOTIFICATION",
   JOB_SEEKER_NEW_NOTIFICATION = "JOB_SEEKER_NEW_NOTIFICATION",
 }
+
+export type TypeEmitNotification = `${TypeEmitNotificationEnum}`;
 
 export interface IGetAllStatesParams {
   country_id?: number;

@@ -3,6 +3,7 @@ import AbstractServices from "../../../abstract/abstract.service";
 import config from "../../../app/config";
 import Lib from "../../../utils/lib/lib";
 
+import CustomError from "../../../utils/lib/customError";
 import {
   OTP_EMAIL_SUBJECT,
   OTP_FOR,
@@ -17,7 +18,10 @@ import {
   USER_AUTHENTICATION_VIEW,
   USER_TYPE,
 } from "../../../utils/miscellaneous/constants";
-import { IGetOTPPayload } from "../../../utils/modelTypes/common/commonModelTypes";
+import {
+  IGetOTPPayload,
+  IMatchOTPPayload,
+} from "../../../utils/modelTypes/common/commonModelTypes";
 import { sendEmailOtpTemplate } from "../../../utils/templates/sendEmailOtpTemplate";
 import { IAdminAuthView } from "../../auth/utils/types/adminAuth.types";
 
@@ -30,37 +34,39 @@ class PublicService extends AbstractServices {
   public async sendOtpToEmailService(req: Request) {
     return await this.db.transaction(async (trx) => {
       const { email, type } = req.body as IGetOTPPayload;
-      if (type === OTP_TYPE_FORGET_JOB_SEEKER) {
+      const userModel = this.Model.UserModel(trx);
+      if (
+        type === OTP_TYPE_FORGET_JOB_SEEKER ||
+        type === OTP_TYPE_TWO_FA_JOB_SEEKER
+      ) {
         // --check if the user exist
-        const userModel = this.Model.UserModel();
         const checkUser = await userModel.getSingleCommonAuthUser({
           email,
           schema_name: "jobseeker",
           table_name: USER_AUTHENTICATION_VIEW.JOB_SEEKER,
         });
         if (!checkUser) {
-          return {
-            success: false,
-            code: this.StatusCode.HTTP_NOT_FOUND,
-            message: "No user has been found with this email",
-          };
+          throw new CustomError(
+            this.ResMsg.NOT_FOUND_USER_WITH_EMAIL,
+            this.StatusCode.HTTP_NOT_FOUND
+          );
         }
-      } else if (type === OTP_TYPE_FORGET_ADMIN) {
-        const model = this.Model.UserModel(trx);
-        const admin_details = await model.getSingleCommonAuthUser({
+      } else if (
+        type === OTP_TYPE_FORGET_ADMIN ||
+        type === OTP_TYPE_TWO_FA_ADMIN
+      ) {
+        const admin_details = await userModel.getSingleCommonAuthUser({
           email,
           schema_name: "admin",
           table_name: USER_AUTHENTICATION_VIEW.ADMIN,
         });
         if (!admin_details) {
-          return {
-            success: false,
-            code: this.StatusCode.HTTP_NOT_FOUND,
-            message: this.ResMsg.NOT_FOUND_USER_WITH_EMAIL,
-          };
+          throw new CustomError(
+            this.ResMsg.NOT_FOUND_USER_WITH_EMAIL,
+            this.StatusCode.HTTP_NOT_FOUND
+          );
         }
       } else if (type === (OTP_TYPE_VERIFY_JOB_SEEKER as typeof type)) {
-        const userModel = this.Model.UserModel();
         const checkUser = await userModel.getSingleCommonAuthUser({
           email,
           schema_name: "jobseeker",
@@ -75,7 +81,6 @@ class PublicService extends AbstractServices {
           };
         }
       } else if (type === (OTP_TYPE_VERIFY_HOTELIER as typeof type)) {
-        const userModel = this.Model.UserModel();
         const checkUser = await userModel.getSingleCommonAuthUser({
           email,
           schema_name: "hotelier",
@@ -89,9 +94,11 @@ class PublicService extends AbstractServices {
             message: "Email already exists!",
           };
         }
-      } else if (type === OTP_TYPE_FORGET_HOTELIER) {
+      } else if (
+        type === OTP_TYPE_FORGET_HOTELIER ||
+        type === OTP_TYPE_TWO_FA_HOTELIER
+      ) {
         // --check if the user exist
-        const userModel = this.Model.UserModel();
         const checkUser = await userModel.getSingleCommonAuthUser({
           email,
           schema_name: "hotelier",
@@ -99,25 +106,10 @@ class PublicService extends AbstractServices {
         });
 
         if (!checkUser) {
-          return {
-            success: false,
-            code: this.StatusCode.HTTP_NOT_FOUND,
-            message: "No user found.",
-          };
-        }
-      } else if (type === (OTP_TYPE_TWO_FA_JOB_SEEKER as typeof type)) {
-        const userModel = this.Model.UserModel();
-        const checkAgent = await userModel.getSingleCommonAuthUser({
-          email,
-          schema_name: "jobseeker",
-          table_name: USER_AUTHENTICATION_VIEW.JOB_SEEKER,
-        });
-        if (!checkAgent) {
-          return {
-            success: false,
-            code: this.StatusCode.HTTP_NOT_FOUND,
-            message: "No user found.",
-          };
+          throw new CustomError(
+            this.ResMsg.NOT_FOUND_USER_WITH_EMAIL,
+            this.StatusCode.HTTP_NOT_FOUND
+          );
         }
       }
 
@@ -182,7 +174,7 @@ class PublicService extends AbstractServices {
   //match email otp service
   public async matchEmailOtpService(req: Request) {
     return this.db.transaction(async (trx) => {
-      const { email, otp, type } = req.body;
+      const { email, otp, type } = req.body as IMatchOTPPayload;
       const commonModel = this.Model.commonModel(trx);
       const userModel = this.Model.UserModel(trx);
       const checkOtp = await commonModel.getOTP({ email, type });
@@ -210,7 +202,20 @@ class PublicService extends AbstractServices {
         hashed_otp
       );
 
-      if (otpValidation) {
+      if (!otpValidation) {
+        await commonModel.updateOTP(
+          {
+            tried: tried + 1,
+          },
+          { id: email_otp_id }
+        );
+
+        return {
+          success: false,
+          code: this.StatusCode.HTTP_UNAUTHORIZED,
+          message: this.ResMsg.OTP_INVALID,
+        };
+      } else {
         await commonModel.updateOTP(
           {
             tried: tried + 1,
@@ -218,25 +223,23 @@ class PublicService extends AbstractServices {
           },
           { id: email_otp_id }
         );
-
         //--change it for member
         let secret = config.JWT_SECRET_ADMIN;
-        if (type === OTP_TYPE_FORGET_JOB_SEEKER) {
+        if (
+          type === OTP_TYPE_FORGET_JOB_SEEKER ||
+          type === OTP_TYPE_VERIFY_JOB_SEEKER ||
+          type === OTP_TYPE_TWO_FA_JOB_SEEKER
+        ) {
+          if (type === OTP_TYPE_VERIFY_JOB_SEEKER) {
+          }
+
           secret = config.JWT_SECRET_JOB_SEEKER;
-        } else if (type === OTP_TYPE_VERIFY_JOB_SEEKER) {
-          secret = config.JWT_SECRET_JOB_SEEKER;
-        } else if (type === OTP_TYPE_FORGET_HOTELIER) {
-          secret = config.JWT_SECRET_HOTEL;
         } else if (
-          type === OTP_TYPE_TWO_FA_HOTELIER ||
-          OTP_TYPE_VERIFY_HOTELIER
+          type === OTP_TYPE_FORGET_HOTELIER ||
+          type === OTP_TYPE_VERIFY_HOTELIER ||
+          type === OTP_TYPE_TWO_FA_HOTELIER
         ) {
           secret = config.JWT_SECRET_HOTEL;
-        } else if (
-          type === OTP_TYPE_TWO_FA_JOB_SEEKER ||
-          OTP_TYPE_VERIFY_JOB_SEEKER
-        ) {
-          secret = config.JWT_SECRET_JOB_SEEKER;
         } else if (type == OTP_TYPE_TWO_FA_ADMIN) {
           const checkUser =
             await userModel.getSingleCommonAuthUser<IAdminAuthView>({
@@ -269,19 +272,6 @@ class PublicService extends AbstractServices {
           message: this.ResMsg.OTP_MATCHED,
           type,
           token,
-        };
-      } else {
-        await commonModel.updateOTP(
-          {
-            tried: tried + 1,
-          },
-          { id: email_otp_id }
-        );
-
-        return {
-          success: false,
-          code: this.StatusCode.HTTP_UNAUTHORIZED,
-          message: this.ResMsg.OTP_INVALID,
         };
       }
     });

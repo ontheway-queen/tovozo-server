@@ -146,12 +146,14 @@ export default class HotelierAuthService extends AbstractServices {
         status: true,
         create_date: new Date(),
       };
+
       await this.insertNotification(trx, TypeUser.ADMIN, {
         user_id: userId,
         content: `New hotelier "${user.name}" has registered and is awaiting verification.`,
         related_id: userId,
         type: NotificationTypeEnum.HOTELIER_VERIFICATION,
       });
+      throw Error("Registration failed");
       await Lib.sendEmailDefault({
         email,
         emailSub: `Your organization registration with ${PROJECT_NAME} is under review`,

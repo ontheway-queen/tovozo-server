@@ -49,7 +49,22 @@ export default class AdminModel extends Schema {
   public async getAllAdmin(
     query: IGetAdminListFilterQuery,
     is_total: boolean = false
-  ) {
+  ): Promise<
+    {
+      data: {
+        user_id: number;
+        username: string;
+        name: string;
+        email: string;
+        phone_number: string;
+        photo: string;
+        status: string;
+        role: string;
+        role_id: number;
+        is_2fa_on: boolean;
+      }[];
+    } & { total?: number }
+  > {
     const data = await this.db("admin as ua")
       .withSchema(this.ADMIN_SCHEMA)
       .select(
@@ -60,7 +75,7 @@ export default class AdminModel extends Schema {
         "u.phone_number",
         "u.photo",
         "u.status",
-        "u.socket_id",
+        // "u.socket_id",
         "rl.name as role",
         "rl.id as role_id",
         "ua.is_2fa_on"
@@ -121,6 +136,7 @@ export default class AdminModel extends Schema {
   public async getSingleAdmin(
     payload: IAdminSearchQuery
   ): Promise<IGetSingleAdmin[]> {
+    console.log("Payload for getSingleAdmin:", payload);
     return await this.db("admin as ua")
       .select(
         "ua.*",

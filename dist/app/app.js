@@ -16,7 +16,6 @@ const cors_1 = __importDefault(require("cors"));
 const express_1 = __importDefault(require("express"));
 const morgan_1 = __importDefault(require("morgan"));
 const errorHandler_1 = __importDefault(require("../middleware/errorHandler/errorHandler"));
-const rootModel_1 = __importDefault(require("../models/rootModel"));
 const customError_1 = __importDefault(require("../utils/lib/customError"));
 const constants_1 = require("../utils/miscellaneous/constants");
 const router_1 = __importDefault(require("./router"));
@@ -73,12 +72,16 @@ class App {
         socket_1.io.on("connection", (socket) => __awaiter(this, void 0, void 0, function* () {
             const { id, type } = socket.handshake.auth;
             console.log(socket.id, "-", id, "-", type, " is connected ⚡");
+            // if (id && type) {
+            //   const model = new Models().UserModel();
+            //   await model.updateProfile({ socket_id: socket.id }, { id });
+            // }
             if (id && type) {
-                const model = new rootModel_1.default().UserModel();
-                yield model.updateProfile({ socket_id: socket.id }, { id });
+                (0, socket_1.addOnlineUser)(id, socket.id, type);
             }
             socket.on("disconnect", (event) => __awaiter(this, void 0, void 0, function* () {
                 console.log(socket.id, "-", id, "-", type, " disconnected...");
+                (0, socket_1.removeOnlineUser)(id, socket.id);
                 socket.disconnect();
             }));
         }));

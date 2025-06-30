@@ -36,12 +36,13 @@ export default class CommonModel extends Schema {
   public async getOTP(payload: IGetOTPPayload): Promise<IGetOTP[]> {
     return await this.db("email_otp")
       .withSchema(this.DBO_SCHEMA)
-      .select("id", "hashed_otp as otp", "tried")
+      .select("id", "hashed_otp", "tried")
       .andWhere("email", payload.email)
       .andWhere("type", payload.type)
       .andWhere("matched", 0)
       .andWhere("tried", "<", 3)
-      .andWhereRaw(`"create_date" + interval '3 minutes' > NOW()`);
+      .andWhereRaw(`"create_date" + interval '3 minutes' > NOW()`)
+      .orderBy("id", "desc");
   }
 
   // insert OTP

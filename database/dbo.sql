@@ -305,7 +305,7 @@ CREATE TABLE dbo.cancellation_reports (
 CREATE TYPE dbo.payment_status AS ENUM ('UNPAID', 'PAID', 'FAILED', "PARTIAL_PAID");
 
 -- job status
-CREATE TYPE dbo.job_status AS ENUM ('PENDING', 'ASSIGNED', 'CANCELLED', 'COMPLETED');
+CREATE TYPE dbo.job_status AS ENUM ('PENDING', 'ASSIGNED', 'IN_PROGRESS','ENDED', 'CANCELLED', 'COMPLETED');
 
 CREATE TABLE IF NOT EXISTS dbo.job_applications (
     id SERIAL PRIMARY KEY,
@@ -348,15 +348,15 @@ CREATE TYPE dbo.report_type as ENUM (
 )
 
 CREATE TABLE IF NOT EXISTS dbo.reports (
-  id SERIAL PRIMARY KEY,    
+  id SERIAL PRIMARY KEY,
   job_post_details_id INTEGER NOT NULL REFERENCES dbo.job_post_details(id),
   related_id INTEGER NOT NULL REFERENCES dbo.job_applications(id),
   report_type dbo.report_type NOT NULL,
-  reason TEXT NOT NULL,            
+  reason TEXT NOT NULL,
   status dbo.report_status DEFAULT 'Pending',
-  resolution TEXT,                   
-  resolved_by INTEGER,               
-  resolved_at TIMESTAMP,             
+  resolution TEXT,
+  resolved_by INTEGER,
+  resolved_at TIMESTAMP,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
