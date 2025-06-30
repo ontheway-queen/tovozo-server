@@ -15,7 +15,7 @@ class AdminJobSeekerRouter extends abstract_router_1.default {
         this.router
             .route("/")
             .get(this.controller.getJobSeekers)
-            .post(this.controller.createJobSeeker);
+            .post(this.uploader.cloudUploadRaw(this.fileFolders.JOB_SEEKER_FILES), this.controller.createJobSeeker);
         this.router
             .route("/:id")
             .get(this.controller.getSingleJobSeeker)
