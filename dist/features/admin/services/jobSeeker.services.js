@@ -137,7 +137,7 @@ class AdminJobSeekerService extends abstract_service_1.default {
     }
     getJobSeekers(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { name, status, limit = 100, skip = 0, from_date, to_date, } = req.query;
+            const { name, status, limit = 100, skip = 0, from_date, to_date, sortBy, } = req.query;
             const model = this.Model.jobSeekerModel();
             const data = yield model.getAllJobSeekerList({
                 name,
@@ -146,6 +146,7 @@ class AdminJobSeekerService extends abstract_service_1.default {
                 status,
                 from_date,
                 to_date,
+                sortBy,
             });
             return Object.assign({ success: true, message: this.ResMsg.HTTP_OK, code: this.StatusCode.HTTP_OK }, data);
         });

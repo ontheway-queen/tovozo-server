@@ -6,6 +6,7 @@ import AdminProfileRouter from "./router/profile.router";
 import CancellationReportRouter from "./router/cancellationReport.router";
 import AdminHotelierController from "./controller/hotelier.controller";
 import AdminHotelierRouter from "./router/hotelier.router";
+import AdminJobPostRouter from "./router/jobPost.router";
 
 export default class AdminRootRouter {
 	public Router = Router();
@@ -15,6 +16,7 @@ export default class AdminRootRouter {
 	private adminJobSeekerRouter = new AdminJobSeekerRouter();
 	private adminHotelierRouter = new AdminHotelierRouter();
 	private cancellationReportRouter = new CancellationReportRouter();
+	private jobPostRouter = new AdminJobPostRouter();
 	constructor() {
 		this.callRouter();
 	}
@@ -34,6 +36,9 @@ export default class AdminRootRouter {
 
 		// hotelier
 		this.Router.use("/hotelier", this.adminHotelierRouter.router);
+
+		// jobs
+		this.Router.use("/jobs", this.jobPostRouter.router);
 
 		// cancellation report
 		this.Router.use(
