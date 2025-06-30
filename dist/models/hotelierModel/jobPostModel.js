@@ -196,7 +196,13 @@ class JobPostModel extends schema_1.default {
                     qb.andWhere("jpd.status", status);
                 }
             })
-                .orderBy(orderBy || "jpd.id", orderTo || "desc")
+                .orderByRaw(`CASE 
+                    WHEN jpd.start_time <= NOW() AND jpd.end_time >= NOW() THEN 0
+                    WHEN jpd.start_time > NOW() THEN 1                            
+                    WHEN jpd.end_time < NOW() THEN 2                                
+                    ELSE 3
+                END,
+                jpd.start_time ASC`)
                 .limit(limit || 100)
                 .offset(skip || 0);
             let total;

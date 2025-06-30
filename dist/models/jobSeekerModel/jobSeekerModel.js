@@ -52,7 +52,7 @@ class JobSeekerModel extends schema_1.default {
     }
     getAllJobSeekerList(params) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { user_id, name, status, from_date, to_date, limit = 100, skip = 0, } = params;
+            const { user_id, name, status, from_date, to_date, limit = 100, skip = 0, sortBy, } = params;
             const data = yield this.db("vw_full_job_seeker_profile")
                 .withSchema(this.JOB_SEEKER)
                 .select("user_id", "email", "name", "photo", "account_status", "user_created_at")
@@ -71,6 +71,7 @@ class JobSeekerModel extends schema_1.default {
                 }
             })
                 .limit(Number(limit))
+                .orderBy("user_created_at", sortBy === "asc" ? "asc" : "desc")
                 .offset(Number(skip));
             const total = yield this.db("vw_full_job_seeker_profile")
                 .withSchema(this.JOB_SEEKER)

@@ -175,6 +175,7 @@ class AdminJobSeekerService extends AbstractServices {
 			skip = 0,
 			from_date,
 			to_date,
+			sortBy,
 		} = req.query as unknown as {
 			name?: string;
 			status?: UserStatusType;
@@ -182,6 +183,7 @@ class AdminJobSeekerService extends AbstractServices {
 			skip?: number;
 			from_date?: string;
 			to_date?: string;
+			sortBy: "asc" | "desc";
 		};
 		const model = this.Model.jobSeekerModel();
 		const data = await model.getAllJobSeekerList({
@@ -191,6 +193,7 @@ class AdminJobSeekerService extends AbstractServices {
 			status,
 			from_date,
 			to_date,
+			sortBy,
 		});
 
 		return {

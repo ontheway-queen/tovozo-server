@@ -65,6 +65,7 @@ export default class JobSeekerModel extends Schema {
 		status?: UserStatusType;
 		from_date?: string;
 		to_date?: string;
+		sortBy: "asc" | "desc";
 	}): Promise<{ data: IJobSeekerProfile[]; total?: number | string }> {
 		const {
 			user_id,
@@ -74,6 +75,7 @@ export default class JobSeekerModel extends Schema {
 			to_date,
 			limit = 100,
 			skip = 0,
+			sortBy,
 		} = params;
 		const data = await this.db("vw_full_job_seeker_profile")
 			.withSchema(this.JOB_SEEKER)
@@ -103,6 +105,7 @@ export default class JobSeekerModel extends Schema {
 				}
 			})
 			.limit(Number(limit))
+			.orderBy("user_created_at", sortBy === "asc" ? "asc" : "desc")
 			.offset(Number(skip));
 
 		const total = await this.db("vw_full_job_seeker_profile")
