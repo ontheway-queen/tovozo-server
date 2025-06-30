@@ -7,20 +7,33 @@ import {
   registrationFromAdminTemplate,
   registrationVerificationCompletedTemplate,
 } from "../../../utils/templates/registrationVerificationCompletedTemplate";
+import {
+  IHotelierUser,
+  IOrganizationAddressPayload,
+  IOrganizationAmenitiesType,
+  IOrganizationName,
+} from "../../auth/utils/types/hotelierAuth.types";
 import { UserStatusType } from "../../public/utils/types/publicCommon.types";
+import { IHotelierUpdateParsedBody } from "../utils/types/adminHotelier.types";
 class AdminHotelierService extends AbstractServices {
   public async createHotelier(req: Request) {
     const { user_id } = req.admin;
     return this.db.transaction(async (trx) => {
       const files = (req.files as Express.Multer.File[]) || [];
 
-      const { designation, ...user } = Lib.safeParseJSON(req.body.user);
-      const organization = Lib.safeParseJSON(req.body.organization);
+      const { designation, ...user } = Lib.safeParseJSON(
+        req.body.user
+      ) as IHotelierUser;
+      const organization = Lib.safeParseJSON(
+        req.body.organization
+      ) as IOrganizationName;
       const organizationAddress = Lib.safeParseJSON(
         req.body.organization_address
-      );
+      ) as IOrganizationAddressPayload;
       const amenitiesInput =
-        Lib.safeParseJSON(req.body.organization_amenities) || [];
+        (Lib.safeParseJSON(
+          req.body.organization_amenities
+        ) as IOrganizationAmenitiesType[]) || [];
 
       for (const file of files) {
         if (file.fieldname === "photo") {
@@ -28,7 +41,7 @@ class AdminHotelierService extends AbstractServices {
         }
       }
 
-      const { email, phone_number, username, password, ...userData } = user;
+      const { email, phone_number, password, ...userData } = user;
 
       const userModel = this.Model.UserModel(trx);
       const organizationModel = this.Model.organizationModel(trx);
@@ -37,7 +50,6 @@ class AdminHotelierService extends AbstractServices {
       const [existingUser] = await userModel.checkUser({
         email,
         phone_number,
-        username,
         type: USER_TYPE.HOTELIER,
       });
 
@@ -49,13 +61,6 @@ class AdminHotelierService extends AbstractServices {
             message: this.ResMsg.EMAIL_ALREADY_EXISTS,
           };
         }
-        // if (existingUser.username === username) {
-        //   return {
-        //     success: false,
-        //     code: this.StatusCode.HTTP_BAD_REQUEST,
-        //     message: this.ResMsg.USERNAME_ALREADY_EXISTS,
-        //   };
-        // }
         if (existingUser.phone_number === phone_number) {
           return {
             success: false,
@@ -71,7 +76,6 @@ class AdminHotelierService extends AbstractServices {
         ...userData,
         email,
         phone_number,
-        username,
         password_hash,
         type: USER_TYPE.HOTELIER,
       });
@@ -123,7 +127,6 @@ class AdminHotelierService extends AbstractServices {
 
       const tokenData = {
         user_id: userId,
-        username,
         name: user.name,
         user_email: email,
         phone_number,
@@ -236,7 +239,7 @@ class AdminHotelierService extends AbstractServices {
         addAmenities: Lib.safeParseJSON(req.body.add_amenities) || [],
         updateAmenities: Lib.safeParseJSON(req.body.update_amenities) || {},
         deleteAmenities: Lib.safeParseJSON(req.body.delete_amenities) || [],
-      };
+      } as IHotelierUpdateParsedBody;
 
       for (const { fieldname, filename } of files) {
         switch (fieldname) {
@@ -244,7 +247,7 @@ class AdminHotelierService extends AbstractServices {
             parsed.user.photo = filename;
             break;
           case "photo":
-            parsed.addPhoto = parsed.addPhoto.push({
+            parsed.addPhoto.push({
               file: filename,
               organization_id: id,
             });
@@ -325,7 +328,7 @@ class AdminHotelierService extends AbstractServices {
 
       if (parsed.deletePhoto.length > 0) {
         for (const delP of parsed.deletePhoto) {
-          updateTasks.push(model.deletePhoto(delP));
+          updateTasks.push(model.deletePhoto(Number(delP)));
         }
       }
 

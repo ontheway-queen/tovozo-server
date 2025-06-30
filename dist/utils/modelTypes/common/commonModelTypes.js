@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TypeEmitNotification = exports.NotificationTypeEnum = void 0;
+exports.TypeEmitNotificationEnum = exports.NotificationTypeEnum = void 0;
 var NotificationTypeEnum;
 (function (NotificationTypeEnum) {
     NotificationTypeEnum["JOB_MATCH"] = "JOB_MATCH";
@@ -13,9 +13,9 @@ var NotificationTypeEnum;
     NotificationTypeEnum["SECURITY_ALERT"] = "SECURITY_ALERT";
     NotificationTypeEnum["SYSTEM_UPDATE"] = "SYSTEM_UPDATE";
 })(NotificationTypeEnum || (exports.NotificationTypeEnum = NotificationTypeEnum = {}));
-var TypeEmitNotification;
-(function (TypeEmitNotification) {
-    TypeEmitNotification["ADMIN_NEW_NOTIFICATION"] = "ADMIN_NEW_NOTIFICATION";
-    TypeEmitNotification["HOTELIER_NEW_NOTIFICATION"] = "HOTELIER_NEW_NOTIFICATION";
-    TypeEmitNotification["JOB_SEEKER_NEW_NOTIFICATION"] = "JOB_SEEKER_NEW_NOTIFICATION";
-})(TypeEmitNotification || (exports.TypeEmitNotification = TypeEmitNotification = {}));
+var TypeEmitNotificationEnum;
+(function (TypeEmitNotificationEnum) {
+    TypeEmitNotificationEnum["ADMIN_NEW_NOTIFICATION"] = "ADMIN_NEW_NOTIFICATION";
+    TypeEmitNotificationEnum["HOTELIER_NEW_NOTIFICATION"] = "HOTELIER_NEW_NOTIFICATION";
+    TypeEmitNotificationEnum["JOB_SEEKER_NEW_NOTIFICATION"] = "JOB_SEEKER_NEW_NOTIFICATION";
+})(TypeEmitNotificationEnum || (exports.TypeEmitNotificationEnum = TypeEmitNotificationEnum = {}));

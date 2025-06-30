@@ -32,3 +32,28 @@ export interface IJobSeekerAuthView {
   location_created_at?: string;
   location_updated_at?: string;
 }
+
+export interface IJobSeekerUserBody {
+  name: string;
+  email: string;
+  password: string;
+  gender: GenderType;
+  phone_number: string;
+  photo: string;
+}
+
+export interface IJobSeekerInfoBody {
+  visa_copy: string;
+  id_copy: string;
+  passport_copy: string;
+  date_of_birth?: string;
+  work_permit?: string;
+  criminal_convictions?: string;
+  address?: string;
+  resume?: string;
+}
+
+export interface IJobSeekerNationalityBody {
+  nationality: number;
+  account_status?: UserStatusType;
+}

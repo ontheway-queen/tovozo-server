@@ -58,7 +58,7 @@ class AdminJobService extends AbstractServices {
     const { user_id } = req.admin;
     return await this.db.transaction(async (trx) => {
       const model = this.Model.jobModel();
-      const body = req.body as ICreateJobPayload;
+      const body = req.body as Partial<ICreateJobPayload>;
 
       const check = await model.getSingleJob(id);
       if (!check) {

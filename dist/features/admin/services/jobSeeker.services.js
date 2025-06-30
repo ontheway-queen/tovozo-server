@@ -59,13 +59,12 @@ class AdminJobSeekerService extends abstract_service_1.default {
                         jobSeekerInfoInput[fieldname] = filename;
                     }
                 });
-                const { email, phone_number, username, password } = userInput, restUserData = __rest(userInput, ["email", "phone_number", "username", "password"]);
+                const { email, phone_number, password } = userInput, restUserData = __rest(userInput, ["email", "phone_number", "password"]);
                 const userModel = this.Model.UserModel(trx);
                 const jobSeekerModel = this.Model.jobSeekerModel(trx);
                 const existingUser = yield userModel.checkUser({
                     email,
                     phone_number,
-                    username,
                     type: constants_1.USER_TYPE.JOB_SEEKER,
                 });
                 if (existingUser && existingUser.length) {
@@ -89,7 +88,6 @@ class AdminJobSeekerService extends abstract_service_1.default {
                 const password_hash = yield lib_1.default.hashValue(password);
                 const registration = yield userModel.createUser(Object.assign(Object.assign({}, restUserData), { email,
                     phone_number,
-                    username,
                     password_hash, type: constants_1.USER_TYPE.JOB_SEEKER }));
                 if (!registration.length) {
                     throw new customError_1.default(this.ResMsg.HTTP_BAD_REQUEST, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
@@ -99,7 +97,6 @@ class AdminJobSeekerService extends abstract_service_1.default {
                 yield jobSeekerModel.createJobSeekerInfo(Object.assign(Object.assign({}, jobSeekerInfoInput), { job_seeker_id: jobSeekerId }));
                 const tokenPayload = {
                     user_id: jobSeekerId,
-                    username,
                     name: userInput.name,
                     gender: userInput.gender,
                     user_email: email,

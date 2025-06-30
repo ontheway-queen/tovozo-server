@@ -88,7 +88,7 @@ exports.OTP_FOR = "Verification";
 // British ID
 exports.BRITISH_ID = 26;
 // Token Expiration time
-exports.LOGIN_TOKEN_EXPIRES_IN = "48h";
+exports.LOGIN_TOKEN_EXPIRES_IN = "14d";
 // Gender
 exports.GENDERS = ["Male", "Female", "Other"];
 // Job post details status

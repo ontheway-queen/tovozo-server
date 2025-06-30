@@ -43,14 +43,13 @@ class AdminHotelierService extends abstract_service_1.default {
                         user.photo = file.filename;
                     }
                 }
-                const { email, phone_number, username, password } = user, userData = __rest(user, ["email", "phone_number", "username", "password"]);
+                const { email, phone_number, password } = user, userData = __rest(user, ["email", "phone_number", "password"]);
                 const userModel = this.Model.UserModel(trx);
                 const organizationModel = this.Model.organizationModel(trx);
                 const commonModel = this.Model.commonModel(trx);
                 const [existingUser] = yield userModel.checkUser({
                     email,
                     phone_number,
-                    username,
                     type: constants_1.USER_TYPE.HOTELIER,
                 });
                 if (existingUser) {
@@ -61,13 +60,6 @@ class AdminHotelierService extends abstract_service_1.default {
                             message: this.ResMsg.EMAIL_ALREADY_EXISTS,
                         };
                     }
-                    // if (existingUser.username === username) {
-                    //   return {
-                    //     success: false,
-                    //     code: this.StatusCode.HTTP_BAD_REQUEST,
-                    //     message: this.ResMsg.USERNAME_ALREADY_EXISTS,
-                    //   };
-                    // }
                     if (existingUser.phone_number === phone_number) {
                         return {
                             success: false,
@@ -79,7 +71,6 @@ class AdminHotelierService extends abstract_service_1.default {
                 const password_hash = yield lib_1.default.hashValue(password);
                 const registration = yield userModel.createUser(Object.assign(Object.assign({}, userData), { email,
                     phone_number,
-                    username,
                     password_hash, type: constants_1.USER_TYPE.HOTELIER }));
                 if (!registration.length) {
                     throw new customError_1.default(this.ResMsg.HTTP_BAD_REQUEST, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
@@ -109,7 +100,6 @@ class AdminHotelierService extends abstract_service_1.default {
                 }
                 const tokenData = {
                     user_id: userId,
-                    username,
                     name: user.name,
                     user_email: email,
                     phone_number,
@@ -208,7 +198,7 @@ class AdminHotelierService extends abstract_service_1.default {
                             parsed.user.photo = filename;
                             break;
                         case "photo":
-                            parsed.addPhoto = parsed.addPhoto.push({
+                            parsed.addPhoto.push({
                                 file: filename,
                                 organization_id: id,
                             });
@@ -256,7 +246,7 @@ class AdminHotelierService extends abstract_service_1.default {
                 }
                 if (parsed.deletePhoto.length > 0) {
                     for (const delP of parsed.deletePhoto) {
-                        updateTasks.push(model.deletePhoto(delP));
+                        updateTasks.push(model.deletePhoto(Number(delP)));
                     }
                 }
                 if (parsed.addAmenities.length > 0) {

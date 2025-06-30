@@ -7,17 +7,18 @@ import {
 class SocketService {
   public emitNotification(
     data: INotificationPayload & {
-      socket_id: string;
+      socketId: string;
       read_status?: boolean;
       created_at?: string;
       emitType: TypeEmitNotification;
     }
   ) {
+    console.log("Emitting notification to socket:", data);
     const {
       emitType,
       read_status = false,
       created_at = new Date().toISOString(),
-      socket_id,
+      socketId,
       ...restData
     } = data;
 
@@ -27,7 +28,7 @@ class SocketService {
       created_at,
     };
 
-    io.to(socket_id).emit(emitType as unknown as string, payload);
+    io.to(socketId).emit(emitType as unknown as string, payload);
   }
 }
 

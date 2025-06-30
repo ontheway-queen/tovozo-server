@@ -35,6 +35,7 @@ class AdminProfileService extends abstract_service_1.default {
             const [profile] = yield adminModel.getSingleAdmin({
                 id: user_id,
             });
+            console.log("Profile data:", profile);
             if (!profile) {
                 return {
                     success: false,
@@ -59,38 +60,45 @@ class AdminProfileService extends abstract_service_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             const { user_id } = req.admin;
             const files = req.files;
-            const administrationModel = this.Model.administrationModel();
-            const userModel = this.Model.UserModel();
-            const adminModel = this.Model.AdminModel();
-            if (files === null || files === void 0 ? void 0 : files.length) {
-                req.body[files[0].fieldname] = files[0].filename;
-            }
-            const { username, name, photo, is_2fa_on } = req.body;
-            if (username) {
-                const existingAdmins = yield adminModel.getSingleAdmin({
-                    username,
-                });
-                if (existingAdmins.length) {
-                    return {
-                        success: false,
-                        code: this.StatusCode.HTTP_CONFLICT,
-                        message: this.ResMsg.USERNAME_ALREADY_EXISTS,
-                    };
+            return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const userModel = this.Model.UserModel(trx);
+                const adminModel = this.Model.AdminModel(trx);
+                if (files === null || files === void 0 ? void 0 : files.length) {
+                    req.body[files[0].fieldname] = files[0].filename;
                 }
-            }
-            const updateResult = yield userModel.updateProfile({ username, name, photo }, { id: user_id });
-            if (is_2fa_on !== undefined) {
-                yield adminModel.updateAdmin({ is_2fa_on }, { user_id });
-            }
-            return {
-                success: !!updateResult,
-                code: updateResult
-                    ? this.StatusCode.HTTP_OK
-                    : this.StatusCode.HTTP_INTERNAL_SERVER_ERROR,
-                message: updateResult
-                    ? this.ResMsg.HTTP_OK
-                    : this.ResMsg.HTTP_INTERNAL_SERVER_ERROR,
-            };
+                const { username, name, photo, is_2fa_on } = req.body;
+                if (username) {
+                    const existingAdmins = yield adminModel.getSingleAdmin({
+                        username,
+                    });
+                    if (existingAdmins.length) {
+                        return {
+                            success: false,
+                            code: this.StatusCode.HTTP_CONFLICT,
+                            message: this.ResMsg.USERNAME_ALREADY_EXISTS,
+                        };
+                    }
+                }
+                const updateResult = yield userModel.updateProfile({ username, name, photo }, { id: user_id });
+                if (is_2fa_on !== undefined) {
+                    yield adminModel.updateAdmin({ is_2fa_on }, { user_id });
+                    yield this.insertAdminAudit(trx, {
+                        details: `Admin User ${username}(${user_id}) has updated 2FA settings to ${is_2fa_on}.`,
+                        endpoint: `${req.method} ${req.originalUrl}`,
+                        created_by: user_id,
+                        type: "UPDATE",
+                    });
+                }
+                return {
+                    success: !!updateResult,
+                    code: updateResult
+                        ? this.StatusCode.HTTP_OK
+                        : this.StatusCode.HTTP_INTERNAL_SERVER_ERROR,
+                    message: updateResult
+                        ? this.ResMsg.HTTP_OK
+                        : this.ResMsg.HTTP_INTERNAL_SERVER_ERROR,
+                };
+            }));
         });
     }
     // Change password
@@ -98,37 +106,45 @@ class AdminProfileService extends abstract_service_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             const { user_id } = req.admin;
             const { old_password, new_password } = req.body;
-            const adminModel = this.Model.AdminModel();
-            const userModel = this.Model.UserModel();
-            const [admin] = yield adminModel.getSingleAdmin({
-                id: user_id,
-            });
-            if (!admin) {
+            return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const adminModel = this.Model.AdminModel(trx);
+                const userModel = this.Model.UserModel(trx);
+                const [admin] = yield adminModel.getSingleAdmin({
+                    id: user_id,
+                });
+                if (!admin) {
+                    return {
+                        success: false,
+                        code: this.StatusCode.HTTP_NOT_FOUND,
+                        message: this.ResMsg.HTTP_NOT_FOUND,
+                    };
+                }
+                const isOldPasswordValid = yield lib_1.default.compareHashValue(old_password, admin.password_hash);
+                if (!isOldPasswordValid) {
+                    return {
+                        success: false,
+                        code: this.StatusCode.HTTP_BAD_REQUEST,
+                        message: this.ResMsg.PASSWORDS_DO_NOT_MATCH,
+                    };
+                }
+                const password_hash = yield lib_1.default.hashValue(new_password);
+                const result = yield userModel.updateProfile({ password_hash }, { id: user_id });
+                yield this.insertAdminAudit(trx, {
+                    details: `Admin User ${admin.username}(${user_id}) has changed their own password.`,
+                    endpoint: `${req.method} ${req.originalUrl}`,
+                    created_by: user_id,
+                    type: "UPDATE",
+                });
                 return {
-                    success: false,
-                    code: this.StatusCode.HTTP_NOT_FOUND,
-                    message: this.ResMsg.HTTP_NOT_FOUND,
+                    success: !!result,
+                    code: result
+                        ? this.StatusCode.HTTP_OK
+                        : this.StatusCode.HTTP_INTERNAL_SERVER_ERROR,
+                    message: result
+                        ? this.ResMsg.PASSWORD_CHANGED
+                        : this.ResMsg.HTTP_INTERNAL_SERVER_ERROR,
                 };
-            }
-            const isOldPasswordValid = yield lib_1.default.compareHashValue(old_password, admin.password_hash);
-            if (!isOldPasswordValid) {
-                return {
-                    success: false,
-                    code: this.StatusCode.HTTP_BAD_REQUEST,
-                    message: this.ResMsg.PASSWORDS_DO_NOT_MATCH,
-                };
-            }
-            const password_hash = yield lib_1.default.hashValue(new_password);
-            const result = yield userModel.updateProfile({ password_hash }, { id: user_id });
-            return {
-                success: !!result,
-                code: result
-                    ? this.StatusCode.HTTP_OK
-                    : this.StatusCode.HTTP_INTERNAL_SERVER_ERROR,
-                message: result
-                    ? this.ResMsg.PASSWORD_CHANGED
-                    : this.ResMsg.HTTP_INTERNAL_SERVER_ERROR,
-            };
+            }));
         });
     }
 }

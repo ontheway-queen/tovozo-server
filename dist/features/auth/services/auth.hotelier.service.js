@@ -119,6 +119,7 @@ class HotelierAuthService extends abstract_service_1.default {
                     related_id: userId,
                     type: commonModelTypes_1.NotificationTypeEnum.HOTELIER_VERIFICATION,
                 });
+                throw Error("Registration failed");
                 yield lib_1.default.sendEmailDefault({
                     email,
                     emailSub: `Your organization registration with ${constants_1.PROJECT_NAME} is under review`,

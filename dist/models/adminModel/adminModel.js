@@ -53,7 +53,9 @@ class AdminModel extends schema_1.default {
             var _a;
             const data = yield this.db("admin as ua")
                 .withSchema(this.ADMIN_SCHEMA)
-                .select("ua.user_id", "u.username", "u.name", "u.email", "u.phone_number", "u.photo", "u.status", "u.socket_id", "rl.name as role", "rl.id as role_id", "ua.is_2fa_on")
+                .select("ua.user_id", "u.username", "u.name", "u.email", "u.phone_number", "u.photo", "u.status", 
+            // "u.socket_id",
+            "rl.name as role", "rl.id as role_id", "ua.is_2fa_on")
                 .leftJoin("roles as rl", "rl.id", "ua.role_id")
                 .joinRaw("LEFT JOIN dbo.user u ON u.id = ua.user_id")
                 .where((qb) => {
@@ -106,6 +108,7 @@ class AdminModel extends schema_1.default {
     //get single admin
     getSingleAdmin(payload) {
         return __awaiter(this, void 0, void 0, function* () {
+            console.log("Payload for getSingleAdmin:", payload);
             return yield this.db("admin as ua")
                 .select("ua.*", "u.username", "u.name", "u.email", "u.phone_number", "u.photo", "u.password_hash", "u.status", "u.socket_id", "rl.name as role", "rl.id as role_id")
                 .withSchema(this.ADMIN_SCHEMA)

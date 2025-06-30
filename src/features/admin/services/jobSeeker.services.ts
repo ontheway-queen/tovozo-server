@@ -13,7 +13,13 @@ import {
   registrationFromAdminTemplate,
   registrationVerificationCompletedTemplate,
 } from "../../../utils/templates/registrationVerificationCompletedTemplate";
+import {
+  IJobSeekerInfoBody,
+  IJobSeekerNationalityBody,
+  IJobSeekerUserBody,
+} from "../../auth/utils/types/jobSeekerAuth.types";
 import { UserStatusType } from "../../public/utils/types/publicCommon.types";
+import { IAdminJobSeekerUpdateParsedBody } from "../utils/types/adminJobSeeker.types";
 class AdminJobSeekerService extends AbstractServices {
   public async createJobSeeker(req: Request) {
     return this.db.transaction(async (trx) => {
@@ -23,9 +29,13 @@ class AdminJobSeekerService extends AbstractServices {
       const parseInput = (key: string) =>
         Lib.safeParseJSON(req.body[key]) || {};
 
-      const userInput = parseInput("user");
-      const jobSeekerInput = parseInput("job_seeker");
-      const jobSeekerInfoInput = parseInput("job_seeker_info");
+      const userInput = parseInput("user") as IJobSeekerUserBody;
+      const jobSeekerInput = parseInput(
+        "job_seeker"
+      ) as IJobSeekerNationalityBody;
+      const jobSeekerInfoInput = parseInput(
+        "job_seeker_info"
+      ) as IJobSeekerInfoBody;
 
       // Attach file references
       files.forEach(({ fieldname, filename }) => {
@@ -51,8 +61,7 @@ class AdminJobSeekerService extends AbstractServices {
         }
       });
 
-      const { email, phone_number, username, password, ...restUserData } =
-        userInput;
+      const { email, phone_number, password, ...restUserData } = userInput;
 
       const userModel = this.Model.UserModel(trx);
       const jobSeekerModel = this.Model.jobSeekerModel(trx);
@@ -60,7 +69,6 @@ class AdminJobSeekerService extends AbstractServices {
       const existingUser = await userModel.checkUser({
         email,
         phone_number,
-        username,
         type: USER_TYPE.JOB_SEEKER,
       });
 
@@ -90,7 +98,6 @@ class AdminJobSeekerService extends AbstractServices {
         ...restUserData,
         email,
         phone_number,
-        username,
         password_hash,
         type: USER_TYPE.JOB_SEEKER,
       });
@@ -117,7 +124,6 @@ class AdminJobSeekerService extends AbstractServices {
 
       const tokenPayload = {
         user_id: jobSeekerId,
-        username,
         name: userInput.name,
         gender: userInput.gender,
         user_email: email,
@@ -241,7 +247,7 @@ class AdminJobSeekerService extends AbstractServices {
           Lib.safeParseJSON(req.body.update_job_locations) || [],
         addJobShifting: Lib.safeParseJSON(req.body.add_job_shifting) || [],
         delJobShifting: Lib.safeParseJSON(req.body.del_job_shifting) || [],
-      };
+      } as IAdminJobSeekerUpdateParsedBody;
 
       for (const { fieldname, filename } of files) {
         switch (fieldname) {

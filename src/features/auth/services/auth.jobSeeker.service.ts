@@ -15,10 +15,14 @@ import {
   IForgetPasswordPayload,
   NotificationTypeEnum,
 } from "../../../utils/modelTypes/common/commonModelTypes";
-import { GenderType } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
 import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
 import { registrationJobSeekerTemplate } from "../../../utils/templates/jobSeekerRegistrationTemplate";
-import { IJobSeekerAuthView } from "../utils/types/jobSeekerAuth.types";
+import {
+  IJobSeekerAuthView,
+  IJobSeekerInfoBody,
+  IJobSeekerNationalityBody,
+  IJobSeekerUserBody,
+} from "../utils/types/jobSeekerAuth.types";
 
 class JobSeekerAuthService extends AbstractServices {
   //registration service
@@ -29,22 +33,13 @@ class JobSeekerAuthService extends AbstractServices {
       const parseInput = (key: string) =>
         Lib.safeParseJSON(req.body[key]) || {};
 
-      const userInput = parseInput("user") as {
-        name: string;
-        email: string;
-        password: string;
-        gender: GenderType;
-        phone_number: string;
-        photo: string;
-      };
-      const jobSeekerInput = parseInput("job_seeker") as {
-        nationality: number;
-      };
-      const jobSeekerInfoInput = parseInput("job_seeker_info") as {
-        visa_copy: string;
-        id_copy: string;
-        passport_copy: string;
-      };
+      const userInput = parseInput("user") as IJobSeekerUserBody;
+      const jobSeekerInput = parseInput(
+        "job_seeker"
+      ) as IJobSeekerNationalityBody;
+      const jobSeekerInfoInput = parseInput(
+        "job_seeker_info"
+      ) as IJobSeekerInfoBody;
 
       const validFileFields = ["visa_copy", "id_copy", "photo"];
 
@@ -151,6 +146,7 @@ class JobSeekerAuthService extends AbstractServices {
 
       await this.insertNotification(trx, TypeUser.ADMIN, {
         user_id: jobSeekerId,
+
         content: `New job seeker "${userInput.name}" has registered and is awaiting verification.`,
         related_id: jobSeekerId,
         type: NotificationTypeEnum.JOB_SEEKER_VERIFICATION,
