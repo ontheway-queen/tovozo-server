@@ -158,7 +158,7 @@ class AdminJobSeekerService extends abstract_service_1.default {
             if (!data) {
                 return {
                     success: false,
-                    message: this.ResMsg.HTTP_NOT_FOUND,
+                    message: `The requested job seeker account with ID ${id} not found`,
                     code: this.StatusCode.HTTP_NOT_FOUND,
                 };
             }
@@ -180,7 +180,7 @@ class AdminJobSeekerService extends abstract_service_1.default {
                 if (!data) {
                     return {
                         success: false,
-                        message: this.ResMsg.HTTP_NOT_FOUND,
+                        message: `The requested job seeker account with ID ${id} not found`,
                         code: this.StatusCode.HTTP_NOT_FOUND,
                     };
                 }
@@ -217,8 +217,9 @@ class AdminJobSeekerService extends abstract_service_1.default {
                     id: id,
                     type: constants_1.USER_TYPE.JOB_SEEKER,
                 });
+                console.log({ existingUser });
                 if (!existingUser) {
-                    throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND, "ERROR");
+                    throw new customError_1.default(`The requested job seeker account with ID ${id} not found`, this.StatusCode.HTTP_NOT_FOUND, "ERROR");
                 }
                 if (((_a = parsed === null || parsed === void 0 ? void 0 : parsed.user) === null || _a === void 0 ? void 0 : _a.phone_number) &&
                     parsed.user.phone_number !== existingUser.phone_number) {
@@ -247,11 +248,14 @@ class AdminJobSeekerService extends abstract_service_1.default {
                         if (!checkJobSeeker) {
                             throw new customError_1.default("Job Seeker account not found!", this.StatusCode.HTTP_NOT_FOUND);
                         }
-                        if (parsed.jobSeeker.account_status === checkJobSeeker.account_status) {
+                        if (parsed.jobSeeker.account_status ===
+                            checkJobSeeker.account_status) {
                             throw new customError_1.default(`Already updated status to ${parsed.jobSeeker.account_status}`, this.StatusCode.HTTP_CONFLICT);
                         }
                     }
-                    updateTasks.push(jobSeekerModel.updateJobSeeker(parsed.jobSeeker, { user_id: id }));
+                    updateTasks.push(jobSeekerModel.updateJobSeeker(parsed.jobSeeker, {
+                        user_id: id,
+                    }));
                 }
                 if (Object.keys(parsed.jobSeekerInfo).length > 0) {
                     updateTasks.push(jobSeekerModel.updateJobSeekerInfo(parsed.jobSeekerInfo, {
@@ -353,7 +357,7 @@ class AdminJobSeekerService extends abstract_service_1.default {
                 if (!data) {
                     return {
                         success: false,
-                        message: this.ResMsg.HTTP_NOT_FOUND,
+                        message: `The requested job seeker account with ID ${id} not found`,
                         code: this.StatusCode.HTTP_NOT_FOUND,
                     };
                 }

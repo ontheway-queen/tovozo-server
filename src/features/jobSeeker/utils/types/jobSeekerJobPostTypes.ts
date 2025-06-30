@@ -13,12 +13,15 @@ export interface IJobSeekerJob {
 	created_time: string;
 	gender: string | null;
 	organization_name: string;
+	organization_photo: string | null;
 	location_id: number;
 	location_name: string;
 	location_address: string;
 	city_name: string;
 	state_name: string;
 	country_name: string;
+	latitude: number;
+	longitude: number;
 }
 
 export interface IJobSeekerJobList {

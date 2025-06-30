@@ -55,14 +55,18 @@ export default class JobApplicationModel extends Schema {
 				"jp.title as job_post_title",
 				"jp.details as job_post_details",
 				"jp.requirements as job_post_requirements",
+				"jp.hourly_rate",
 				"org.id as organization_id",
 				"org.name as organization_name",
+				"org_p.file as organization_photo",
 				"vwl.location_id",
 				"vwl.location_name",
 				"vwl.location_address",
 				"vwl.country_name",
 				"vwl.state_name",
 				"vwl.city_name",
+				"vwl.longitude",
+				"vwl.latitude",
 				this.db.raw(`json_build_object(
                     'id', j.id,
                     'title', j.title,
@@ -86,6 +90,11 @@ export default class JobApplicationModel extends Schema {
 				"org.location_id"
 			)
 			.leftJoin("jobs as j", "jpd.job_id", "j.id")
+			.leftJoin(
+				this.db.raw(`?? as org_p ON org_p.organization_id = org.id`, [
+					`${this.HOTELIER}.${this.TABLES.organization_photos}`,
+				])
+			)
 			.where("ja.job_seeker_id", job_seeker_id)
 			.modify((qb) => {
 				if (status) {
@@ -122,7 +131,7 @@ export default class JobApplicationModel extends Schema {
 		job_application_id: number;
 		job_seeker_id: number;
 	}): Promise<IJobSeekerJobApplication> {
-		const data = await this.db("job_applications as ja")
+		return await this.db("job_applications as ja")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
 				"ja.id as job_application_id",
@@ -137,14 +146,18 @@ export default class JobApplicationModel extends Schema {
 				"jp.title as job_post_title",
 				"jp.details as job_post_details",
 				"jp.requirements as job_post_requirements",
+				"jp.hourly_rate",
 				"org.id as organization_id",
 				"org.name as organization_name",
+				"org_p.file as organization_photo",
 				"vwl.location_id",
 				"vwl.location_name",
 				"vwl.location_address",
 				"vwl.country_name",
 				"vwl.state_name",
 				"vwl.city_name",
+				"vwl.longitude",
+				"vwl.latitude",
 				this.db.raw(`json_build_object(
                     'id', j.id,
                     'title', j.title,
@@ -170,6 +183,11 @@ export default class JobApplicationModel extends Schema {
 				`${this.HOTELIER}.${this.TABLES.organization}`,
 			])
 			.leftJoin(
+				this.db.raw(`?? as org_p ON org_p.organization_id = org.id`, [
+					`${this.HOTELIER}.${this.TABLES.organization_photos}`,
+				])
+			)
+			.leftJoin(
 				"vw_location as vwl",
 				"vwl.location_id",
 				"org.location_id"
@@ -185,8 +203,6 @@ export default class JobApplicationModel extends Schema {
 				"ja.job_seeker_id": job_seeker_id,
 			})
 			.first();
-
-		return data;
 	}
 
 	public async updateMyJobApplicationStatus(

@@ -67,7 +67,10 @@ class OrganizationModel extends schema_1.default {
                 if (params.name)
                     qb.andWhereILike("name", `%${params.name}%`);
                 if (params.from_date && params.to_date)
-                    qb.andWhereBetween("created_at", [params.from_date, params.to_date]);
+                    qb.andWhereBetween("created_at", [
+                        params.from_date,
+                        params.to_date,
+                    ]);
             })
                 .limit(params.limit || 100)
                 .offset(params.skip || 0);
@@ -84,7 +87,10 @@ class OrganizationModel extends schema_1.default {
                 if (params.name)
                     qb.andWhereILike("name", `%${params.name}%`);
                 if (params.from_date && params.to_date)
-                    qb.andWhereBetween("created_at", [params.from_date, params.to_date]);
+                    qb.andWhereBetween("created_at", [
+                        params.from_date,
+                        params.to_date,
+                    ]);
             })
                 .first();
             return {
@@ -98,7 +104,7 @@ class OrganizationModel extends schema_1.default {
             return yield this.db("organization")
                 .withSchema(this.HOTELIER)
                 .select("*")
-                .where({ id })
+                .where({ id, is_deleted: false })
                 .first();
         });
     }

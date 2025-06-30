@@ -9,6 +9,7 @@ const jobs_router_1 = __importDefault(require("./router/jobs.router"));
 const jobSeeker_router_1 = __importDefault(require("./router/jobSeeker.router"));
 const profile_router_1 = __importDefault(require("./router/profile.router"));
 const cancellationReport_router_1 = __importDefault(require("./router/cancellationReport.router"));
+const hotelier_router_1 = __importDefault(require("./router/hotelier.router"));
 class AdminRootRouter {
     constructor() {
         this.Router = (0, express_1.Router)();
@@ -16,6 +17,7 @@ class AdminRootRouter {
         this.adminProfileRouter = new profile_router_1.default();
         this.adminJobRouter = new jobs_router_1.default();
         this.adminJobSeekerRouter = new jobSeeker_router_1.default();
+        this.adminHotelierRouter = new hotelier_router_1.default();
         this.cancellationReportRouter = new cancellationReport_router_1.default();
         this.callRouter();
     }
@@ -28,6 +30,8 @@ class AdminRootRouter {
         this.Router.use("/job-category", this.adminJobRouter.router);
         // Job seeker
         this.Router.use("/job-seeker", this.adminJobSeekerRouter.router);
+        // hotelier
+        this.Router.use("/hotelier", this.adminHotelierRouter.router);
         // cancellation report
         this.Router.use("/cancellation-report", this.cancellationReportRouter.router);
     }

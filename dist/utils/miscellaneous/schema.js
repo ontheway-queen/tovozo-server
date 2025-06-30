@@ -19,6 +19,7 @@ class Schema {
             location: "location",
             notification: "notification",
             organization: "organization",
+            organization_photos: "organization_photos",
             notification_seen: "notification_seen",
             notification_delete: "notification_delete",
             job_seeker: "job_seeker",

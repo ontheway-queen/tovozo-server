@@ -15,12 +15,14 @@ class HotelierAuthRouter extends abstract_router_1.default {
         //register
         this.router
             .route("/registration")
-            .post(this.uploader.cloudUploadRaw(this.fileFolders.JOB_SEEKER_FILES), this.authChecker.hotelierAuthChecker, this.controller.registration);
+            .post(this.uploader.cloudUploadRaw(this.fileFolders.HOTELIER_FILES), this.authChecker.hotelierAuthChecker, this.controller.registration);
         //login
         this.router.route("/login").post(this.controller.login);
         this.router.route("/login-data").post(this.controller.loginData);
         //forget password
-        this.router.route("/forget-password").post(this.controller.forgetPassword);
+        this.router
+            .route("/forget-password")
+            .post(this.controller.forgetPassword);
     }
 }
 exports.default = HotelierAuthRouter;

@@ -14,8 +14,10 @@ export interface IJobSeekerJobApplication {
 	job_post_title: string;
 	job_post_details: string;
 	job_post_requirements: string;
+	hourly_rate: number;
 	organization_id: number;
 	organization_name: string;
+	organization_photo: string | null;
 	location_id: number;
 	location_name: string;
 	location_address: string;

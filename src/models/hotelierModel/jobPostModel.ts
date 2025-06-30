@@ -74,12 +74,15 @@ class JobPostModel extends Schema {
 				"jp.hourly_rate",
 				"jp.created_time",
 				"org.name as organization_name",
+				"org_p.file as organization_photo",
 				"vwl.location_id",
 				"vwl.location_name",
 				"vwl.location_address",
 				"vwl.city_name",
 				"vwl.state_name",
-				"vwl.country_name"
+				"vwl.country_name",
+				"vwl.longitude",
+				"vwl.latitude"
 			)
 			.joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
 				`${this.HOTELIER}.${this.TABLES.organization}`,
@@ -91,6 +94,11 @@ class JobPostModel extends Schema {
 				"vw_location as vwl",
 				"vwl.location_id",
 				"org.location_id"
+			)
+			.leftJoin(
+				this.db.raw(`?? as org_p ON org_p.organization_id = org.id`, [
+					`${this.HOTELIER}.${this.TABLES.organization_photos}`,
+				])
 			)
 			.where((qb) => {
 				if (user_id) {
@@ -178,12 +186,17 @@ class JobPostModel extends Schema {
 				"jp.hourly_rate",
 				"jp.created_time",
 				"org.name as organization_name",
+				"org_p.file as organization_photo",
 				"vwl.location_id",
 				"vwl.location_name",
 				"vwl.location_address",
 				"vwl.city_name",
 				"vwl.state_name",
-				"vwl.country_name"
+				"vwl.country_name",
+				"vwl.longitude",
+				"vwl.latitude",
+				"vwl.longitude",
+				"vwl.latitude"
 			)
 			.joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
 				`${this.HOTELIER}.${this.TABLES.organization}`,
@@ -197,6 +210,11 @@ class JobPostModel extends Schema {
 				"vwl.location_id",
 				"org.location_id"
 			)
+			.leftJoin(
+				this.db.raw(`?? as org_p ON org_p.organization_id = org.id`, [
+					`${this.HOTELIER}.${this.TABLES.organization_photos}`,
+				])
+			)
 			.where("jpd.id", id)
 			.first();
 	}
@@ -206,6 +224,7 @@ class JobPostModel extends Schema {
 		params: IGetJobPostListParams
 	): Promise<IHoiteleirJobList> {
 		const {
+			organization_id,
 			user_id,
 			title,
 			category_id,
@@ -236,12 +255,15 @@ class JobPostModel extends Schema {
 				"jp.created_time",
 				"jp.prefer_gender",
 				"org.name as organization_name",
+				"org_p.file as organization_photo",
 				"vwl.location_id",
 				"vwl.location_name",
 				"vwl.location_address",
 				"vwl.city_name",
 				"vwl.state_name",
 				"vwl.country_name",
+				"vwl.longitude",
+				"vwl.latitude",
 				this.db.raw(
 					`COUNT(*) OVER (PARTITION BY jpd.job_post_id) AS vacancy`
 				),
@@ -296,7 +318,15 @@ class JobPostModel extends Schema {
 				"jta.job_application_id",
 				"ja.id"
 			)
+			.leftJoin(
+				this.db.raw(`?? as org_p ON org_p.organization_id = org.id`, [
+					`${this.HOTELIER}.${this.TABLES.organization_photos}`,
+				])
+			)
 			.where((qb) => {
+				if (organization_id) {
+					qb.andWhere("jp.organization_id", organization_id);
+				}
 				if (user_id) {
 					qb.andWhere("u.id", user_id);
 				}
@@ -348,6 +378,9 @@ class JobPostModel extends Schema {
 					"jsu.location_id"
 				)
 				.where((qb) => {
+					if (organization_id) {
+						qb.andWhere("jp.organization_id", organization_id);
+					}
 					if (user_id) {
 						qb.andWhere("u.id", user_id);
 					}
@@ -401,12 +434,15 @@ class JobPostModel extends Schema {
 				"jp.prefer_gender",
 				"jp.created_time",
 				"org.name as organization_name",
+				"org_p.file as organization_photo",
 				"vwl.location_id",
 				"vwl.location_name",
 				"vwl.location_address",
 				"vwl.city_name",
 				"vwl.state_name",
 				"vwl.country_name",
+				"vwl.longitude",
+				"vwl.latitude",
 				this.db.raw(`(
                     SELECT COUNT(*) 
                     FROM dbo.job_post_details 
@@ -463,6 +499,11 @@ class JobPostModel extends Schema {
 				"job_task_activities as jta",
 				"jta.job_application_id",
 				"ja.id"
+			)
+			.leftJoin(
+				this.db.raw(`?? as org_p ON org_p.organization_id = org.id`, [
+					`${this.HOTELIER}.${this.TABLES.organization_photos}`,
+				])
 			)
 			.where("jpd.id", id)
 			.first();

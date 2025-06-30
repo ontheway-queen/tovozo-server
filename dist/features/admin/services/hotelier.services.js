@@ -34,6 +34,7 @@ class AdminHotelierService extends abstract_service_1.default {
             const { user_id } = req.admin;
             return this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const files = req.files || [];
+                console.log({ user: req.body });
                 const _a = lib_1.default.safeParseJSON(req.body.user), { designation } = _a, user = __rest(_a, ["designation"]);
                 const organization = lib_1.default.safeParseJSON(req.body.organization);
                 const organizationAddress = lib_1.default.safeParseJSON(req.body.organization_address);
@@ -133,9 +134,11 @@ class AdminHotelierService extends abstract_service_1.default {
     }
     getHoteliers(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { name, status, limit = 100, skip = 0, from_date, to_date, } = req.query;
+            const { id, user_id, name, status, limit = 100, skip = 0, from_date, to_date, } = req.query;
             const model = this.Model.organizationModel();
             const data = yield model.getOrganizationList({
+                id: id ? Number(id) : undefined,
+                user_id: user_id ? Number(user_id) : undefined,
                 name,
                 limit,
                 skip,
@@ -163,12 +166,15 @@ class AdminHotelierService extends abstract_service_1.default {
                 organizationModel.getAmenities({ organization_id: data.id }),
                 organizationModel.getPhotos(data.id),
             ]);
-            const jobPosts = jobPostModel.getHotelierJobPostList({ user_id: id });
+            const jobPosts = yield jobPostModel.getHotelierJobPostList({
+                organization_id: data.id,
+            });
             return {
                 success: true,
                 message: this.ResMsg.HTTP_OK,
                 code: this.StatusCode.HTTP_OK,
-                data: Object.assign(Object.assign({}, data), { organization_amenities, organization_photos, jobPosts }),
+                data: Object.assign(Object.assign({}, data), { organization_amenities,
+                    organization_photos, jobPosts: jobPosts.data }),
             };
         });
     }
@@ -179,6 +185,7 @@ class AdminHotelierService extends abstract_service_1.default {
                 var _a;
                 const model = this.Model.organizationModel(trx);
                 const data = yield model.getSingleOrganization(id);
+                console.log({ data });
                 if (!data) {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
                 }
@@ -212,6 +219,7 @@ class AdminHotelierService extends abstract_service_1.default {
                     id: id,
                     type: constants_1.USER_TYPE.HOTELIER,
                 });
+                console.log({ existingUser });
                 if (!existingUser) {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND, "ERROR");
                 }
@@ -227,7 +235,7 @@ class AdminHotelierService extends abstract_service_1.default {
                 }
                 const updateTasks = [];
                 if (Object.keys(parsed.user).length > 0) {
-                    updateTasks.push(userModel.updateProfile(parsed.user, { id }));
+                    updateTasks.push(userModel.updateProfile(parsed.user, { id: data.user_id }));
                 }
                 if (Object.keys(parsed.organization).length > 0) {
                     if (parsed.organization.status) {
@@ -239,7 +247,9 @@ class AdminHotelierService extends abstract_service_1.default {
                             throw new customError_1.default(`Already updated status to ${parsed.organization.status}`, this.StatusCode.HTTP_CONFLICT);
                         }
                     }
-                    updateTasks.push(model.updateOrganization(parsed.organization, { user_id: id }));
+                    updateTasks.push(model.updateOrganization(parsed.organization, {
+                        user_id: id,
+                    }));
                 }
                 if (parsed.addPhoto.length > 0) {
                     updateTasks.push(model.addPhoto(parsed.addPhoto));
@@ -321,9 +331,10 @@ class AdminHotelierService extends abstract_service_1.default {
                     };
                 }
                 const userModel = this.Model.UserModel(trx);
-                yield userModel.deleteUser(id);
+                yield userModel.deleteUser(data.user_id);
+                yield model.deleteOrganization({ id: data.id });
                 yield this.insertAdminAudit(trx, {
-                    details: `Hotelier (${data.name} - ${id}) has been deleted.`,
+                    details: `Hotelier (${data.name} - ${data.user_id}) has been deleted.`,
                     created_by: req.admin.user_id,
                     endpoint: req.originalUrl,
                     type: "DELETE",
@@ -331,7 +342,7 @@ class AdminHotelierService extends abstract_service_1.default {
                 return {
                     success: true,
                     code: this.StatusCode.HTTP_OK,
-                    message: `Hotelier (${data.name} - ${id}) has been deleted successfully.`,
+                    message: `Hotelier (${data.name} - ${data.user_id}) has been deleted successfully.`,
                 };
             }));
         });
