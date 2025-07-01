@@ -71,3 +71,10 @@ export interface IReport {
 	job_seeker_details: JobSeekerDetails;
 	job_task_activity: IJobTaskActivity;
 }
+
+export interface IReportAcknowledge {
+	resolution: string;
+	resolved_by: number;
+	resolved_at: string;
+	status: IReportStatus;
+}

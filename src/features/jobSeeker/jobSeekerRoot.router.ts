@@ -5,6 +5,7 @@ import { JobSeekerJobsRouter } from "./router/jobSeekerJobs.router";
 import { JobSeekerJobApplicationRouter } from "./router/jobSeekerJobApplication.router";
 import { JobSeekerCancellationApplicationReportsRouter } from "./router/jobSeekerCancellationReport.router";
 import JobTaskActivityRouter from "./router/jobSeekerJobTaskActivity.router";
+import JobSeekerReportRouter from "./router/jobSeekerReport.router";
 
 export default class JobSeekerRootRouter extends AbstractRouter {
 	constructor() {
@@ -34,5 +35,8 @@ export default class JobSeekerRootRouter extends AbstractRouter {
 			"/job-task-activity",
 			new JobTaskActivityRouter().router
 		);
+
+		// reports
+		this.router.use("/reports", new JobSeekerReportRouter().router);
 	}
 }

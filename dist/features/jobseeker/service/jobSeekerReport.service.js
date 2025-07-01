@@ -15,16 +15,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
 const customError_1 = __importDefault(require("../../../utils/lib/customError"));
 const constants_1 = require("../../../utils/miscellaneous/constants");
-class HotelierReportService extends abstract_service_1.default {
+class JobSeekerReportService extends abstract_service_1.default {
     constructor() {
         super();
         this.submitReport = (req) => __awaiter(this, void 0, void 0, function* () {
             var _a;
+            console.log(req.body);
             const body = req.body;
             const model = this.Model.reportModel();
             const isReportExist = yield model.getSingleReport(body.job_post_details_id);
             if (isReportExist &&
-                isReportExist.report_type === constants_1.REPORT_TYPE.TaskActivity) {
+                isReportExist.report_type === constants_1.REPORT_TYPE.JobPost) {
                 throw new customError_1.default(`A report is already submitted for the job post.`, this.StatusCode.HTTP_CONFLICT);
             }
             const res = yield model.submitReport(Object.assign({}, body));
@@ -40,11 +41,11 @@ class HotelierReportService extends abstract_service_1.default {
         });
         this.getReportsWithInfo = (req) => __awaiter(this, void 0, void 0, function* () {
             const { limit, skip, searchQuery, type, report_status } = req.query;
-            const { user_id } = req.hotelier;
+            const { user_id } = req.jobSeeker;
             const model = this.Model.reportModel();
             const res = yield model.getReportsWithInfo({
                 user_id,
-                type: type || constants_1.REPORT_TYPE.TaskActivity,
+                type: type || constants_1.REPORT_TYPE.JobPost,
                 limit: Number(limit),
                 skip: Number(skip),
                 searchQuery: searchQuery,
@@ -55,7 +56,7 @@ class HotelierReportService extends abstract_service_1.default {
         this.getSingleReportWithInfo = (req) => __awaiter(this, void 0, void 0, function* () {
             const id = req.params.id;
             const model = this.Model.reportModel();
-            const res = yield model.getSingleReportWithInfo(Number(id), constants_1.REPORT_TYPE.TaskActivity);
+            const res = yield model.getSingleReportWithInfo(Number(id), constants_1.REPORT_TYPE.JobPost);
             if (!res) {
                 throw new customError_1.default(`The requested report with ID-${id} not found`, this.StatusCode.HTTP_NOT_FOUND);
             }
@@ -68,4 +69,4 @@ class HotelierReportService extends abstract_service_1.default {
         });
     }
 }
-exports.default = HotelierReportService;
+exports.default = JobSeekerReportService;

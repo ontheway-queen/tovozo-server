@@ -1,11 +1,11 @@
 import { Request, Response } from "express";
 import AbstractController from "../../../abstract/abstract.controller";
-import HotelierReportService from "../services/HotelierReport.service";
-import HotelierReportValidator from "../utils/validator/hotelierReport.validator";
+import JobSeekerReportService from "../service/jobSeekerReport.service";
+import HotelierReportValidator from "../../hotelier/utils/validator/hotelierReport.validator";
 
-export default class HotelierReportController extends AbstractController {
+export default class JobSeekerReportController extends AbstractController {
 	private validator = new HotelierReportValidator();
-	private hotelierReportService = new HotelierReportService();
+	private jobSeekerReportService = new JobSeekerReportService();
 	constructor() {
 		super();
 	}
@@ -14,25 +14,25 @@ export default class HotelierReportController extends AbstractController {
 		{ bodySchema: this.validator.submitReport },
 		async (req: Request, res: Response) => {
 			const { code, ...data } =
-				await this.hotelierReportService.submitReport(req);
+				await this.jobSeekerReportService.submitReport(req);
 			res.status(code).json(data);
 		}
 	);
 
 	public getReportsWithInfo = this.asyncWrapper.wrap(
-		{ paramSchema: this.commonValidator.getReportQueryValidator },
+		{ querySchema: this.commonValidator.getReportQueryValidator },
 		async (req: Request, res: Response) => {
 			const { code, ...data } =
-				await this.hotelierReportService.getReportsWithInfo(req);
+				await this.jobSeekerReportService.getReportsWithInfo(req);
 			res.status(code).json(data);
 		}
 	);
 
 	public getSingleReportWithInfo = this.asyncWrapper.wrap(
-		{ querySchema: this.commonValidator.getSingleItemWithIdValidator },
+		{ paramSchema: this.commonValidator.getSingleItemWithIdValidator },
 		async (req: Request, res: Response) => {
 			const { code, ...data } =
-				await this.hotelierReportService.getSingleReportWithInfo(req);
+				await this.jobSeekerReportService.getSingleReportWithInfo(req);
 			res.status(code).json(data);
 		}
 	);
