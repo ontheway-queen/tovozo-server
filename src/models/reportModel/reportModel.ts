@@ -5,6 +5,7 @@ import {
 	IGetReportsWithInfoQuery,
 	IGetSingleReport,
 	IReportStatus,
+	IReportType,
 	ISubmitReportPayload,
 } from "../../utils/modelTypes/report/reportModel.types";
 
@@ -23,11 +24,18 @@ export default class ReportModel extends Schema {
 	}
 
 	public async getSingleReport(
-		job_post_details_id: number
+		job_post_details_id?: number | null,
+		id?: number | null
 	): Promise<IGetSingleReport> {
 		return await this.db("reports")
 			.withSchema(this.DBO_SCHEMA)
-			.where({ job_post_details_id })
+			.where((qb) => {
+				if (id) {
+					qb.where("id", id);
+				} else if (job_post_details_id) {
+					qb.where("job_post_details_id", job_post_details_id);
+				}
+			})
 			.first();
 	}
 
@@ -41,7 +49,9 @@ export default class ReportModel extends Schema {
 			limit,
 			skip,
 			searchQuery,
+			report_status,
 		} = query;
+		console.log({ type });
 		const data = await this.db("reports as rp")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
@@ -138,6 +148,9 @@ export default class ReportModel extends Schema {
 				if (searchQuery) {
 					qb.andWhereILike("jp.title", `%${searchQuery}%`);
 				}
+				if (report_status) {
+					qb.andWhere("rp.status", report_status);
+				}
 			})
 			.limit(Number(limit) || 100)
 			.offset(Number(skip) || 0);
@@ -191,6 +204,9 @@ export default class ReportModel extends Schema {
 					if (searchQuery) {
 						qb.andWhereILike("jp.title", `%${searchQuery}%`);
 					}
+					if (report_status) {
+						qb.andWhere("rp.status", report_status);
+					}
 				})
 				.first();
 			total = totalQuery?.total ? Number(totalQuery.total) : 0;
@@ -199,7 +215,7 @@ export default class ReportModel extends Schema {
 		return { data, total };
 	}
 
-	public async getSingleReportWithInfo(id: number) {
+	public async getSingleReportWithInfo(id: number, type?: IReportType) {
 		return await this.db("reports as rp")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
@@ -287,6 +303,18 @@ export default class ReportModel extends Schema {
 				"ja.id"
 			)
 			.where("rp.id", id)
+			.modify((qb) => {
+				if (type) {
+					qb.andWhere("rp.report_type", type);
+				}
+			})
 			.first();
+	}
+
+	public async reportMarkAsAcknowledge(id: number, payload: any) {
+		return await this.db("reports")
+			.withSchema(this.DBO_SCHEMA)
+			.where("id", id)
+			.update(payload);
 	}
 }

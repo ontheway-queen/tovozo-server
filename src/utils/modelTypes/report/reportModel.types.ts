@@ -37,6 +37,8 @@ export interface IGetReportsWithInfoQuery {
 	limit?: number;
 	skip?: number;
 	searchQuery?: string;
+	report_type?: IReportType;
+	report_status?: IReportStatus;
 }
 
 export interface IReport {

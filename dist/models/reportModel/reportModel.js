@@ -25,17 +25,25 @@ class ReportModel extends schema_1.default {
                 .insert(payload, "id");
         });
     }
-    getSingleReport(job_post_details_id) {
+    getSingleReport(job_post_details_id, id) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("reports")
                 .withSchema(this.DBO_SCHEMA)
-                .where({ job_post_details_id })
+                .where((qb) => {
+                if (id) {
+                    qb.where("id", id);
+                }
+                else if (job_post_details_id) {
+                    qb.where("job_post_details_id", job_post_details_id);
+                }
+            })
                 .first();
         });
     }
     getReportsWithInfo(query) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { user_id, type, need_total = true, limit, skip, searchQuery, } = query;
+            const { user_id, type, need_total = true, limit, skip, searchQuery, report_status, } = query;
+            console.log({ type });
             const data = yield this.db("reports as rp")
                 .withSchema(this.DBO_SCHEMA)
                 .select("rp.id", "rp.status as report_status", "rp.report_type", "rp.reason as report_reason", "jp.id as job_post_id", "jp.title", "jp.details", "jp.requirements", "jp.prefer_gender", "jp.hourly_rate", "jp.expire_time", "jpd.id as job_post_details_id", "jpd.start_time", "jpd.end_time", "jpd.status as job_post_details_status", "org.id as organization_id", "org.name as organization_name", "org_p.file as organization_photo", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.city_name", "vwl.state_name", "vwl.country_name", "vwl.longitude", "vwl.latitude", this.db.raw(`json_build_object(
@@ -84,6 +92,9 @@ class ReportModel extends schema_1.default {
                 if (searchQuery) {
                     qb.andWhereILike("jp.title", `%${searchQuery}%`);
                 }
+                if (report_status) {
+                    qb.andWhere("rp.status", report_status);
+                }
             })
                 .limit(Number(limit) || 100)
                 .offset(Number(skip) || 0);
@@ -117,6 +128,9 @@ class ReportModel extends schema_1.default {
                     if (searchQuery) {
                         qb.andWhereILike("jp.title", `%${searchQuery}%`);
                     }
+                    if (report_status) {
+                        qb.andWhere("rp.status", report_status);
+                    }
                 })
                     .first();
                 total = (totalQuery === null || totalQuery === void 0 ? void 0 : totalQuery.total) ? Number(totalQuery.total) : 0;
@@ -124,7 +138,7 @@ class ReportModel extends schema_1.default {
             return { data, total };
         });
     }
-    getSingleReportWithInfo(id) {
+    getSingleReportWithInfo(id, type) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("reports as rp")
                 .withSchema(this.DBO_SCHEMA)
@@ -165,7 +179,20 @@ class ReportModel extends schema_1.default {
                 .leftJoin("vw_location as js_vwl", "js_vwl.location_id", "js.location_id")
                 .leftJoin("job_task_activities as jta", "jta.job_application_id", "ja.id")
                 .where("rp.id", id)
+                .modify((qb) => {
+                if (type) {
+                    qb.andWhere("rp.report_type", type);
+                }
+            })
                 .first();
+        });
+    }
+    reportMarkAsAcknowledge(id, payload) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("reports")
+                .withSchema(this.DBO_SCHEMA)
+                .where("id", id)
+                .update(payload);
         });
     }
 }

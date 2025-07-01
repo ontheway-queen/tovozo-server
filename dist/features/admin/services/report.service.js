@@ -15,38 +15,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
 const customError_1 = __importDefault(require("../../../utils/lib/customError"));
 const constants_1 = require("../../../utils/miscellaneous/constants");
-class HotelierReportService extends abstract_service_1.default {
+class AdminReportService extends abstract_service_1.default {
     constructor() {
         super();
-        this.submitReport = (req) => __awaiter(this, void 0, void 0, function* () {
-            var _a;
-            const body = req.body;
-            const model = this.Model.reportModel();
-            const isReportExist = yield model.getSingleReport(body.job_post_details_id);
-            if (isReportExist) {
-                throw new customError_1.default(`A report is already submitted for the job post.`, this.StatusCode.HTTP_CONFLICT);
-            }
-            const res = yield model.submitReport(Object.assign({}, body));
-            if (!res.length) {
-                throw new customError_1.default(`Failed to submit the report. Please try again later.`, this.StatusCode.HTTP_BAD_REQUEST);
-            }
-            return {
-                success: true,
-                code: this.StatusCode.HTTP_OK,
-                message: this.ResMsg.HTTP_OK,
-                data: (_a = res[0]) === null || _a === void 0 ? void 0 : _a.id,
-            };
-        });
         this.getReportsWithInfo = (req) => __awaiter(this, void 0, void 0, function* () {
             const { limit, skip, searchQuery, type, report_status } = req.query;
-            const { user_id } = req.hotelier;
             const model = this.Model.reportModel();
             const res = yield model.getReportsWithInfo({
-                user_id,
-                type: type || constants_1.REPORT_TYPE.TaskActivity,
                 limit: Number(limit),
                 skip: Number(skip),
                 searchQuery: searchQuery,
+                type: type,
                 report_status: report_status,
             });
             return Object.assign({ success: true, code: this.StatusCode.HTTP_OK, message: this.ResMsg.HTTP_OK }, res);
@@ -54,7 +33,7 @@ class HotelierReportService extends abstract_service_1.default {
         this.getSingleReportWithInfo = (req) => __awaiter(this, void 0, void 0, function* () {
             const id = req.params.id;
             const model = this.Model.reportModel();
-            const res = yield model.getSingleReportWithInfo(Number(id), constants_1.REPORT_TYPE.TaskActivity);
+            const res = yield model.getSingleReportWithInfo(Number(id));
             return {
                 success: true,
                 code: this.StatusCode.HTTP_OK,
@@ -62,6 +41,37 @@ class HotelierReportService extends abstract_service_1.default {
                 data: res,
             };
         });
+        this.reportMarkAsAcknowledge = (req) => __awaiter(this, void 0, void 0, function* () {
+            return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const { user_id } = req.admin;
+                const id = req.params.id;
+                const body = req.body;
+                const model = this.Model.reportModel(trx);
+                const isReportExist = yield model.getSingleReport(null, Number(id));
+                if (!isReportExist) {
+                    throw new customError_1.default(`Report with ID ${id} not found`, this.StatusCode.HTTP_NOT_FOUND);
+                }
+                if (isReportExist.status !== constants_1.REPORT_STATUS.Pending) {
+                    throw new customError_1.default(`Cannot perform this action because the report is already ${isReportExist.status.toLowerCase()}.`, this.StatusCode.HTTP_BAD_REQUEST);
+                }
+                body.status = constants_1.REPORT_STATUS.Acknowledge;
+                body.resolved_by = user_id;
+                body.resolved_at = new Date();
+                yield model.reportMarkAsAcknowledge(Number(id), body);
+                yield this.insertAdminAudit(trx, {
+                    details: `Report ID - ${id} has been updated.`,
+                    created_by: user_id,
+                    endpoint: req.originalUrl,
+                    type: "UPDATE",
+                    payload: JSON.stringify(body),
+                });
+                return {
+                    success: true,
+                    code: this.StatusCode.HTTP_OK,
+                    message: this.ResMsg.HTTP_OK,
+                };
+            }));
+        });
     }
 }
-exports.default = HotelierReportService;
+exports.default = AdminReportService;
