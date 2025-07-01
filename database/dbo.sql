@@ -337,9 +337,7 @@ CREATE TABLE IF NOT EXISTS dbo.job_task_activities (
 -- report
 CREATE TYPE dbo.report_status AS ENUM (
   'Pending',
-  'Reviewed',
-  'Resolved',
-  'Rejected'
+  'Acknowledge'
 );
 
 CREATE TYPE dbo.report_type as ENUM (

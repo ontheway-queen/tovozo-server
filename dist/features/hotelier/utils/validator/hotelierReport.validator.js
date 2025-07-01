@@ -13,7 +13,7 @@ class HotelierReportValidator {
             report_type: joi_1.default.string()
                 .valid(...constants_1.REPORT_TYPE_ENUM)
                 .required(),
-            reason: joi_1.default.string().min(100),
+            reason: joi_1.default.string().required(),
         });
     }
 }

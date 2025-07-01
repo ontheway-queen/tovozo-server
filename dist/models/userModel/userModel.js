@@ -46,7 +46,7 @@ class UserModel extends schema_1.default {
         });
     }
     checkUser(_a) {
-        return __awaiter(this, arguments, void 0, function* ({ email, id, username, type, user_name, phone_number, }) {
+        return __awaiter(this, arguments, void 0, function* ({ email, id, username, type, phone_number, }) {
             return yield this.db(this.TABLES.user)
                 .withSchema(this.DBO_SCHEMA)
                 .select("*")
@@ -56,19 +56,17 @@ class UserModel extends schema_1.default {
                         qbc.andWhere("id", id);
                     }
                     if (type) {
-                        qbc.andWhere("type", type);
-                        if (email) {
-                            qbc.andWhere("email", email);
-                        }
-                        if (username) {
-                            qbc.orWhere("username", username);
-                        }
-                        if (user_name) {
-                            qbc.orWhere("user_name", user_name);
-                        }
-                        if (phone_number) {
-                            qbc.orWhere("phone_number", phone_number);
-                        }
+                        qbc.andWhere("type", type).andWhere((subQbc) => {
+                            if (email) {
+                                subQbc.andWhere("email", email);
+                            }
+                            if (username) {
+                                subQbc.orWhere("username", username);
+                            }
+                            if (phone_number) {
+                                subQbc.orWhere("phone_number", phone_number);
+                            }
+                        });
                     }
                 });
             });

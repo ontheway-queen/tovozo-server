@@ -23,8 +23,8 @@ class HotelierReportService extends abstract_service_1.default {
             const body = req.body;
             const model = this.Model.reportModel();
             const isReportExist = yield model.getSingleReport(body.job_post_details_id);
-            if (isReportExist.status === constants_1.REPORT_STATUS.Pending) {
-                throw new customError_1.default(`A report is already submitted and pending review.`, this.StatusCode.HTTP_CONFLICT);
+            if (isReportExist) {
+                throw new customError_1.default(`A report is already submitted for the job post.`, this.StatusCode.HTTP_CONFLICT);
             }
             const res = yield model.submitReport(Object.assign({}, body));
             if (!res.length) {
@@ -35,6 +35,31 @@ class HotelierReportService extends abstract_service_1.default {
                 code: this.StatusCode.HTTP_OK,
                 message: this.ResMsg.HTTP_OK,
                 data: (_a = res[0]) === null || _a === void 0 ? void 0 : _a.id,
+            };
+        });
+        this.getReportsWithInfo = (req) => __awaiter(this, void 0, void 0, function* () {
+            const { limit, skip, searchQuery } = req.query;
+            const { user_id } = req.hotelier;
+            const model = this.Model.reportModel();
+            const res = yield model.getReportsWithInfo({
+                user_id,
+                type: constants_1.REPORT_TYPE.TaskActivity,
+                limit: Number(limit),
+                skip: Number(skip),
+                searchQuery: searchQuery,
+            });
+            console.log(req.hotelier);
+            return Object.assign({ success: true, code: this.StatusCode.HTTP_OK, message: this.ResMsg.HTTP_OK }, res);
+        });
+        this.getSingleReportWithInfo = (req) => __awaiter(this, void 0, void 0, function* () {
+            const id = req.params.id;
+            const model = this.Model.reportModel();
+            const res = yield model.getSingleReportWithInfo(Number(id));
+            return {
+                success: true,
+                code: this.StatusCode.HTTP_OK,
+                message: this.ResMsg.HTTP_OK,
+                data: res,
             };
         });
     }

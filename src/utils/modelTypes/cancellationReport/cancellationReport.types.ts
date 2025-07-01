@@ -25,7 +25,7 @@ export interface IGetReportsQuery {
 	limit: number;
 	skip: number;
 	need_total: boolean;
-	search_text: string;
+	searchQuery: string;
 }
 
 export type ICancellationReportType = keyof typeof CANCELLATION_REPORT_TYPE;

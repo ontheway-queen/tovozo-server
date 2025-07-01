@@ -38,28 +38,39 @@ class AdminJobSeekerService extends AbstractServices {
 			) as IJobSeekerInfoBody;
 
 			// Attach file references
-			files.forEach(({ fieldname, filename }) => {
+			let idCopyFound = false;
+			for (const { fieldname, filename } of files) {
 				if (fieldname === "photo") {
 					userInput.photo = filename;
-				} else {
-					if (jobSeekerInput.nationality === BRITISH_ID) {
-						if (fieldname !== "id_copy") {
-							throw new CustomError(
-								"id_copy required for British Nationality",
-								this.StatusCode.HTTP_BAD_REQUEST
-							);
-						}
-					} else {
-						if (fieldname !== "visa_copy") {
-							throw new CustomError(
-								"visa_copy required for British Nationality",
-								this.StatusCode.HTTP_BAD_REQUEST
-							);
-						}
-					}
-					jobSeekerInfoInput[fieldname] = filename;
+					continue;
 				}
-			});
+
+				if (jobSeekerInput.nationality === BRITISH_ID) {
+					if (fieldname === "id_copy") {
+						idCopyFound = true;
+					} else if (fieldname !== "passport_copy") {
+						throw new CustomError(
+							"Only id_copy is allowed for British nationality",
+							this.StatusCode.HTTP_BAD_REQUEST
+						);
+					}
+				} else {
+					if (fieldname !== "visa_copy") {
+						throw new CustomError(
+							"Only visa_copy required for Non-British Nationality",
+							this.StatusCode.HTTP_BAD_REQUEST
+						);
+					}
+				}
+
+				jobSeekerInfoInput[fieldname] = filename;
+			}
+			if (jobSeekerInput.nationality === BRITISH_ID && !idCopyFound) {
+				throw new CustomError(
+					"id_copy is required for British Nationality",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
 
 			const { email, phone_number, password, ...restUserData } =
 				userInput;
@@ -257,7 +268,6 @@ class AdminJobSeekerService extends AbstractServices {
 				delJobShifting:
 					Lib.safeParseJSON(req.body.del_job_shifting) || [],
 			} as IAdminJobSeekerUpdateParsedBody;
-
 			for (const { fieldname, filename } of files) {
 				switch (fieldname) {
 					case "resume":
@@ -265,6 +275,15 @@ class AdminJobSeekerService extends AbstractServices {
 						break;
 					case "photo":
 						parsed.user.photo = filename;
+						break;
+					case "visa_copy":
+						parsed.jobSeekerInfo.visa_copy = filename;
+						break;
+					case "id_copy":
+						parsed.jobSeekerInfo.id_copy = filename;
+						break;
+					case "passport_copy":
+						parsed.jobSeekerInfo.passport_copy = filename;
 						break;
 					default:
 						throw new CustomError(
@@ -274,7 +293,6 @@ class AdminJobSeekerService extends AbstractServices {
 						);
 				}
 			}
-
 			const userModel = this.Model.UserModel(trx);
 			const jobSeekerModel = this.Model.jobSeekerModel(trx);
 			const commonModel = this.Model.commonModel(trx);
@@ -302,8 +320,7 @@ class AdminJobSeekerService extends AbstractServices {
 					phone_number: parsed.user.phone_number,
 					type: USER_TYPE.JOB_SEEKER,
 				});
-
-				if (phoneExists) {
+				if (phoneExists.length) {
 					throw new CustomError(
 						this.ResMsg.PHONE_NUMBER_ALREADY_EXISTS,
 						this.StatusCode.HTTP_BAD_REQUEST,

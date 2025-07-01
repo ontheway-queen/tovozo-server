@@ -21,7 +21,7 @@ class CancellationReportModel extends schema_1.default {
     // get job post reports list
     getJobPostReports(query) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { user_id, report_type, status, limit, skip, need_total = true, search_text, } = query;
+            const { user_id, report_type, status, limit, skip, need_total = true, searchQuery, } = query;
             const data = yield this.db("cancellation_reports as cr")
                 .withSchema(this.DBO_SCHEMA)
                 .select("cr.id", "cr.related_id as related_job_post_details", "cr.report_type", "cr.status", "u.name as reporter_name", this.db.raw(`json_build_object(
@@ -47,8 +47,8 @@ class CancellationReportModel extends schema_1.default {
                 if (user_id) {
                     qb.andWhere("cr.reporter_id", user_id);
                 }
-                if (search_text) {
-                    qb.andWhereILike("jp.title", `%${search_text}%`);
+                if (searchQuery) {
+                    qb.andWhereILike("jp.title", `%${searchQuery}%`);
                 }
                 if (report_type) {
                     qb.andWhere("cr.report_type", report_type);
@@ -72,8 +72,8 @@ class CancellationReportModel extends schema_1.default {
                     if (user_id) {
                         qb.andWhere("cr.reporter_id", user_id);
                     }
-                    if (search_text) {
-                        qb.andWhereILike("jp.title", `%${search_text}%`);
+                    if (searchQuery) {
+                        qb.andWhereILike("jp.title", `%${searchQuery}%`);
                     }
                     if (report_type) {
                         qb.andWhere("cr.report_type", report_type);
@@ -126,7 +126,7 @@ class CancellationReportModel extends schema_1.default {
     // JOB APPLICATION REPORTS
     getJobApplicationReports(query) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { user_id, report_type, status, limit, skip, need_total = true, search_text, } = query;
+            const { user_id, report_type, status, limit, skip, need_total = true, searchQuery, } = query;
             const data = yield this.db("cancellation_reports as cr")
                 .withSchema(this.DBO_SCHEMA)
                 .select("cr.id", "u.name as reporter_name", "u.phone_number as reporter_phone_number", "cr.report_type", "cr.status", "cr.reason as cancellation_reason", "cr.reject_reason", this.db.raw(`json_build_object(
@@ -143,8 +143,8 @@ class CancellationReportModel extends schema_1.default {
                 if (user_id) {
                     qb.andWhere("cr.reporter_id", user_id);
                 }
-                if (search_text) {
-                    qb.andWhereILike("jp.title", `%${search_text}%`);
+                if (searchQuery) {
+                    qb.andWhereILike("jp.title", `%${searchQuery}%`);
                 }
                 if (report_type) {
                     qb.andWhere("cr.report_type", report_type);
@@ -168,8 +168,8 @@ class CancellationReportModel extends schema_1.default {
                     if (user_id) {
                         qb.andWhere("cr.reporter_id", user_id);
                     }
-                    if (search_text) {
-                        qb.andWhereILike("jp.title", `%${search_text}%`);
+                    if (searchQuery) {
+                        qb.andWhereILike("jp.title", `%${searchQuery}%`);
                     }
                     if (report_type) {
                         qb.andWhere("cr.report_type", report_type);

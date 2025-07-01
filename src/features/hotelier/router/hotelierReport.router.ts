@@ -9,6 +9,13 @@ export default class HotelierReportRouter extends AbstractRouter {
 	}
 
 	private callRouter() {
-		this.router.route("/").post(this.hotelierReportController.submitReport);
+		this.router
+			.route("/")
+			.post(this.hotelierReportController.submitReport)
+			.get(this.hotelierReportController.getReportsWithInfo);
+
+		this.router
+			.route("/:id")
+			.get(this.hotelierReportController.getSingleReportWithInfo);
 	}
 }

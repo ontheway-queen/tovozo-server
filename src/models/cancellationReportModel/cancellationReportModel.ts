@@ -27,7 +27,7 @@ class CancellationReportModel extends Schema {
 			limit,
 			skip,
 			need_total = true,
-			search_text,
+			searchQuery,
 		} = query;
 		const data = await this.db("cancellation_reports as cr")
 			.withSchema(this.DBO_SCHEMA)
@@ -63,8 +63,8 @@ class CancellationReportModel extends Schema {
 				if (user_id) {
 					qb.andWhere("cr.reporter_id", user_id);
 				}
-				if (search_text) {
-					qb.andWhereILike("jp.title", `%${search_text}%`);
+				if (searchQuery) {
+					qb.andWhereILike("jp.title", `%${searchQuery}%`);
 				}
 				if (report_type) {
 					qb.andWhere("cr.report_type", report_type);
@@ -89,8 +89,8 @@ class CancellationReportModel extends Schema {
 					if (user_id) {
 						qb.andWhere("cr.reporter_id", user_id);
 					}
-					if (search_text) {
-						qb.andWhereILike("jp.title", `%${search_text}%`);
+					if (searchQuery) {
+						qb.andWhereILike("jp.title", `%${searchQuery}%`);
 					}
 					if (report_type) {
 						qb.andWhere("cr.report_type", report_type);
@@ -163,7 +163,7 @@ class CancellationReportModel extends Schema {
 			limit,
 			skip,
 			need_total = true,
-			search_text,
+			searchQuery,
 		} = query;
 		const data = await this.db("cancellation_reports as cr")
 			.withSchema(this.DBO_SCHEMA)
@@ -194,8 +194,8 @@ class CancellationReportModel extends Schema {
 				if (user_id) {
 					qb.andWhere("cr.reporter_id", user_id);
 				}
-				if (search_text) {
-					qb.andWhereILike("jp.title", `%${search_text}%`);
+				if (searchQuery) {
+					qb.andWhereILike("jp.title", `%${searchQuery}%`);
 				}
 				if (report_type) {
 					qb.andWhere("cr.report_type", report_type);
@@ -224,8 +224,8 @@ class CancellationReportModel extends Schema {
 					if (user_id) {
 						qb.andWhere("cr.reporter_id", user_id);
 					}
-					if (search_text) {
-						qb.andWhereILike("jp.title", `%${search_text}%`);
+					if (searchQuery) {
+						qb.andWhereILike("jp.title", `%${searchQuery}%`);
 					}
 					if (report_type) {
 						qb.andWhere("cr.report_type", report_type);

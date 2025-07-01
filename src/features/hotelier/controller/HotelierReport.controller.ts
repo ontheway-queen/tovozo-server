@@ -18,4 +18,22 @@ export default class HotelierReportController extends AbstractController {
 			res.status(code).json(data);
 		}
 	);
+
+	public getReportsWithInfo = this.asyncWrapper.wrap(
+		null,
+		async (req: Request, res: Response) => {
+			const { code, ...data } =
+				await this.hotelierReportService.getReportsWithInfo(req);
+			res.status(code).json(data);
+		}
+	);
+
+	public getSingleReportWithInfo = this.asyncWrapper.wrap(
+		null,
+		async (req: Request, res: Response) => {
+			const { code, ...data } =
+				await this.hotelierReportService.getSingleReportWithInfo(req);
+			res.status(code).json(data);
+		}
+	);
 }

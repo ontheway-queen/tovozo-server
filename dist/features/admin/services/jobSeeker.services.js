@@ -41,24 +41,30 @@ class AdminJobSeekerService extends abstract_service_1.default {
                 const jobSeekerInput = parseInput("job_seeker");
                 const jobSeekerInfoInput = parseInput("job_seeker_info");
                 // Attach file references
-                files.forEach(({ fieldname, filename }) => {
+                let idCopyFound = false;
+                for (const { fieldname, filename } of files) {
                     if (fieldname === "photo") {
                         userInput.photo = filename;
+                        continue;
+                    }
+                    if (jobSeekerInput.nationality === constants_1.BRITISH_ID) {
+                        if (fieldname === "id_copy") {
+                            idCopyFound = true;
+                        }
+                        else if (fieldname !== "passport_copy") {
+                            throw new customError_1.default("Only id_copy is allowed for British nationality", this.StatusCode.HTTP_BAD_REQUEST);
+                        }
                     }
                     else {
-                        if (jobSeekerInput.nationality === constants_1.BRITISH_ID) {
-                            if (fieldname !== "id_copy") {
-                                throw new customError_1.default("id_copy required for British Nationality", this.StatusCode.HTTP_BAD_REQUEST);
-                            }
+                        if (fieldname !== "visa_copy") {
+                            throw new customError_1.default("Only visa_copy required for Non-British Nationality", this.StatusCode.HTTP_BAD_REQUEST);
                         }
-                        else {
-                            if (fieldname !== "visa_copy") {
-                                throw new customError_1.default("visa_copy required for British Nationality", this.StatusCode.HTTP_BAD_REQUEST);
-                            }
-                        }
-                        jobSeekerInfoInput[fieldname] = filename;
                     }
-                });
+                    jobSeekerInfoInput[fieldname] = filename;
+                }
+                if (jobSeekerInput.nationality === constants_1.BRITISH_ID && !idCopyFound) {
+                    throw new customError_1.default("id_copy is required for British Nationality", this.StatusCode.HTTP_BAD_REQUEST);
+                }
                 const { email, phone_number, password } = userInput, restUserData = __rest(userInput, ["email", "phone_number", "password"]);
                 const userModel = this.Model.UserModel(trx);
                 const jobSeekerModel = this.Model.jobSeekerModel(trx);
@@ -207,6 +213,15 @@ class AdminJobSeekerService extends abstract_service_1.default {
                         case "photo":
                             parsed.user.photo = filename;
                             break;
+                        case "visa_copy":
+                            parsed.jobSeekerInfo.visa_copy = filename;
+                            break;
+                        case "id_copy":
+                            parsed.jobSeekerInfo.id_copy = filename;
+                            break;
+                        case "passport_copy":
+                            parsed.jobSeekerInfo.passport_copy = filename;
+                            break;
                         default:
                             throw new customError_1.default(this.ResMsg.UNKNOWN_FILE_FIELD, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
                     }
@@ -228,7 +243,7 @@ class AdminJobSeekerService extends abstract_service_1.default {
                         phone_number: parsed.user.phone_number,
                         type: constants_1.USER_TYPE.JOB_SEEKER,
                     });
-                    if (phoneExists) {
+                    if (phoneExists.length) {
                         throw new customError_1.default(this.ResMsg.PHONE_NUMBER_ALREADY_EXISTS, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
                     }
                 }
