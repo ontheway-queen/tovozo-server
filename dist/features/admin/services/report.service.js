@@ -34,6 +34,9 @@ class AdminReportService extends abstract_service_1.default {
             const id = req.params.id;
             const model = this.Model.reportModel();
             const res = yield model.getSingleReportWithInfo(Number(id));
+            if (!res) {
+                throw new customError_1.default(`The requested report with ID-${id} not found`, this.StatusCode.HTTP_NOT_FOUND);
+            }
             return {
                 success: true,
                 code: this.StatusCode.HTTP_OK,

@@ -1,21 +1,19 @@
 import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
 import CustomError from "../../../utils/lib/customError";
-import {
-	REPORT_STATUS,
-	REPORT_TYPE,
-} from "../../../utils/miscellaneous/constants";
+import { REPORT_TYPE } from "../../../utils/miscellaneous/constants";
 import {
 	IReportStatus,
 	IReportType,
 } from "../../../utils/modelTypes/report/reportModel.types";
 
-export default class HotelierReportService extends AbstractServices {
+export default class JobSeekerReportService extends AbstractServices {
 	constructor() {
 		super();
 	}
 
 	public submitReport = async (req: Request) => {
+		console.log(req.body);
 		const body = req.body;
 		const model = this.Model.reportModel();
 		const isReportExist = await model.getSingleReport(
@@ -24,7 +22,7 @@ export default class HotelierReportService extends AbstractServices {
 
 		if (
 			isReportExist &&
-			isReportExist.report_type === REPORT_TYPE.TaskActivity
+			isReportExist.report_type === REPORT_TYPE.JobPost
 		) {
 			throw new CustomError(
 				`A report is already submitted for the job post.`,
@@ -51,11 +49,11 @@ export default class HotelierReportService extends AbstractServices {
 
 	public getReportsWithInfo = async (req: Request) => {
 		const { limit, skip, searchQuery, type, report_status } = req.query;
-		const { user_id } = req.hotelier;
+		const { user_id } = req.jobSeeker;
 		const model = this.Model.reportModel();
 		const res = await model.getReportsWithInfo({
 			user_id,
-			type: (type as IReportType) || REPORT_TYPE.TaskActivity,
+			type: (type as IReportType) || REPORT_TYPE.JobPost,
 			limit: Number(limit),
 			skip: Number(skip),
 			searchQuery: searchQuery as string,
@@ -74,7 +72,7 @@ export default class HotelierReportService extends AbstractServices {
 		const model = this.Model.reportModel();
 		const res = await model.getSingleReportWithInfo(
 			Number(id),
-			REPORT_TYPE.TaskActivity
+			REPORT_TYPE.JobPost
 		);
 		if (!res) {
 			throw new CustomError(

@@ -248,6 +248,18 @@ class PublicCommonValidator {
         this.getSingleItemWithIdValidator = joi_1.default.object({
             id: joi_1.default.number().integer().required(),
         });
+        //   get reports data query
+        this.getReportQueryValidator = joi_1.default.object({
+            limit: joi_1.default.number().optional(),
+            skip: joi_1.default.number().optional(),
+            searchQuery: joi_1.default.string().optional(),
+            type: joi_1.default.string()
+                .valid(...constants_1.REPORT_TYPE_ENUM)
+                .optional(),
+            report_status: joi_1.default.string()
+                .valid(...constants_1.REPORT_STATUS_ENUM)
+                .optional(),
+        });
     }
     // multiple params number validator
     multipleParamsNumValidator(fields) {
