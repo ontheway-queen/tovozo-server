@@ -21,7 +21,7 @@ class HotelierCancellationReportService extends abstract_service_1.default {
         // get cancellation reports
         this.getCancellationReports = (req) => __awaiter(this, void 0, void 0, function* () {
             const { user_id } = req.hotelier;
-            const { status, limit, skip, search_text, report_type } = req.query;
+            const { status, limit, skip, searchQuery, report_type } = req.query;
             const model = this.Model.cancellationReportModel();
             const data = yield model.getJobPostReports({
                 user_id,
@@ -29,7 +29,7 @@ class HotelierCancellationReportService extends abstract_service_1.default {
                 report_type: report_type || constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST,
                 limit,
                 skip,
-                search_text,
+                searchQuery,
             });
             return Object.assign({ success: true, code: this.StatusCode.HTTP_OK, message: this.ResMsg.HTTP_OK }, data);
         });

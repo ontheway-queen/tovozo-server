@@ -24,25 +24,28 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_controller_1 = __importDefault(require("../../../abstract/abstract.controller"));
-const HotelierReport_service_1 = __importDefault(require("../services/HotelierReport.service"));
-const hotelierReport_validator_1 = __importDefault(require("../utils/validator/hotelierReport.validator"));
-class HotelierReportController extends abstract_controller_1.default {
+const report_service_1 = __importDefault(require("../services/report.service"));
+const report_validator_1 = __importDefault(require("../utils/validator/report.validator"));
+class AdminReportController extends abstract_controller_1.default {
     constructor() {
         super();
-        this.validator = new hotelierReport_validator_1.default();
-        this.hotelierReportService = new HotelierReport_service_1.default();
-        this.submitReport = this.asyncWrapper.wrap({ bodySchema: this.validator.submitReport }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.hotelierReportService.submitReport(req), { code } = _a, data = __rest(_a, ["code"]);
-            res.status(code).json(data);
-        }));
+        this.adminReportService = new report_service_1.default();
+        this.validator = new report_validator_1.default();
         this.getReportsWithInfo = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.hotelierReportService.getReportsWithInfo(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _a = yield this.adminReportService.getReportsWithInfo(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         this.getSingleReportWithInfo = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.hotelierReportService.getSingleReportWithInfo(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _a = yield this.adminReportService.getSingleReportWithInfo(req), { code } = _a, data = __rest(_a, ["code"]);
+            res.status(code).json(data);
+        }));
+        this.reportMarkAsAcknowledge = this.asyncWrapper.wrap({
+            paramSchema: this.commonValidator.getSingleItemWithIdValidator,
+            bodySchema: this.validator.markAsAcknowledgeReportSchema,
+        }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.adminReportService.reportMarkAsAcknowledge(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }
 }
-exports.default = HotelierReportController;
+exports.default = AdminReportController;

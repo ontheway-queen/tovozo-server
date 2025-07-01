@@ -30,7 +30,7 @@ class CancellationReportValidator {
 
 		limit: Joi.number().integer().min(1).max(1000).optional(),
 		skip: Joi.number().integer().min(0).optional(),
-		search_text: Joi.string().allow("").optional(),
+		searchQuery: Joi.string().allow("").optional(),
 	});
 
 	public reportTypeQuerySchema = Joi.object({

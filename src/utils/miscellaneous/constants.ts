@@ -216,14 +216,7 @@ export const REPORT_TYPE_ENUM = ["TaskActivity", "JobPost"] as const;
 
 export const REPORT_STATUS = {
 	Pending: "Pending",
-	Reviewed: "Reviewed",
-	Resolved: "Resolved",
-	Rejected: "Rejected",
+	Acknowledge: "Acknowledge",
 } as const;
 
-export const REPORT_STATUS_ENUM = [
-	"Pending",
-	"Reviewed",
-	"Resolved",
-	"Rejected",
-] as const;
+export const REPORT_STATUS_ENUM = ["Pending", "Acknowledge"] as const;

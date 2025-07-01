@@ -18,7 +18,7 @@ export default class HotelierCancellationReportService extends AbstractServices 
 	// get cancellation reports
 	public getCancellationReports = async (req: Request) => {
 		const { user_id } = req.hotelier;
-		const { status, limit, skip, search_text, report_type } = req.query;
+		const { status, limit, skip, searchQuery, report_type } = req.query;
 		const model = this.Model.cancellationReportModel();
 
 		const data = await model.getJobPostReports({
@@ -28,7 +28,7 @@ export default class HotelierCancellationReportService extends AbstractServices 
 				report_type || CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST,
 			limit,
 			skip,
-			search_text,
+			searchQuery,
 		} as unknown as IGetReportsQuery);
 
 		return {

@@ -8,6 +8,6 @@ export default class HotelierReportValidator {
 		report_type: Joi.string()
 			.valid(...REPORT_TYPE_ENUM)
 			.required(),
-		reason: Joi.string().min(100),
+		reason: Joi.string().required(),
 	});
 }

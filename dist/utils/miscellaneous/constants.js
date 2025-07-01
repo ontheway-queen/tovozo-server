@@ -177,13 +177,6 @@ exports.REPORT_TYPE = {
 exports.REPORT_TYPE_ENUM = ["TaskActivity", "JobPost"];
 exports.REPORT_STATUS = {
     Pending: "Pending",
-    Reviewed: "Reviewed",
-    Resolved: "Resolved",
-    Rejected: "Rejected",
+    Acknowledge: "Acknowledge",
 };
-exports.REPORT_STATUS_ENUM = [
-    "Pending",
-    "Reviewed",
-    "Resolved",
-    "Rejected",
-];
+exports.REPORT_STATUS_ENUM = ["Pending", "Acknowledge"];
