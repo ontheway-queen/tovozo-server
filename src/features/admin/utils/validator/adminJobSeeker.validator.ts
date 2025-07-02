@@ -1,5 +1,6 @@
 import Joi from "joi";
 import {
+	JOB_APPLICATION_STATUS_ENUM,
 	USER_STATUS,
 	USER_STATUS_ENUM,
 } from "../../../../utils/miscellaneous/constants";
@@ -14,6 +15,9 @@ class AdminJobSeekerValidator {
 			.optional(),
 		from_date: Joi.date().optional(),
 		to_date: Joi.date().optional(),
+		application_status: Joi.string()
+			.valid(...JOB_APPLICATION_STATUS_ENUM)
+			.optional(),
 	});
 
 	createJobSeekerValidator = Joi.object({

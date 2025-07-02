@@ -20,6 +20,7 @@ import {
 } from "../../auth/utils/types/jobSeekerAuth.types";
 import { UserStatusType } from "../../public/utils/types/publicCommon.types";
 import { IAdminJobSeekerUpdateParsedBody } from "../utils/types/adminJobSeeker.types";
+import { IJobApplicationStatus } from "../../../utils/modelTypes/jobApplication/jobApplicationModel.types";
 class AdminJobSeekerService extends AbstractServices {
 	public async createJobSeeker(req: Request) {
 		return this.db.transaction(async (trx) => {
@@ -187,6 +188,7 @@ class AdminJobSeekerService extends AbstractServices {
 			from_date,
 			to_date,
 			sortBy,
+			application_status,
 		} = req.query as unknown as {
 			name?: string;
 			status?: UserStatusType;
@@ -195,6 +197,7 @@ class AdminJobSeekerService extends AbstractServices {
 			from_date?: string;
 			to_date?: string;
 			sortBy: "asc" | "desc";
+			application_status: IJobApplicationStatus;
 		};
 		const model = this.Model.jobSeekerModel();
 		const data = await model.getAllJobSeekerList({
@@ -205,6 +208,7 @@ class AdminJobSeekerService extends AbstractServices {
 			from_date,
 			to_date,
 			sortBy,
+			application_status,
 		});
 
 		return {

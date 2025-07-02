@@ -12,6 +12,7 @@ export default class Schema {
 		jobs: "jobs",
 		job_post: "job_post",
 		job_post_details: "job_post_details",
+		job_applications: "job_applications",
 		nationality: "nationality",
 		location: "location",
 		notification: "notification",

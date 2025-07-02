@@ -8,6 +8,7 @@ import AdminHotelierController from "./controller/hotelier.controller";
 import AdminHotelierRouter from "./router/hotelier.router";
 import AdminJobPostRouter from "./router/jobPost.router";
 import AdminReportRouter from "./router/report.router";
+import AdminJobApplicationRouter from "./router/jobApplication.router";
 
 export default class AdminRootRouter {
 	public Router = Router();
@@ -19,6 +20,7 @@ export default class AdminRootRouter {
 	private cancellationReportRouter = new CancellationReportRouter();
 	private jobPostRouter = new AdminJobPostRouter();
 	private reportRouter = new AdminReportRouter();
+	private jobApplicationRouter = new AdminJobApplicationRouter();
 
 	constructor() {
 		this.callRouter();
@@ -51,5 +53,8 @@ export default class AdminRootRouter {
 
 		// report
 		this.Router.use("/reports", this.reportRouter.router);
+
+		// job-application
+		this.Router.use("/job-application", this.jobApplicationRouter.router);
 	}
 }

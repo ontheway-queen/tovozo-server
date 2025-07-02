@@ -1,17 +1,12 @@
-import { GENDERS, PAYMENT_STATUS } from "../../miscellaneous/constants";
+import {
+	GENDERS,
+	JOB_POST_DETAILS_STATUS,
+	PAYMENT_STATUS,
+} from "../../miscellaneous/constants";
 
 export type IGenderType = (typeof GENDERS)[number];
 
-export interface IJobPostDetailsStatus {
-	status:
-		| "Pending"
-		| "Applied"
-		| "Expired"
-		| "Completed"
-		| "Work Finished"
-		| "Cancelled";
-}
-
+export type IJobPostDetailsStatus = keyof typeof JOB_POST_DETAILS_STATUS;
 export interface IJobPostPayload {
 	id: number;
 	organization_id: number;
