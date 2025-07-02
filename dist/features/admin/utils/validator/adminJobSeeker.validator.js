@@ -16,6 +16,9 @@ class AdminJobSeekerValidator {
                 .optional(),
             from_date: joi_1.default.date().optional(),
             to_date: joi_1.default.date().optional(),
+            application_status: joi_1.default.string()
+                .valid(...constants_1.JOB_APPLICATION_STATUS_ENUM)
+                .optional(),
         });
         this.createJobSeekerValidator = joi_1.default.object({
             user: joi_1.default.object({

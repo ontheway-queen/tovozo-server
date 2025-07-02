@@ -12,6 +12,7 @@ const cancellationReport_router_1 = __importDefault(require("./router/cancellati
 const hotelier_router_1 = __importDefault(require("./router/hotelier.router"));
 const jobPost_router_1 = __importDefault(require("./router/jobPost.router"));
 const report_router_1 = __importDefault(require("./router/report.router"));
+const jobApplication_router_1 = __importDefault(require("./router/jobApplication.router"));
 class AdminRootRouter {
     constructor() {
         this.Router = (0, express_1.Router)();
@@ -23,6 +24,7 @@ class AdminRootRouter {
         this.cancellationReportRouter = new cancellationReport_router_1.default();
         this.jobPostRouter = new jobPost_router_1.default();
         this.reportRouter = new report_router_1.default();
+        this.jobApplicationRouter = new jobApplication_router_1.default();
         this.callRouter();
     }
     callRouter() {
@@ -42,6 +44,8 @@ class AdminRootRouter {
         this.Router.use("/cancellation-report", this.cancellationReportRouter.router);
         // report
         this.Router.use("/reports", this.reportRouter.router);
+        // job-application
+        this.Router.use("/job-application", this.jobApplicationRouter.router);
     }
 }
 exports.default = AdminRootRouter;

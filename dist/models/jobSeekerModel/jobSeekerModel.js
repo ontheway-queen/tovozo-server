@@ -12,6 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const constants_1 = require("../../utils/miscellaneous/constants");
 const schema_1 = __importDefault(require("../../utils/miscellaneous/schema"));
 class JobSeekerModel extends schema_1.default {
     constructor(db) {
@@ -52,10 +53,11 @@ class JobSeekerModel extends schema_1.default {
     }
     getAllJobSeekerList(params) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { user_id, name, status, from_date, to_date, limit = 100, skip = 0, sortBy, } = params;
+            const { user_id, name, status, from_date, to_date, limit = 100, skip = 0, sortBy, application_status, } = params;
             const data = yield this.db("vw_full_job_seeker_profile")
                 .withSchema(this.JOB_SEEKER)
                 .select("user_id", "email", "name", "photo", "account_status", "user_created_at")
+                .joinRaw(`LEFT JOIN ?? as ja ON ja.job_seeker_id = vw_full_job_seeker_profile.user_id`, [`${this.DBO_SCHEMA}.${this.TABLES.job_applications}`])
                 .where((qb) => {
                 if (user_id) {
                     qb.andWhere("user_id", user_id);
@@ -69,6 +71,14 @@ class JobSeekerModel extends schema_1.default {
                 if (from_date && to_date) {
                     qb.andWhereBetween("user_created_at", [from_date, to_date]);
                 }
+                if (application_status &&
+                    application_status === constants_1.JOB_APPLICATION_STATUS.COMPLETED) {
+                    qb.andWhere((subQb) => {
+                        subQb
+                            .where("ja.status", constants_1.JOB_APPLICATION_STATUS.COMPLETED)
+                            .orWhereNull("ja.job_seeker_id");
+                    });
+                }
             })
                 .limit(Number(limit))
                 .orderBy("user_created_at", sortBy === "asc" ? "asc" : "desc")
@@ -76,6 +86,7 @@ class JobSeekerModel extends schema_1.default {
             const total = yield this.db("vw_full_job_seeker_profile")
                 .withSchema(this.JOB_SEEKER)
                 .count("user_id as total")
+                .joinRaw(`LEFT JOIN ?? as ja ON ja.job_seeker_id = vw_full_job_seeker_profile.user_id`, [`${this.DBO_SCHEMA}.${this.TABLES.job_applications}`])
                 .where((qb) => {
                 if (user_id) {
                     qb.andWhere("user_id", user_id);
@@ -92,6 +103,14 @@ class JobSeekerModel extends schema_1.default {
                 }
                 if (from_date && to_date) {
                     qb.andWhereBetween("user_created_at", [from_date, to_date]);
+                }
+                if (application_status &&
+                    application_status === constants_1.JOB_APPLICATION_STATUS.COMPLETED) {
+                    qb.andWhere((subQb) => {
+                        subQb
+                            .where("ja.status", constants_1.JOB_APPLICATION_STATUS.COMPLETED)
+                            .orWhereNull("ja.job_seeker_id");
+                    });
                 }
             })
                 .first();

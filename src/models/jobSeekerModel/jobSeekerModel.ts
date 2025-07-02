@@ -2,7 +2,9 @@ import {
 	TDB,
 	UserStatusType,
 } from "../../features/public/utils/types/publicCommon.types";
+import { JOB_APPLICATION_STATUS } from "../../utils/miscellaneous/constants";
 import Schema from "../../utils/miscellaneous/schema";
+import { IJobApplicationStatus } from "../../utils/modelTypes/jobApplication/jobApplicationModel.types";
 import {
 	ICreateJobSeekerPayload,
 	IGetJobPreference,
@@ -66,6 +68,7 @@ export default class JobSeekerModel extends Schema {
 		from_date?: string;
 		to_date?: string;
 		sortBy: "asc" | "desc";
+		application_status: IJobApplicationStatus;
 	}): Promise<{ data: IJobSeekerProfile[]; total?: number | string }> {
 		const {
 			user_id,
@@ -76,6 +79,7 @@ export default class JobSeekerModel extends Schema {
 			limit = 100,
 			skip = 0,
 			sortBy,
+			application_status,
 		} = params;
 		const data = await this.db("vw_full_job_seeker_profile")
 			.withSchema(this.JOB_SEEKER)
@@ -86,6 +90,10 @@ export default class JobSeekerModel extends Schema {
 				"photo",
 				"account_status",
 				"user_created_at"
+			)
+			.joinRaw(
+				`LEFT JOIN ?? as ja ON ja.job_seeker_id = vw_full_job_seeker_profile.user_id`,
+				[`${this.DBO_SCHEMA}.${this.TABLES.job_applications}`]
 			)
 			.where((qb) => {
 				if (user_id) {
@@ -103,6 +111,19 @@ export default class JobSeekerModel extends Schema {
 				if (from_date && to_date) {
 					qb.andWhereBetween("user_created_at", [from_date, to_date]);
 				}
+				if (
+					application_status &&
+					application_status === JOB_APPLICATION_STATUS.COMPLETED
+				) {
+					qb.andWhere((subQb) => {
+						subQb
+							.where(
+								"ja.status",
+								JOB_APPLICATION_STATUS.COMPLETED
+							)
+							.orWhereNull("ja.job_seeker_id");
+					});
+				}
 			})
 			.limit(Number(limit))
 			.orderBy("user_created_at", sortBy === "asc" ? "asc" : "desc")
@@ -111,6 +132,10 @@ export default class JobSeekerModel extends Schema {
 		const total = await this.db("vw_full_job_seeker_profile")
 			.withSchema(this.JOB_SEEKER)
 			.count("user_id as total")
+			.joinRaw(
+				`LEFT JOIN ?? as ja ON ja.job_seeker_id = vw_full_job_seeker_profile.user_id`,
+				[`${this.DBO_SCHEMA}.${this.TABLES.job_applications}`]
+			)
 			.where((qb) => {
 				if (user_id) {
 					qb.andWhere("user_id", user_id);
@@ -127,6 +152,19 @@ export default class JobSeekerModel extends Schema {
 				}
 				if (from_date && to_date) {
 					qb.andWhereBetween("user_created_at", [from_date, to_date]);
+				}
+				if (
+					application_status &&
+					application_status === JOB_APPLICATION_STATUS.COMPLETED
+				) {
+					qb.andWhere((subQb) => {
+						subQb
+							.where(
+								"ja.status",
+								JOB_APPLICATION_STATUS.COMPLETED
+							)
+							.orWhereNull("ja.job_seeker_id");
+					});
 				}
 			})
 			.first();
