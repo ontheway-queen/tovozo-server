@@ -5,14 +5,19 @@ CREATE SCHEMA IF NOT EXISTS admin;
 
 --Create Types-----------------------------------------------------------------------------------
 
--------------------------------------------------------------------------------------------------
+CREATE TYPE IF NOT EXISTS admin.type_audit_trail AS ENUM (
+    'CREATE',
+    'UPDATE',
+    'DELETE',
+    'GET'
+);
 
 --Create Tables ---------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS admin.audit_trail
 (
     id serial NOT NULL,
     created_by integer NOT NULL,
-    type dbo.type_audit_trail NOT NULL,
+    type admin.type_audit_trail NOT NULL,
     endpoint character varying,
     details text NOT NULL,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,

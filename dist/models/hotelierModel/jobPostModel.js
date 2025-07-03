@@ -145,7 +145,7 @@ class JobPostModel extends schema_1.default {
                     'job_seeker_id', ja.job_seeker_id,
                     'job_seeker_name', js.name,
                     'gender', jsu.gender,
-                    'payment_status', ja.payment_status,
+
                     'location_address', js_vwl.location_address,
                     'city_name', js_vwl.city_name,
                     'state_name', js_vwl.state_name,
@@ -272,7 +272,6 @@ class JobPostModel extends schema_1.default {
                     'job_seeker_id', ja.job_seeker_id,
                     'job_seeker_name', js.name,
                     'gender', jsu.gender,
-                    'payment_status', ja.payment_status,
                     'location_address', js_vwl.location_address,
                     'city_name', js_vwl.city_name,
                     'state_name', js_vwl.state_name,

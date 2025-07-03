@@ -33,7 +33,8 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
                 }
                 const jobPostReport = yield cancellationReportModel.getSingleJobPostReport(null, constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST, job_post_details_id);
-                if (jobPostReport.status === constants_1.CANCELLATION_REPORT_STATUS.PENDING) {
+                if (jobPostReport &&
+                    jobPostReport.status === constants_1.CANCELLATION_REPORT_STATUS.PENDING) {
                     throw new customError_1.default("A cancellation request is already pending for this job post.", this.StatusCode.HTTP_CONFLICT);
                 }
                 if (jobPost.gender !== constants_1.GENDER_TYPE.Other &&
@@ -47,6 +48,14 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     throw new customError_1.default("This job post is no longer accepting applications.", this.StatusCode.HTTP_BAD_REQUEST);
                 }
                 const model = this.Model.jobApplicationModel(trx);
+                const existPendingApplication = yield model.getMyJobApplication({
+                    job_seeker_id: user_id,
+                });
+                if (existPendingApplication &&
+                    existPendingApplication.job_application_status !==
+                        constants_1.JOB_APPLICATION_STATUS.COMPLETED) {
+                    throw new customError_1.default("You already have a pending application for this job.", this.StatusCode.HTTP_BAD_REQUEST);
+                }
                 const payload = {
                     job_post_details_id: Number(job_post_details_id),
                     job_seeker_id: user_id,

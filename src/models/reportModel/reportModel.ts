@@ -88,11 +88,9 @@ export default class ReportModel extends Schema {
 				this.db.raw(`json_build_object(
 				    'application_id', ja.id,
 				    'application_status', ja.status,
-				    'payment_status', ja.payment_status,
 				    'job_seeker_id', ja.job_seeker_id,
 				    'job_seeker_name', jsu.name,
 				    'gender', js.gender,
-				    'payment_status', ja.payment_status,
 				    'location_address', js_vwl.location_address,
 				    'city_name', js_vwl.city_name,
 				    'state_name', js_vwl.state_name,
@@ -265,11 +263,11 @@ export default class ReportModel extends Schema {
 				this.db.raw(`json_build_object(
                     'application_id', ja.id,
                     'application_status', ja.status,
-                    'payment_status', ja.payment_status,
+                    
                     'job_seeker_id', ja.job_seeker_id,
                     'job_seeker_name', jsu.name,
                     'gender', js.gender,
-                    'payment_status', ja.payment_status,
+                    
                     'location_address', js_vwl.location_address,
                     'city_name', js_vwl.city_name,
                     'state_name', js_vwl.state_name,

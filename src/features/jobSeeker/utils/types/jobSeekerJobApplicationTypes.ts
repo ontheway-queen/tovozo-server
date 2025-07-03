@@ -4,7 +4,6 @@ import { IGetJobResponse } from "../../../hotelier/utils/types/hotelierJobTypes"
 export interface IJobSeekerJobApplication {
 	job_application_id: number;
 	job_application_status: string;
-	payment_status: string;
 	applied_at: string;
 	job_post_details_id: number;
 	job_post_details_status: string;

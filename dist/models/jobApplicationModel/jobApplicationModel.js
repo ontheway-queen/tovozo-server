@@ -18,6 +18,9 @@ class JobApplicationModel extends schema_1.default {
         super();
         this.db = db;
     }
+    getApplication(job_post_details_id) {
+        return __awaiter(this, void 0, void 0, function* () { });
+    }
     createJobApplication(payload) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("job_applications")
@@ -38,7 +41,7 @@ class JobApplicationModel extends schema_1.default {
             const { user_id: job_seeker_id, orderBy, orderTo, status, limit, skip, need_total = true, } = params;
             const data = yield this.db("job_applications as ja")
                 .withSchema(this.DBO_SCHEMA)
-                .select("ja.id as job_application_id", "ja.status as job_application_status", "ja.payment_status", "ja.created_at as applied_at", "jpd.id as job_post_details_id", "jpd.status as job_post_details_status", "jpd.start_time", "jpd.end_time", "jpd.job_post_id", "jp.title as job_post_title", "jp.details as job_post_details", "jp.requirements as job_post_requirements", "jp.hourly_rate", "org.id as organization_id", "org.name as organization_name", "org_p.file as organization_photo", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.country_name", "vwl.state_name", "vwl.city_name", "vwl.longitude", "vwl.latitude", this.db.raw(`json_build_object(
+                .select("ja.id as job_application_id", "ja.status as job_application_status", "ja.created_at as applied_at", "jpd.id as job_post_details_id", "jpd.status as job_post_details_status", "jpd.start_time", "jpd.end_time", "jpd.job_post_id", "jp.title as job_post_title", "jp.details as job_post_details", "jp.requirements as job_post_requirements", "jp.hourly_rate", "org.id as organization_id", "org.name as organization_name", "org_p.file as organization_photo", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.country_name", "vwl.state_name", "vwl.city_name", "vwl.longitude", "vwl.latitude", this.db.raw(`json_build_object(
                     'id', j.id,
                     'title', j.title,
                     'details', j.details,
@@ -78,7 +81,6 @@ class JobApplicationModel extends schema_1.default {
                     .first();
                 total = (totalQuery === null || totalQuery === void 0 ? void 0 : totalQuery.total) ? Number(totalQuery.total) : 0;
             }
-            console.log({ data });
             return { data, total };
         });
     }
@@ -86,7 +88,7 @@ class JobApplicationModel extends schema_1.default {
         return __awaiter(this, arguments, void 0, function* ({ job_application_id, job_seeker_id, }) {
             return yield this.db("job_applications as ja")
                 .withSchema(this.DBO_SCHEMA)
-                .select("ja.id as job_application_id", "ja.status as job_application_status", "ja.payment_status", "ja.created_at as applied_at", "jpd.id as job_post_details_id", "jpd.status as job_post_details_status", "jpd.start_time", "jpd.end_time", "jpd.job_post_id", "jp.title as job_post_title", "jp.details as job_post_details", "jp.requirements as job_post_requirements", "jp.hourly_rate", "org.id as organization_id", "org.name as organization_name", "org_p.file as organization_photo", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.country_name", "vwl.state_name", "vwl.city_name", "vwl.longitude", "vwl.latitude", this.db.raw(`json_build_object(
+                .select("ja.id as job_application_id", "ja.status as job_application_status", "ja.created_at as applied_at", "jpd.id as job_post_details_id", "jpd.status as job_post_details_status", "jpd.start_time", "jpd.end_time", "jpd.job_post_id", "jp.title as job_post_title", "jp.details as job_post_details", "jp.requirements as job_post_requirements", "jp.hourly_rate", "org.id as organization_id", "org.name as organization_name", "org_p.file as organization_photo", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.country_name", "vwl.state_name", "vwl.city_name", "vwl.longitude", "vwl.latitude", this.db.raw(`json_build_object(
                     'id', j.id,
                     'title', j.title,
                     'details', j.details,
@@ -110,9 +112,11 @@ class JobApplicationModel extends schema_1.default {
                 .leftJoin("vw_location as vwl", "vwl.location_id", "org.location_id")
                 .leftJoin("jobs as j", "jpd.job_id", "j.id")
                 .leftJoin("job_task_activities as jta", "jta.job_application_id", "ja.id")
-                .where({
-                "ja.id": job_application_id,
-                "ja.job_seeker_id": job_seeker_id,
+                .where("ja.job_seeker_id", job_seeker_id)
+                .modify((qb) => {
+                if (job_application_id) {
+                    qb.andWhere("ja.id", job_application_id);
+                }
             })
                 .first();
         });
