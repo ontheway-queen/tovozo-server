@@ -191,7 +191,9 @@ class HotelierJobPostService extends AbstractServices {
 			const cancellationReportModel =
 				this.Model.cancellationReportModel(trx);
 
-			const jobPost = await model.getSingleJobPost(Number(id));
+			const jobPost = await model.getSingleJobPostWithJobSeekerDetails(
+				Number(id)
+			);
 			if (!jobPost) {
 				throw new CustomError(
 					"Job post not found!",
@@ -199,8 +201,8 @@ class HotelierJobPostService extends AbstractServices {
 				);
 			}
 			if (
-				jobPost.status ===
-				(JOB_POST_DETAILS_STATUS.Cancelled as unknown as typeof jobPost.status)
+				jobPost.job_post_details_status ===
+				(JOB_POST_DETAILS_STATUS.Cancelled as unknown as typeof jobPost.job_post_details_status)
 			) {
 				throw new CustomError(
 					"Job post already cancelled",
@@ -222,11 +224,11 @@ class HotelierJobPostService extends AbstractServices {
 			const hoursDiff =
 				(startTime.getTime() - currentTime.getTime()) /
 				(1000 * 60 * 60);
-
+			console.log(jobPost);
 			if (hoursDiff > 24) {
 				await model.cancelJobPost(Number(jobPost.job_post_id));
 				await model.updateJobPostDetailsStatus(
-					Number(jobPost.job_post_id),
+					Number(jobPost.id),
 					JOB_POST_DETAILS_STATUS.Cancelled as unknown as IJobPostDetailsStatus
 				);
 

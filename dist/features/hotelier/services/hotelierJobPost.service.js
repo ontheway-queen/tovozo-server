@@ -133,11 +133,11 @@ class HotelierJobPostService extends abstract_service_1.default {
                 const user = req.hotelier;
                 const model = this.Model.jobPostModel(trx);
                 const cancellationReportModel = this.Model.cancellationReportModel(trx);
-                const jobPost = yield model.getSingleJobPost(Number(id));
+                const jobPost = yield model.getSingleJobPostWithJobSeekerDetails(Number(id));
                 if (!jobPost) {
                     throw new customError_1.default("Job post not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }
-                if (jobPost.status ===
+                if (jobPost.job_post_details_status ===
                     constants_1.JOB_POST_DETAILS_STATUS.Cancelled) {
                     throw new customError_1.default("Job post already cancelled", this.StatusCode.HTTP_BAD_REQUEST);
                 }
@@ -149,9 +149,10 @@ class HotelierJobPostService extends abstract_service_1.default {
                 const startTime = new Date(jobPost.start_time);
                 const hoursDiff = (startTime.getTime() - currentTime.getTime()) /
                     (1000 * 60 * 60);
+                console.log(jobPost);
                 if (hoursDiff > 24) {
                     yield model.cancelJobPost(Number(jobPost.job_post_id));
-                    yield model.updateJobPostDetailsStatus(Number(jobPost.job_post_id), constants_1.JOB_POST_DETAILS_STATUS.Cancelled);
+                    yield model.updateJobPostDetailsStatus(Number(jobPost.id), constants_1.JOB_POST_DETAILS_STATUS.Cancelled);
                     const jobApplicationModel = this.Model.jobApplicationModel(trx);
                     yield jobApplicationModel.cancelApplication(jobPost.job_post_id);
                     return {

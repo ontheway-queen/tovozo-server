@@ -25,7 +25,6 @@ class JobSeekerJobApplication extends abstract_service_1.default {
             const { job_post_details_id } = req.body;
             const { user_id, gender } = req.jobSeeker;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
-                var _a;
                 const jobPostModel = new jobPostModel_1.default(trx);
                 const cancellationReportModel = new cancellationReportModel_1.default(trx);
                 const jobPost = yield jobPostModel.getSingleJobPost(job_post_details_id);
@@ -61,13 +60,12 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     job_seeker_id: user_id,
                     job_post_id: jobPost.job_post_id,
                 };
-                const res = yield model.createJobApplication(payload);
+                yield model.createJobApplication(payload);
                 yield model.markJobPostDetailAsApplied(Number(job_post_details_id));
                 return {
                     success: true,
                     message: this.ResMsg.HTTP_OK,
                     code: this.StatusCode.HTTP_OK,
-                    data: (_a = res[0]) === null || _a === void 0 ? void 0 : _a.id,
                 };
             }));
         });

@@ -95,7 +95,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 				job_seeker_id: user_id,
 				job_post_id: jobPost.job_post_id,
 			};
-			const res = await model.createJobApplication(
+			await model.createJobApplication(
 				payload as ICreateJobApplicationPayload
 			);
 
@@ -104,7 +104,6 @@ export class JobSeekerJobApplication extends AbstractServices {
 				success: true,
 				message: this.ResMsg.HTTP_OK,
 				code: this.StatusCode.HTTP_OK,
-				data: res[0]?.id,
 			};
 		});
 	};
