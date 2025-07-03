@@ -30,13 +30,22 @@ export class JobSeekerJobApplication extends AbstractServices {
 			const jobPost = await jobPostModel.getSingleJobPost(
 				job_post_details_id
 			);
-
 			if (!jobPost) {
 				throw new CustomError(
 					this.ResMsg.HTTP_NOT_FOUND,
 					this.StatusCode.HTTP_NOT_FOUND
 				);
 			}
+			if (
+				jobPost.status !==
+				(JOB_POST_DETAILS_STATUS.Pending as unknown as IJobPostDetailsStatus)
+			) {
+				throw new CustomError(
+					"This job post is no longer accepting applications.",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
+
 			const jobPostReport =
 				await cancellationReportModel.getSingleJobPostReport(
 					null,
@@ -64,15 +73,6 @@ export class JobSeekerJobApplication extends AbstractServices {
 				);
 			}
 
-			if (
-				jobPost.status !==
-				(JOB_POST_DETAILS_STATUS.Pending as unknown as IJobPostDetailsStatus)
-			) {
-				throw new CustomError(
-					"This job post is no longer accepting applications.",
-					this.StatusCode.HTTP_BAD_REQUEST
-				);
-			}
 			const model = this.Model.jobApplicationModel(trx);
 
 			const existPendingApplication = await model.getMyJobApplication({
@@ -85,7 +85,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 					JOB_APPLICATION_STATUS.COMPLETED
 			) {
 				throw new CustomError(
-					"You already have a pending application for this job.",
+					"Hold on! You need to complete your current job before moving on to the next.",
 					this.StatusCode.HTTP_BAD_REQUEST
 				);
 			}
