@@ -301,9 +301,6 @@ CREATE TABLE dbo.cancellation_reports (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Payment status
-CREATE TYPE dbo.payment_status AS ENUM ('UNPAID', 'PAID', 'FAILED', "PARTIAL_PAID");
-
 -- job status
 CREATE TYPE dbo.job_status AS ENUM ('PENDING', 'ASSIGNED', 'IN_PROGRESS','ENDED', 'CANCELLED', 'COMPLETED');
 
@@ -358,3 +355,35 @@ CREATE TABLE IF NOT EXISTS dbo.reports (
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
+
+
+-- Payment and ledger Not completed because of changing project 
+-- Payment status
+CREATE TYPE dbo.payment_status AS ENUM ('UNPAID', 'PAID', 'FAILED', "PARTIAL_PAID");
+
+CREATE TABLE IF NOT EXISTS dbo.payment (
+    id SERIAL PRIMARY KEY,
+    application_id INTEGER NOT NULL REFERENCES dbo.job_applications(id),
+    job_seeker_pay NUMERIC(10, 2) NOT NULL,
+    platform_fee NUMERIC(10, 2) NOT NULL,
+    total_amount NUMERIC(10, 2),
+    status dbo.payment_status NOT NULL DEFAULT 'UNPAID',
+    trx_id VARCHAR(255),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    paid_at TIMESTAMP WITH TIME ZONE,
+    is_deleted BOOLEAN DEFAULT FALSE
+);
+
+-- job seeker ledger
+CREATE TABLE IF NOT EXISTS jobseeker.job_seeker_ledger (
+    id SERIAL PRIMARY KEY,
+    job_seeker_id INTEGER NOT NULL REFERENCES dbo.user(id),
+    hotelier_id INTEGER NOT NULL REFERENCES dbo.user(id),
+    voucher_no VARCHAR(50) NOT NULL,
+    amount NUMERIC(18,2) NOT NULL,
+    details TEXT NOT NULL,
+    ledger_date TIMESTAMP,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
+)
+-- Payment and ledger Not completed because of changing project 

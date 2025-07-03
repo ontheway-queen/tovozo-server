@@ -15,6 +15,8 @@ export default class JobApplicationModel extends Schema {
 		this.db = db;
 	}
 
+	public async getApplication(job_post_details_id: number) {}
+
 	public async createJobApplication(payload: ICreateJobApplicationPayload) {
 		return await this.db("job_applications")
 			.withSchema(this.DBO_SCHEMA)
@@ -45,7 +47,6 @@ export default class JobApplicationModel extends Schema {
 			.select(
 				"ja.id as job_application_id",
 				"ja.status as job_application_status",
-				"ja.payment_status",
 				"ja.created_at as applied_at",
 				"jpd.id as job_post_details_id",
 				"jpd.status as job_post_details_status",
@@ -120,7 +121,6 @@ export default class JobApplicationModel extends Schema {
 
 			total = totalQuery?.total ? Number(totalQuery.total) : 0;
 		}
-		console.log({ data });
 		return { data, total };
 	}
 
@@ -128,7 +128,7 @@ export default class JobApplicationModel extends Schema {
 		job_application_id,
 		job_seeker_id,
 	}: {
-		job_application_id: number;
+		job_application_id?: number | null;
 		job_seeker_id: number;
 	}): Promise<IJobSeekerJobApplication> {
 		return await this.db("job_applications as ja")
@@ -136,7 +136,6 @@ export default class JobApplicationModel extends Schema {
 			.select(
 				"ja.id as job_application_id",
 				"ja.status as job_application_status",
-				"ja.payment_status",
 				"ja.created_at as applied_at",
 				"jpd.id as job_post_details_id",
 				"jpd.status as job_post_details_status",
@@ -198,9 +197,11 @@ export default class JobApplicationModel extends Schema {
 				"jta.job_application_id",
 				"ja.id"
 			)
-			.where({
-				"ja.id": job_application_id,
-				"ja.job_seeker_id": job_seeker_id,
+			.where("ja.job_seeker_id", job_seeker_id)
+			.modify((qb) => {
+				if (job_application_id) {
+					qb.andWhere("ja.id", job_application_id);
+				}
 			})
 			.first();
 	}

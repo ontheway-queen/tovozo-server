@@ -37,20 +37,21 @@ export class JobSeekerJobApplication extends AbstractServices {
 					this.StatusCode.HTTP_NOT_FOUND
 				);
 			}
-
 			const jobPostReport =
 				await cancellationReportModel.getSingleJobPostReport(
 					null,
 					CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST,
 					job_post_details_id
 				);
-			if (jobPostReport.status === CANCELLATION_REPORT_STATUS.PENDING) {
+			if (
+				jobPostReport &&
+				jobPostReport.status === CANCELLATION_REPORT_STATUS.PENDING
+			) {
 				throw new CustomError(
 					"A cancellation request is already pending for this job post.",
 					this.StatusCode.HTTP_CONFLICT
 				);
 			}
-
 			if (
 				jobPost.gender !== GENDER_TYPE.Other &&
 				gender &&
@@ -72,8 +73,22 @@ export class JobSeekerJobApplication extends AbstractServices {
 					this.StatusCode.HTTP_BAD_REQUEST
 				);
 			}
-
 			const model = this.Model.jobApplicationModel(trx);
+
+			const existPendingApplication = await model.getMyJobApplication({
+				job_seeker_id: user_id,
+			});
+
+			if (
+				existPendingApplication &&
+				existPendingApplication.job_application_status !==
+					JOB_APPLICATION_STATUS.COMPLETED
+			) {
+				throw new CustomError(
+					"You already have a pending application for this job.",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
 
 			const payload = {
 				job_post_details_id: Number(job_post_details_id),

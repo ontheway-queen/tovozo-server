@@ -50,11 +50,9 @@ class ReportModel extends schema_1.default {
                 .select("rp.id", "rp.status as report_status", "rp.report_type", "rp.reason as report_reason", "jp.id as job_post_id", "jp.title", "jp.details", "jp.requirements", "jp.prefer_gender", "jp.hourly_rate", "jp.expire_time", "jpd.id as job_post_details_id", "jpd.start_time", "jpd.end_time", "jpd.status as job_post_details_status", "org.id as organization_id", "org.name as organization_name", "org_p.file as organization_photo", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.city_name", "vwl.state_name", "vwl.country_name", "vwl.longitude", "vwl.latitude", this.db.raw(`json_build_object(
 				    'application_id', ja.id,
 				    'application_status', ja.status,
-				    'payment_status', ja.payment_status,
 				    'job_seeker_id', ja.job_seeker_id,
 				    'job_seeker_name', jsu.name,
 				    'gender', js.gender,
-				    'payment_status', ja.payment_status,
 				    'location_address', js_vwl.location_address,
 				    'city_name', js_vwl.city_name,
 				    'state_name', js_vwl.state_name,
@@ -161,11 +159,11 @@ class ReportModel extends schema_1.default {
                 .select("rp.id", "rp.status as report_status", "rp.report_type", "rp.reason as report_reason", "jp.id as job_post_id", "jp.title", "jp.details", "jp.requirements", "jp.prefer_gender", "jp.hourly_rate", "jp.expire_time", "jpd.id as job_post_details_id", "jpd.start_time", "jpd.end_time", "jpd.status as job_post_details_status", "org.id as organization_id", "org.name as organization_name", "org_p.file as organization_photo", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.city_name", "vwl.state_name", "vwl.country_name", "vwl.longitude", "vwl.latitude", this.db.raw(`json_build_object(
                     'application_id', ja.id,
                     'application_status', ja.status,
-                    'payment_status', ja.payment_status,
+                    
                     'job_seeker_id', ja.job_seeker_id,
                     'job_seeker_name', jsu.name,
                     'gender', js.gender,
-                    'payment_status', ja.payment_status,
+                    
                     'location_address', js_vwl.location_address,
                     'city_name', js_vwl.city_name,
                     'state_name', js_vwl.state_name,
