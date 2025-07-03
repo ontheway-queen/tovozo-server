@@ -32,6 +32,10 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 if (!jobPost) {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
                 }
+                if (jobPost.status !==
+                    constants_1.JOB_POST_DETAILS_STATUS.Pending) {
+                    throw new customError_1.default("This job post is no longer accepting applications.", this.StatusCode.HTTP_BAD_REQUEST);
+                }
                 const jobPostReport = yield cancellationReportModel.getSingleJobPostReport(null, constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST, job_post_details_id);
                 if (jobPostReport &&
                     jobPostReport.status === constants_1.CANCELLATION_REPORT_STATUS.PENDING) {
@@ -43,10 +47,6 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     gender !== jobPost.gender) {
                     throw new customError_1.default("Your gender does not meet the eligibility criteria for this job.", this.StatusCode.HTTP_BAD_REQUEST);
                 }
-                if (jobPost.status !==
-                    constants_1.JOB_POST_DETAILS_STATUS.Pending) {
-                    throw new customError_1.default("This job post is no longer accepting applications.", this.StatusCode.HTTP_BAD_REQUEST);
-                }
                 const model = this.Model.jobApplicationModel(trx);
                 const existPendingApplication = yield model.getMyJobApplication({
                     job_seeker_id: user_id,
@@ -54,7 +54,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 if (existPendingApplication &&
                     existPendingApplication.job_application_status !==
                         constants_1.JOB_APPLICATION_STATUS.COMPLETED) {
-                    throw new customError_1.default("You already have a pending application for this job.", this.StatusCode.HTTP_BAD_REQUEST);
+                    throw new customError_1.default("Hold on! You need to complete your current job before moving on to the next.", this.StatusCode.HTTP_BAD_REQUEST);
                 }
                 const payload = {
                     job_post_details_id: Number(job_post_details_id),
