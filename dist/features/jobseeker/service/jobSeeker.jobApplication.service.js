@@ -118,6 +118,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     job_application_id: Number(id),
                     job_seeker_id: Number(user_id),
                 });
+                console.log({ application });
                 if (!application) {
                     throw new customError_1.default("Application not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }

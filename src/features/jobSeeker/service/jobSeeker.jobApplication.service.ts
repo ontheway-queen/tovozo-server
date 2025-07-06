@@ -164,7 +164,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 				job_application_id: Number(id),
 				job_seeker_id: Number(user_id),
 			});
-
+			console.log({ application });
 			if (!application) {
 				throw new CustomError(
 					"Application not found!",
