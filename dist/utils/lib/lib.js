@@ -169,6 +169,7 @@ class Lib {
         });
     }
     static safeParseJSON(value) {
+        console.log({ value });
         if (typeof value === "string") {
             try {
                 return JSON.parse(value);

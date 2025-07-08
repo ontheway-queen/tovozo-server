@@ -40,8 +40,8 @@ class JobSeekerProfileService extends abstract_service_1.default {
                 const files = req.files || [];
                 const { user_id } = req.jobSeeker;
                 const parsed = {
-                    user: lib_1.default.safeParseJSON(req.body.user),
-                    jobSeeker: lib_1.default.safeParseJSON(req.body.job_seeker),
+                    user: lib_1.default.safeParseJSON(req.body.user) || {},
+                    jobSeeker: lib_1.default.safeParseJSON(req.body.job_seeker) || {},
                     jobSeekerInfo: lib_1.default.safeParseJSON(req.body.job_seeker_info) || {},
                     ownAddress: lib_1.default.safeParseJSON(req.body.own_address) || {},
                     addJobPreferences: lib_1.default.safeParseJSON(req.body.add_job_preferences) || [],
@@ -80,23 +80,27 @@ class JobSeekerProfileService extends abstract_service_1.default {
                         phone_number: parsed.user.phone_number,
                         type: constants_1.USER_TYPE.JOB_SEEKER,
                     });
-                    if (phoneExists) {
+                    if (phoneExists && phoneExists.length > 0) {
                         throw new customError_1.default(this.ResMsg.PHONE_NUMBER_ALREADY_EXISTS, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
                     }
                 }
                 const updateTasks = [];
-                if (Object.keys(parsed.user).length > 0) {
+                if (parsed.user && Object.keys(parsed.user).length > 0) {
                     updateTasks.push(userModel.updateProfile(parsed.user, { id: user_id }));
                 }
-                if (Object.keys(parsed.ownAddress).length > 0) {
+                if (parsed.ownAddress &&
+                    Object.keys(parsed.ownAddress).length > 0) {
                     updateTasks.push(commonModel.updateLocation(parsed.ownAddress, {
                         location_id: parsed.ownAddress.id,
                     }));
                 }
-                if (Object.keys(parsed.jobSeeker).length > 0) {
-                    updateTasks.push(jobSeekerModel.updateJobSeeker(parsed.jobSeeker, { user_id }));
+                if (parsed.jobSeeker && Object.keys(parsed.jobSeeker).length > 0) {
+                    updateTasks.push(jobSeekerModel.updateJobSeeker(parsed.jobSeeker, {
+                        user_id,
+                    }));
                 }
-                if (Object.keys(parsed.jobSeekerInfo).length > 0) {
+                if (parsed.jobSeekerInfo &&
+                    Object.keys(parsed.jobSeekerInfo).length > 0) {
                     updateTasks.push(jobSeekerModel.updateJobSeekerInfo(parsed.jobSeekerInfo, {
                         job_seeker_id: user_id,
                     }));
