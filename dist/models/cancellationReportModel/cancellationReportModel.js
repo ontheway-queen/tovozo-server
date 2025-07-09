@@ -12,6 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const constants_1 = require("../../utils/miscellaneous/constants");
 const schema_1 = __importDefault(require("../../utils/miscellaneous/schema"));
 class CancellationReportModel extends schema_1.default {
     constructor(db) {
@@ -225,6 +226,7 @@ class CancellationReportModel extends schema_1.default {
             return yield this.db("cancellation_reports")
                 .withSchema(this.DBO_SCHEMA)
                 .where("related_id", id)
+                .andWhere("status", constants_1.CANCELLATION_REPORT_STATUS.PENDING)
                 .first();
         });
     }

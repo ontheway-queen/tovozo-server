@@ -1,5 +1,6 @@
 import { IJobCancellationReport } from "../../features/hotelier/utils/types/hotelierJobCancellationReportTypes";
 import { TDB } from "../../features/public/utils/types/publicCommon.types";
+import { CANCELLATION_REPORT_STATUS } from "../../utils/miscellaneous/constants";
 import Schema from "../../utils/miscellaneous/schema";
 import {
 	ICancellationReportRes,
@@ -298,6 +299,7 @@ class CancellationReportModel extends Schema {
 		return await this.db("cancellation_reports")
 			.withSchema(this.DBO_SCHEMA)
 			.where("related_id", id)
+			.andWhere("status", CANCELLATION_REPORT_STATUS.PENDING)
 			.first();
 	}
 
