@@ -79,16 +79,16 @@ export class JobSeekerJobApplication extends AbstractServices {
 				job_seeker_id: user_id,
 			});
 
-			if (
-				existPendingApplication &&
-				existPendingApplication.job_application_status !==
-					JOB_APPLICATION_STATUS.COMPLETED
-			) {
-				throw new CustomError(
-					"Hold on! You need to complete your current job before moving on to the next.",
-					this.StatusCode.HTTP_BAD_REQUEST
-				);
-			}
+			// if (
+			// 	existPendingApplication &&
+			// 	existPendingApplication.job_application_status !==
+			// 		JOB_APPLICATION_STATUS.COMPLETED
+			// ) {
+			// 	throw new CustomError(
+			// 		"Hold on! You need to complete your current job before moving on to the next.",
+			// 		this.StatusCode.HTTP_BAD_REQUEST
+			// 	);
+			// }
 
 			const payload = {
 				job_post_details_id: Number(job_post_details_id),
@@ -164,7 +164,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 				job_application_id: Number(id),
 				job_seeker_id: Number(user_id),
 			});
-			console.log({ application });
+
 			if (!application) {
 				throw new CustomError(
 					"Application not found!",
@@ -177,6 +177,15 @@ export class JobSeekerJobApplication extends AbstractServices {
 			) {
 				throw new CustomError(
 					"This application cannot be cancelled because it has already been processed.",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
+			const reportModel = this.Model.cancellationReportModel(trx);
+			const isReportExists =
+				await reportModel.getSingleReportWithRelatedId(Number(id));
+			if (isReportExists) {
+				throw new CustomError(
+					"A cancellation report for this application is already pending.",
 					this.StatusCode.HTTP_BAD_REQUEST
 				);
 			}
