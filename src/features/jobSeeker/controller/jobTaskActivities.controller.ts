@@ -21,7 +21,7 @@ export default class JobTaskActivitiesController extends AbstractController {
 	);
 
 	public endJobTaskActivity = this.asyncWrapper.wrap(
-		null,
+		{ paramSchema: this.commonValidator.getSingleItemWithIdValidator },
 		async (req: Request, res: Response) => {
 			const { code, ...data } = await this.service.endJobTaskActivities(
 				req

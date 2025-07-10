@@ -1,30 +1,30 @@
 import { Request, Response } from "express";
 import AbstractController from "../../../abstract/abstract.controller";
-import { JobSeekerCancellationReportServices } from "../service/jobSeekerCancellationReport.service";
 import CancellationReportValidator from "../../admin/utils/validator/cancellationReport.validator";
+import { JobSeekerCancellationLogServices } from "../service/jobSeekerCancellationLog.service";
 
-export class JobSeekerCancellationApplicationReportController extends AbstractController {
-	private service = new JobSeekerCancellationReportServices();
+export class JobSeekerCancellationApplicationLogController extends AbstractController {
+	private service = new JobSeekerCancellationLogServices();
 	private CancellationReportValidator = new CancellationReportValidator();
 
 	constructor() {
 		super();
 	}
 
-	public getgetCancellationApplicationReports = this.asyncWrapper.wrap(
+	public getCancellationApplicationLogs = this.asyncWrapper.wrap(
 		{ querySchema: this.CancellationReportValidator.reportQuerySchema },
 		async (req: Request, res: Response) => {
 			const { code, ...data } =
-				await this.service.getCancellationApplicationReports(req);
+				await this.service.getCancellationApplicationLog(req);
 			res.status(code).json(data);
 		}
 	);
 
-	public getCancellationApplicationReport = this.asyncWrapper.wrap(
-		null,
+	public getCancellationApplicationLog = this.asyncWrapper.wrap(
+		{ paramSchema: this.commonValidator.getSingleItemWithIdValidator },
 		async (req: Request, res: Response) => {
 			const { code, ...data } =
-				await this.service.getCancellationApplicationReport(req);
+				await this.service.getCancellationApplicationLog(req);
 			res.status(code).json(data);
 		}
 	);

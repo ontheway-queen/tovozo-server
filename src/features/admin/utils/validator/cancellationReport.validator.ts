@@ -2,6 +2,7 @@ import Joi from "joi";
 import {
 	CANCELLATION_REPORT_STATUS,
 	CANCELLATION_REPORT_STATUS_ENUM,
+	CANCELLATION_REPORT_TYPE_ENUM,
 	REPORT_TYPE_ENUM,
 } from "../../../../utils/miscellaneous/constants";
 
@@ -21,7 +22,7 @@ class CancellationReportValidator {
 	public reportQuerySchema = Joi.object({
 		user_id: Joi.number().optional(),
 		report_type: Joi.string()
-			.valid(...REPORT_TYPE_ENUM)
+			.valid(...CANCELLATION_REPORT_TYPE_ENUM)
 			.optional(),
 
 		status: Joi.string()
@@ -35,7 +36,7 @@ class CancellationReportValidator {
 
 	public reportTypeQuerySchema = Joi.object({
 		report_type: Joi.string()
-			.valid(...REPORT_TYPE_ENUM)
+			.valid(...CANCELLATION_REPORT_TYPE_ENUM)
 			.required(),
 	});
 }

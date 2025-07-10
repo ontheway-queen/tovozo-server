@@ -132,7 +132,7 @@ class HotelierJobPostService extends abstract_service_1.default {
                 const body = req.body;
                 const user = req.hotelier;
                 const model = this.Model.jobPostModel(trx);
-                const cancellationReportModel = this.Model.cancellationReportModel(trx);
+                const cancellationLogModel = this.Model.cancellationLogModel(trx);
                 const jobPost = yield model.getSingleJobPostWithJobSeekerDetails(Number(id));
                 if (!jobPost) {
                     throw new customError_1.default("Job post not found!", this.StatusCode.HTTP_NOT_FOUND);
@@ -141,15 +141,14 @@ class HotelierJobPostService extends abstract_service_1.default {
                     constants_1.JOB_POST_DETAILS_STATUS.Cancelled) {
                     throw new customError_1.default("Job post already cancelled", this.StatusCode.HTTP_BAD_REQUEST);
                 }
-                const report = yield cancellationReportModel.getSingleReportWithRelatedId(jobPost.id);
+                const report = yield cancellationLogModel.getSingleCancellationLogWithRelatedId(jobPost.id);
                 if (report) {
-                    throw new customError_1.default(this.ResMsg.HTTP_CONFLICT, this.StatusCode.HTTP_CONFLICT);
+                    throw new customError_1.default("Conflict: This job post already has an associated cancellation report.", this.StatusCode.HTTP_CONFLICT);
                 }
                 const currentTime = new Date();
                 const startTime = new Date(jobPost.start_time);
                 const hoursDiff = (startTime.getTime() - currentTime.getTime()) /
                     (1000 * 60 * 60);
-                console.log(jobPost);
                 if (hoursDiff > 24) {
                     yield model.cancelJobPost(Number(jobPost.job_post_id));
                     yield model.updateJobPostDetailsStatus(Number(jobPost.id), constants_1.JOB_POST_DETAILS_STATUS.Cancelled);
@@ -169,8 +168,8 @@ class HotelierJobPostService extends abstract_service_1.default {
                     }
                     body.reporter_id = user.user_id;
                     body.related_id = id;
-                    const cancellationReportModel = this.Model.cancellationReportModel(trx);
-                    const data = yield cancellationReportModel.requestForCancellationReport(body);
+                    const cancellationLogModel = this.Model.cancellationLogModel(trx);
+                    const data = yield cancellationLogModel.requestForCancellationLog(body);
                     return {
                         success: true,
                         message: this.ResMsg.HTTP_SUCCESSFUL,

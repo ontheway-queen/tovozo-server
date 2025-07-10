@@ -10,18 +10,18 @@ import {
 } from "../../../utils/modelTypes/cancellationReport/cancellationReport.types";
 import CustomError from "../../../utils/lib/customError";
 
-export default class HotelierCancellationReportService extends AbstractServices {
+export default class HotelierCancellationLogService extends AbstractServices {
 	constructor() {
 		super();
 	}
 
 	// get cancellation reports
-	public getCancellationReports = async (req: Request) => {
+	public getCancellationLogs = async (req: Request) => {
 		const { user_id } = req.hotelier;
 		const { status, limit, skip, searchQuery, report_type } = req.query;
-		const model = this.Model.cancellationReportModel();
+		const model = this.Model.cancellationLogModel();
 
-		const data = await model.getJobPostReports({
+		const data = await model.getJobPostCancellationLogs({
 			user_id,
 			status,
 			report_type:
@@ -39,11 +39,11 @@ export default class HotelierCancellationReportService extends AbstractServices 
 		};
 	};
 
-	public getCancellationReport = async (req: Request) => {
+	public getCancellationLog = async (req: Request) => {
 		const { id } = req.params;
-		const model = this.Model.cancellationReportModel();
+		const model = this.Model.cancellationLogModel();
 
-		const data = await model.getSingleJobPostReport(
+		const data = await model.getSingleJobPostCancellationLog(
 			Number(id),
 			CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST
 		);
@@ -61,12 +61,12 @@ export default class HotelierCancellationReportService extends AbstractServices 
 		};
 	};
 
-	public cancelJobPostReport = async (req: Request) => {
+	public cancelJobPostCancellationLog = async (req: Request) => {
 		return await this.db.transaction(async (trx) => {
 			const { id } = req.params;
-			const model = this.Model.cancellationReportModel(trx);
+			const model = this.Model.cancellationLogModel(trx);
 
-			const jobPostReport = await model.getSingleJobPostReport(
+			const jobPostReport = await model.getSingleJobPostCancellationLog(
 				Number(id),
 				CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST
 			);
@@ -84,7 +84,7 @@ export default class HotelierCancellationReportService extends AbstractServices 
 				);
 			}
 
-			await model.updateCancellationReportStatus(Number(id), {
+			await model.updateCancellationLogStatus(Number(id), {
 				status: CANCELLATION_REPORT_STATUS.CANCELLED as unknown as ICancellationReportStatus,
 			});
 

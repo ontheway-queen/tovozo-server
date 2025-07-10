@@ -287,7 +287,7 @@ CREATE TYPE dbo.cancellation_report_type AS ENUM
 CREATE TYPE dbo.cancellation_report_status AS ENUM
     ('PENDING', 'APPROVED', 'REJECTED', "CANCELLED");
 
-CREATE TABLE dbo.cancellation_reports (
+CREATE TABLE dbo.cancellation_logs (
     id SERIAL PRIMARY KEY,
     reporter_id INT NOT NULL REFERENCES dbo.user(id) ON DELETE CASCADE,
     report_type dbo.cancellation_report_type NOT NULL,

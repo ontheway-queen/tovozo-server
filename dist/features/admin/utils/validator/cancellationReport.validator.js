@@ -20,7 +20,7 @@ class CancellationReportValidator {
         this.reportQuerySchema = joi_1.default.object({
             user_id: joi_1.default.number().optional(),
             report_type: joi_1.default.string()
-                .valid(...constants_1.REPORT_TYPE_ENUM)
+                .valid(...constants_1.CANCELLATION_REPORT_TYPE_ENUM)
                 .optional(),
             status: joi_1.default.string()
                 .valid(...constants_1.CANCELLATION_REPORT_STATUS_ENUM)
@@ -31,7 +31,7 @@ class CancellationReportValidator {
         });
         this.reportTypeQuerySchema = joi_1.default.object({
             report_type: joi_1.default.string()
-                .valid(...constants_1.REPORT_TYPE_ENUM)
+                .valid(...constants_1.CANCELLATION_REPORT_TYPE_ENUM)
                 .required(),
         });
     }

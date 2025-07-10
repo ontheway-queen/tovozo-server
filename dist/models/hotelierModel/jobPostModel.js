@@ -37,9 +37,10 @@ class JobPostModel extends schema_1.default {
     getJobPostList(params) {
         return __awaiter(this, void 0, void 0, function* () {
             const { user_id, title, category_id, city_id, orderBy, orderTo, status, limit, skip, need_total = true, } = params;
-            const data = yield this.db("job_post as jp")
+            console.log({ category_id });
+            const dataQuery = this.db("job_post as jp")
                 .withSchema(this.DBO_SCHEMA)
-                .select("jpd.id", "jp.id as job_post_id", "jpd.start_time", "jpd.end_time", "jp.prefer_gender as gender", "jpd.status", "jp.organization_id", "jp.title as job_title", "jp.details as job_details", "jp.requirements as job_requirements", "jp.prefer_gender", "j.title as job_category", "jp.hourly_rate", "jp.created_time", "org.name as organization_name", "org_p.file as organization_photo", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.city_name", "vwl.state_name", "vwl.country_name", "vwl.longitude", "vwl.latitude")
+                .select("jpd.id", "jp.id as job_post_id", "jpd.start_time", "jpd.end_time", "jp.prefer_gender as gender", "jpd.status", "jp.organization_id", "jp.title as job_title", "jp.details as job_details", "jp.requirements as job_requirements", "jp.prefer_gender", "j.id as job_category_id", "j.title as job_category", "jp.hourly_rate", "jp.created_time", "org.name as organization_name", "org_p.file as organization_photo", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.city_name", "vwl.state_name", "vwl.country_name", "vwl.longitude", "vwl.latitude")
                 .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
                 `${this.HOTELIER}.${this.TABLES.organization}`,
             ])
@@ -51,28 +52,33 @@ class JobPostModel extends schema_1.default {
                 `${this.HOTELIER}.${this.TABLES.organization_photos}`,
             ]))
                 .where((qb) => {
-                if (user_id) {
-                    qb.andWhere("u.id", user_id);
-                }
-                if (category_id) {
-                    qb.andWhere("j.job_id", category_id);
-                }
-                if (city_id) {
+                if (category_id)
+                    qb.andWhere("j.id", category_id);
+                if (city_id)
                     qb.andWhere("vwl.city_id", city_id);
-                }
-                if (title) {
+                if (title)
                     qb.andWhereILike("jp.title", `%${title}%`);
-                }
-                if (status) {
+                if (status)
                     qb.andWhere("jpd.status", status);
-                }
-            })
+            });
+            // Exclude job_post_id the job seeker already applied for
+            if (user_id) {
+                const that = this;
+                dataQuery.whereNotExists(function () {
+                    this.select("*")
+                        .from(`${that.DBO_SCHEMA}.job_applications as ja`)
+                        .whereRaw("ja.job_post_id = jp.id")
+                        .andWhere("ja.job_seeker_id", user_id);
+                });
+            }
+            dataQuery
                 .orderBy(orderBy || "jp.id", orderTo || "desc")
                 .limit(limit || 100)
                 .offset(skip || 0);
-            let total;
+            const data = yield dataQuery;
+            let total = 0;
             if (need_total) {
-                const totalQuery = yield this.db("job_post as jp")
+                const totalQuery = this.db("job_post as jp")
                     .withSchema(this.DBO_SCHEMA)
                     .count("jpd.id as total")
                     .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
@@ -83,29 +89,30 @@ class JobPostModel extends schema_1.default {
                     .join("jobs as j", "j.id", "jpd.job_id")
                     .leftJoin("vw_location as vwl", "vwl.location_id", "org.location_id")
                     .where((qb) => {
-                    // qb.where("jp.status", status || "Live");
-                    if (user_id) {
-                        qb.andWhere("u.id", user_id);
-                    }
-                    if (category_id) {
-                        qb.andWhere("j.job_id", category_id);
-                    }
-                    if (city_id) {
+                    if (category_id)
+                        qb.andWhere("j.id", category_id);
+                    if (city_id)
                         qb.andWhere("vwl.city_id", city_id);
-                    }
-                    if (title) {
+                    if (title)
                         qb.andWhereILike("jp.title", `%${title}%`);
-                    }
-                    if (status) {
+                    if (status)
                         qb.andWhere("jpd.status", status);
-                    }
-                })
-                    .first();
-                total = (totalQuery === null || totalQuery === void 0 ? void 0 : totalQuery.total) ? Number(totalQuery.total) : 0;
+                });
+                if (user_id) {
+                    const that = this;
+                    totalQuery.whereNotExists(function () {
+                        this.select("*")
+                            .from(`${that.DBO_SCHEMA}.job_applications as ja`)
+                            .whereRaw("ja.job_post_id = jp.id")
+                            .andWhere("ja.job_seeker_id", user_id);
+                    });
+                }
+                const totalResult = yield totalQuery.first();
+                total = (totalResult === null || totalResult === void 0 ? void 0 : totalResult.total) ? Number(totalResult.total) : 0;
             }
             return {
-                data,
                 total,
+                data,
             };
         });
     }

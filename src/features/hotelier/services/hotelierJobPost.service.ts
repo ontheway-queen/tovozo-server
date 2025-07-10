@@ -188,8 +188,7 @@ class HotelierJobPostService extends AbstractServices {
 			const body = req.body;
 			const user = req.hotelier;
 			const model = this.Model.jobPostModel(trx);
-			const cancellationReportModel =
-				this.Model.cancellationReportModel(trx);
+			const cancellationLogModel = this.Model.cancellationLogModel(trx);
 
 			const jobPost = await model.getSingleJobPostWithJobSeekerDetails(
 				Number(id)
@@ -210,12 +209,12 @@ class HotelierJobPostService extends AbstractServices {
 				);
 			}
 			const report =
-				await cancellationReportModel.getSingleReportWithRelatedId(
+				await cancellationLogModel.getSingleCancellationLogWithRelatedId(
 					jobPost.id
 				);
 			if (report) {
 				throw new CustomError(
-					this.ResMsg.HTTP_CONFLICT,
+					"Conflict: This job post already has an associated cancellation report.",
 					this.StatusCode.HTTP_CONFLICT
 				);
 			}
@@ -224,7 +223,7 @@ class HotelierJobPostService extends AbstractServices {
 			const hoursDiff =
 				(startTime.getTime() - currentTime.getTime()) /
 				(1000 * 60 * 60);
-			console.log(jobPost);
+
 			if (hoursDiff > 24) {
 				await model.cancelJobPost(Number(jobPost.job_post_id));
 				await model.updateJobPostDetailsStatus(
@@ -257,12 +256,10 @@ class HotelierJobPostService extends AbstractServices {
 				body.reporter_id = user.user_id;
 				body.related_id = id;
 
-				const cancellationReportModel =
-					this.Model.cancellationReportModel(trx);
+				const cancellationLogModel =
+					this.Model.cancellationLogModel(trx);
 				const data =
-					await cancellationReportModel.requestForCancellationReport(
-						body
-					);
+					await cancellationLogModel.requestForCancellationLog(body);
 
 				return {
 					success: true,

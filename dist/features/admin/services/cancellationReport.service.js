@@ -20,17 +20,17 @@ class CancellationReportService extends abstract_service_1.default {
     getReports(req) {
         return __awaiter(this, void 0, void 0, function* () {
             const query = req.query;
-            const model = this.Model.cancellationReportModel();
+            const model = this.Model.cancellationLogModel();
             if (query.report_type !== constants_1.CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION &&
                 query.report_type !== constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST) {
                 throw new customError_1.default("Report type is invalid. Please add report type in the query", this.StatusCode.HTTP_BAD_REQUEST);
             }
             let data;
             if (query.report_type === constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST) {
-                data = yield model.getJobPostReports(query);
+                data = yield model.getJobPostCancellationLogs(query);
             }
             else if (query.report_type === constants_1.CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION) {
-                data = yield model.getJobApplicationReports(query);
+                data = yield model.getJobApplicationCancellationLogs(query);
             }
             return Object.assign({ success: true, code: this.StatusCode.HTTP_OK, message: this.ResMsg.HTTP_OK }, data);
         });
@@ -40,13 +40,13 @@ class CancellationReportService extends abstract_service_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             const { id } = req.params;
             const { report_type } = req.query;
-            const model = this.Model.cancellationReportModel();
+            const model = this.Model.cancellationLogModel();
             let data;
             if (report_type === constants_1.CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION) {
-                data = yield model.getSingleJobApplicationReport(id, report_type);
+                data = yield model.getSingleJobApplicationCancellationLog(id, report_type);
             }
             else if (report_type === constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST) {
-                data = yield model.getSingleJobPostReport(id, report_type);
+                data = yield model.getSingleJobPostCancellationLog(id, report_type);
             }
             if (!data) {
                 throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
@@ -67,15 +67,16 @@ class CancellationReportService extends abstract_service_1.default {
                 const body = req.body;
                 const id = req.params.id;
                 const { report_type } = req.query;
-                const reportModel = this.Model.cancellationReportModel(trx);
+                const reportModel = this.Model.cancellationLogModel(trx);
                 const jobPostModel = this.Model.jobPostModel(trx);
                 const jobApplicationModel = this.Model.jobApplicationModel(trx);
                 let report;
                 if (report_type === constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST) {
-                    report = yield reportModel.getSingleJobPostReport(Number(id), report_type);
+                    report = yield reportModel.getSingleJobPostCancellationLog(Number(id), report_type);
                 }
                 else if (report_type === constants_1.CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION) {
-                    report = yield reportModel.getSingleJobApplicationReport(Number(id), report_type);
+                    report =
+                        yield reportModel.getSingleJobApplicationCancellationLog(Number(id), report_type);
                 }
                 if (!report) {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
@@ -91,7 +92,7 @@ class CancellationReportService extends abstract_service_1.default {
                         ? body.reject_reason
                         : null;
                 if (body.status === constants_1.CANCELLATION_REPORT_STATUS.APPROVED) {
-                    yield reportModel.updateCancellationReportStatus(Number(id), body);
+                    yield reportModel.updateCancellationLogStatus(Number(id), body);
                     if (report_type === constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST) {
                         const jobPost = yield jobPostModel.getSingleJobPost(report.id);
                         yield jobPostModel.cancelJobPost(Number(jobPost.job_post_id));
@@ -104,7 +105,7 @@ class CancellationReportService extends abstract_service_1.default {
                     }
                 }
                 else {
-                    yield reportModel.updateCancellationReportStatus(Number(id), body);
+                    yield reportModel.updateCancellationLogStatus(Number(id), body);
                 }
                 return {
                     success: true,

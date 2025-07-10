@@ -23,7 +23,7 @@ class JobTaskActivitiesService extends abstract_service_1.default {
             const { user_id } = req.jobSeeker;
             const { job_application_id, job_post_details_id } = req.body;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
-                var _a;
+                const jobPostModel = this.Model.jobPostModel(trx);
                 const jobApplicationModel = this.Model.jobApplicationModel(trx);
                 const jobTaskActivitiesModel = this.Model.jobTaskActivitiesModel(trx);
                 const myApplication = yield jobApplicationModel.getMyJobApplication({
@@ -48,13 +48,13 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                     job_post_details_id,
                     start_time: now,
                 };
+                yield jobTaskActivitiesModel.createJobTaskActivity(payload);
                 yield jobApplicationModel.updateMyJobApplicationStatus(job_application_id, user_id, constants_1.JOB_APPLICATION_STATUS.IN_PROGRESS);
-                const res = yield jobTaskActivitiesModel.createJobTaskActivity(payload);
+                yield jobPostModel.updateJobPostDetailsStatus(myApplication.job_post_details_id, constants_1.JOB_POST_DETAILS_STATUS.In_Progress);
                 return {
                     success: true,
-                    message: this.ResMsg.HTTP_SUCCESSFUL,
-                    code: this.StatusCode.HTTP_SUCCESSFUL,
-                    data: (_a = res[0]) === null || _a === void 0 ? void 0 : _a.id,
+                    message: this.ResMsg.HTTP_OK,
+                    code: this.StatusCode.HTTP_OK,
                 };
             }));
         });
@@ -84,7 +84,6 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                 const startTime = (0, dayjs_1.default)(taskActivity.start_time).valueOf();
                 const endTime = (0, dayjs_1.default)((_a = taskActivity.end_time) !== null && _a !== void 0 ? _a : new Date()).valueOf();
                 const totalWorkingHours = Number(((endTime - startTime) / (1000 * 60 * 60)).toFixed(2));
-                console.log({ totalWorkingHours });
                 yield jobApplicationModel.updateMyJobApplicationStatus(taskActivity.job_application_id, user_id, constants_1.JOB_APPLICATION_STATUS.ENDED);
                 yield jobTaskActivitiesModel.updateJobTaskActivity(taskActivity.id, {
                     end_time: new Date(),

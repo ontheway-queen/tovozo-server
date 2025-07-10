@@ -26,7 +26,7 @@ class AdminJobApplicationService extends abstract_service_1.default {
                 const { job_post_details_id, user_id, job_post_id } = req.body;
                 const model = this.Model.jobApplicationModel(trx);
                 const jobPostModel = this.Model.jobPostModel(trx);
-                const cancellationReportModel = this.Model.cancellationReportModel(trx);
+                const cancellationReportModel = this.Model.cancellationLogModel(trx);
                 const jobPost = yield jobPostModel.getSingleJobPost(job_post_details_id);
                 if (!jobPost) {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
@@ -34,7 +34,7 @@ class AdminJobApplicationService extends abstract_service_1.default {
                 if (jobPost.status !== constants_1.JOB_POST_DETAILS_STATUS.Pending) {
                     throw new customError_1.default("Can't apply. This job post is not accepting applications.", this.StatusCode.HTTP_BAD_REQUEST);
                 }
-                const jobPostReport = yield cancellationReportModel.getSingleJobPostReport(null, constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST, job_post_details_id);
+                const jobPostReport = yield cancellationReportModel.getSingleJobPostCancellationLog(null, constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST, job_post_details_id);
                 if (jobPostReport &&
                     jobPostReport.status === constants_1.CANCELLATION_REPORT_STATUS.PENDING) {
                     throw new customError_1.default("A cancellation request is already pending for this job post.", this.StatusCode.HTTP_CONFLICT);
