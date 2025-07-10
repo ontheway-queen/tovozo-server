@@ -10,7 +10,7 @@ import {
 	IGetReportsQuery,
 } from "../../utils/modelTypes/cancellationReport/cancellationReport.types";
 
-class CancellationReportModel extends Schema {
+class CancellationLogModel extends Schema {
 	private db: TDB;
 	constructor(db: TDB) {
 		super();
@@ -18,7 +18,7 @@ class CancellationReportModel extends Schema {
 	}
 
 	// get job post reports list
-	public async getJobPostReports(
+	public async getJobPostCancellationLogs(
 		query: IGetReportsQuery
 	): Promise<{ data: IJobCancellationReport[]; total?: number }> {
 		const {
@@ -30,7 +30,7 @@ class CancellationReportModel extends Schema {
 			need_total = true,
 			searchQuery,
 		} = query;
-		const data = await this.db("cancellation_reports as cr")
+		const data = await this.db("cancellation_logs as cr")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
 				"cr.id",
@@ -79,7 +79,7 @@ class CancellationReportModel extends Schema {
 
 		let total;
 		if (need_total) {
-			const totalQuery = await this.db("cancellation_reports as cr")
+			const totalQuery = await this.db("cancellation_logs as cr")
 				.withSchema(this.DBO_SCHEMA)
 				.count("cr.id as total")
 				.leftJoin("user as u", "u.id", "cr.reporter_id")
@@ -106,12 +106,12 @@ class CancellationReportModel extends Schema {
 		return { data, total };
 	}
 
-	public async getSingleJobPostReport(
+	public async getSingleJobPostCancellationLog(
 		id: number | null,
 		report_type: ICancellationReportType,
 		related_id?: number
 	): Promise<ICancellationReportRes> {
-		return await this.db("cancellation_reports as cr")
+		return await this.db("cancellation_logs as cr")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
 				"cr.id",
@@ -154,7 +154,7 @@ class CancellationReportModel extends Schema {
 	}
 
 	// JOB APPLICATION REPORTS
-	public async getJobApplicationReports(
+	public async getJobApplicationCancellationLogs(
 		query: IGetReportsQuery
 	): Promise<ICancellationReportResponse> {
 		const {
@@ -166,7 +166,7 @@ class CancellationReportModel extends Schema {
 			need_total = true,
 			searchQuery,
 		} = query;
-		const data = await this.db("cancellation_reports as cr")
+		const data = await this.db("cancellation_logs as cr")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
 				"cr.id",
@@ -210,7 +210,7 @@ class CancellationReportModel extends Schema {
 
 		let total;
 		if (need_total) {
-			const totalQuery = await this.db("cancellation_reports as cr")
+			const totalQuery = await this.db("cancellation_logs as cr")
 				.withSchema(this.DBO_SCHEMA)
 				.count("cr.id as total")
 				.leftJoin("user as u", "u.id", "cr.reporter_id")
@@ -241,13 +241,13 @@ class CancellationReportModel extends Schema {
 		return { data, total };
 	}
 
-	public async getSingleJobApplicationReport(
+	public async getSingleJobApplicationCancellationLog(
 		id: number | null,
 		report_type: ICancellationReportType,
 		related_id?: number | null,
 		reporter_id?: number
 	): Promise<ICancellationReportRes> {
-		return await this.db("cancellation_reports as cr")
+		return await this.db("cancellation_logs as cr")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
 				"cr.id",
@@ -289,29 +289,29 @@ class CancellationReportModel extends Schema {
 			.first();
 	}
 
-	public async requestForCancellationReport(payload: any) {
-		return await this.db("cancellation_reports")
+	public async requestForCancellationLog(payload: any) {
+		return await this.db("cancellation_logs")
 			.withSchema(this.DBO_SCHEMA)
 			.insert(payload, "id");
 	}
 
-	public async getSingleReportWithRelatedId(id: number) {
-		return await this.db("cancellation_reports")
+	public async getSingleCancellationLogWithRelatedId(id: number) {
+		return await this.db("cancellation_logs")
 			.withSchema(this.DBO_SCHEMA)
 			.where("related_id", id)
 			.andWhere("status", CANCELLATION_REPORT_STATUS.PENDING)
 			.first();
 	}
 
-	public async updateCancellationReportStatus(
+	public async updateCancellationLogStatus(
 		id: number,
 		payload: { status: ICancellationReportStatus }
 	) {
-		return await this.db("cancellation_reports")
+		return await this.db("cancellation_logs")
 			.withSchema(this.DBO_SCHEMA)
 			.where("id", id)
 			.update(payload);
 	}
 }
 
-export default CancellationReportModel;
+export default CancellationLogModel;

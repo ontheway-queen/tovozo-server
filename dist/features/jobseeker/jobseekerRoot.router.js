@@ -7,9 +7,9 @@ const abstract_router_1 = __importDefault(require("../../abstract/abstract.route
 const jobSeekerProfile_router_1 = __importDefault(require("./router/jobSeekerProfile.router"));
 const jobSeekerJobs_router_1 = require("./router/jobSeekerJobs.router");
 const jobSeekerJobApplication_router_1 = require("./router/jobSeekerJobApplication.router");
-const jobSeekerCancellationReport_router_1 = require("./router/jobSeekerCancellationReport.router");
 const jobSeekerJobTaskActivity_router_1 = __importDefault(require("./router/jobSeekerJobTaskActivity.router"));
 const jobSeekerReport_router_1 = __importDefault(require("./router/jobSeekerReport.router"));
+const jobSeekerCancellationLog_router_1 = require("./router/jobSeekerCancellationLog.router");
 class JobSeekerRootRouter extends abstract_router_1.default {
     constructor() {
         super();
@@ -22,7 +22,7 @@ class JobSeekerRootRouter extends abstract_router_1.default {
         this.router.use("/jobs", new jobSeekerJobs_router_1.JobSeekerJobsRouter().router);
         // job seeker job application router
         this.router.use("/job-application", new jobSeekerJobApplication_router_1.JobSeekerJobApplicationRouter().router);
-        this.router.use("/cancellation-reports", new jobSeekerCancellationReport_router_1.JobSeekerCancellationApplicationReportsRouter().router);
+        this.router.use("/cancellation-logs", new jobSeekerCancellationLog_router_1.JobSeekerCancellationApplicationLogsRouter().router);
         this.router.use("/job-task-activity", new jobSeekerJobTaskActivity_router_1.default().router);
         // reports
         this.router.use("/reports", new jobSeekerReport_router_1.default().router);

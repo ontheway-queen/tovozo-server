@@ -22,7 +22,7 @@ export default class AdminJobApplicationService extends AbstractServices {
 			const model = this.Model.jobApplicationModel(trx);
 			const jobPostModel = this.Model.jobPostModel(trx);
 			const cancellationReportModel =
-				this.Model.cancellationReportModel(trx);
+				this.Model.cancellationLogModel(trx);
 
 			const jobPost = await jobPostModel.getSingleJobPost(
 				job_post_details_id
@@ -42,7 +42,7 @@ export default class AdminJobApplicationService extends AbstractServices {
 			}
 
 			const jobPostReport =
-				await cancellationReportModel.getSingleJobPostReport(
+				await cancellationReportModel.getSingleJobPostCancellationLog(
 					null,
 					CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST,
 					job_post_details_id

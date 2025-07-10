@@ -3,9 +3,9 @@ import AbstractRouter from "../../abstract/abstract.router";
 import jobSeekerProfileRouter from "./router/jobSeekerProfile.router";
 import { JobSeekerJobsRouter } from "./router/jobSeekerJobs.router";
 import { JobSeekerJobApplicationRouter } from "./router/jobSeekerJobApplication.router";
-import { JobSeekerCancellationApplicationReportsRouter } from "./router/jobSeekerCancellationReport.router";
 import JobTaskActivityRouter from "./router/jobSeekerJobTaskActivity.router";
 import JobSeekerReportRouter from "./router/jobSeekerReport.router";
+import { JobSeekerCancellationApplicationLogsRouter } from "./router/jobSeekerCancellationLog.router";
 
 export default class JobSeekerRootRouter extends AbstractRouter {
 	constructor() {
@@ -27,8 +27,8 @@ export default class JobSeekerRootRouter extends AbstractRouter {
 		);
 
 		this.router.use(
-			"/cancellation-reports",
-			new JobSeekerCancellationApplicationReportsRouter().router
+			"/cancellation-logs",
+			new JobSeekerCancellationApplicationLogsRouter().router
 		);
 
 		this.router.use(

@@ -1,5 +1,5 @@
 import AbstractRouter from "../../abstract/abstract.router";
-import HotelierCancellationReportRouter from "./router/hotelierCancellationReport.router";
+import HotelierCancellationLogRouter from "./router/hotelierCancellationLog.router";
 import HotelierJobPostRouter from "./router/hotelierJobPost.router";
 import HotelierJobTaskActivitiesRouter from "./router/hotelierJobTaskActivities.router";
 import HotelierReportRouter from "./router/hotelierReport.router";
@@ -18,8 +18,8 @@ export default class HotelierRootRouter extends AbstractRouter {
 		this.router.use("/job-post", new HotelierJobPostRouter().router);
 
 		this.router.use(
-			"/cancellation-reports",
-			new HotelierCancellationReportRouter().router
+			"/cancellation-logs",
+			new HotelierCancellationLogRouter().router
 		);
 
 		this.router.use(

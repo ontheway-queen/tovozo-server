@@ -23,28 +23,23 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.JobSeekerCancellationApplicationLogController = void 0;
 const abstract_controller_1 = __importDefault(require("../../../abstract/abstract.controller"));
-const hotelierJobPost_validator_1 = require("../utils/validator/hotelierJobPost.validator");
 const cancellationReport_validator_1 = __importDefault(require("../../admin/utils/validator/cancellationReport.validator"));
-const hotelierCancellationLog_service_1 = __importDefault(require("../services/hotelierCancellationLog.service"));
-class HotelierCancellationLogController extends abstract_controller_1.default {
+const jobSeekerCancellationLog_service_1 = require("../service/jobSeekerCancellationLog.service");
+class JobSeekerCancellationApplicationLogController extends abstract_controller_1.default {
     constructor() {
         super();
-        this.service = new hotelierCancellationLog_service_1.default();
-        this.validator = new hotelierJobPost_validator_1.HotelierJobPostValidator();
-        this.cancellationReportValidator = new cancellationReport_validator_1.default();
-        this.getCancellationLogs = this.asyncWrapper.wrap({ querySchema: this.cancellationReportValidator.reportQuerySchema }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.getCancellationLogs(req), { code } = _a, data = __rest(_a, ["code"]);
+        this.service = new jobSeekerCancellationLog_service_1.JobSeekerCancellationLogServices();
+        this.CancellationReportValidator = new cancellationReport_validator_1.default();
+        this.getCancellationApplicationLogs = this.asyncWrapper.wrap({ querySchema: this.CancellationReportValidator.reportQuerySchema }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.getCancellationApplicationLog(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
-        this.getCancellationLog = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.getSingleItemWithIdValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.getCancellationLog(req), { code } = _a, data = __rest(_a, ["code"]);
-            res.status(code).json(data);
-        }));
-        this.cancelJobPostCancellationLog = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.getSingleItemWithIdValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.cancelJobPostCancellationLog(req), { code } = _a, data = __rest(_a, ["code"]);
+        this.getCancellationApplicationLog = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.getSingleItemWithIdValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.getCancellationApplicationLog(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }
 }
-exports.default = HotelierCancellationLogController;
+exports.JobSeekerCancellationApplicationLogController = JobSeekerCancellationApplicationLogController;

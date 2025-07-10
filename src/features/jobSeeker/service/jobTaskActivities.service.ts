@@ -18,6 +18,7 @@ export default class JobTaskActivitiesService extends AbstractServices {
 		const { job_application_id, job_post_details_id } = req.body;
 
 		return await this.db.transaction(async (trx) => {
+			const jobPostModel = this.Model.jobPostModel(trx);
 			const jobApplicationModel = this.Model.jobApplicationModel(trx);
 			const jobTaskActivitiesModel =
 				this.Model.jobTaskActivitiesModel(trx);
@@ -65,19 +66,21 @@ export default class JobTaskActivitiesService extends AbstractServices {
 				start_time: now,
 			};
 
+			await jobTaskActivitiesModel.createJobTaskActivity(payload);
 			await jobApplicationModel.updateMyJobApplicationStatus(
 				job_application_id,
 				user_id,
 				JOB_APPLICATION_STATUS.IN_PROGRESS
 			);
-			const res = await jobTaskActivitiesModel.createJobTaskActivity(
-				payload
+			await jobPostModel.updateJobPostDetailsStatus(
+				myApplication.job_post_details_id,
+				JOB_POST_DETAILS_STATUS.In_Progress
 			);
+
 			return {
 				success: true,
-				message: this.ResMsg.HTTP_SUCCESSFUL,
-				code: this.StatusCode.HTTP_SUCCESSFUL,
-				data: res[0]?.id,
+				message: this.ResMsg.HTTP_OK,
+				code: this.StatusCode.HTTP_OK,
 			};
 		});
 	};
@@ -136,8 +139,6 @@ export default class JobTaskActivitiesService extends AbstractServices {
 			const totalWorkingHours = Number(
 				((endTime - startTime) / (1000 * 60 * 60)).toFixed(2)
 			);
-
-			console.log({ totalWorkingHours });
 
 			await jobApplicationModel.updateMyJobApplicationStatus(
 				taskActivity.job_application_id,

@@ -84,6 +84,7 @@ export default class PublicCommonValidator {
 	public getLimitSkipQueryValidator = Joi.object({
 		limit: Joi.number().integer().optional(),
 		skip: Joi.number().integer().optional(),
+		category_id: Joi.string().optional(),
 	});
 
 	// Get nationality validator
@@ -194,10 +195,10 @@ export default class PublicCommonValidator {
 
 		job_seeker: Joi.object({
 			// date_of_birth: Joi.date().required(),
-			// gender: Joi.string().valid("Male", "Female", "Other").required(),
+			gender: Joi.string().valid("Male", "Female", "Other").required(),
 			nationality: Joi.number().integer().required(),
 			// work_permit: Joi.boolean().required(),
-			account_status: Joi.string().max(42).default("Pending"),
+			account_status: Joi.string().max(42).default("pending"),
 			// criminal_convictions: Joi.boolean().required(),
 		}).required(),
 		passport_copy: Joi.string().max(255).allow("").optional(),

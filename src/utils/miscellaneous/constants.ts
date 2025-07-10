@@ -130,6 +130,7 @@ export const JOB_POST_DETAILS_STATUS = {
 	Completed: "Completed",
 	WorkFinished: "Work Finished",
 	Cancelled: "Cancelled",
+	In_Progress: "In_Progress",
 } as const;
 
 export const JOB_POST_DETAILS_STATUS_ENUM = [
@@ -139,6 +140,7 @@ export const JOB_POST_DETAILS_STATUS_ENUM = [
 	"Completed",
 	"Work Finished",
 	"Cancelled",
+	"In_Progress",
 ] as const;
 
 export const GENDER_TYPE = {

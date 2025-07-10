@@ -9,9 +9,9 @@ import JobModel from "./jobModel/jobModel";
 import JobSeekerModel from "./jobSeekerModel/jobSeekerModel";
 import UserModel from "./userModel/userModel";
 import JobApplicationModel from "./jobApplicationModel/jobApplicationModel";
-import CancellationReportModel from "./cancellationReportModel/cancellationReportModel";
 import JobTaskActivitiesModel from "./jobTaskActivitiesModel/jobTaskActivitiesModel";
 import ReportModel from "./reportModel/reportModel";
+import CancellationLogModel from "./cancellationLogModel/cancellationLogModel";
 
 export default class Models {
 	public UserModel(trx?: Knex.Transaction) {
@@ -57,8 +57,8 @@ export default class Models {
 	}
 
 	// cancellation report model
-	public cancellationReportModel(trx?: Knex.Transaction) {
-		return new CancellationReportModel(trx || db);
+	public cancellationLogModel(trx?: Knex.Transaction) {
+		return new CancellationLogModel(trx || db);
 	}
 
 	// job task activities

@@ -4,16 +4,16 @@ import { IGetJobPostListParams } from "../../../utils/modelTypes/hotelier/jobPos
 import { IGetReportsQuery } from "../../../utils/modelTypes/cancellationReport/cancellationReport.types";
 import { CANCELLATION_REPORT_TYPE } from "../../../utils/miscellaneous/constants";
 
-export class JobSeekerCancellationReportServices extends AbstractServices {
+export class JobSeekerCancellationLogServices extends AbstractServices {
 	constructor() {
 		super();
 	}
 
-	public getCancellationApplicationReports = async (req: Request) => {
+	public getCancellationApplicationLogs = async (req: Request) => {
 		const { user_id } = req.jobSeeker;
 		const { limit, skip, status } = req.query;
-		const model = this.Model.cancellationReportModel();
-		const data = await model.getJobApplicationReports({
+		const model = this.Model.cancellationLogModel();
+		const data = await model.getJobApplicationCancellationLogs({
 			user_id,
 			limit,
 			skip,
@@ -27,12 +27,12 @@ export class JobSeekerCancellationReportServices extends AbstractServices {
 		};
 	};
 
-	public getCancellationApplicationReport = async (req: Request) => {
+	public getCancellationApplicationLog = async (req: Request) => {
 		const { user_id } = req.jobSeeker;
 		const { id } = req.params;
 
-		const model = this.Model.cancellationReportModel();
-		const data = await model.getSingleJobApplicationReport(
+		const model = this.Model.cancellationLogModel();
+		const data = await model.getSingleJobApplicationCancellationLog(
 			Number(id),
 			CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION,
 			null,

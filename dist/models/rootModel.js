@@ -13,9 +13,9 @@ const jobModel_1 = __importDefault(require("./jobModel/jobModel"));
 const jobSeekerModel_1 = __importDefault(require("./jobSeekerModel/jobSeekerModel"));
 const userModel_1 = __importDefault(require("./userModel/userModel"));
 const jobApplicationModel_1 = __importDefault(require("./jobApplicationModel/jobApplicationModel"));
-const cancellationReportModel_1 = __importDefault(require("./cancellationReportModel/cancellationReportModel"));
 const jobTaskActivitiesModel_1 = __importDefault(require("./jobTaskActivitiesModel/jobTaskActivitiesModel"));
 const reportModel_1 = __importDefault(require("./reportModel/reportModel"));
+const cancellationLogModel_1 = __importDefault(require("./cancellationLogModel/cancellationLogModel"));
 class Models {
     UserModel(trx) {
         return new userModel_1.default(trx || database_1.db);
@@ -52,8 +52,8 @@ class Models {
         return new jobApplicationModel_1.default(trx || database_1.db);
     }
     // cancellation report model
-    cancellationReportModel(trx) {
-        return new cancellationReportModel_1.default(trx || database_1.db);
+    cancellationLogModel(trx) {
+        return new cancellationLogModel_1.default(trx || database_1.db);
     }
     // job task activities
     jobTaskActivitiesModel(trx) {

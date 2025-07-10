@@ -12,28 +12,36 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.JobSeekerServices = void 0;
+exports.JobSeekerCancellationLogServices = void 0;
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
 const constants_1 = require("../../../utils/miscellaneous/constants");
-class JobSeekerServices extends abstract_service_1.default {
+class JobSeekerCancellationLogServices extends abstract_service_1.default {
     constructor() {
         super();
-        this.getJobs = (req) => __awaiter(this, void 0, void 0, function* () {
+        this.getCancellationApplicationLogs = (req) => __awaiter(this, void 0, void 0, function* () {
             const { user_id } = req.jobSeeker;
-            const model = this.Model.jobPostModel();
-            const { data, total } = yield model.getJobPostList(Object.assign(Object.assign({}, req), { user_id, category_id: req.query.category_id, limit: req.query.limit, skip: req.query.skip, status: constants_1.JOB_POST_DETAILS_STATUS.Pending }));
-            return {
-                success: true,
-                message: this.ResMsg.HTTP_OK,
-                code: this.StatusCode.HTTP_OK,
-                data,
-                total: total || 0,
-            };
+            const { limit, skip, status } = req.query;
+            const model = this.Model.cancellationLogModel();
+            const data = yield model.getJobApplicationCancellationLogs({
+                user_id,
+                limit,
+                skip,
+                status,
+            });
+            return Object.assign({ success: true, message: this.ResMsg.HTTP_OK, code: this.StatusCode.HTTP_OK }, data);
         });
-        this.getJob = (req) => __awaiter(this, void 0, void 0, function* () {
+        this.getCancellationApplicationLog = (req) => __awaiter(this, void 0, void 0, function* () {
+            const { user_id } = req.jobSeeker;
             const { id } = req.params;
-            const model = this.Model.jobPostModel();
-            const data = yield model.getSingleJobPost(Number(id));
+            const model = this.Model.cancellationLogModel();
+            const data = yield model.getSingleJobApplicationCancellationLog(Number(id), constants_1.CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION, null, user_id);
+            if (!data) {
+                return {
+                    success: false,
+                    message: `Cancellation report with ID ${id} not found`,
+                    code: this.StatusCode.HTTP_NOT_FOUND,
+                };
+            }
             return {
                 success: true,
                 message: this.ResMsg.HTTP_OK,
@@ -43,4 +51,4 @@ class JobSeekerServices extends abstract_service_1.default {
         });
     }
 }
-exports.JobSeekerServices = JobSeekerServices;
+exports.JobSeekerCancellationLogServices = JobSeekerCancellationLogServices;

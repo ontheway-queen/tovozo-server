@@ -55,8 +55,8 @@ class JobPostModel extends Schema {
 			skip,
 			need_total = true,
 		} = params;
-
-		const data = await this.db("job_post as jp")
+		console.log({ category_id });
+		const dataQuery = this.db("job_post as jp")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
 				"jpd.id",
@@ -70,6 +70,7 @@ class JobPostModel extends Schema {
 				"jp.details as job_details",
 				"jp.requirements as job_requirements",
 				"jp.prefer_gender",
+				"j.id as job_category_id",
 				"j.title as job_category",
 				"jp.hourly_rate",
 				"jp.created_time",
@@ -101,35 +102,38 @@ class JobPostModel extends Schema {
 				])
 			)
 			.where((qb) => {
-				if (user_id) {
-					qb.andWhere("u.id", user_id);
-				}
-				if (category_id) {
-					qb.andWhere("j.job_id", category_id);
-				}
-				if (city_id) {
-					qb.andWhere("vwl.city_id", city_id);
-				}
-				if (title) {
-					qb.andWhereILike("jp.title", `%${title}%`);
-				}
-				if (status) {
-					qb.andWhere("jpd.status", status);
-				}
-			})
+				if (category_id) qb.andWhere("j.id", category_id);
+				if (city_id) qb.andWhere("vwl.city_id", city_id);
+				if (title) qb.andWhereILike("jp.title", `%${title}%`);
+				if (status) qb.andWhere("jpd.status", status);
+			});
+
+		// Exclude job_post_id the job seeker already applied for
+		if (user_id) {
+			const that = this;
+			dataQuery.whereNotExists(function () {
+				this.select("*")
+					.from(`${that.DBO_SCHEMA}.job_applications as ja`)
+					.whereRaw("ja.job_post_id = jp.id")
+					.andWhere("ja.job_seeker_id", user_id);
+			});
+		}
+
+		dataQuery
 			.orderBy(orderBy || "jp.id", orderTo || "desc")
 			.limit(limit || 100)
 			.offset(skip || 0);
 
-		let total;
+		const data = await dataQuery;
+
+		let total = 0;
 		if (need_total) {
-			const totalQuery = await this.db("job_post as jp")
+			const totalQuery = this.db("job_post as jp")
 				.withSchema(this.DBO_SCHEMA)
 				.count("jpd.id as total")
 				.joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
 					`${this.HOTELIER}.${this.TABLES.organization}`,
 				])
-
 				.join("user as u", "u.id", "org.user_id")
 				.join("job_post_details as jpd", "jp.id", "jpd.job_post_id")
 				.join("jobs as j", "j.id", "jpd.job_id")
@@ -139,30 +143,29 @@ class JobPostModel extends Schema {
 					"org.location_id"
 				)
 				.where((qb) => {
-					// qb.where("jp.status", status || "Live");
-					if (user_id) {
-						qb.andWhere("u.id", user_id);
-					}
-					if (category_id) {
-						qb.andWhere("j.job_id", category_id);
-					}
-					if (city_id) {
-						qb.andWhere("vwl.city_id", city_id);
-					}
-					if (title) {
-						qb.andWhereILike("jp.title", `%${title}%`);
-					}
-					if (status) {
-						qb.andWhere("jpd.status", status);
-					}
-				})
-				.first();
-			total = totalQuery?.total ? Number(totalQuery.total) : 0;
+					if (category_id) qb.andWhere("j.id", category_id);
+					if (city_id) qb.andWhere("vwl.city_id", city_id);
+					if (title) qb.andWhereILike("jp.title", `%${title}%`);
+					if (status) qb.andWhere("jpd.status", status);
+				});
+
+			if (user_id) {
+				const that = this;
+				totalQuery.whereNotExists(function () {
+					this.select("*")
+						.from(`${that.DBO_SCHEMA}.job_applications as ja`)
+						.whereRaw("ja.job_post_id = jp.id")
+						.andWhere("ja.job_seeker_id", user_id);
+				});
+			}
+
+			const totalResult = await totalQuery.first();
+			total = totalResult?.total ? Number(totalResult.total) : 0;
 		}
 
 		return {
-			data,
 			total,
+			data,
 		};
 	}
 

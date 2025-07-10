@@ -12,7 +12,7 @@ import {
 	REPORT_TYPE,
 } from "../../../utils/miscellaneous/constants";
 import { IJobPostDetailsStatus } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
-import CancellationReportModel from "../../../models/cancellationReportModel/cancellationReportModel";
+import CancellationLogModel from "../../../models/cancellationLogModel/cancellationLogModel";
 
 export class JobSeekerJobApplication extends AbstractServices {
 	constructor() {
@@ -25,7 +25,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 
 		return await this.db.transaction(async (trx) => {
 			const jobPostModel = new JobPostModel(trx);
-			const cancellationReportModel = new CancellationReportModel(trx);
+			const cancellationLogModel = new CancellationLogModel(trx);
 
 			const jobPost = await jobPostModel.getSingleJobPost(
 				job_post_details_id
@@ -47,7 +47,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 			}
 
 			const jobPostReport =
-				await cancellationReportModel.getSingleJobPostReport(
+				await cancellationLogModel.getSingleJobPostCancellationLog(
 					null,
 					CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST,
 					job_post_details_id
@@ -79,16 +79,18 @@ export class JobSeekerJobApplication extends AbstractServices {
 				job_seeker_id: user_id,
 			});
 
-			// if (
-			// 	existPendingApplication &&
-			// 	existPendingApplication.job_application_status !==
-			// 		JOB_APPLICATION_STATUS.COMPLETED
-			// ) {
-			// 	throw new CustomError(
-			// 		"Hold on! You need to complete your current job before moving on to the next.",
-			// 		this.StatusCode.HTTP_BAD_REQUEST
-			// 	);
-			// }
+			if (
+				existPendingApplication &&
+				(existPendingApplication.job_application_status ===
+					JOB_APPLICATION_STATUS.PENDING ||
+					existPendingApplication.job_application_status ===
+						JOB_APPLICATION_STATUS.IN_PROGRESS)
+			) {
+				throw new CustomError(
+					"Hold on! You need to complete your current job before moving on to the next.",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
 
 			const payload = {
 				job_post_details_id: Number(job_post_details_id),
@@ -180,9 +182,11 @@ export class JobSeekerJobApplication extends AbstractServices {
 					this.StatusCode.HTTP_BAD_REQUEST
 				);
 			}
-			const reportModel = this.Model.cancellationReportModel(trx);
+			const cancellationLogModel = this.Model.cancellationLogModel(trx);
 			const isReportExists =
-				await reportModel.getSingleReportWithRelatedId(Number(id));
+				await cancellationLogModel.getSingleCancellationLogWithRelatedId(
+					Number(id)
+				);
 			if (isReportExists) {
 				throw new CustomError(
 					"A cancellation report for this application is already pending.",
@@ -220,7 +224,6 @@ export class JobSeekerJobApplication extends AbstractServices {
 					success: true,
 					message: this.ResMsg.HTTP_OK,
 					code: this.StatusCode.HTTP_OK,
-					data: data.id,
 				};
 			} else {
 				if (
@@ -237,17 +240,14 @@ export class JobSeekerJobApplication extends AbstractServices {
 				body.related_id = id;
 
 				const cancellationReportModel =
-					this.Model.cancellationReportModel(trx);
-				const data =
-					await cancellationReportModel.requestForCancellationReport(
-						body
-					);
+					this.Model.cancellationLogModel(trx);
+
+				await cancellationReportModel.requestForCancellationLog(body);
 
 				return {
 					success: true,
 					message: this.ResMsg.HTTP_OK,
 					code: this.StatusCode.HTTP_OK,
-					data: data[0].id,
 				};
 			}
 		});

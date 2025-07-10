@@ -17,7 +17,7 @@ const abstract_service_1 = __importDefault(require("../../../abstract/abstract.s
 const customError_1 = __importDefault(require("../../../utils/lib/customError"));
 const jobPostModel_1 = __importDefault(require("../../../models/hotelierModel/jobPostModel"));
 const constants_1 = require("../../../utils/miscellaneous/constants");
-const cancellationReportModel_1 = __importDefault(require("../../../models/cancellationReportModel/cancellationReportModel"));
+const cancellationLogModel_1 = __importDefault(require("../../../models/cancellationLogModel/cancellationLogModel"));
 class JobSeekerJobApplication extends abstract_service_1.default {
     constructor() {
         super();
@@ -26,7 +26,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
             const { user_id, gender } = req.jobSeeker;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const jobPostModel = new jobPostModel_1.default(trx);
-                const cancellationReportModel = new cancellationReportModel_1.default(trx);
+                const cancellationLogModel = new cancellationLogModel_1.default(trx);
                 const jobPost = yield jobPostModel.getSingleJobPost(job_post_details_id);
                 if (!jobPost) {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
@@ -35,7 +35,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     constants_1.JOB_POST_DETAILS_STATUS.Pending) {
                     throw new customError_1.default("This job post is no longer accepting applications.", this.StatusCode.HTTP_BAD_REQUEST);
                 }
-                const jobPostReport = yield cancellationReportModel.getSingleJobPostReport(null, constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST, job_post_details_id);
+                const jobPostReport = yield cancellationLogModel.getSingleJobPostCancellationLog(null, constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST, job_post_details_id);
                 if (jobPostReport &&
                     jobPostReport.status === constants_1.CANCELLATION_REPORT_STATUS.PENDING) {
                     throw new customError_1.default("A cancellation request is already pending for this job post.", this.StatusCode.HTTP_CONFLICT);
@@ -50,16 +50,13 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 const existPendingApplication = yield model.getMyJobApplication({
                     job_seeker_id: user_id,
                 });
-                // if (
-                // 	existPendingApplication &&
-                // 	existPendingApplication.job_application_status !==
-                // 		JOB_APPLICATION_STATUS.COMPLETED
-                // ) {
-                // 	throw new CustomError(
-                // 		"Hold on! You need to complete your current job before moving on to the next.",
-                // 		this.StatusCode.HTTP_BAD_REQUEST
-                // 	);
-                // }
+                if (existPendingApplication &&
+                    (existPendingApplication.job_application_status ===
+                        constants_1.JOB_APPLICATION_STATUS.PENDING ||
+                        existPendingApplication.job_application_status ===
+                            constants_1.JOB_APPLICATION_STATUS.IN_PROGRESS)) {
+                    throw new customError_1.default("Hold on! You need to complete your current job before moving on to the next.", this.StatusCode.HTTP_BAD_REQUEST);
+                }
                 const payload = {
                     job_post_details_id: Number(job_post_details_id),
                     job_seeker_id: user_id,
@@ -130,8 +127,8 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     constants_1.JOB_APPLICATION_STATUS.PENDING) {
                     throw new customError_1.default("This application cannot be cancelled because it has already been processed.", this.StatusCode.HTTP_BAD_REQUEST);
                 }
-                const reportModel = this.Model.cancellationReportModel(trx);
-                const isReportExists = yield reportModel.getSingleReportWithRelatedId(Number(id));
+                const cancellationLogModel = this.Model.cancellationLogModel(trx);
+                const isReportExists = yield cancellationLogModel.getSingleCancellationLogWithRelatedId(Number(id));
                 if (isReportExists) {
                     throw new customError_1.default("A cancellation report for this application is already pending.", this.StatusCode.HTTP_BAD_REQUEST);
                 }
@@ -149,7 +146,6 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                         success: true,
                         message: this.ResMsg.HTTP_OK,
                         code: this.StatusCode.HTTP_OK,
-                        data: data.id,
                     };
                 }
                 else {
@@ -160,13 +156,12 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     }
                     body.reporter_id = user_id;
                     body.related_id = id;
-                    const cancellationReportModel = this.Model.cancellationReportModel(trx);
-                    const data = yield cancellationReportModel.requestForCancellationReport(body);
+                    const cancellationReportModel = this.Model.cancellationLogModel(trx);
+                    yield cancellationReportModel.requestForCancellationLog(body);
                     return {
                         success: true,
                         message: this.ResMsg.HTTP_OK,
                         code: this.StatusCode.HTTP_OK,
-                        data: data[0].id,
                     };
                 }
             }));

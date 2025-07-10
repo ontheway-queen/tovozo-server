@@ -10,7 +10,7 @@ export default class HotelierJobTaskActivitiesController extends AbstractControl
 	}
 
 	public approveJobTaskActivity = this.asyncWrapper.wrap(
-		null,
+		{ paramSchema: this.commonValidator.getSingleItemWithIdValidator },
 		async (req: Request, res: Response) => {
 			const { code, ...data } =
 				await this.hotelierJobTaskActivitiesService.approveJobTaskActivity(

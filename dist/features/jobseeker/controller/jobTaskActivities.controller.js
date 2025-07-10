@@ -35,7 +35,7 @@ class JobTaskActivitiesController extends abstract_controller_1.default {
             const _a = yield this.service.startJobTaskActivities(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
-        this.endJobTaskActivity = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
+        this.endJobTaskActivity = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.getSingleItemWithIdValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
             const _a = yield this.service.endJobTaskActivities(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));

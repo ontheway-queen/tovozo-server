@@ -106,6 +106,7 @@ exports.JOB_POST_DETAILS_STATUS = {
     Completed: "Completed",
     WorkFinished: "Work Finished",
     Cancelled: "Cancelled",
+    In_Progress: "In_Progress",
 };
 exports.JOB_POST_DETAILS_STATUS_ENUM = [
     "Pending",
@@ -114,6 +115,7 @@ exports.JOB_POST_DETAILS_STATUS_ENUM = [
     "Completed",
     "Work Finished",
     "Cancelled",
+    "In_Progress",
 ];
 exports.GENDER_TYPE = {
     Male: "Male",

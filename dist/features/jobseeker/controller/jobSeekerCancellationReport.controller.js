@@ -36,7 +36,7 @@ class JobSeekerCancellationApplicationReportController extends abstract_controll
             const _a = yield this.service.getCancellationApplicationReports(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
-        this.getCancellationApplicationReport = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
+        this.getCancellationApplicationReport = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.getSingleItemWithIdValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
             const _a = yield this.service.getCancellationApplicationReport(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));

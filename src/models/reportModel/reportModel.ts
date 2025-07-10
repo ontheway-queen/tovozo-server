@@ -7,6 +7,7 @@ import Schema from "../../utils/miscellaneous/schema";
 import {
 	IGetReportsWithInfoQuery,
 	IGetSingleReport,
+	IReport,
 	IReportAcknowledge,
 	IReportStatus,
 	IReportType,
@@ -230,7 +231,10 @@ export default class ReportModel extends Schema {
 		return { data, total };
 	}
 
-	public async getSingleReportWithInfo(id: number, type?: IReportType) {
+	public async getSingleReportWithInfo(
+		id: number,
+		type?: IReportType
+	): Promise<IReport> {
 		return await this.db("reports as rp")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
