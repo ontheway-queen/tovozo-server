@@ -1,10 +1,10 @@
 import { Router } from "express";
-import AuthChecker from "../middleware/authChecker/authChecker";
-import AuthRootRouter from "../features/auth/authRoot.router";
 import AdminRootRouter from "../features/admin/adminRoot.router";
+import AuthRootRouter from "../features/auth/authRoot.router";
 import HotelierRootRouter from "../features/hotelier/hotelierRoot.router";
 import JobSeekerRootRouter from "../features/jobSeeker/jobSeekerRoot.router";
 import PublicRouter from "../features/public/router/publicRouter";
+import AuthChecker from "../middleware/authChecker/authChecker";
 
 export default class RootRouter {
   public v2Router = Router();

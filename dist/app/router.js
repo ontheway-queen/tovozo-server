@@ -4,12 +4,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const authChecker_1 = __importDefault(require("../middleware/authChecker/authChecker"));
-const authRoot_router_1 = __importDefault(require("../features/auth/authRoot.router"));
 const adminRoot_router_1 = __importDefault(require("../features/admin/adminRoot.router"));
+const authRoot_router_1 = __importDefault(require("../features/auth/authRoot.router"));
 const hotelierRoot_router_1 = __importDefault(require("../features/hotelier/hotelierRoot.router"));
 const jobSeekerRoot_router_1 = __importDefault(require("../features/jobSeeker/jobSeekerRoot.router"));
 const publicRouter_1 = __importDefault(require("../features/public/router/publicRouter"));
+const authChecker_1 = __importDefault(require("../middleware/authChecker/authChecker"));
 class RootRouter {
     constructor() {
         this.v2Router = (0, express_1.Router)();
