@@ -100,8 +100,7 @@ class HotelierJobPostService extends abstract_service_1.default {
                     throw new customError_1.default("The job post cannot be updated because its status is not 'Pending'.", this.StatusCode.HTTP_BAD_REQUEST);
                 }
                 const hasJobPost = body.job_post && Object.keys(body.job_post).length > 0;
-                const hasJobPostDetails = body.job_post_details &&
-                    Object.keys(body.job_post_details).length > 0;
+                const hasJobPostDetails = body.job_post_details && Object.keys(body.job_post_details).length > 0;
                 if (hasJobPost) {
                     yield model.updateJobPost(Number(jobPost.job_post_id), body.job_post);
                 }
@@ -147,8 +146,7 @@ class HotelierJobPostService extends abstract_service_1.default {
                 }
                 const currentTime = new Date();
                 const startTime = new Date(jobPost.start_time);
-                const hoursDiff = (startTime.getTime() - currentTime.getTime()) /
-                    (1000 * 60 * 60);
+                const hoursDiff = (startTime.getTime() - currentTime.getTime()) / (1000 * 60 * 60);
                 if (hoursDiff > 24) {
                     yield model.cancelJobPost(Number(jobPost.job_post_id));
                     yield model.updateJobPostDetailsStatus(Number(jobPost.id), constants_1.JOB_POST_DETAILS_STATUS.Cancelled);
@@ -161,8 +159,7 @@ class HotelierJobPostService extends abstract_service_1.default {
                     };
                 }
                 else {
-                    if (body.report_type !==
-                        constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST ||
+                    if (body.report_type !== constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST ||
                         !body.reason) {
                         throw new customError_1.default("Invalid request: 'report_type' and 'reason' is required.", this.StatusCode.HTTP_UNPROCESSABLE_ENTITY);
                     }
@@ -178,6 +175,31 @@ class HotelierJobPostService extends abstract_service_1.default {
                     };
                 }
             }));
+        });
+    }
+    trackJobSeekerLocation(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { id } = req.params;
+            const { job_seeker } = req.query;
+            const model = this.Model.jobApplicationModel();
+            const jobPost = yield model.getMyJobApplication({
+                job_seeker_id: Number(job_seeker),
+                job_application_id: Number(id),
+            });
+            if (!jobPost) {
+                throw new customError_1.default("Job post not found!", this.StatusCode.HTTP_NOT_FOUND);
+            }
+            const now = new Date();
+            const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+            const jobStartTime = new Date(jobPost.start_time);
+            if (jobStartTime > twoHoursFromNow || jobStartTime < now) {
+                throw new customError_1.default("Live location sharing is only allowed within 2 hours before job start time.", this.StatusCode.HTTP_BAD_REQUEST);
+            }
+            return {
+                success: true,
+                message: "Live location sharing is allowed.",
+                code: this.StatusCode.HTTP_OK,
+            };
         });
     }
 }

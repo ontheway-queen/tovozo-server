@@ -42,7 +42,18 @@ class AbstractServices {
             const commonModel = this.Model.commonModel(trx);
             const notificationPayload = [];
             if (userType === userModelTypes_1.TypeUser.ADMIN) {
-                const getAllAdminSocketIds = (0, socket_1.getAllOnlineSocketIds)({
+                const getAllAdmin = yield this.Model.AdminModel(trx).getAllAdmin({}, false);
+                if (!getAllAdmin.data.length) {
+                    for (const admin of getAllAdmin.data) {
+                        notificationPayload.push({
+                            user_id: admin.user_id,
+                            content: payload.content,
+                            related_id: payload.related_id,
+                            type: payload.type,
+                        });
+                    }
+                }
+                const getAllAdminSocketIds = yield (0, socket_1.getAllOnlineSocketIds)({
                     type: userType,
                 });
                 if (!getAllAdminSocketIds.length)
@@ -61,16 +72,23 @@ class AbstractServices {
                         continue;
                     }
                     seenUserIds.add(user_id);
-                    notificationPayload.push({
-                        user_id,
-                        content: payload.content,
-                        related_id: payload.related_id,
-                        type: payload.type,
-                    });
                 }
             }
             else {
-                const getUserSocketIds = (0, socket_1.getAllOnlineSocketIds)({ type: userType });
+                const getAllUsers = yield this.Model.UserModel(trx).checkUser({
+                    type: userType,
+                });
+                if (!getAllUsers.length) {
+                    for (const user of getAllUsers) {
+                        notificationPayload.push({
+                            user_id: user.id,
+                            content: payload.content,
+                            related_id: payload.related_id,
+                            type: payload.type,
+                        });
+                    }
+                }
+                const getUserSocketIds = yield (0, socket_1.getAllOnlineSocketIds)({ type: userType });
                 if (!getUserSocketIds.length)
                     return;
                 for (const { user_id, socketId } of getUserSocketIds) {

@@ -18,6 +18,7 @@ const morgan_1 = __importDefault(require("morgan"));
 const errorHandler_1 = __importDefault(require("../middleware/errorHandler/errorHandler"));
 const customError_1 = __importDefault(require("../utils/lib/customError"));
 const constants_1 = require("../utils/miscellaneous/constants");
+const database_1 = require("./database");
 const router_1 = __importDefault(require("./router"));
 const socket_1 = require("./socket");
 class App {
@@ -71,7 +72,6 @@ class App {
         });
         socket_1.io.on("connection", (socket) => __awaiter(this, void 0, void 0, function* () {
             const { id, type } = socket.handshake.auth;
-            console.log(socket.id, "-", id, "-", type, " is connected ⚡");
             // if (id && type) {
             //   const model = new Models().UserModel();
             //   await model.updateProfile({ socket_id: socket.id }, { id });
@@ -79,9 +79,33 @@ class App {
             if (id && type) {
                 (0, socket_1.addOnlineUser)(id, socket.id, type);
             }
+            let lastLocation = {};
+            if (type === "jobseeker") {
+                socket.on("send-location", (data) => {
+                    socket_1.io.to(`watch:jobseeker:${id}`).emit("receive-location", data);
+                    lastLocation = data;
+                });
+            }
+            if (type === "hotelier") {
+                socket.on("hotelier:watch", ({ jobSeekerId }) => {
+                    socket.join(`watch:jobseeker:${jobSeekerId}`);
+                });
+            }
             socket.on("disconnect", (event) => __awaiter(this, void 0, void 0, function* () {
                 console.log(socket.id, "-", id, "-", type, " disconnected...");
                 (0, socket_1.removeOnlineUser)(id, socket.id);
+                if (type === "jobseeker" &&
+                    lastLocation.latitude &&
+                    lastLocation.longitude) {
+                    yield (0, database_1.db)("user as u")
+                        .withSchema("dbo")
+                        .join("location as l", "l.id", "u.location_id")
+                        .update({
+                        latitude: lastLocation.latitude,
+                        longitude: lastLocation.longitude,
+                    })
+                        .where({ id });
+                }
                 socket.disconnect();
             }));
         }));

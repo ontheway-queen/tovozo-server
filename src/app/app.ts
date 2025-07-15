@@ -5,6 +5,7 @@ import morgan from "morgan";
 import ErrorHandler from "../middleware/errorHandler/errorHandler";
 import CustomError from "../utils/lib/customError";
 import { origin } from "../utils/miscellaneous/constants";
+import { db } from "./database";
 import RootRouter from "./router";
 import { SocketServer, addOnlineUser, io, removeOnlineUser } from "./socket";
 
@@ -63,7 +64,6 @@ class App {
 
     io.on("connection", async (socket) => {
       const { id, type } = socket.handshake.auth;
-      console.log(socket.id, "-", id, "-", type, " is connected ⚡");
       // if (id && type) {
       //   const model = new Models().UserModel();
       //   await model.updateProfile({ socket_id: socket.id }, { id });
@@ -72,9 +72,40 @@ class App {
       if (id && type) {
         addOnlineUser(id, socket.id, type);
       }
+      let lastLocation: {
+        latitude?: number;
+        longitude?: number;
+      } = {};
+      if (type === "jobseeker") {
+        socket.on("send-location", (data) => {
+          io.to(`watch:jobseeker:${id}`).emit("receive-location", data);
+          lastLocation = data;
+        });
+      }
+
+      if (type === "hotelier") {
+        socket.on("hotelier:watch", ({ jobSeekerId }) => {
+          socket.join(`watch:jobseeker:${jobSeekerId}`);
+        });
+      }
+
       socket.on("disconnect", async (event) => {
         console.log(socket.id, "-", id, "-", type, " disconnected...");
         removeOnlineUser(id, socket.id);
+        if (
+          type === "jobseeker" &&
+          lastLocation.latitude &&
+          lastLocation.longitude
+        ) {
+          await db("user as u")
+            .withSchema("dbo")
+            .join("location as l", "l.id", "u.location_id")
+            .update({
+              latitude: lastLocation.latitude,
+              longitude: lastLocation.longitude,
+            })
+            .where({ id });
+        }
         socket.disconnect();
       });
     });

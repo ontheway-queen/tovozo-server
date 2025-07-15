@@ -1,0 +1,42 @@
+name: 🚀 Deploy Node.js App (Self-Hosted Runner)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: [tovozo_runner]
+
+    steps:
+      - name: ⬇️ Checkout code
+        uses: actions/checkout@v3
+
+      - name: 🚀 Deploy Script (All in One)
+        run: |
+          cd /home/ubuntu/projects/tovozo-server
+          git checkout main
+          git pull
+          npm install --production
+          npm run build
+
+          # Start app temporarily for health check
+          PORT=8888 node dist/server.js &
+          APP_PID=$!
+
+          # Wait a few seconds for server to start
+          sleep 5
+
+          # Check if app is running properly
+          curl --fail http://localhost:8888 || (echo "❌ Health check failed" && kill $APP_PID && exit 1)
+
+          # Stop dry-run server
+          kill $APP_PID
+
+          # Deploy using PM2
+          if pm2 list | grep -q "backend-server"; then
+            pm2 restart backend-server
+          else
+            pm2 start dist/server.js --name backend-server
+          fi

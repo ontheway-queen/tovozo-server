@@ -54,24 +54,28 @@ class OrganizationModel extends schema_1.default {
     }
     getOrganizationList(params) {
         return __awaiter(this, void 0, void 0, function* () {
-            const data = yield this.db("organization")
+            const data = yield this.db("organization as org")
                 .withSchema(this.HOTELIER)
-                .select("*")
+                .joinRaw(`left join ?? as u on u.id = org.user_id`, [
+                `${this.DBO_SCHEMA}.${this.TABLES.user}`,
+            ])
+                .select("org.*", "u.email as user_email", "u.phone_number as user_phone_number", "u.photo as user_photo")
                 .where((qb) => {
                 if (params.id)
-                    qb.andWhere("id", params.id);
+                    qb.andWhere("org.id", params.id);
                 if (params.user_id)
-                    qb.andWhere("user_id", params.user_id);
+                    qb.andWhere("org.user_id", params.user_id);
                 if (params.status)
-                    qb.andWhere("status", params.status);
+                    qb.andWhere("org.status", params.status);
                 if (params.name)
-                    qb.andWhereILike("name", `%${params.name}%`);
+                    qb.andWhereILike("org.name", `%${params.name}%`);
                 if (params.from_date && params.to_date)
-                    qb.andWhereBetween("created_at", [
+                    qb.andWhereBetween("org.created_at", [
                         params.from_date,
                         params.to_date,
                     ]);
             })
+                .orderBy("org.created_at", "desc")
                 .limit(params.limit || 100)
                 .offset(params.skip || 0);
             const total = yield this.db("organization")
@@ -87,10 +91,7 @@ class OrganizationModel extends schema_1.default {
                 if (params.name)
                     qb.andWhereILike("name", `%${params.name}%`);
                 if (params.from_date && params.to_date)
-                    qb.andWhereBetween("created_at", [
-                        params.from_date,
-                        params.to_date,
-                    ]);
+                    qb.andWhereBetween("created_at", [params.from_date, params.to_date]);
             })
                 .first();
             return {
@@ -101,10 +102,18 @@ class OrganizationModel extends schema_1.default {
     }
     getSingleOrganization(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db("organization")
+            return yield this.db("organization as org")
                 .withSchema(this.HOTELIER)
-                .select("*")
-                .where({ id, is_deleted: false })
+                .joinRaw(`left join ?? as u on u.id = org.user_id`, [
+                `${this.DBO_SCHEMA}.${this.TABLES.user}`,
+            ])
+                .joinRaw(`left join ?? as la on la.location_id = org.location_id`, [
+                `${this.DBO_SCHEMA}.vw_location`,
+            ])
+                .leftJoin("maintenance_designation as md", "md.user_id", "org.user_id")
+                .select("org.*", "md.designation", "la.location_name", "la.location_address", "la.city_name", "la.state_name", "la.country_name", "la.longitude", "la.latitude", "la.city_id", "la.state_id", "la.country_id", "la.postal_code", "u.email", "u.phone_number", "u.name", "u.photo")
+                .where("org.id", id)
+                .andWhere("org.is_deleted", false)
                 .first();
         });
     }

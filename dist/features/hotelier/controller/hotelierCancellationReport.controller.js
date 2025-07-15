@@ -38,11 +38,11 @@ class HotelierCancellationLogController extends abstract_controller_1.default {
             res.status(code).json(data);
         }));
         this.getCancellationLog = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.getSingleItemWithIdValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.getCancellationLog(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _b = yield this.service.getCancellationLog(req), { code } = _b, data = __rest(_b, ["code"]);
             res.status(code).json(data);
         }));
         this.cancelJobPostCancellationLog = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.getSingleItemWithIdValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.cancelJobPostCancellationLog(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _c = yield this.service.cancelJobPostCancellationLog(req), { code } = _c, data = __rest(_c, ["code"]);
             res.status(code).json(data);
         }));
     }

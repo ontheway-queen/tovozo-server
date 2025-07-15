@@ -21,10 +21,10 @@ class AdminHotelierValidator {
                 description: joi_1.default.string().optional(),
             }).optional(),
             organization_address: joi_1.default.object({
-                name: joi_1.default.string().required(),
+                name: joi_1.default.string().optional(),
                 address: joi_1.default.string().required(),
                 city_id: joi_1.default.string().required(),
-                postal_code: joi_1.default.string().required(),
+                postal_code: joi_1.default.string().optional(),
                 longitude: joi_1.default.string().required(),
                 latitude: joi_1.default.string().required(),
             }).optional(),
@@ -56,6 +56,9 @@ class AdminHotelierValidator {
             organization: joi_1.default.object({
                 name: joi_1.default.string().optional(),
                 description: joi_1.default.string().optional(),
+                status: joi_1.default.string()
+                    .valid(...constants_1.USER_STATUS_ENUM)
+                    .optional(),
             }).optional(),
             organization_address: joi_1.default.object({
                 name: joi_1.default.string().optional(),

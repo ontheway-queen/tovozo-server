@@ -38,22 +38,22 @@ class AdminAdministrationController extends abstract_controller_1.default {
         }));
         //role list
         this.roleList = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.roleList(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _b = yield this.service.roleList(req), { code } = _b, data = __rest(_b, ["code"]);
             res.status(code).json(data);
         }));
         //create permission
         this.createPermission = this.asyncWrapper.wrap({ bodySchema: this.validator.createPermission }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.createPermission(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _c = yield this.service.createPermission(req), { code } = _c, data = __rest(_c, ["code"]);
             res.status(code).json(data);
         }));
         //permission list
         this.permissionList = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.permissionList(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _d = yield this.service.permissionList(req), { code } = _d, data = __rest(_d, ["code"]);
             res.status(code).json(data);
         }));
         //get single role permission
         this.getSingleRolePermission = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.singleParamValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.getSingleRolePermission(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _e = yield this.service.getSingleRolePermission(req), { code } = _e, data = __rest(_e, ["code"]);
             res.status(code).json(data);
         }));
         //update role permission
@@ -61,29 +61,29 @@ class AdminAdministrationController extends abstract_controller_1.default {
             paramSchema: this.commonValidator.singleParamValidator,
             bodySchema: this.validator.updateRolePermissions,
         }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.updateRolePermissions(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _f = yield this.service.updateRolePermissions(req), { code } = _f, data = __rest(_f, ["code"]);
             res.status(code).json(data);
         }));
         //create admin
         this.createAdmin = this.asyncWrapper.wrap({
             bodySchema: this.validator.createAdmin,
         }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.createAdmin(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _g = yield this.service.createAdmin(req), { code } = _g, data = __rest(_g, ["code"]);
             res.status(code).json(data);
         }));
         //get all admin
         this.getAllAdmin = this.asyncWrapper.wrap({ querySchema: this.validator.getAllAdminQueryValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.getAllAdmin(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _h = yield this.service.getAllAdmin(req), { code } = _h, data = __rest(_h, ["code"]);
             res.status(code).json(data);
         }));
         //get single admin
         this.getSingleAdmin = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.singleParamValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.getSingleAdmin(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _j = yield this.service.getSingleAdmin(req), { code } = _j, data = __rest(_j, ["code"]);
             res.status(code).json(data);
         }));
         //update admin
         this.updateAdmin = this.asyncWrapper.wrap({ bodySchema: this.validator.updateAdmin }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.updateAdmin(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _k = yield this.service.updateAdmin(req), { code } = _k, data = __rest(_k, ["code"]);
             res.status(code).json(data);
         }));
     }

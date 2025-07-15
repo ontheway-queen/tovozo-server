@@ -85,7 +85,9 @@ class AdminHotelierService extends abstract_service_1.default {
                 });
                 const orgInsert = yield organizationModel.createOrganization(Object.assign(Object.assign({}, organization), { status: constants_1.USER_STATUS.ACTIVE, user_id: userId, location_id: locationId }));
                 const organizationId = orgInsert[0].id;
-                const photos = files.map((file) => ({
+                const photos = files
+                    .filter((file) => file.fieldname === "hotel_photo")
+                    .map((file) => ({
                     organization_id: organizationId,
                     file: file.filename,
                 }));
@@ -185,8 +187,7 @@ class AdminHotelierService extends abstract_service_1.default {
                 var _a;
                 const model = this.Model.organizationModel(trx);
                 const data = yield model.getSingleOrganization(id);
-                console.log({ data });
-                if (!data) {
+                if (!Object.keys(data).length) {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
                 }
                 const files = req.files;
@@ -204,7 +205,7 @@ class AdminHotelierService extends abstract_service_1.default {
                         case "profile_photo":
                             parsed.user.photo = filename;
                             break;
-                        case "photo":
+                        case "hotel_photo":
                             parsed.addPhoto.push({
                                 file: filename,
                                 organization_id: id,
@@ -216,10 +217,9 @@ class AdminHotelierService extends abstract_service_1.default {
                 }
                 const userModel = this.Model.UserModel(trx);
                 const [existingUser] = yield userModel.checkUser({
-                    id: id,
+                    id: data.user_id,
                     type: constants_1.USER_TYPE.HOTELIER,
                 });
-                console.log({ existingUser });
                 if (!existingUser) {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND, "ERROR");
                 }
@@ -290,6 +290,9 @@ class AdminHotelierService extends abstract_service_1.default {
                 }
                 yield Promise.all(updateTasks);
                 if (parsed.organization.status === constants_1.USER_STATUS.ACTIVE) {
+                    if (data.status === parsed.organization.status) {
+                        throw new customError_1.default(`Already updated status to ${parsed.organization.status}`, this.StatusCode.HTTP_CONFLICT);
+                    }
                     yield lib_1.default.sendEmailDefault({
                         email: existingUser.email,
                         emailSub: "Hotelier Account Activation Successful – You Can Now Log In",
