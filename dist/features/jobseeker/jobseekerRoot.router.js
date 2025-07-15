@@ -4,12 +4,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_router_1 = __importDefault(require("../../abstract/abstract.router"));
-const jobSeekerProfile_router_1 = __importDefault(require("./router/jobSeekerProfile.router"));
-const jobSeekerJobs_router_1 = require("./router/jobSeekerJobs.router");
-const jobSeekerJobApplication_router_1 = require("./router/jobSeekerJobApplication.router");
-const jobSeekerJobTaskActivity_router_1 = __importDefault(require("./router/jobSeekerJobTaskActivity.router"));
-const jobSeekerReport_router_1 = __importDefault(require("./router/jobSeekerReport.router"));
 const jobSeekerCancellationLog_router_1 = require("./router/jobSeekerCancellationLog.router");
+const jobSeekerJobApplication_router_1 = require("./router/jobSeekerJobApplication.router");
+const jobSeekerJobs_router_1 = require("./router/jobSeekerJobs.router");
+const jobSeekerJobTaskActivity_router_1 = __importDefault(require("./router/jobSeekerJobTaskActivity.router"));
+const jobSeekerProfile_router_1 = __importDefault(require("./router/jobSeekerProfile.router"));
+const jobSeekerReport_router_1 = __importDefault(require("./router/jobSeekerReport.router"));
 class JobSeekerRootRouter extends abstract_router_1.default {
     constructor() {
         super();
