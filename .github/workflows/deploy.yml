@@ -21,10 +21,6 @@ jobs:
           git pull
           npm install --production
 
-      - name: 🛠️ Build app
-        run: npm run build
-        working-directory: /home/ubuntu/projects/tovozo-server
-
   deploy:
     name: 🚀 Deploy App
     runs-on: tovozo_runner
