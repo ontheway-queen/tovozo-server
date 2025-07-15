@@ -1,4 +1,4 @@
-name: 🚀 Deploy Node.js App (Self-Hosted Runner)
+name: 🚀 Deploy Tovozo Server (Self-Hosted Runner)
 
 on:
   push:
