@@ -3,6 +3,7 @@ import AbstractServices from "../../../abstract/abstract.service";
 import CustomError from "../../../utils/lib/customError";
 import Lib from "../../../utils/lib/lib";
 import { USER_STATUS, USER_TYPE } from "../../../utils/miscellaneous/constants";
+import { ILocationUpdatePayload } from "../../../utils/modelTypes/common/commonModelTypes";
 import {
   registrationFromAdminTemplate,
   registrationVerificationCompletedTemplate,
@@ -18,9 +19,9 @@ import { IHotelierUpdateParsedBody } from "../utils/types/adminHotelier.types";
 class AdminHotelierService extends AbstractServices {
   public async createHotelier(req: Request) {
     const { user_id } = req.admin;
+
     return this.db.transaction(async (trx) => {
       const files = (req.files as Express.Multer.File[]) || [];
-      console.log({ user: req.body });
       const { designation, ...user } = Lib.safeParseJSON(
         req.body.user
       ) as IHotelierUser;
@@ -239,6 +240,7 @@ class AdminHotelierService extends AbstractServices {
     const id = req.params.id as unknown as number;
     return await this.db.transaction(async (trx) => {
       const model = this.Model.organizationModel(trx);
+      const commonModel = this.Model.commonModel(trx);
       const data = await model.getSingleOrganization(id);
       if (!Object.keys(data).length) {
         throw new CustomError(
@@ -255,11 +257,13 @@ class AdminHotelierService extends AbstractServices {
         addAmenities: Lib.safeParseJSON(req.body.add_amenities) || [],
         updateAmenities: Lib.safeParseJSON(req.body.update_amenities) || {},
         deleteAmenities: Lib.safeParseJSON(req.body.delete_amenities) || [],
+        organization_address:
+          Lib.safeParseJSON(req.body.organization_address) || {},
       } as IHotelierUpdateParsedBody;
 
       for (const { fieldname, filename } of files) {
         switch (fieldname) {
-          case "profile_photo":
+          case "photo":
             parsed.user.photo = filename;
             break;
           case "hotel_photo":
@@ -425,6 +429,41 @@ class AdminHotelierService extends AbstractServices {
         //   related_id: id,
         //   type: "HOTELIER_VERIFICATION",
         // });
+      }
+      if (Object.keys(parsed.organization_address).length > 0) {
+        if (parsed.organization_address.city_id) {
+          const checkCity = await commonModel.getAllCity({
+            city_id: parsed.organization_address.city_id,
+          });
+          if (!checkCity.length) {
+            throw new CustomError(
+              "City not found!",
+              this.StatusCode.HTTP_NOT_FOUND
+            );
+          }
+        }
+        if (parsed.organization_address.id) {
+          const checkLocation = await commonModel.getLocation({
+            location_id: parsed.organization_address.id,
+          });
+          if (!checkLocation) {
+            throw new CustomError(
+              "Location not found!",
+              this.StatusCode.HTTP_NOT_FOUND
+            );
+          }
+          updateTasks.push(
+            commonModel.updateLocation(parsed.organization_address, {
+              location_id: parsed.organization_address.id,
+            })
+          );
+        } else {
+          updateTasks.push(
+            commonModel.createLocation(
+              parsed.organization_address as ILocationUpdatePayload
+            )
+          );
+        }
       }
 
       await this.insertAdminAudit(trx, {

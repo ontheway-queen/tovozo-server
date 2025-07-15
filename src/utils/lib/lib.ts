@@ -208,6 +208,7 @@ class Lib {
       try {
         return JSON.parse(value);
       } catch {
+        console.log("Error parsing JSON:", value);
         return value;
       }
     }

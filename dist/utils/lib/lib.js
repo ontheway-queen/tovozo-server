@@ -174,6 +174,7 @@ class Lib {
                 return JSON.parse(value);
             }
             catch (_a) {
+                console.log("Error parsing JSON:", value);
                 return value;
             }
         }

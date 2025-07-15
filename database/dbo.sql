@@ -193,7 +193,7 @@ CREATE TABLE IF NOT EXISTS dbo.cities
 CREATE TABLE dbo.location (
     id SERIAL PRIMARY KEY,
     city_id INTEGER,
-    name VARCHAR(100) NOT NULL,
+    name VARCHAR(100),
     address TEXT,
     longitude DECIMAL(9,6),
     latitude DECIMAL(9,6),

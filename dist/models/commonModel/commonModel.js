@@ -151,6 +151,19 @@ class CommonModel extends schema_1.default {
                 .insert(payload, "id");
         });
     }
+    getLocation(query) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("vw_location")
+                .withSchema(this.DBO_SCHEMA)
+                .select("*")
+                .where((qb) => {
+                if (query.location_id) {
+                    qb.andWhere("location_id", query.location_id);
+                }
+            })
+                .first();
+        });
+    }
     updateLocation(payload, query) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("location")

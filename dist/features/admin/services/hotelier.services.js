@@ -34,7 +34,6 @@ class AdminHotelierService extends abstract_service_1.default {
             const { user_id } = req.admin;
             return this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const files = req.files || [];
-                console.log({ user: req.body });
                 const _a = lib_1.default.safeParseJSON(req.body.user), { designation } = _a, user = __rest(_a, ["designation"]);
                 const organization = lib_1.default.safeParseJSON(req.body.organization);
                 const organizationAddress = lib_1.default.safeParseJSON(req.body.organization_address);
@@ -186,6 +185,7 @@ class AdminHotelierService extends abstract_service_1.default {
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 var _a;
                 const model = this.Model.organizationModel(trx);
+                const commonModel = this.Model.commonModel(trx);
                 const data = yield model.getSingleOrganization(id);
                 if (!Object.keys(data).length) {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
@@ -199,10 +199,11 @@ class AdminHotelierService extends abstract_service_1.default {
                     addAmenities: lib_1.default.safeParseJSON(req.body.add_amenities) || [],
                     updateAmenities: lib_1.default.safeParseJSON(req.body.update_amenities) || {},
                     deleteAmenities: lib_1.default.safeParseJSON(req.body.delete_amenities) || [],
+                    organization_address: lib_1.default.safeParseJSON(req.body.organization_address) || {},
                 };
                 for (const { fieldname, filename } of files) {
                     switch (fieldname) {
-                        case "profile_photo":
+                        case "photo":
                             parsed.user.photo = filename;
                             break;
                         case "hotel_photo":
@@ -304,6 +305,30 @@ class AdminHotelierService extends abstract_service_1.default {
                     //   related_id: id,
                     //   type: "HOTELIER_VERIFICATION",
                     // });
+                }
+                if (Object.keys(parsed.organization_address).length > 0) {
+                    if (parsed.organization_address.city_id) {
+                        const checkCity = yield commonModel.getAllCity({
+                            city_id: parsed.organization_address.city_id,
+                        });
+                        if (!checkCity.length) {
+                            throw new customError_1.default("City not found!", this.StatusCode.HTTP_NOT_FOUND);
+                        }
+                    }
+                    if (parsed.organization_address.id) {
+                        const checkLocation = yield commonModel.getLocation({
+                            location_id: parsed.organization_address.id,
+                        });
+                        if (!checkLocation) {
+                            throw new customError_1.default("Location not found!", this.StatusCode.HTTP_NOT_FOUND);
+                        }
+                        updateTasks.push(commonModel.updateLocation(parsed.organization_address, {
+                            location_id: parsed.organization_address.id,
+                        }));
+                    }
+                    else {
+                        updateTasks.push(commonModel.createLocation(parsed.organization_address));
+                    }
                 }
                 yield this.insertAdminAudit(trx, {
                     details: `Hotelier (${existingUser.name} - ${id}) profile has been updated.`,
