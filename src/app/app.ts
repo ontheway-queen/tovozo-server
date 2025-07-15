@@ -114,7 +114,7 @@ class App {
   // init routers
   private initRouters() {
     this.app.get("/", (_req: Request, res: Response) => {
-      res.send(`Tovozo server is running successfully...🚀`);
+      res.send(`Tovozo server is running successfully..🚀`);
     });
 
     this.app.get("/api", (_req: Request, res: Response) => {
