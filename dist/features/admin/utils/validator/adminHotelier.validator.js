@@ -19,7 +19,7 @@ class AdminHotelierValidator {
             organization: joi_1.default.object({
                 name: joi_1.default.string().required(),
                 description: joi_1.default.string().optional(),
-            }).optional(),
+            }).required(),
             organization_address: joi_1.default.object({
                 name: joi_1.default.string().optional(),
                 address: joi_1.default.string().required(),
