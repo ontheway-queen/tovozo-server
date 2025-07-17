@@ -9,6 +9,7 @@ import {
   IGetCountry,
   IGetLastIdData,
   IGetLastIdParams,
+  IGetLocationView,
   IGetNationality,
   IGetNotification,
   IGetNotificationParams,
@@ -130,7 +131,7 @@ export default class CommonModel extends Schema {
   }: IGetAllCityParams): Promise<IGetCity[]> {
     return await this.db("cities")
       .withSchema(this.DBO_SCHEMA)
-      .select("id", "name")
+      .select(this.db.raw("id"), "name")
       .where((qb) => {
         if (country_id) {
           qb.where({ country_id });
@@ -183,6 +184,20 @@ export default class CommonModel extends Schema {
     return await this.db("location")
       .withSchema(this.DBO_SCHEMA)
       .insert(payload, "id");
+  }
+
+  public async getLocation(query: {
+    location_id: number;
+  }): Promise<IGetLocationView> {
+    return await this.db("vw_location")
+      .withSchema(this.DBO_SCHEMA)
+      .select("*")
+      .where((qb) => {
+        if (query.location_id) {
+          qb.andWhere("location_id", query.location_id);
+        }
+      })
+      .first();
   }
 
   public async updateLocation(
@@ -284,7 +299,9 @@ export default class CommonModel extends Schema {
     };
   }
 
-  public async deleteNotification(payload: INotificationUserPayload) {
+  public async deleteNotification(
+    payload: INotificationUserPayload | INotificationUserPayload[]
+  ) {
     return await this.db(this.TABLES.notification_delete)
       .withSchema(this.DBO_SCHEMA)
       .insert(payload);

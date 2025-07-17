@@ -11,9 +11,21 @@ export default class HotelierJobTaskActivitiesRouter extends AbstractRouter {
 
 	private callRouter() {
 		this.router
+			.route("/list")
+			.post(this.hotelierJobTaskActivityController.createJobTaskList);
+
+		this.router
+			.route("/list/:id")
+			.patch(this.hotelierJobTaskActivityController.updateJobTaskList)
+			.delete(this.hotelierJobTaskActivityController.deleteJobTaskList);
+
+		this.router
 			.route("/:id")
 			.patch(
 				this.hotelierJobTaskActivityController.approveJobTaskActivity
+			)
+			.put(
+				this.hotelierJobTaskActivityController.approveEndJobTaskActivity
 			);
 	}
 }

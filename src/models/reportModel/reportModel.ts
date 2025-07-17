@@ -104,7 +104,8 @@ export default class ReportModel extends Schema {
 				    'start_time', jta.start_time,
 				    'end_time', jta.end_time,
 				    'total_working_hours', jta.total_working_hours,
-				    'approved_at', jta.approved_at
+				    'start_approved_at', jta.start_approved_at,
+				    'end_approved_at', jta.end_approved_at
 				) as job_task_activity`)
 			)
 			.leftJoin(
@@ -284,7 +285,8 @@ export default class ReportModel extends Schema {
                     'start_time', jta.start_time,
                     'end_time', jta.end_time,
                     'total_working_hours', jta.total_working_hours,
-                    'approved_at', jta.approved_at
+                    'start_approved_at', jta.start_approved_at,
+                    'end_approved_at', jta.end_approved_at,
                 ) as job_task_activity`)
 			)
 			.leftJoin(

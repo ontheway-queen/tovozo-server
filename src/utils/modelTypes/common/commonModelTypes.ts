@@ -126,8 +126,29 @@ export interface ILocationUpdatePayload {
   is_home_address?: boolean;
   postal_code?: string;
 }
+
+export interface IGetLocationView {
+  location_id: number;
+  city_id: number;
+  location_name: string;
+  location_address: string;
+  longitude: string;
+  latitude: string;
+  location_type: string;
+  postal_code: string;
+  location_status: string;
+  is_home_address: boolean;
+  location_created_at: string;
+  location_updated_at: string;
+  city_name: string;
+  state_name: string;
+  state_id: number;
+  country_name: string;
+  country_id: number;
+}
 export enum NotificationTypeEnum {
   JOB_MATCH = "JOB_MATCH",
+  JOB_TASK = "JOB_TASK",
   REMINDER = "REMINDER",
   APPLICATION_UPDATE = "APPLICATION_UPDATE",
   PAYMENT = "PAYMENT",

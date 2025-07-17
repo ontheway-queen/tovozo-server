@@ -324,17 +324,34 @@ class PublicService extends AbstractServices {
           type: "DELETE",
         });
       }
+      if (id) {
+        await model.deleteNotification({
+          notification_id: Number(id),
+          user_id,
+        });
+      } else {
+        const getAllNotification = await model.getNotification({
+          user_id,
+          limit: "1000",
+          need_total: false,
+        });
 
-      const data = await model.deleteNotification({
-        notification_id: Number(id),
-        user_id,
-      });
+        const payload = getAllNotification.data
+          .filter((notification) => Number.isInteger(notification.id))
+          .map((notification) => ({
+            notification_id: notification.id,
+            user_id,
+          }));
+
+        if (payload.length) {
+          await model.deleteNotification(payload);
+        }
+      }
 
       return {
         success: true,
         message: this.ResMsg.HTTP_OK,
         code: this.StatusCode.HTTP_OK,
-        ...data,
       };
     });
   }

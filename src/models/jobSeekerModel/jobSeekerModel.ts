@@ -91,6 +91,7 @@ export default class JobSeekerModel extends Schema {
 				"account_status",
 				"user_created_at"
 			)
+			.distinct("user_id")
 			.joinRaw(
 				`LEFT JOIN ?? as ja ON ja.job_seeker_id = vw_full_job_seeker_profile.user_id`,
 				[`${this.DBO_SCHEMA}.${this.TABLES.job_applications}`]
@@ -131,7 +132,7 @@ export default class JobSeekerModel extends Schema {
 
 		const total = await this.db("vw_full_job_seeker_profile")
 			.withSchema(this.JOB_SEEKER)
-			.count("user_id as total")
+			.countDistinct("user_id as total")
 			.joinRaw(
 				`LEFT JOIN ?? as ja ON ja.job_seeker_id = vw_full_job_seeker_profile.user_id`,
 				[`${this.DBO_SCHEMA}.${this.TABLES.job_applications}`]
@@ -171,7 +172,7 @@ export default class JobSeekerModel extends Schema {
 
 		return {
 			data,
-			total: total?.total,
+			total: Number(total?.total),
 		};
 	}
 

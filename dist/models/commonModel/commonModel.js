@@ -102,7 +102,7 @@ class CommonModel extends schema_1.default {
         return __awaiter(this, arguments, void 0, function* ({ country_id, city_id, limit, skip, state_id, name, }) {
             return yield this.db("cities")
                 .withSchema(this.DBO_SCHEMA)
-                .select("id", "name")
+                .select(this.db.raw("id"), "name")
                 .where((qb) => {
                 if (country_id) {
                     qb.where({ country_id });
@@ -149,6 +149,19 @@ class CommonModel extends schema_1.default {
             return yield this.db("location")
                 .withSchema(this.DBO_SCHEMA)
                 .insert(payload, "id");
+        });
+    }
+    getLocation(query) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("vw_location")
+                .withSchema(this.DBO_SCHEMA)
+                .select("*")
+                .where((qb) => {
+                if (query.location_id) {
+                    qb.andWhere("location_id", query.location_id);
+                }
+            })
+                .first();
         });
     }
     updateLocation(payload, query) {

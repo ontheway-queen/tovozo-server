@@ -193,7 +193,7 @@ CREATE TABLE IF NOT EXISTS dbo.cities
 CREATE TABLE dbo.location (
     id SERIAL PRIMARY KEY,
     city_id INTEGER,
-    name VARCHAR(100) NOT NULL,
+    name VARCHAR(100),
     address TEXT,
     longitude DECIMAL(9,6),
     latitude DECIMAL(9,6),
@@ -326,7 +326,19 @@ CREATE TABLE IF NOT EXISTS dbo.job_task_activities (
     start_time TIMESTAMP,
     end_time TIMESTAMP,
     total_working_hours NUMERIC(6, 2),
-    approved_at TIMESTAMP,
+    start_approved_at TIMESTAMP,
+    end_approved_at TIMESTAMP,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE IF NOT EXISTS dbo.job_task_list(
+    id SERIAL PRIMARY KEY,
+    job_task_activity_id INTEGER NOT NULL REFERENCES dbo.job_task_activities(id),
+    message TEXT,
+    is_completed BOOLEAN DEFAULT FALSE,
+    completed_at TIMESTAMP,
     is_deleted BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -357,7 +369,7 @@ CREATE TABLE IF NOT EXISTS dbo.reports (
 );
 
 
--- Payment and ledger Not completed because of changing project 
+-- Payment and ledger Not completed because of changing project
 -- Payment status
 CREATE TYPE dbo.payment_status AS ENUM ('UNPAID', 'PAID', 'FAILED', "PARTIAL_PAID");
 
@@ -386,97 +398,28 @@ CREATE TABLE IF NOT EXISTS jobseeker.job_seeker_ledger (
     created_at TIMESTAMP,
     updated_at TIMESTAMP,
 )
--- Payment and ledger Not completed because of changing project 
-
-
--- 
-CREATE TABLE `employee` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `hotel_id` int NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `photo` varchar(255) DEFAULT NULL,
-  `department_id` int NOT NULL,
-  `designation_id` int NOT NULL,
-  `blood_group` enum('a+','a-','b+','b-','ab+','ab-','o+','o-') DEFAULT NULL,
-  `salary` decimal(10,0) NOT NULL,
-  `email` varchar(45) DEFAULT NULL,
-  `mobile_no` varchar(45) NOT NULL,
-  `birth_date` date DEFAULT NULL,
-  `appointment_date` date DEFAULT NULL,
-  `joining_date` date DEFAULT NULL,
-  `address` text,
-  `status` int NOT NULL DEFAULT '1',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `created_by` int NOT NULL,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `category` enum('restaurant','hotel','management') DEFAULT 'hotel',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `id_UNIQUE` (`id`),
-  KEY `designation_id_idx` (`designation_id`),
-  KEY `department_id_idx` (`department_id`),
-  KEY `res_ids_e_idx` (`res_id`),
-  CONSTRAINT `department_id` FOREIGN KEY (`department_id`) REFERENCES `department` (`id`),
-  CONSTRAINT `designation_id` FOREIGN KEY (`designation_id`) REFERENCES `designation` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=38 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
-4:25
-CREATE TABLE `designation` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `hotel_id` int DEFAULT NULL,
-  `name` varchar(255) NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `status` tinyint NOT NULL DEFAULT '1',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `id_UNIQUE` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
-4:25
-CREATE TABLE `department` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `hotel_id` int DEFAULT NULL,
-  `name` varchar(255) NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `status` tinyint NOT NULL DEFAULT '1',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `id_UNIQUE` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+-- Payment and ledger Not completed because of changing project
 
 
 
-CREATE TABLE hotel_reservation.department (
+CREATE TABLE IF NOT EXISTS dbo.chat_sessions (
     id SERIAL PRIMARY KEY,
-    hotel_code INTEGER NOT NULL REFERENCES hotel_reservation.hotels(hotel_code),
-    name VARCHAR(255) NOT NULL,
-    status VARCHAR(10) DEFAULT 'active'
-    created_by INTEGER NOT NULL REFERENCES hotel_reservation.user_admin(id)
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    is_deleted BOOLEAN DEFAULT false
+    user1_id INTEGER NOT NULL REFERENCES dbo."user"(id),
+    user2_id INTEGER NOT NULL REFERENCES dbo."user"(id),
+    last_message TEXT,
+    last_message_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    enable_chat BOOLEAN DEFAULT TRUE,
+    UNIQUE(user1_id, user2_id)
 );
 
-CREATE TABLE hotel_reservation.designation (
-    id SERIAL PRIMARY KEY,
-    hotel_code INTEGER NOT NULL REFERENCES hotel_reservation.hotels(hotel_code),
-    name VARCHAR(255) NOT NULL,
-    status VARCHAR(10) DEFAULT 'active'
-    created_by INTEGER NOT NULL REFERENCES hotel_reservation.user_admin(id)
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    is_deleted BOOLEAN DEFAULT false
-)
 
-CREATE TABLE hotel_reservation.employee (
+CREATE TABLE IF NOT EXISTS dbo.chat_messages (
     id SERIAL PRIMARY KEY,
-    hotel_code INTEGER NOT NULL REFERENCES hotel_reservation.hotels(hotel_code),
-    name VARCHAR(255) NOT NULL,
-    photo VARCHAR(255) NOT NULL,
-    department_id INTEGER NOT NULL REFERENCES hotel_reservation.department(id),
-    designation_id INTEGER NOT NULL REFERENCES hotel_reservation.designation(id),
-    salary NUMERIC(10,0) NOT NULL,
-    email VARCHAR(255),
-    mobile_no VARCHAR(45) NOT NULL,
-    birth_date DATE,
-    appointment_date DATE,
-    joining_date DATE,
-    address TEXT,
-    status VARCHAR(10) DEFAULT 'active'
-    created_by INTEGER NOT NULL REFERENCES hotel_reservation.user_admin(id)
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    is_deleted BOOLEAN DEFAULT false
-)
+    chat_session_id INTEGER NOT NULL REFERENCES dbo.chat_sessions(id),
+    sender_id INTEGER NOT NULL REFERENCES dbo."user"(id),
+    receiver_id INTEGER NOT NULL REFERENCES dbo."user"(id),
+    message TEXT NOT NULL,
+    file TEXT,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);

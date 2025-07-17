@@ -2,7 +2,6 @@ import Joi from "joi";
 import {
 	CANCEL_JOB_POST_ENUM,
 	GENDERS,
-	JOB_POST_DETAILS_STATUS,
 	JOB_POST_DETAILS_STATUS_ENUM,
 } from "../../../../utils/miscellaneous/constants";
 
@@ -37,6 +36,7 @@ export class HotelierJobPostValidator {
 		status: Joi.string()
 			.valid(...JOB_POST_DETAILS_STATUS_ENUM)
 			.optional(),
+		title: Joi.string().optional(),
 	});
 
 	public getSingleJobPostSchema = Joi.object({
@@ -65,5 +65,8 @@ export class HotelierJobPostValidator {
 			start_time: Joi.string().isoDate().optional(),
 			end_time: Joi.string().isoDate().optional(),
 		}).optional(),
+	});
+	public trackJobSeekerLocationSchema = Joi.object({
+		job_seeker: Joi.number().integer().required(),
 	});
 }

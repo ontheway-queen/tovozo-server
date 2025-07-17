@@ -57,7 +57,7 @@ class HotelierJobPostService extends abstract_service_1.default {
     }
     getJobPostList(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { limit, skip, status } = req.query;
+            const { limit, skip, status, title } = req.query;
             const { user_id } = req.hotelier;
             const model = this.Model.jobPostModel();
             const data = yield model.getHotelierJobPostList({
@@ -65,6 +65,7 @@ class HotelierJobPostService extends abstract_service_1.default {
                 limit,
                 skip,
                 status,
+                title,
             });
             return Object.assign({ success: true, message: this.ResMsg.HTTP_OK, code: this.StatusCode.HTTP_OK }, data);
         });
@@ -178,6 +179,31 @@ class HotelierJobPostService extends abstract_service_1.default {
                     };
                 }
             }));
+        });
+    }
+    trackJobSeekerLocation(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { id } = req.params;
+            const { job_seeker } = req.query;
+            const model = this.Model.jobApplicationModel();
+            const jobPost = yield model.getMyJobApplication({
+                job_seeker_id: Number(job_seeker),
+                job_application_id: Number(id),
+            });
+            if (!jobPost) {
+                throw new customError_1.default("Job post not found!", this.StatusCode.HTTP_NOT_FOUND);
+            }
+            const now = new Date();
+            const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+            const jobStartTime = new Date(jobPost.start_time);
+            if (jobStartTime > twoHoursFromNow || jobStartTime < now) {
+                throw new customError_1.default("Live location sharing is only allowed within 2 hours before job start time.", this.StatusCode.HTTP_BAD_REQUEST);
+            }
+            return {
+                success: true,
+                message: "Live location sharing is allowed.",
+                code: this.StatusCode.HTTP_OK,
+            };
         });
     }
 }

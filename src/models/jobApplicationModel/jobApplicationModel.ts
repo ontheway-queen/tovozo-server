@@ -167,12 +167,14 @@ export default class JobApplicationModel extends Schema {
                     'is_deleted', j.is_deleted
                 ) as category`),
 				this.db.raw(`json_build_object(
-                    'id', jta.id,
-                    'start_time', jta.start_time,
-                    'end_time', jta.end_time,
-                    'total_working_hours', jta.total_working_hours,
-                    'approved_at', jta.approved_at
-                ) as job_task_activity`)
+            'id', jta.id,
+            'start_time', jta.start_time,
+            'end_time', jta.end_time,
+            'total_working_hours', jta.total_working_hours,
+            'start_approved_at', jta.start_approved_at,
+            'end_approved_at', jta.end_approved_at,
+            'tasks', task_list_agg.tasks
+        ) as job_task_activity`)
 			)
 			.leftJoin(
 				"job_post_details as jpd",
@@ -198,6 +200,25 @@ export default class JobApplicationModel extends Schema {
 				"job_task_activities as jta",
 				"jta.job_application_id",
 				"ja.id"
+			)
+			.leftJoin(
+				this.db
+					.select(
+						"jtl.job_task_activity_id",
+						this.db
+							.raw(`COALESCE(json_agg(DISTINCT jsonb_build_object(
+                  'id', jtl.id,
+        'message', jtl.message,
+        'is_completed', jtl.is_completed,
+        'completed_at', jtl.completed_at
+      )) FILTER (WHERE jtl.id IS NOT NULL), '[]'::json) as tasks`)
+					)
+					.from(`${this.DBO_SCHEMA}.job_task_list as jtl`)
+					.where("jtl.is_deleted", false)
+					.groupBy("jtl.job_task_activity_id")
+					.as("task_list_agg"),
+				"task_list_agg.job_task_activity_id",
+				"jta.id"
 			)
 			.where("ja.job_seeker_id", job_seeker_id)
 			.modify((qb) => {

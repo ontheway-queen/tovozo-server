@@ -57,6 +57,7 @@ class JobSeekerModel extends schema_1.default {
             const data = yield this.db("vw_full_job_seeker_profile")
                 .withSchema(this.JOB_SEEKER)
                 .select("user_id", "email", "name", "photo", "account_status", "user_created_at")
+                .distinct("user_id")
                 .joinRaw(`LEFT JOIN ?? as ja ON ja.job_seeker_id = vw_full_job_seeker_profile.user_id`, [`${this.DBO_SCHEMA}.${this.TABLES.job_applications}`])
                 .where((qb) => {
                 if (user_id) {
@@ -85,7 +86,7 @@ class JobSeekerModel extends schema_1.default {
                 .offset(Number(skip));
             const total = yield this.db("vw_full_job_seeker_profile")
                 .withSchema(this.JOB_SEEKER)
-                .count("user_id as total")
+                .countDistinct("user_id as total")
                 .joinRaw(`LEFT JOIN ?? as ja ON ja.job_seeker_id = vw_full_job_seeker_profile.user_id`, [`${this.DBO_SCHEMA}.${this.TABLES.job_applications}`])
                 .where((qb) => {
                 if (user_id) {
@@ -116,7 +117,7 @@ class JobSeekerModel extends schema_1.default {
                 .first();
             return {
                 data,
-                total: total === null || total === void 0 ? void 0 : total.total,
+                total: Number(total === null || total === void 0 ? void 0 : total.total),
             };
         });
     }

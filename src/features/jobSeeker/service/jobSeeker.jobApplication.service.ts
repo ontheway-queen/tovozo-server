@@ -1,18 +1,17 @@
 import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
-import { ICreateJobApplicationPayload } from "../../../utils/modelTypes/jobApplication/jobApplicationModel.types";
-import CustomError from "../../../utils/lib/customError";
+import CancellationLogModel from "../../../models/cancellationLogModel/cancellationLogModel";
 import JobPostModel from "../../../models/hotelierModel/jobPostModel";
+import CustomError from "../../../utils/lib/customError";
 import {
 	CANCELLATION_REPORT_STATUS,
 	CANCELLATION_REPORT_TYPE,
 	GENDER_TYPE,
 	JOB_APPLICATION_STATUS,
 	JOB_POST_DETAILS_STATUS,
-	REPORT_TYPE,
 } from "../../../utils/miscellaneous/constants";
 import { IJobPostDetailsStatus } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
-import CancellationLogModel from "../../../models/cancellationLogModel/cancellationLogModel";
+import { ICreateJobApplicationPayload } from "../../../utils/modelTypes/jobApplication/jobApplicationModel.types";
 
 export class JobSeekerJobApplication extends AbstractServices {
 	constructor() {
@@ -27,9 +26,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 			const jobPostModel = new JobPostModel(trx);
 			const cancellationLogModel = new CancellationLogModel(trx);
 
-			const jobPost = await jobPostModel.getSingleJobPost(
-				job_post_details_id
-			);
+			const jobPost = await jobPostModel.getSingleJobPost(job_post_details_id);
 			if (!jobPost) {
 				throw new CustomError(
 					this.ResMsg.HTTP_NOT_FOUND,
@@ -79,27 +76,25 @@ export class JobSeekerJobApplication extends AbstractServices {
 				job_seeker_id: user_id,
 			});
 
-			if (
-				existPendingApplication &&
-				(existPendingApplication.job_application_status ===
-					JOB_APPLICATION_STATUS.PENDING ||
-					existPendingApplication.job_application_status ===
-						JOB_APPLICATION_STATUS.IN_PROGRESS)
-			) {
-				throw new CustomError(
-					"Hold on! You need to complete your current job before moving on to the next.",
-					this.StatusCode.HTTP_BAD_REQUEST
-				);
-			}
+			// if (
+			// 	existPendingApplication &&
+			// 	(existPendingApplication.job_application_status ===
+			// 		JOB_APPLICATION_STATUS.PENDING ||
+			// 		existPendingApplication.job_application_status ===
+			// 			JOB_APPLICATION_STATUS.IN_PROGRESS)
+			// ) {
+			// 	throw new CustomError(
+			// 		"Hold on! You need to complete your current job before moving on to the next.",
+			// 		this.StatusCode.HTTP_BAD_REQUEST
+			// 	);
+			// }
 
 			const payload = {
 				job_post_details_id: Number(job_post_details_id),
 				job_seeker_id: user_id,
 				job_post_id: jobPost.job_post_id,
 			};
-			await model.createJobApplication(
-				payload as ICreateJobApplicationPayload
-			);
+			await model.createJobApplication(payload as ICreateJobApplicationPayload);
 
 			await model.markJobPostDetailAsApplied(Number(job_post_details_id));
 			return {
@@ -113,7 +108,6 @@ export class JobSeekerJobApplication extends AbstractServices {
 	public getMyJobApplications = async (req: Request) => {
 		const { orderBy, orderTo, status, limit, skip } = req.query;
 		const { user_id } = req.jobSeeker;
-
 		const model = this.Model.jobApplicationModel();
 		const { data, total } = await model.getMyJobApplications({
 			user_id,
@@ -174,8 +168,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 				);
 			}
 			if (
-				application.job_application_status !==
-				JOB_APPLICATION_STATUS.PENDING
+				application.job_application_status !== JOB_APPLICATION_STATUS.PENDING
 			) {
 				throw new CustomError(
 					"This application cannot be cancelled because it has already been processed.",
@@ -197,16 +190,14 @@ export class JobSeekerJobApplication extends AbstractServices {
 			const currentTime = new Date();
 			const startTime = new Date(application?.start_time);
 			const hoursDiff =
-				(startTime.getTime() - currentTime.getTime()) /
-				(1000 * 60 * 60);
+				(startTime.getTime() - currentTime.getTime()) / (1000 * 60 * 60);
 
 			if (hoursDiff > 24) {
-				const data =
-					await applicationModel.updateMyJobApplicationStatus(
-						parseInt(id),
-						user_id,
-						JOB_APPLICATION_STATUS.CANCELLED
-					);
+				const data = await applicationModel.updateMyJobApplicationStatus(
+					parseInt(id),
+					user_id,
+					JOB_APPLICATION_STATUS.CANCELLED
+				);
 
 				if (!data) {
 					throw new CustomError(
@@ -227,8 +218,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 				};
 			} else {
 				if (
-					body.report_type !==
-						CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION ||
+					body.report_type !== CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION ||
 					!body.reason
 				) {
 					throw new CustomError(
@@ -239,8 +229,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 				body.reporter_id = user_id;
 				body.related_id = id;
 
-				const cancellationReportModel =
-					this.Model.cancellationLogModel(trx);
+				const cancellationReportModel = this.Model.cancellationLogModel(trx);
 
 				await cancellationReportModel.requestForCancellationLog(body);
 

@@ -2,15 +2,15 @@ import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
 import CustomError from "../../../utils/lib/customError";
 import {
+	CANCELLATION_REPORT_TYPE,
+	JOB_POST_DETAILS_STATUS,
+} from "../../../utils/miscellaneous/constants";
+import {
 	IGetJobPostListParams,
 	IJobPostDetailsPayload,
 	IJobPostDetailsStatus,
 	IJobPostPayload,
 } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
-import {
-	CANCELLATION_REPORT_TYPE,
-	JOB_POST_DETAILS_STATUS,
-} from "../../../utils/miscellaneous/constants";
 import { IHoiteleirJob } from "../utils/types/hotelierJobPostTypes";
 
 class HotelierJobPostService extends AbstractServices {
@@ -79,7 +79,7 @@ class HotelierJobPostService extends AbstractServices {
 	}
 
 	public async getJobPostList(req: Request) {
-		const { limit, skip, status } = req.query;
+		const { limit, skip, status, title } = req.query;
 		const { user_id } = req.hotelier;
 		const model = this.Model.jobPostModel();
 		const data = await model.getHotelierJobPostList({
@@ -87,6 +87,7 @@ class HotelierJobPostService extends AbstractServices {
 			limit,
 			skip,
 			status,
+			title,
 		} as IGetJobPostListParams);
 		return {
 			success: true,
@@ -269,6 +270,39 @@ class HotelierJobPostService extends AbstractServices {
 				};
 			}
 		});
+	}
+
+	public async trackJobSeekerLocation(req: Request) {
+		const { id } = req.params;
+		const { job_seeker } = req.query;
+		const model = this.Model.jobApplicationModel();
+		const jobPost = await model.getMyJobApplication({
+			job_seeker_id: Number(job_seeker),
+			job_application_id: Number(id),
+		});
+		if (!jobPost) {
+			throw new CustomError(
+				"Job post not found!",
+				this.StatusCode.HTTP_NOT_FOUND
+			);
+		}
+
+		const now = new Date();
+		const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+		const jobStartTime = new Date(jobPost.start_time);
+
+		if (jobStartTime > twoHoursFromNow || jobStartTime < now) {
+			throw new CustomError(
+				"Live location sharing is only allowed within 2 hours before job start time.",
+				this.StatusCode.HTTP_BAD_REQUEST
+			);
+		}
+
+		return {
+			success: true,
+			message: "Live location sharing is allowed.",
+			code: this.StatusCode.HTTP_OK,
+		};
 	}
 }
 export default HotelierJobPostService;

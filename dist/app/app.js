@@ -18,6 +18,8 @@ const morgan_1 = __importDefault(require("morgan"));
 const errorHandler_1 = __importDefault(require("../middleware/errorHandler/errorHandler"));
 const customError_1 = __importDefault(require("../utils/lib/customError"));
 const constants_1 = require("../utils/miscellaneous/constants");
+const userModelTypes_1 = require("../utils/modelTypes/user/userModelTypes");
+const database_1 = require("./database");
 const router_1 = __importDefault(require("./router"));
 const socket_1 = require("./socket");
 class App {
@@ -71,17 +73,55 @@ class App {
         });
         socket_1.io.on("connection", (socket) => __awaiter(this, void 0, void 0, function* () {
             const { id, type } = socket.handshake.auth;
-            console.log(socket.id, "-", id, "-", type, " is connected ⚡");
-            // if (id && type) {
-            //   const model = new Models().UserModel();
-            //   await model.updateProfile({ socket_id: socket.id }, { id });
-            // }
             if (id && type) {
                 (0, socket_1.addOnlineUser)(id, socket.id, type);
+            }
+            let lastLocation = {};
+            if (type === userModelTypes_1.TypeUser.JOB_SEEKER) {
+                socket.on("send-location", (data) => {
+                    console.log("send-location", data);
+                    socket_1.io.to(`watch:jobseeker:${id}`).emit("receive-location", data);
+                    lastLocation = data;
+                });
+            }
+            if (type === userModelTypes_1.TypeUser.HOTELIER) {
+                socket.on("hotelier:watch", ({ jobSeekerId }) => {
+                    socket.join(`watch:jobseeker:${jobSeekerId}`);
+                });
+                socket.on("hotelier:location-start", ({ jobSeekerId }) => {
+                    socket
+                        .to(jobSeekerId)
+                        .emit(`jobseeker:location-start-${jobSeekerId}`);
+                });
+                socket.on("hotelier:location-stop", ({ jobSeekerId }) => {
+                    socket
+                        .to(jobSeekerId)
+                        .emit(`jobseeker:location-stop-${jobSeekerId}`);
+                });
             }
             socket.on("disconnect", (event) => __awaiter(this, void 0, void 0, function* () {
                 console.log(socket.id, "-", id, "-", type, " disconnected...");
                 (0, socket_1.removeOnlineUser)(id, socket.id);
+                if (type === userModelTypes_1.TypeUser.JOB_SEEKER &&
+                    lastLocation.latitude &&
+                    lastLocation.longitude) {
+                    console.log({ lastLocation });
+                    const getLocation = yield (0, database_1.db)("job_seeker")
+                        .withSchema("jobseeker")
+                        .select("location_id")
+                        .where({ user_id: id })
+                        .first();
+                    if (getLocation) {
+                        yield (0, database_1.db)("location")
+                            .withSchema("dbo")
+                            .update({
+                            latitude: lastLocation.latitude,
+                            longitude: lastLocation.longitude,
+                        })
+                            .where({ id: getLocation === null || getLocation === void 0 ? void 0 : getLocation.location_id });
+                    }
+                    console.log({ getLocation });
+                }
                 socket.disconnect();
             }));
         }));
@@ -89,12 +129,12 @@ class App {
     // init routers
     initRouters() {
         this.app.get("/", (_req, res) => {
-            res.send(`Tovozo server is running successfully...🚀`);
+            res.send(`Tovozo server is running successfully..🚀`);
         });
         this.app.get("/api", (_req, res) => {
             res.send(`Tovozo API is active...🚀`);
         });
-        this.app.use("/api/v1", new router_1.default().v2Router);
+        this.app.use("/api/v1", new router_1.default().Router);
     }
     // not found router
     notFoundRouter() {

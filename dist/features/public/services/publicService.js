@@ -265,11 +265,33 @@ class PublicService extends abstract_service_1.default {
                         type: "DELETE",
                     });
                 }
-                const data = yield model.deleteNotification({
-                    notification_id: Number(id),
-                    user_id,
-                });
-                return Object.assign({ success: true, message: this.ResMsg.HTTP_OK, code: this.StatusCode.HTTP_OK }, data);
+                if (id) {
+                    yield model.deleteNotification({
+                        notification_id: Number(id),
+                        user_id,
+                    });
+                }
+                else {
+                    const getAllNotification = yield model.getNotification({
+                        user_id,
+                        limit: "1000",
+                        need_total: false,
+                    });
+                    const payload = getAllNotification.data
+                        .filter((notification) => Number.isInteger(notification.id))
+                        .map((notification) => ({
+                        notification_id: notification.id,
+                        user_id,
+                    }));
+                    if (payload.length) {
+                        yield model.deleteNotification(payload);
+                    }
+                }
+                return {
+                    success: true,
+                    message: this.ResMsg.HTTP_OK,
+                    code: this.StatusCode.HTTP_OK,
+                };
             }));
         });
     }

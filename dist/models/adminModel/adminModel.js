@@ -74,7 +74,7 @@ class AdminModel extends schema_1.default {
                 }
             })
                 .orderBy("ua.user_id", "desc")
-                .limit(query.limit ? query.limit : 100)
+                .limit(query.limit ? query.limit : 1000)
                 .offset(query.skip ? query.skip : 0);
             let total = [];
             if (is_total) {

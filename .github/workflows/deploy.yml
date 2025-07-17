@@ -1,0 +1,55 @@
+name: 🚀 Deploy Tovozo Server (Self-Hosted Runner)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: 🏗️ Build App
+    runs-on: tovozo_runner
+
+    steps:
+      - name: ⬇️ Checkout code
+        uses: actions/checkout@v3
+
+      - name: 📦 Install dependencies
+        run: |
+          cd /home/ubuntu/projects/tovozo-server
+          git checkout main
+          git pull
+          npm install --production
+
+  deploy:
+    name: 🚀 Deploy App
+    runs-on: tovozo_runner
+    needs: build
+
+    steps:
+      - name: 🔁 Checkout code again (needed for each job)
+        uses: actions/checkout@v3
+
+      - name: 🚀 Run health check and deploy with PM2
+        run: |
+          cd /home/ubuntu/projects/tovozo-server
+
+          # Start app temporarily for health check
+          PORT=8888 node dist/server.js &
+          APP_PID=$!
+
+          # Wait for server to start
+          sleep 5
+
+          # Health check
+          curl --fail http://localhost:8888 || (echo "❌ Health check failed" && kill $APP_PID && exit 1)
+
+          # Kill test instance
+          kill $APP_PID
+
+          # Deploy using PM2
+          if pm2 list | grep -q "backend-server"; then
+            pm2 restart backend-server
+          else
+            pm2 start dist/server.js --name backend-server
+          fi

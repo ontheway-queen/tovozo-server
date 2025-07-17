@@ -27,7 +27,7 @@ class AdminAdministrationValidator {
         this.updateRolePermissions = joi_1.default.object({
             role_name: joi_1.default.string().optional(),
             status: joi_1.default.number().valid(0, 1).optional(),
-            add_permissions: joi_1.default.array()
+            permissions: joi_1.default.array()
                 .items({
                 permission_id: joi_1.default.number().required(),
                 read: joi_1.default.number().valid(0, 1).required(),

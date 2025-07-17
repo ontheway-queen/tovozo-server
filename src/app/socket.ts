@@ -3,63 +3,60 @@ import http from "http";
 import { Server } from "socket.io";
 import { origin } from "../utils/miscellaneous/constants";
 import { TypeUser } from "../utils/modelTypes/user/userModelTypes";
+import { client } from "./redis";
 export let io: Server;
 
 export const SocketServer = (app: Application) => {
-  const server = http.createServer(app);
-  io = new Server(server, {
-    cors: { origin: origin },
-  });
+	const server = http.createServer(app);
+	io = new Server(server, {
+		cors: { origin: origin },
+	});
 
-  return server;
+	return server;
 };
 
-const onlineUsers = new Map<
-  number,
-  { sockets: Set<string>; type: `${TypeUser}` }
->();
-
-export function addOnlineUser(
-  userId: number,
-  socketId: string,
-  type: `${TypeUser}`
+export async function addOnlineUser(
+	userId: number,
+	socketId: string,
+	type: `${TypeUser}`
 ) {
-  if (!onlineUsers.has(userId)) {
-    onlineUsers.set(userId, { sockets: new Set(), type });
-  }
-  onlineUsers.get(userId)?.sockets.add(socketId);
+	await client.sAdd(`socket:user:${userId}`, socketId);
+	await client.set(`socket:user-type:${userId}`, type);
 }
 
-export function removeOnlineUser(userId: number, socketId: string) {
-  const user = onlineUsers.get(userId);
-  if (!user) return;
+export async function removeOnlineUser(userId: number, socketId: string) {
+	await client.sRem(`socket:user:${userId}`, socketId);
 
-  user.sockets.delete(socketId);
-
-  if (user.sockets.size === 0) {
-    onlineUsers.delete(userId);
-    console.log(`User ${userId} (${user.type}) is now offline`);
-  }
+	const remaining = await client.sCard(`socket:user:${userId}`);
+	if (remaining === 0) {
+		await client.del(`socket:user:${userId}`);
+		await client.del(`socket:user-type:${userId}`);
+		console.log(`User ${userId} is now offline`);
+	}
 }
 
-export function getAllOnlineSocketIds({
-  user_id,
-  type,
+export async function getAllOnlineSocketIds({
+	user_id,
+	type,
 }: {
-  user_id?: number;
-  type?: `${TypeUser}`;
-  needUserId?: boolean;
-}): { user_id: number; socketId: string }[] {
-  const results: { user_id: number; socketId: string }[] = [];
+	user_id?: number;
+	type?: `${TypeUser}`;
+}): Promise<{ user_id: number; socketId: string }[]> {
+	const results: { user_id: number; socketId: string }[] = [];
+	const keys = await client.keys("socket:user:*");
 
-  for (const [id, { sockets, type: userType }] of onlineUsers.entries()) {
-    if (user_id !== undefined && id !== user_id) continue;
-    if (type && userType !== type) continue;
+	for (const key of keys) {
+		const id = parseInt(key.split(":")[2]);
+		if (user_id !== undefined && id !== user_id) continue;
 
-    (results as { user_id: number; socketId: string }[]).push(
-      ...[...sockets].map((socketId) => ({ user_id: id, socketId }))
-    );
-  }
+		const userType = await client.get(`socket:user-type:${id}`);
+		if (type && userType !== type) continue;
 
-  return results;
+		const socketIds = await client.sMembers(key);
+		socketIds.forEach((socketId: string) => {
+			results.push({ user_id: id, socketId });
+		});
+	}
+
+	return results;
 }
