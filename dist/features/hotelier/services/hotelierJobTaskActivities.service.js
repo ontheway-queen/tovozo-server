@@ -189,7 +189,7 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 });
                 yield jobPostModel.updateJobPostDetailsStatus(application.job_post_details_id, constants_1.JOB_POST_DETAILS_STATUS.WorkFinished);
                 yield jobPostModel.updateJobPostDetailsStatus(application.job_post_details_id, constants_1.JOB_POST_DETAILS_STATUS.In_Progress);
-                socket_1.io.emit("approve-end-job-task", {
+                socket_1.io.to(String(taskActivity.job_seeker_id)).emit("approve-end-job-task", {
                     id,
                     start_time: taskActivity.start_time,
                     end_time: taskActivity.end_time,

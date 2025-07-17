@@ -14,6 +14,7 @@ export interface IJobSeekerJobApplication {
 	job_post_details: string;
 	job_post_requirements: string;
 	hourly_rate: number;
+	hotelier_id: number;
 	organization_id: number;
 	organization_name: string;
 	organization_photo: string | null;
