@@ -15,11 +15,6 @@ export const SocketServer = (app: Application) => {
   return server;
 };
 
-const onlineUsers = new Map<
-  number,
-  { sockets: Set<string>; type: `${TypeUser}` }
->();
-
 export async function addOnlineUser(
   userId: number,
   socketId: string,

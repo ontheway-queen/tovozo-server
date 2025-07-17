@@ -39,7 +39,9 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                 if (now < startTime) {
                     throw new customError_1.default(`You cannot start the task before the scheduled start time.`, this.StatusCode.HTTP_FORBIDDEN);
                 }
-                const exitingTaskActivities = yield jobTaskActivitiesModel.getSingleTaskActivity(null, job_post_details_id);
+                const exitingTaskActivities = yield jobTaskActivitiesModel.getSingleTaskActivity({
+                    job_post_details_id,
+                });
                 if (exitingTaskActivities) {
                     throw new customError_1.default(`A task activity already exists for this job.`, this.StatusCode.HTTP_CONFLICT);
                 }
@@ -73,7 +75,9 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                 const jobApplicationModel = this.Model.jobApplicationModel(trx);
                 const jobTaskActivitiesModel = this.Model.jobTaskActivitiesModel(trx);
                 const jobPostModel = this.Model.jobPostModel(trx);
-                const taskActivity = yield jobTaskActivitiesModel.getSingleTaskActivity(Number(id), null);
+                const taskActivity = yield jobTaskActivitiesModel.getSingleTaskActivity({
+                    id: Number(id),
+                });
                 if (!taskActivity) {
                     throw new customError_1.default("Task activity not found", this.StatusCode.HTTP_NOT_FOUND);
                 }

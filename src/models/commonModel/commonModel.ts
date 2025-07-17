@@ -131,7 +131,7 @@ export default class CommonModel extends Schema {
   }: IGetAllCityParams): Promise<IGetCity[]> {
     return await this.db("cities")
       .withSchema(this.DBO_SCHEMA)
-      .select("id", "name")
+      .select(this.db.raw("id"), "name")
       .where((qb) => {
         if (country_id) {
           qb.where({ country_id });

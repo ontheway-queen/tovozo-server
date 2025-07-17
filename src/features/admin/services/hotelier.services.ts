@@ -100,7 +100,7 @@ class AdminHotelierService extends AbstractServices {
         user_id: userId,
       });
       const orgInsert = await organizationModel.createOrganization({
-        ...organization,
+        name: organization.org_name,
         status: USER_STATUS.ACTIVE,
         user_id: userId,
         location_id: locationId,
@@ -242,25 +242,26 @@ class AdminHotelierService extends AbstractServices {
       const model = this.Model.organizationModel(trx);
       const commonModel = this.Model.commonModel(trx);
       const data = await model.getSingleOrganization(id);
-      if (!Object.keys(data).length) {
+
+      if (!data) {
         throw new CustomError(
           this.ResMsg.HTTP_NOT_FOUND,
           this.StatusCode.HTTP_NOT_FOUND
         );
       }
       const files = req.files as Express.MulterS3.File[];
+      const body = req.body;
       const parsed = {
-        organization: Lib.safeParseJSON(req.body.organization) || {},
-        user: Lib.safeParseJSON(req.body.user) || {},
-        addPhoto: Lib.safeParseJSON(req.body.add_photo) || [],
-        deletePhoto: Lib.safeParseJSON(req.body.delete_photo) || [],
-        addAmenities: Lib.safeParseJSON(req.body.add_amenities) || [],
-        updateAmenities: Lib.safeParseJSON(req.body.update_amenities) || {},
-        deleteAmenities: Lib.safeParseJSON(req.body.delete_amenities) || [],
+        organization: Lib.safeParseJSON(body.organization) || {},
+        user: Lib.safeParseJSON(body.user) || {},
+        addPhoto: Lib.safeParseJSON(body.add_photo) || [],
+        deletePhoto: Lib.safeParseJSON(body.delete_photo) || [],
+        addAmenities: Lib.safeParseJSON(body.add_amenities) || [],
+        updateAmenities: Lib.safeParseJSON(body.update_amenities) || {},
+        deleteAmenities: Lib.safeParseJSON(body.delete_amenities) || [],
         organization_address:
-          Lib.safeParseJSON(req.body.organization_address) || {},
+          Lib.safeParseJSON(body.organization_address) || {},
       } as IHotelierUpdateParsedBody;
-
       for (const { fieldname, filename } of files) {
         switch (fieldname) {
           case "photo":
@@ -340,9 +341,15 @@ class AdminHotelierService extends AbstractServices {
           }
         }
         updateTasks.push(
-          model.updateOrganization(parsed.organization, {
-            user_id: id,
-          })
+          model.updateOrganization(
+            {
+              name: parsed.organization.org_name || data.org_name,
+              status: parsed.organization.status || data.status,
+            },
+            {
+              id: id,
+            }
+          )
         );
       }
 
@@ -467,7 +474,7 @@ class AdminHotelierService extends AbstractServices {
       }
 
       await this.insertAdminAudit(trx, {
-        details: `Hotelier (${existingUser.name} - ${id}) profile has been updated.`,
+        details: `Hotelier (${existingUser.name} - ${data.user_id}) profile has been updated.`,
         created_by: req.admin.user_id,
         endpoint: req.originalUrl,
         type: "UPDATE",

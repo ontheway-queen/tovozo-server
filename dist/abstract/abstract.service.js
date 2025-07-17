@@ -104,6 +104,8 @@ class AbstractServices {
                     });
                 }
             }
+            if (!notificationPayload.length)
+                return;
             yield commonModel.createNotification(notificationPayload);
         });
     }

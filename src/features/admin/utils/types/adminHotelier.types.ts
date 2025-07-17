@@ -7,7 +7,7 @@ import { UserStatusType } from "../../../public/utils/types/publicCommon.types";
 
 export interface IHotelierUpdateParsedBody {
   organization: {
-    name: string;
+    org_name: string;
     status: UserStatusType;
   };
   user: Partial<IHotelierUser>;

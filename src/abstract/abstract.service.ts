@@ -105,6 +105,7 @@ abstract class AbstractServices {
       }
     }
 
+    if (!notificationPayload.length) return;
     await commonModel.createNotification(notificationPayload);
   }
 }

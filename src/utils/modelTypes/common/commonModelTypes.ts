@@ -148,6 +148,7 @@ export interface IGetLocationView {
 }
 export enum NotificationTypeEnum {
   JOB_MATCH = "JOB_MATCH",
+  JOB_TASK = "JOB_TASK",
   REMINDER = "REMINDER",
   APPLICATION_UPDATE = "APPLICATION_UPDATE",
   PAYMENT = "PAYMENT",

@@ -12,7 +12,7 @@ class AdminHotelierValidator {
       designation: Joi.string().required(),
     }).required(),
     organization: Joi.object({
-      name: Joi.string().required(),
+      org_name: Joi.string().required(),
       description: Joi.string().optional(),
     }).required(),
 

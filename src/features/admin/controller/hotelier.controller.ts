@@ -39,7 +39,7 @@ class AdminHotelierController extends AbstractController {
   public updateHotelier = this.asyncWrapper.wrap(
     {
       paramSchema: this.commonValidator.singleParamValidator,
-      bodySchema: this.validator.updateHotelier,
+      //   bodySchema: this.validator.updateHotelier,
     },
     async (req: Request, res: Response) => {
       const { code, ...data } = await this.service.updateHotelier(req);

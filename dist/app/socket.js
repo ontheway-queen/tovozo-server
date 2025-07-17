@@ -25,7 +25,6 @@ const SocketServer = (app) => {
     return server;
 };
 exports.SocketServer = SocketServer;
-const onlineUsers = new Map();
 function addOnlineUser(userId, socketId, type) {
     return __awaiter(this, void 0, void 0, function* () {
         yield redis_1.client.sAdd(`socket:user:${userId}`, socketId);

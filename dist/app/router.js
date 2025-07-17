@@ -12,7 +12,7 @@ const publicRouter_1 = __importDefault(require("../features/public/router/public
 const authChecker_1 = __importDefault(require("../middleware/authChecker/authChecker"));
 class RootRouter {
     constructor() {
-        this.v2Router = (0, express_1.Router)();
+        this.Router = (0, express_1.Router)();
         this.publicRootRouter = new publicRouter_1.default();
         this.authRootRouter = new authRoot_router_1.default();
         this.adminRootRouter = new adminRoot_router_1.default();
@@ -20,19 +20,19 @@ class RootRouter {
         this.jobSeekerRootRouter = new jobSeekerRoot_router_1.default();
         // Auth checker
         this.authChecker = new authChecker_1.default();
-        this.callV2Router();
+        this.callRouter();
     }
-    callV2Router() {
+    callRouter() {
         // Public Routes
-        this.v2Router.use("/public", this.publicRootRouter.router);
+        this.Router.use("/public", this.publicRootRouter.router);
         // Auth Routes
-        this.v2Router.use("/auth", this.authRootRouter.AuthRouter);
+        this.Router.use("/auth", this.authRootRouter.AuthRouter);
         // Admin Routes
-        this.v2Router.use("/admin", this.authChecker.adminAuthChecker, this.adminRootRouter.Router);
+        this.Router.use("/admin", this.authChecker.adminAuthChecker, this.adminRootRouter.Router);
         // Job Seeker Routes
-        this.v2Router.use("/job-seeker", this.authChecker.jobSeekerAuthChecker, this.jobSeekerRootRouter.router);
+        this.Router.use("/job-seeker", this.authChecker.jobSeekerAuthChecker, this.jobSeekerRootRouter.router);
         // Hotelier Routes
-        this.v2Router.use("/hotelier", this.authChecker.hotelierAuthChecker, this.hotelierRootRouter.router);
+        this.Router.use("/hotelier", this.authChecker.hotelierAuthChecker, this.hotelierRootRouter.router);
     }
 }
 exports.default = RootRouter;

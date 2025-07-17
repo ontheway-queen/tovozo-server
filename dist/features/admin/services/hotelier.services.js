@@ -82,7 +82,12 @@ class AdminHotelierService extends abstract_service_1.default {
                     designation,
                     user_id: userId,
                 });
-                const orgInsert = yield organizationModel.createOrganization(Object.assign(Object.assign({}, organization), { status: constants_1.USER_STATUS.ACTIVE, user_id: userId, location_id: locationId }));
+                const orgInsert = yield organizationModel.createOrganization({
+                    name: organization.org_name,
+                    status: constants_1.USER_STATUS.ACTIVE,
+                    user_id: userId,
+                    location_id: locationId,
+                });
                 const organizationId = orgInsert[0].id;
                 const photos = files
                     .filter((file) => file.fieldname === "hotel_photo")
@@ -187,19 +192,20 @@ class AdminHotelierService extends abstract_service_1.default {
                 const model = this.Model.organizationModel(trx);
                 const commonModel = this.Model.commonModel(trx);
                 const data = yield model.getSingleOrganization(id);
-                if (!Object.keys(data).length) {
+                if (!data) {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
                 }
                 const files = req.files;
+                const body = req.body;
                 const parsed = {
-                    organization: lib_1.default.safeParseJSON(req.body.organization) || {},
-                    user: lib_1.default.safeParseJSON(req.body.user) || {},
-                    addPhoto: lib_1.default.safeParseJSON(req.body.add_photo) || [],
-                    deletePhoto: lib_1.default.safeParseJSON(req.body.delete_photo) || [],
-                    addAmenities: lib_1.default.safeParseJSON(req.body.add_amenities) || [],
-                    updateAmenities: lib_1.default.safeParseJSON(req.body.update_amenities) || {},
-                    deleteAmenities: lib_1.default.safeParseJSON(req.body.delete_amenities) || [],
-                    organization_address: lib_1.default.safeParseJSON(req.body.organization_address) || {},
+                    organization: lib_1.default.safeParseJSON(body.organization) || {},
+                    user: lib_1.default.safeParseJSON(body.user) || {},
+                    addPhoto: lib_1.default.safeParseJSON(body.add_photo) || [],
+                    deletePhoto: lib_1.default.safeParseJSON(body.delete_photo) || [],
+                    addAmenities: lib_1.default.safeParseJSON(body.add_amenities) || [],
+                    updateAmenities: lib_1.default.safeParseJSON(body.update_amenities) || {},
+                    deleteAmenities: lib_1.default.safeParseJSON(body.delete_amenities) || [],
+                    organization_address: lib_1.default.safeParseJSON(body.organization_address) || {},
                 };
                 for (const { fieldname, filename } of files) {
                     switch (fieldname) {
@@ -248,8 +254,11 @@ class AdminHotelierService extends abstract_service_1.default {
                             throw new customError_1.default(`Already updated status to ${parsed.organization.status}`, this.StatusCode.HTTP_CONFLICT);
                         }
                     }
-                    updateTasks.push(model.updateOrganization(parsed.organization, {
-                        user_id: id,
+                    updateTasks.push(model.updateOrganization({
+                        name: parsed.organization.org_name || data.org_name,
+                        status: parsed.organization.status || data.status,
+                    }, {
+                        id: id,
                     }));
                 }
                 if (parsed.addPhoto.length > 0) {
@@ -331,7 +340,7 @@ class AdminHotelierService extends abstract_service_1.default {
                     }
                 }
                 yield this.insertAdminAudit(trx, {
-                    details: `Hotelier (${existingUser.name} - ${id}) profile has been updated.`,
+                    details: `Hotelier (${existingUser.name} - ${data.user_id}) profile has been updated.`,
                     created_by: req.admin.user_id,
                     endpoint: req.originalUrl,
                     type: "UPDATE",

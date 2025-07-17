@@ -331,6 +331,17 @@ CREATE TABLE IF NOT EXISTS dbo.job_task_activities (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+
+CREATE TABLE IF NOT EXISTS dbo.job_task_list(
+    id SERIAL PRIMARY KEY,
+    job_task_activity_id INTEGER NOT NULL REFERENCES dbo.job_task_activities(id),
+    message TEXT,
+    is_completed BOOLEAN DEFAULT FALSE,
+    completed_at TIMESTAMP,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- report
 CREATE TYPE dbo.report_status AS ENUM (
   'Pending',

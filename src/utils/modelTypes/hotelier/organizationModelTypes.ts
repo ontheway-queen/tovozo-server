@@ -28,25 +28,39 @@ export interface ICreateAmenityPayload {
   amenity: string;
 }
 
-export interface IGetOrganization {
+export interface IGetOrganizationList {
   id: number;
-  name?: string;
+  org_name?: string;
   user_id: number;
-  details?: string;
   created_at?: string;
   status: UserStatusType;
-  is_deleted: boolean;
   is_2fa_on?: boolean;
   location_id?: number;
   user_email?: string;
   user_phone_number?: string;
   user_name?: string;
   user_photo?: string;
+}
+export interface IGetOrganization {
+  id: number;
+  org_name?: string;
+  user_id: number;
+  created_at?: string;
+  status: UserStatusType;
+  is_2fa_on?: boolean;
+  location_id?: number;
+  email?: string;
+  phone_number?: string;
+  name?: string;
+  photo?: string;
   location_name?: string;
-  location_address?: string;
+  address?: string;
   city_name?: string;
+  city_id?: number;
   state_name?: string;
+  state_id?: number;
   country_name?: string;
+  country_id?: number;
   longitude?: string;
   latitude?: string;
 }

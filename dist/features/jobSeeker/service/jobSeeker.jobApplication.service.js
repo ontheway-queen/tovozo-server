@@ -14,10 +14,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.JobSeekerJobApplication = void 0;
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
-const customError_1 = __importDefault(require("../../../utils/lib/customError"));
-const jobPostModel_1 = __importDefault(require("../../../models/hotelierModel/jobPostModel"));
-const constants_1 = require("../../../utils/miscellaneous/constants");
 const cancellationLogModel_1 = __importDefault(require("../../../models/cancellationLogModel/cancellationLogModel"));
+const jobPostModel_1 = __importDefault(require("../../../models/hotelierModel/jobPostModel"));
+const customError_1 = __importDefault(require("../../../utils/lib/customError"));
+const constants_1 = require("../../../utils/miscellaneous/constants");
 class JobSeekerJobApplication extends abstract_service_1.default {
     constructor() {
         super();
@@ -50,13 +50,18 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 const existPendingApplication = yield model.getMyJobApplication({
                     job_seeker_id: user_id,
                 });
-                if (existPendingApplication &&
-                    (existPendingApplication.job_application_status ===
-                        constants_1.JOB_APPLICATION_STATUS.PENDING ||
-                        existPendingApplication.job_application_status ===
-                            constants_1.JOB_APPLICATION_STATUS.IN_PROGRESS)) {
-                    throw new customError_1.default("Hold on! You need to complete your current job before moving on to the next.", this.StatusCode.HTTP_BAD_REQUEST);
-                }
+                // if (
+                // 	existPendingApplication &&
+                // 	(existPendingApplication.job_application_status ===
+                // 		JOB_APPLICATION_STATUS.PENDING ||
+                // 		existPendingApplication.job_application_status ===
+                // 			JOB_APPLICATION_STATUS.IN_PROGRESS)
+                // ) {
+                // 	throw new CustomError(
+                // 		"Hold on! You need to complete your current job before moving on to the next.",
+                // 		this.StatusCode.HTTP_BAD_REQUEST
+                // 	);
+                // }
                 const payload = {
                     job_post_details_id: Number(job_post_details_id),
                     job_seeker_id: user_id,
@@ -123,8 +128,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 if (!application) {
                     throw new customError_1.default("Application not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }
-                if (application.job_application_status !==
-                    constants_1.JOB_APPLICATION_STATUS.PENDING) {
+                if (application.job_application_status !== constants_1.JOB_APPLICATION_STATUS.PENDING) {
                     throw new customError_1.default("This application cannot be cancelled because it has already been processed.", this.StatusCode.HTTP_BAD_REQUEST);
                 }
                 const cancellationLogModel = this.Model.cancellationLogModel(trx);
@@ -134,8 +138,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 }
                 const currentTime = new Date();
                 const startTime = new Date(application === null || application === void 0 ? void 0 : application.start_time);
-                const hoursDiff = (startTime.getTime() - currentTime.getTime()) /
-                    (1000 * 60 * 60);
+                const hoursDiff = (startTime.getTime() - currentTime.getTime()) / (1000 * 60 * 60);
                 if (hoursDiff > 24) {
                     const data = yield applicationModel.updateMyJobApplicationStatus(parseInt(id), user_id, constants_1.JOB_APPLICATION_STATUS.CANCELLED);
                     if (!data) {
@@ -149,8 +152,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     };
                 }
                 else {
-                    if (body.report_type !==
-                        constants_1.CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION ||
+                    if (body.report_type !== constants_1.CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION ||
                         !body.reason) {
                         throw new customError_1.default(this.ResMsg.HTTP_UNPROCESSABLE_ENTITY, this.StatusCode.HTTP_UNPROCESSABLE_ENTITY);
                     }

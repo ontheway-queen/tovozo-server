@@ -162,6 +162,7 @@ class AdminJobSeekerService extends abstract_service_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             const { id } = req.params;
             const model = this.Model.jobSeekerModel();
+            const jobApplicationModel = this.Model.jobApplicationModel();
             const data = yield model.getJobSeekerDetails({ user_id: id });
             if (!data) {
                 return {
@@ -170,11 +171,15 @@ class AdminJobSeekerService extends abstract_service_1.default {
                     code: this.StatusCode.HTTP_NOT_FOUND,
                 };
             }
+            const appliedJobPost = yield jobApplicationModel.getMyJobApplications({
+                user_id: id,
+                need_total: false,
+            });
             return {
                 success: true,
                 message: this.ResMsg.HTTP_OK,
                 code: this.StatusCode.HTTP_OK,
-                data,
+                data: Object.assign(Object.assign({}, data), { appliedJobPost: appliedJobPost.data }),
             };
         });
     }
@@ -265,8 +270,7 @@ class AdminJobSeekerService extends abstract_service_1.default {
                         if (!checkJobSeeker) {
                             throw new customError_1.default("Job Seeker account not found!", this.StatusCode.HTTP_NOT_FOUND);
                         }
-                        if (parsed.jobSeeker.account_status ===
-                            checkJobSeeker.account_status) {
+                        if (parsed.jobSeeker.account_status === checkJobSeeker.account_status) {
                             throw new customError_1.default(`Already updated status to ${parsed.jobSeeker.account_status}`, this.StatusCode.HTTP_CONFLICT);
                         }
                     }

@@ -47,7 +47,7 @@ class AdminHotelierController extends abstract_controller_1.default {
         }));
         this.updateHotelier = this.asyncWrapper.wrap({
             paramSchema: this.commonValidator.singleParamValidator,
-            bodySchema: this.validator.updateHotelier,
+            //   bodySchema: this.validator.updateHotelier,
         }, (req, res) => __awaiter(this, void 0, void 0, function* () {
             const _d = yield this.service.updateHotelier(req), { code } = _d, data = __rest(_d, ["code"]);
             res.status(code).json(data);

@@ -5,6 +5,7 @@ import {
   ICreateOrganizationPayload,
   ICreatePhotoPayload,
   IGetOrganization,
+  IGetOrganizationList,
   IUpdateOrganizationPayload,
 } from "../../utils/modelTypes/hotelier/organizationModelTypes";
 
@@ -58,19 +59,25 @@ export default class OrganizationModel extends Schema {
     from_date?: string;
     to_date?: string;
     skip?: number;
-  }): Promise<{ data: IGetOrganization[]; total: number }> {
+  }): Promise<{ data: IGetOrganizationList[]; total: number }> {
     const data = await this.db("organization as org")
       .withSchema(this.HOTELIER)
       .joinRaw(`left join ?? as u on u.id = org.user_id`, [
         `${this.DBO_SCHEMA}.${this.TABLES.user}`,
       ])
       .select(
-        "org.*",
+        "org.id",
+        "org.name as org_name",
+        "org.user_id",
+        "org.created_at",
+        "org.status",
+        "org.is_2fa_on",
         "u.email as user_email",
         "u.phone_number as user_phone_number",
         "u.photo as user_photo"
       )
       .where((qb) => {
+        qb.where("org.is_deleted", false);
         if (params.id) qb.andWhere("org.id", params.id);
         if (params.user_id) qb.andWhere("org.user_id", params.user_id);
         if (params.status) qb.andWhere("org.status", params.status);
@@ -89,6 +96,7 @@ export default class OrganizationModel extends Schema {
       .withSchema(this.HOTELIER)
       .count("id as total")
       .where((qb) => {
+        qb.where("is_deleted", false);
         if (params.id) qb.andWhere("id", params.id);
         if (params.user_id) qb.andWhere("user_id", params.user_id);
         if (params.status) qb.andWhere("status", params.status);
@@ -106,19 +114,18 @@ export default class OrganizationModel extends Schema {
   public async getSingleOrganization(id: number): Promise<IGetOrganization> {
     return await this.db("organization as org")
       .withSchema(this.HOTELIER)
-
-      .joinRaw(`left join ?? as u on u.id = org.user_id`, [
-        `${this.DBO_SCHEMA}.${this.TABLES.user}`,
-      ])
-      .joinRaw(`left join ?? as la on la.location_id = org.location_id`, [
-        `${this.DBO_SCHEMA}.vw_location`,
-      ])
-      .leftJoin("maintenance_designation as md", "md.user_id", "org.user_id")
       .select(
-        "org.*",
+        "org.id",
+        "org.name as org_name",
+        "org.user_id",
+        "org.details",
+        "org.created_at",
+        "org.status",
+        "org.is_2fa_on",
+        "org.location_id",
         "md.designation",
         "la.location_name",
-        "la.location_address",
+        "la.location_address as address",
         "la.city_name",
         "la.state_name",
         "la.country_name",
@@ -133,6 +140,14 @@ export default class OrganizationModel extends Schema {
         "u.name",
         "u.photo"
       )
+      .joinRaw(`left join ?? as u on u.id = org.user_id`, [
+        `${this.DBO_SCHEMA}.${this.TABLES.user}`,
+      ])
+      .joinRaw(`left join ?? as la on la.location_id = org.location_id`, [
+        `${this.DBO_SCHEMA}.vw_location`,
+      ])
+      .leftJoin("maintenance_designation as md", "md.user_id", "org.user_id")
+
       .where("org.id", id)
       .andWhere("org.is_deleted", false)
       .first();
