@@ -35,6 +35,7 @@ class HotelierJobPostValidator {
             status: joi_1.default.string()
                 .valid(...constants_1.JOB_POST_DETAILS_STATUS_ENUM)
                 .optional(),
+            title: joi_1.default.string().optional(),
         });
         this.getSingleJobPostSchema = joi_1.default.object({
             id: joi_1.default.number().integer().required(),

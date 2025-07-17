@@ -36,18 +36,24 @@ class HotelierJobTaskActivitiesController extends abstract_controller_1.default 
             res.status(code).json(data);
         }));
         this.createJobTaskList = this.asyncWrapper.wrap({ bodySchema: this.validator.createJobTaskList }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _b = yield this.hotelierJobTaskActivitiesService.createJobTaskList(req), { code } = _b, data = __rest(_b, ["code"]);
+            console.log("body", req.body);
+            const _a = yield this.hotelierJobTaskActivitiesService.createJobTaskList(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         this.updateJobTaskList = this.asyncWrapper.wrap({
             paramSchema: this.commonValidator.getSingleItemWithIdValidator,
             bodySchema: this.validator.updateJobTaskList,
         }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _c = yield this.hotelierJobTaskActivitiesService.updateJobTaskList(req), { code } = _c, data = __rest(_c, ["code"]);
+            const _a = yield this.hotelierJobTaskActivitiesService.updateJobTaskList(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         this.deleteJobTaskList = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.getSingleItemWithIdValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _d = yield this.hotelierJobTaskActivitiesService.deleteJobTaskList(req), { code } = _d, data = __rest(_d, ["code"]);
+            console.log("id", req.params);
+            const _a = yield this.hotelierJobTaskActivitiesService.deleteJobTaskList(req), { code } = _a, data = __rest(_a, ["code"]);
+            res.status(code).json(data);
+        }));
+        this.approveEndJobTaskActivity = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.getSingleItemWithIdValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.hotelierJobTaskActivitiesService.approveEndJobTaskActivity(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }

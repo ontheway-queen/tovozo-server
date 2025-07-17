@@ -140,6 +140,7 @@ class JobPostModel extends schema_1.default {
     getHotelierJobPostList(params) {
         return __awaiter(this, void 0, void 0, function* () {
             const { organization_id, user_id, title, category_id, city_id, orderBy, orderTo, status, limit, skip, need_total = true, } = params;
+            console.log({ title });
             const data = yield this.db("job_post as jp")
                 .withSchema(this.DBO_SCHEMA)
                 .select("jpd.id", "jpd.status as job_post_details_status", "jpd.start_time", "jpd.end_time", "jp.organization_id", "jp.title", this.db.raw(`json_build_object(
@@ -164,7 +165,8 @@ class JobPostModel extends schema_1.default {
                     'start_time', jta.start_time,
                     'end_time', jta.end_time,
                     'total_working_hours', jta.total_working_hours,
-                    'approved_at', jta.approved_at
+                    'start_approved_at', jta.start_approved_at,
+				            'end_approved_at', jta.end_approved_at
                 ) as job_task_activity`))
                 .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
                 `${this.HOTELIER}.${this.TABLES.organization}`,
@@ -197,6 +199,7 @@ class JobPostModel extends schema_1.default {
                     qb.andWhere("vwl.city_id", city_id);
                 }
                 if (title) {
+                    console.log("Searching title:", title);
                     qb.andWhereILike("jp.title", `%${title}%`);
                 }
                 if (status) {
@@ -273,7 +276,9 @@ class JobPostModel extends schema_1.default {
                     SELECT COUNT(*) 
                     FROM dbo.job_post_details 
                     WHERE job_post_id = jpd.job_post_id
-                ) AS vacancy`), this.db.raw(`json_build_object(
+                ) AS vacancy`), this.db.raw(`
+          CASE
+            WHEN js.id IS NOT NULL THEN json_build_object(
                     'application_id', ja.id,
                     'application_status', ja.status,
                     'job_seeker_id', ja.job_seeker_id,
@@ -285,13 +290,22 @@ class JobPostModel extends schema_1.default {
                     'country_name', js_vwl.country_name,
                     'longitude', js_vwl.longitude,
                     'latitude', js_vwl.latitude
-                ) as job_seeker_details`), this.db.raw(`json_build_object(
-                    'id', jta.id,
-                    'start_time', jta.start_time,
-                    'end_time', jta.end_time,
-                    'total_working_hours', jta.total_working_hours,
-                    'approved_at', jta.approved_at
-                ) as job_task_activity`))
+                )
+              ELSE NULL
+              END as job_seeker_details`), this.db.raw(`
+          CASE 
+              WHEN jta.id IS NOT NULL THEN json_build_object(
+                  'id', jta.id,
+                  'start_time', jta.start_time,
+                  'end_time', jta.end_time,
+                  'total_working_hours', jta.total_working_hours,
+                  'start_approved_at', jta.start_approved_at,
+                  'end_approved_at', jta.end_approved_at,
+                  'tasks', task_list_agg.tasks
+              )
+              ELSE NULL
+          END as job_task_activity
+      `))
                 .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
                 `${this.HOTELIER}.${this.TABLES.organization}`,
             ])
@@ -306,6 +320,18 @@ class JobPostModel extends schema_1.default {
             ])
                 .leftJoin("vw_location as js_vwl", "js_vwl.location_id", "jsu.location_id")
                 .leftJoin("job_task_activities as jta", "jta.job_application_id", "ja.id")
+                .leftJoin(this.db
+                .select("jtl.job_task_activity_id", this.db
+                .raw(`COALESCE(json_agg(DISTINCT jsonb_build_object(
+                  'id', jtl.id,
+        'message', jtl.message,
+        'is_completed', jtl.is_completed,
+        'completed_at', jtl.completed_at
+      )) FILTER (WHERE jtl.id IS NOT NULL), '[]'::json) as tasks`))
+                .from(`${this.DBO_SCHEMA}.job_task_list as jtl`)
+                .where("jtl.is_deleted", false)
+                .groupBy("jtl.job_task_activity_id")
+                .as("task_list_agg"), "task_list_agg.job_task_activity_id", "jta.id")
                 .leftJoin(this.db.raw(`?? as org_p ON org_p.organization_id = org.id`, [
                 `${this.HOTELIER}.${this.TABLES.organization_photos}`,
             ]))

@@ -88,6 +88,16 @@ class App {
                 socket.on("hotelier:watch", ({ jobSeekerId }) => {
                     socket.join(`watch:jobseeker:${jobSeekerId}`);
                 });
+                socket.on("hotelier:location-start", ({ jobSeekerId }) => {
+                    socket
+                        .to(jobSeekerId)
+                        .emit(`jobseeker:location-start-${jobSeekerId}`);
+                });
+                socket.on("hotelier:location-stop", ({ jobSeekerId }) => {
+                    socket
+                        .to(jobSeekerId)
+                        .emit(`jobseeker:location-stop-${jobSeekerId}`);
+                });
             }
             socket.on("disconnect", (event) => __awaiter(this, void 0, void 0, function* () {
                 console.log(socket.id, "-", id, "-", type, " disconnected...");
@@ -95,6 +105,7 @@ class App {
                 if (type === userModelTypes_1.TypeUser.JOB_SEEKER &&
                     lastLocation.latitude &&
                     lastLocation.longitude) {
+                    console.log({ lastLocation });
                     const getLocation = yield (0, database_1.db)("job_seeker")
                         .withSchema("jobseeker")
                         .select("location_id")
@@ -109,6 +120,7 @@ class App {
                         })
                             .where({ id: getLocation === null || getLocation === void 0 ? void 0 : getLocation.location_id });
                     }
+                    console.log({ getLocation });
                 }
                 socket.disconnect();
             }));

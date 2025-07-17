@@ -1,11 +1,16 @@
+import dayjs from "dayjs";
 import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
 import { io } from "../../../app/socket";
 import CustomError from "../../../utils/lib/customError";
-import { JOB_APPLICATION_STATUS } from "../../../utils/miscellaneous/constants";
+import {
+	JOB_APPLICATION_STATUS,
+	JOB_POST_DETAILS_STATUS,
+} from "../../../utils/miscellaneous/constants";
 import { NotificationTypeEnum } from "../../../utils/modelTypes/common/commonModelTypes";
 import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
 import { IUpdateJobTaskListPayload } from "../utils/types/hotelierJobTaskTypes";
+import { IJobPostDetailsStatus } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
 
 export default class HotelierJobTaskActivitiesService extends AbstractServices {
 	constructor() {
@@ -15,15 +20,22 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 	public approveJobTaskActivity = async (req: Request) => {
 		const id = req.params.id;
 		return await this.db.transaction(async (trx) => {
+			const jobPostModel = this.Model.jobPostModel(trx);
 			const jobApplicationModel = this.Model.jobApplicationModel(trx);
-			const jobTaskActivitiesModel = this.Model.jobTaskActivitiesModel(trx);
+			const jobTaskActivitiesModel =
+				this.Model.jobTaskActivitiesModel(trx);
 
-			const taskActivity = await jobTaskActivitiesModel.getSingleTaskActivity({
-				id: Number(id),
-			});
-			if (taskActivity.application_status !== JOB_APPLICATION_STATUS.ENDED) {
+			const taskActivity =
+				await jobTaskActivitiesModel.getSingleTaskActivity({
+					id: Number(id),
+				});
+			console.log({ taskActivity });
+			if (
+				taskActivity.application_status !==
+				JOB_APPLICATION_STATUS.PENDING
+			) {
 				throw new CustomError(
-					`You cannot perform this action because the application is not ended yet.`,
+					`You cannot perform this action because the application is still in progress.`,
 					this.StatusCode.HTTP_FORBIDDEN
 				);
 			}
@@ -43,17 +55,26 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 			await jobApplicationModel.updateMyJobApplicationStatus(
 				taskActivity.job_application_id,
 				taskActivity.job_seeker_id,
-				JOB_APPLICATION_STATUS.COMPLETED
+				JOB_APPLICATION_STATUS.IN_PROGRESS
 			);
 
-			await jobTaskActivitiesModel.updateJobTaskActivity(taskActivity.id, {
-				approved_at: new Date().toISOString(),
-			});
+			await jobTaskActivitiesModel.updateJobTaskActivity(
+				taskActivity.id,
+				{
+					start_time: new Date(),
+					approved_at: new Date().toISOString(),
+				}
+			);
+
+			await jobPostModel.updateJobPostDetailsStatus(
+				application.job_post_details_id,
+				JOB_POST_DETAILS_STATUS.In_Progress
+			);
 
 			return {
 				success: true,
-				message: this.ResMsg.HTTP_SUCCESSFUL,
-				code: this.StatusCode.HTTP_SUCCESSFUL,
+				message: this.ResMsg.HTTP_OK,
+				code: this.StatusCode.HTTP_OK,
 			};
 		});
 	};
@@ -61,18 +82,20 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 	public createJobTaskList = async (req: Request) => {
 		const body = req.body as {
 			job_task_activity_id: number;
-			message: string;
+			tasks: { message: string }[];
 		};
 
 		return await this.db.transaction(async (trx) => {
-			const jobTaskActivitiesModel = this.Model.jobTaskActivitiesModel(trx);
+			const jobTaskActivitiesModel =
+				this.Model.jobTaskActivitiesModel(trx);
 			const jobTaskListModel = this.Model.jobTaskListModel(trx);
 			const { user_id } = req.hotelier;
 
-			const taskActivity = await jobTaskActivitiesModel.getSingleTaskActivity({
-				id: body.job_task_activity_id,
-				hotelier_id: user_id,
-			});
+			// Validate task activity
+			const taskActivity =
+				await jobTaskActivitiesModel.getSingleTaskActivity({
+					id: body.job_task_activity_id,
+				});
 
 			if (!taskActivity) {
 				throw new CustomError(
@@ -81,8 +104,22 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 				);
 			}
 
-			const res = await jobTaskListModel.createJobTaskList(body);
+			if (
+				taskActivity.application_status !==
+				JOB_APPLICATION_STATUS.IN_PROGRESS
+			) {
+				throw new CustomError(
+					`You cannot perform this action because the application is not in progress. Your application status is ${taskActivity.application_status}`,
+					this.StatusCode.HTTP_FORBIDDEN
+				);
+			}
+			// Build insert payload
+			const taskList = body.tasks.map((task) => ({
+				job_task_activity_id: body.job_task_activity_id,
+				message: task.message,
+			}));
 
+			const res = await jobTaskListModel.createJobTaskList(taskList);
 			if (!res.length) {
 				throw new CustomError(
 					"Failed to create job task list",
@@ -90,24 +127,28 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 				);
 			}
 
-			this.insertNotification(trx, TypeUser.JOB_SEEKER, {
+			await this.insertNotification(trx, TypeUser.JOB_SEEKER, {
 				user_id: taskActivity.job_seeker_id,
-				content: `A new task has been created for you.`,
+				content: `New tasks have been assigned to you.`,
 				related_id: taskActivity.job_application_id,
 				type: NotificationTypeEnum.JOB_TASK,
 			});
 
+			const allMessages = taskList
+				.map((task, index) => `${index + 1}. ${task.message}`)
+				.join("\n");
+
 			io.emit("create:job-task-list", {
 				id: res[0].id,
 				job_task_activity_id: body.job_task_activity_id,
-				message: body.message,
+				message: allMessages,
 				is_completed: false,
 				completed_at: null,
 				created_at: new Date().toISOString(),
 				job_seeker_id: taskActivity.job_seeker_id,
 				job_seeker_name: taskActivity.job_seeker_name,
 			});
-
+			console.log(4);
 			return {
 				success: true,
 				message: this.ResMsg.HTTP_OK,
@@ -129,7 +170,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 
 			if (!taskList.length) {
 				throw new CustomError(
-					"Job task list not found",
+					"Job task not found. Please create task to proceed.",
 					this.StatusCode.HTTP_NOT_FOUND
 				);
 			}
@@ -163,7 +204,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 
 			if (!taskList.length) {
 				throw new CustomError(
-					"Job task list not found",
+					"Job task not found. Please create task to proceed.",
 					this.StatusCode.HTTP_NOT_FOUND
 				);
 			}
@@ -171,6 +212,99 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 			await jobTaskListModel.deleteJobTaskList(id);
 
 			io.emit("delete:job-task-list", id);
+
+			return {
+				success: true,
+				message: this.ResMsg.HTTP_OK,
+				code: this.StatusCode.HTTP_OK,
+			};
+		});
+	};
+
+	public approveEndJobTaskActivity = async (req: Request) => {
+		const id = req.params.id;
+		return await this.db.transaction(async (trx) => {
+			const jobPostModel = this.Model.jobPostModel(trx);
+			const jobApplicationModel = this.Model.jobApplicationModel(trx);
+			const jobTaskActivitiesModel =
+				this.Model.jobTaskActivitiesModel(trx);
+
+			const taskActivity =
+				await jobTaskActivitiesModel.getSingleTaskActivity({
+					id: Number(id),
+				});
+			console.log({ taskActivity });
+			// return {
+			// 	success: true,
+			// 	message: this.ResMsg.HTTP_OK,
+			// 	code: this.StatusCode.HTTP_OK,
+			// };
+			if (
+				taskActivity.application_status !==
+				JOB_APPLICATION_STATUS.IN_PROGRESS
+			) {
+				throw new CustomError(
+					`You cannot perform this action because the application is still in progress.`,
+					this.StatusCode.HTTP_FORBIDDEN
+				);
+			}
+
+			const application = await jobApplicationModel.getMyJobApplication({
+				job_application_id: taskActivity.job_application_id,
+				job_seeker_id: taskActivity.job_seeker_id,
+			});
+
+			if (!application) {
+				throw new CustomError(
+					`Job application not found or does not belong to you.`,
+					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
+
+			await jobApplicationModel.updateMyJobApplicationStatus(
+				taskActivity.job_application_id,
+				taskActivity.job_seeker_id,
+				JOB_APPLICATION_STATUS.ENDED
+			);
+
+			const startTime = dayjs(taskActivity.start_time).valueOf();
+			const endTime = dayjs(new Date()).valueOf();
+
+			const totalMinutes = Math.floor(
+				(endTime - startTime) / (1000 * 60)
+			);
+			const hours = Math.floor(totalMinutes / 60);
+			const minutes = totalMinutes % 60;
+
+			const totalWorkingHours = Number(
+				`${hours}.${minutes < 10 ? "0" + minutes : minutes}`
+			);
+
+			await jobTaskActivitiesModel.updateJobTaskActivity(
+				taskActivity.id,
+				{
+					end_approved_at: new Date(),
+					total_working_hours: totalWorkingHours,
+				}
+			);
+
+			await jobPostModel.updateJobPostDetailsStatus(
+				application.job_post_details_id,
+				JOB_POST_DETAILS_STATUS.WorkFinished as unknown as IJobPostDetailsStatus
+			);
+
+			await jobPostModel.updateJobPostDetailsStatus(
+				application.job_post_details_id,
+				JOB_POST_DETAILS_STATUS.In_Progress
+			);
+
+			io.emit("approve-end-job-task", {
+				id,
+				start_time: taskActivity.start_time,
+				end_time: taskActivity.end_time,
+				total_working_hours: totalWorkingHours,
+				end_approved_at: new Date(),
+			});
 
 			return {
 				success: true,

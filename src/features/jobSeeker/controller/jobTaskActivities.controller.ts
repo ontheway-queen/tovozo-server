@@ -20,6 +20,18 @@ export default class JobTaskActivitiesController extends AbstractController {
 		}
 	);
 
+	public toggleJobCompletionStatus = this.asyncWrapper.wrap(
+		{
+			paramSchema: this.commonValidator.getSingleItemWithIdValidator,
+			querySchema: this.validator.toogleTaskCompletion,
+		},
+		async (req: Request, res: Response) => {
+			const { code, ...data } =
+				await this.service.toggleTaskCompletionStatus(req);
+			res.status(code).json(data);
+		}
+	);
+
 	public endJobTaskActivity = this.asyncWrapper.wrap(
 		{ paramSchema: this.commonValidator.getSingleItemWithIdValidator },
 		async (req: Request, res: Response) => {

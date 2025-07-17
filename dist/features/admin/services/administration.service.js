@@ -50,7 +50,8 @@ class AdminAdministrationService extends abstract_service_1.default {
                 for (let i = 0; i < permissions.length; i++) {
                     let found = false;
                     for (let j = 0; j < uniquePermission.length; j++) {
-                        if (permissions[i].permission_id == uniquePermission[j].permission_id) {
+                        if (permissions[i].permission_id ==
+                            uniquePermission[j].permission_id) {
                             found = true;
                             break;
                         }
@@ -194,9 +195,11 @@ class AdminAdministrationService extends abstract_service_1.default {
                         message: "You can't update main role",
                     };
                 }
-                const { add_permissions, role_name, status } = req.body;
+                const { permissions: add_permissions, role_name, status, } = req.body;
                 if (role_name || status) {
-                    const check_name = yield model.getSingleRole({ name: role_name });
+                    const check_name = yield model.getSingleRole({
+                        name: role_name,
+                    });
                     if (!check_name.length) {
                         yield model.updateRole({ name: role_name, status }, Number(role_id));
                     }

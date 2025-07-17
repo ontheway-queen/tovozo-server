@@ -23,7 +23,7 @@ class JobTaskListModel extends schema_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("job_task_list")
                 .withSchema(this.DBO_SCHEMA)
-                .insert(payload, "id");
+                .insert(payload, ["id", "message"]);
         });
     }
     // get job task list
@@ -51,6 +51,7 @@ class JobTaskListModel extends schema_1.default {
             return yield this.db("job_task_list")
                 .withSchema(this.DBO_SCHEMA)
                 .where("id", id)
+                .andWhere("is_deleted", false)
                 .update(payload);
         });
     }
@@ -59,6 +60,7 @@ class JobTaskListModel extends schema_1.default {
             return yield this.db("job_task_list")
                 .withSchema(this.DBO_SCHEMA)
                 .where("id", id)
+                .andWhere("is_deleted", false)
                 .update({ is_deleted: true });
         });
     }

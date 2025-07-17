@@ -76,7 +76,10 @@ class App {
 			if (type === TypeUser.JOB_SEEKER) {
 				socket.on("send-location", (data) => {
 					console.log("send-location", data);
-					io.to(`watch:jobseeker:${id}`).emit("receive-location", data);
+					io.to(`watch:jobseeker:${id}`).emit(
+						"receive-location",
+						data
+					);
 					lastLocation = data;
 				});
 			}
@@ -84,6 +87,18 @@ class App {
 			if (type === TypeUser.HOTELIER) {
 				socket.on("hotelier:watch", ({ jobSeekerId }) => {
 					socket.join(`watch:jobseeker:${jobSeekerId}`);
+				});
+
+				socket.on("hotelier:location-start", ({ jobSeekerId }) => {
+					socket
+						.to(jobSeekerId)
+						.emit(`jobseeker:location-start-${jobSeekerId}`);
+				});
+
+				socket.on("hotelier:location-stop", ({ jobSeekerId }) => {
+					socket
+						.to(jobSeekerId)
+						.emit(`jobseeker:location-stop-${jobSeekerId}`);
 				});
 			}
 
@@ -95,6 +110,7 @@ class App {
 					lastLocation.latitude &&
 					lastLocation.longitude
 				) {
+					console.log({ lastLocation });
 					const getLocation = await db("job_seeker")
 						.withSchema("jobseeker")
 						.select("location_id")
@@ -109,6 +125,8 @@ class App {
 							})
 							.where({ id: getLocation?.location_id });
 					}
+
+					console.log({ getLocation });
 				}
 				socket.disconnect();
 			});
@@ -130,9 +148,12 @@ class App {
 
 	// not found router
 	private notFoundRouter() {
-		this.app.use("*", (_req: Request, _res: Response, next: NextFunction) => {
-			next(new CustomError("Cannot found the route", 404));
-		});
+		this.app.use(
+			"*",
+			(_req: Request, _res: Response, next: NextFunction) => {
+				next(new CustomError("Cannot found the route", 404));
+			}
+		);
 	}
 
 	// error handler

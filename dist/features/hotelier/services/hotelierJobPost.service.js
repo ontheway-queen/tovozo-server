@@ -57,7 +57,7 @@ class HotelierJobPostService extends abstract_service_1.default {
     }
     getJobPostList(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { limit, skip, status } = req.query;
+            const { limit, skip, status, title } = req.query;
             const { user_id } = req.hotelier;
             const model = this.Model.jobPostModel();
             const data = yield model.getHotelierJobPostList({
@@ -65,6 +65,7 @@ class HotelierJobPostService extends abstract_service_1.default {
                 limit,
                 skip,
                 status,
+                title,
             });
             return Object.assign({ success: true, message: this.ResMsg.HTTP_OK, code: this.StatusCode.HTTP_OK }, data);
         });
@@ -100,7 +101,8 @@ class HotelierJobPostService extends abstract_service_1.default {
                     throw new customError_1.default("The job post cannot be updated because its status is not 'Pending'.", this.StatusCode.HTTP_BAD_REQUEST);
                 }
                 const hasJobPost = body.job_post && Object.keys(body.job_post).length > 0;
-                const hasJobPostDetails = body.job_post_details && Object.keys(body.job_post_details).length > 0;
+                const hasJobPostDetails = body.job_post_details &&
+                    Object.keys(body.job_post_details).length > 0;
                 if (hasJobPost) {
                     yield model.updateJobPost(Number(jobPost.job_post_id), body.job_post);
                 }
@@ -146,7 +148,8 @@ class HotelierJobPostService extends abstract_service_1.default {
                 }
                 const currentTime = new Date();
                 const startTime = new Date(jobPost.start_time);
-                const hoursDiff = (startTime.getTime() - currentTime.getTime()) / (1000 * 60 * 60);
+                const hoursDiff = (startTime.getTime() - currentTime.getTime()) /
+                    (1000 * 60 * 60);
                 if (hoursDiff > 24) {
                     yield model.cancelJobPost(Number(jobPost.job_post_id));
                     yield model.updateJobPostDetailsStatus(Number(jobPost.id), constants_1.JOB_POST_DETAILS_STATUS.Cancelled);
@@ -159,7 +162,8 @@ class HotelierJobPostService extends abstract_service_1.default {
                     };
                 }
                 else {
-                    if (body.report_type !== constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST ||
+                    if (body.report_type !==
+                        constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST ||
                         !body.reason) {
                         throw new customError_1.default("Invalid request: 'report_type' and 'reason' is required.", this.StatusCode.HTTP_UNPROCESSABLE_ENTITY);
                     }

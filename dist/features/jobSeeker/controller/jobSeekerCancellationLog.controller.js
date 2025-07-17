@@ -37,7 +37,7 @@ class JobSeekerCancellationApplicationLogController extends abstract_controller_
             res.status(code).json(data);
         }));
         this.getCancellationApplicationLog = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.getSingleItemWithIdValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _b = yield this.service.getCancellationApplicationLog(req), { code } = _b, data = __rest(_b, ["code"]);
+            const _a = yield this.service.getCancellationApplicationLog(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }

@@ -64,7 +64,8 @@ class ReportModel extends schema_1.default {
 				    'start_time', jta.start_time,
 				    'end_time', jta.end_time,
 				    'total_working_hours', jta.total_working_hours,
-				    'approved_at', jta.approved_at
+				    'start_approved_at', jta.start_approved_at,
+				    'end_approved_at', jta.end_approved_at
 				) as job_task_activity`))
                 .leftJoin("job_post_details as jpd", "jpd.id", "rp.job_post_details_id")
                 .leftJoin("job_post as jp", "jp.id", "jpd.job_post_id")
@@ -175,7 +176,8 @@ class ReportModel extends schema_1.default {
                     'start_time', jta.start_time,
                     'end_time', jta.end_time,
                     'total_working_hours', jta.total_working_hours,
-                    'approved_at', jta.approved_at
+                    'start_approved_at', jta.start_approved_at,
+                    'end_approved_at', jta.end_approved_at,
                 ) as job_task_activity`))
                 .leftJoin("job_post_details as jpd", "jpd.id", "rp.job_post_details_id")
                 .leftJoin("job_post as jp", "jp.id", "jpd.job_post_id")

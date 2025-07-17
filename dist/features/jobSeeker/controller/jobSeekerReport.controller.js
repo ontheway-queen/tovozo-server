@@ -36,11 +36,11 @@ class JobSeekerReportController extends abstract_controller_1.default {
             res.status(code).json(data);
         }));
         this.getReportsWithInfo = this.asyncWrapper.wrap({ querySchema: this.commonValidator.getReportQueryValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _b = yield this.jobSeekerReportService.getReportsWithInfo(req), { code } = _b, data = __rest(_b, ["code"]);
+            const _a = yield this.jobSeekerReportService.getReportsWithInfo(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         this.getSingleReportWithInfo = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.getSingleItemWithIdValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _c = yield this.jobSeekerReportService.getSingleReportWithInfo(req), { code } = _c, data = __rest(_c, ["code"]);
+            const _a = yield this.jobSeekerReportService.getSingleReportWithInfo(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }

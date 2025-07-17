@@ -326,7 +326,8 @@ CREATE TABLE IF NOT EXISTS dbo.job_task_activities (
     start_time TIMESTAMP,
     end_time TIMESTAMP,
     total_working_hours NUMERIC(6, 2),
-    approved_at TIMESTAMP,
+    start_approved_at TIMESTAMP,
+    end_approved_at TIMESTAMP,
     is_deleted BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
