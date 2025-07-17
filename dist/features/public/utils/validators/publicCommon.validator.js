@@ -221,7 +221,7 @@ class PublicCommonValidator {
                 designation: joi_1.default.string().max(500).required(),
             }).required(),
             organization: joi_1.default.object({
-                name: joi_1.default.string().max(255).required(),
+                org_name: joi_1.default.string().max(255).required(),
                 details: joi_1.default.string().allow("").optional(),
             }).required(),
             organization_address: joi_1.default.object({

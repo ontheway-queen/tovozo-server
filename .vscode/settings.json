@@ -1,3 +1,8 @@
 {
-  "cSpell.words": ["Organizationamenities"]
+	"cSpell.words": ["Organizationamenities"],
+	"editor.formatOnSave": true,
+	"editor.defaultFormatter": "esbenp.prettier-vscode",
+	"editor.tabSize": 2,
+	"prettier.singleQuote": false,
+	"prettier.useTabs": true
 }

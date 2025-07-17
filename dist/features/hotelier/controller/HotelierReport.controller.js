@@ -36,11 +36,11 @@ class HotelierReportController extends abstract_controller_1.default {
             res.status(code).json(data);
         }));
         this.getReportsWithInfo = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.getReportQueryValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.hotelierReportService.getReportsWithInfo(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _b = yield this.hotelierReportService.getReportsWithInfo(req), { code } = _b, data = __rest(_b, ["code"]);
             res.status(code).json(data);
         }));
         this.getSingleReportWithInfo = this.asyncWrapper.wrap({ querySchema: this.commonValidator.getSingleItemWithIdValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.hotelierReportService.getSingleReportWithInfo(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _c = yield this.hotelierReportService.getSingleReportWithInfo(req), { code } = _c, data = __rest(_c, ["code"]);
             res.status(code).json(data);
         }));
     }

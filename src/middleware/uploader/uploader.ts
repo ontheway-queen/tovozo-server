@@ -35,7 +35,6 @@ class Uploader extends CommonAbstractStorage {
               path.extname(file.originalname);
 
             file.filename = fileWithFolder;
-            console.log({ fileWithFolder });
             req.upFiles.push(fileWithFolder);
             cb(null, `${ROOT_FILE_FOLDER}/${fileWithFolder}`);
           },

@@ -40,7 +40,21 @@ abstract class AbstractServices {
 
     const notificationPayload: INotificationPayload[] = [];
     if (userType === TypeUser.ADMIN) {
-      const getAllAdminSocketIds = getAllOnlineSocketIds({
+      const getAllAdmin = await this.Model.AdminModel(trx).getAllAdmin(
+        {},
+        false
+      );
+      if (!getAllAdmin.data.length) {
+        for (const admin of getAllAdmin.data) {
+          notificationPayload.push({
+            user_id: admin.user_id,
+            content: payload.content,
+            related_id: payload.related_id,
+            type: payload.type,
+          });
+        }
+      }
+      const getAllAdminSocketIds = await getAllOnlineSocketIds({
         type: userType,
       });
       if (!getAllAdminSocketIds.length) return;
@@ -58,16 +72,22 @@ abstract class AbstractServices {
           continue;
         }
         seenUserIds.add(user_id);
-
-        notificationPayload.push({
-          user_id,
-          content: payload.content,
-          related_id: payload.related_id,
-          type: payload.type,
-        });
       }
     } else {
-      const getUserSocketIds = getAllOnlineSocketIds({ type: userType });
+      const getAllUsers = await this.Model.UserModel(trx).checkUser({
+        type: userType,
+      });
+      if (!getAllUsers.length) {
+        for (const user of getAllUsers) {
+          notificationPayload.push({
+            user_id: user.id,
+            content: payload.content,
+            related_id: payload.related_id,
+            type: payload.type,
+          });
+        }
+      }
+      const getUserSocketIds = await getAllOnlineSocketIds({ type: userType });
       if (!getUserSocketIds.length) return;
 
       for (const { user_id, socketId } of getUserSocketIds) {
@@ -85,6 +105,7 @@ abstract class AbstractServices {
       }
     }
 
+    if (!notificationPayload.length) return;
     await commonModel.createNotification(notificationPayload);
   }
 }

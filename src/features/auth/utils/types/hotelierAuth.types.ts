@@ -4,7 +4,7 @@ import { UserStatusType } from "../../../public/utils/types/publicCommon.types";
 export type IOrganizationAmenitiesType = string;
 
 export interface IOrganizationName {
-  name: string;
+  org_name: string;
 }
 
 export interface IHotelierUser {

@@ -88,7 +88,11 @@ class HotelierAuthService extends abstract_service_1.default {
                     designation,
                     user_id: userId,
                 });
-                const orgInsert = yield organizationModel.createOrganization(Object.assign(Object.assign({}, organization), { user_id: userId, location_id: locationId }));
+                const orgInsert = yield organizationModel.createOrganization({
+                    name: organization.org_name,
+                    user_id: userId,
+                    location_id: locationId,
+                });
                 const organizationId = orgInsert[0].id;
                 const photos = files.map((file) => ({
                     organization_id: organizationId,

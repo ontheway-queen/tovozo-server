@@ -1,13 +1,13 @@
 import { Router } from "express";
-import AuthChecker from "../middleware/authChecker/authChecker";
-import AuthRootRouter from "../features/auth/authRoot.router";
 import AdminRootRouter from "../features/admin/adminRoot.router";
+import AuthRootRouter from "../features/auth/authRoot.router";
 import HotelierRootRouter from "../features/hotelier/hotelierRoot.router";
 import JobSeekerRootRouter from "../features/jobSeeker/jobSeekerRoot.router";
 import PublicRouter from "../features/public/router/publicRouter";
+import AuthChecker from "../middleware/authChecker/authChecker";
 
 export default class RootRouter {
-  public v2Router = Router();
+  public Router = Router();
   private publicRootRouter = new PublicRouter();
   private authRootRouter = new AuthRootRouter();
   private adminRootRouter = new AdminRootRouter();
@@ -17,32 +17,32 @@ export default class RootRouter {
   // Auth checker
   private authChecker = new AuthChecker();
   constructor() {
-    this.callV2Router();
+    this.callRouter();
   }
 
-  private callV2Router() {
+  private callRouter() {
     // Public Routes
-    this.v2Router.use("/public", this.publicRootRouter.router);
+    this.Router.use("/public", this.publicRootRouter.router);
 
     // Auth Routes
-    this.v2Router.use("/auth", this.authRootRouter.AuthRouter);
+    this.Router.use("/auth", this.authRootRouter.AuthRouter);
 
     // Admin Routes
-    this.v2Router.use(
+    this.Router.use(
       "/admin",
       this.authChecker.adminAuthChecker,
       this.adminRootRouter.Router
     );
 
     // Job Seeker Routes
-    this.v2Router.use(
+    this.Router.use(
       "/job-seeker",
       this.authChecker.jobSeekerAuthChecker,
       this.jobSeekerRootRouter.router
     );
 
     // Hotelier Routes
-    this.v2Router.use(
+    this.Router.use(
       "/hotelier",
       this.authChecker.hotelierAuthChecker,
       this.hotelierRootRouter.router

@@ -6,16 +6,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const database_1 = require("../app/database");
 const administrationModel_1 = __importDefault(require("./adminModel/administrationModel"));
 const adminModel_1 = __importDefault(require("./adminModel/adminModel"));
+const cancellationLogModel_1 = __importDefault(require("./cancellationLogModel/cancellationLogModel"));
+const chatModel_1 = __importDefault(require("./chatModel/chatModel"));
 const commonModel_1 = __importDefault(require("./commonModel/commonModel"));
 const jobPostModel_1 = __importDefault(require("./hotelierModel/jobPostModel"));
 const organizationModel_1 = __importDefault(require("./hotelierModel/organizationModel"));
+const jobApplicationModel_1 = __importDefault(require("./jobApplicationModel/jobApplicationModel"));
 const jobModel_1 = __importDefault(require("./jobModel/jobModel"));
 const jobSeekerModel_1 = __importDefault(require("./jobSeekerModel/jobSeekerModel"));
-const userModel_1 = __importDefault(require("./userModel/userModel"));
-const jobApplicationModel_1 = __importDefault(require("./jobApplicationModel/jobApplicationModel"));
 const jobTaskActivitiesModel_1 = __importDefault(require("./jobTaskActivitiesModel/jobTaskActivitiesModel"));
+const jobTaskListModel_1 = __importDefault(require("./jobTaskActivitiesModel/jobTaskListModel"));
 const reportModel_1 = __importDefault(require("./reportModel/reportModel"));
-const cancellationLogModel_1 = __importDefault(require("./cancellationLogModel/cancellationLogModel"));
+const userModel_1 = __importDefault(require("./userModel/userModel"));
 class Models {
     UserModel(trx) {
         return new userModel_1.default(trx || database_1.db);
@@ -59,9 +61,17 @@ class Models {
     jobTaskActivitiesModel(trx) {
         return new jobTaskActivitiesModel_1.default(trx || database_1.db);
     }
+    // job task list
+    jobTaskListModel(trx) {
+        return new jobTaskListModel_1.default(trx || database_1.db);
+    }
     // report
     reportModel(trx) {
         return new reportModel_1.default(trx || database_1.db);
+    }
+    // chat
+    chatModel(trx) {
+        return new chatModel_1.default(trx || database_1.db);
     }
 }
 exports.default = Models;

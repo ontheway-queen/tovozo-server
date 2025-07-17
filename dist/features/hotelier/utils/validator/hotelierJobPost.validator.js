@@ -61,6 +61,9 @@ class HotelierJobPostValidator {
                 end_time: joi_1.default.string().isoDate().optional(),
             }).optional(),
         });
+        this.trackJobSeekerLocationSchema = joi_1.default.object({
+            job_seeker: joi_1.default.number().integer().required(),
+        });
     }
 }
 exports.HotelierJobPostValidator = HotelierJobPostValidator;

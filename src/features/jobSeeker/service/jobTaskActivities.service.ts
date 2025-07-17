@@ -1,12 +1,13 @@
+import dayjs from "dayjs";
 import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
+import { io } from "../../../app/socket";
+import CustomError from "../../../utils/lib/customError";
 import {
 	JOB_APPLICATION_STATUS,
 	JOB_POST_DETAILS_STATUS,
 } from "../../../utils/miscellaneous/constants";
-import CustomError from "../../../utils/lib/customError";
 import { IJobPostDetailsStatus } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
-import dayjs from "dayjs";
 
 export default class JobTaskActivitiesService extends AbstractServices {
 	constructor() {
@@ -20,19 +21,15 @@ export default class JobTaskActivitiesService extends AbstractServices {
 		return await this.db.transaction(async (trx) => {
 			const jobPostModel = this.Model.jobPostModel(trx);
 			const jobApplicationModel = this.Model.jobApplicationModel(trx);
-			const jobTaskActivitiesModel =
-				this.Model.jobTaskActivitiesModel(trx);
+			const jobTaskActivitiesModel = this.Model.jobTaskActivitiesModel(trx);
 
-			const myApplication = await jobApplicationModel.getMyJobApplication(
-				{
-					job_application_id,
-					job_seeker_id: user_id,
-				}
-			);
+			const myApplication = await jobApplicationModel.getMyJobApplication({
+				job_application_id,
+				job_seeker_id: user_id,
+			});
 
 			if (
-				myApplication.job_application_status !==
-				JOB_APPLICATION_STATUS.PENDING
+				myApplication.job_application_status !== JOB_APPLICATION_STATUS.PENDING
 			) {
 				throw new CustomError(
 					`Job application must be in 'PENDING' status to perform this action.`,
@@ -49,10 +46,9 @@ export default class JobTaskActivitiesService extends AbstractServices {
 			}
 
 			const exitingTaskActivities =
-				await jobTaskActivitiesModel.getSingleTaskActivity(
-					null,
-					job_post_details_id
-				);
+				await jobTaskActivitiesModel.getSingleTaskActivity({
+					job_post_details_id,
+				});
 			if (exitingTaskActivities) {
 				throw new CustomError(
 					`A task activity already exists for this job.`,
@@ -66,7 +62,7 @@ export default class JobTaskActivitiesService extends AbstractServices {
 				start_time: now,
 			};
 
-			await jobTaskActivitiesModel.createJobTaskActivity(payload);
+			const res = await jobTaskActivitiesModel.createJobTaskActivity(payload);
 			await jobApplicationModel.updateMyJobApplicationStatus(
 				job_application_id,
 				user_id,
@@ -76,7 +72,13 @@ export default class JobTaskActivitiesService extends AbstractServices {
 				myApplication.job_post_details_id,
 				JOB_POST_DETAILS_STATUS.In_Progress
 			);
-
+			io.emit("start-job-task", {
+				id: res[0].id,
+				start_time: new Date(),
+				end_time: null,
+				total_working_hours: null,
+				approved_at: null,
+			});
 			return {
 				success: true,
 				message: this.ResMsg.HTTP_OK,
@@ -91,15 +93,12 @@ export default class JobTaskActivitiesService extends AbstractServices {
 
 		return await this.db.transaction(async (trx) => {
 			const jobApplicationModel = this.Model.jobApplicationModel(trx);
-			const jobTaskActivitiesModel =
-				this.Model.jobTaskActivitiesModel(trx);
+			const jobTaskActivitiesModel = this.Model.jobTaskActivitiesModel(trx);
 			const jobPostModel = this.Model.jobPostModel(trx);
 
-			const taskActivity =
-				await jobTaskActivitiesModel.getSingleTaskActivity(
-					Number(id),
-					null
-				);
+			const taskActivity = await jobTaskActivitiesModel.getSingleTaskActivity({
+				id: Number(id),
+			});
 
 			if (!taskActivity) {
 				throw new CustomError(
@@ -108,8 +107,7 @@ export default class JobTaskActivitiesService extends AbstractServices {
 				);
 			}
 			if (
-				taskActivity.application_status !==
-				JOB_APPLICATION_STATUS.IN_PROGRESS
+				taskActivity.application_status !== JOB_APPLICATION_STATUS.IN_PROGRESS
 			) {
 				throw new CustomError(
 					`You cannot perform this action because the application is not in progress.`,
@@ -117,12 +115,10 @@ export default class JobTaskActivitiesService extends AbstractServices {
 				);
 			}
 
-			const myApplication = await jobApplicationModel.getMyJobApplication(
-				{
-					job_application_id: taskActivity.job_application_id,
-					job_seeker_id: taskActivity.job_seeker_id,
-				}
-			);
+			const myApplication = await jobApplicationModel.getMyJobApplication({
+				job_application_id: taskActivity.job_application_id,
+				job_seeker_id: taskActivity.job_seeker_id,
+			});
 
 			if (!myApplication) {
 				throw new CustomError(
@@ -132,9 +128,7 @@ export default class JobTaskActivitiesService extends AbstractServices {
 			}
 
 			const startTime = dayjs(taskActivity.start_time).valueOf();
-			const endTime = dayjs(
-				taskActivity.end_time ?? new Date()
-			).valueOf();
+			const endTime = dayjs(taskActivity.end_time ?? new Date()).valueOf();
 
 			const totalWorkingHours = Number(
 				((endTime - startTime) / (1000 * 60 * 60)).toFixed(2)
@@ -146,19 +140,22 @@ export default class JobTaskActivitiesService extends AbstractServices {
 				JOB_APPLICATION_STATUS.ENDED
 			);
 
-			await jobTaskActivitiesModel.updateJobTaskActivity(
-				taskActivity.id,
-				{
-					end_time: new Date(),
-					total_working_hours: totalWorkingHours,
-				}
-			);
+			await jobTaskActivitiesModel.updateJobTaskActivity(taskActivity.id, {
+				end_time: new Date(),
+				total_working_hours: totalWorkingHours,
+			});
 
 			await jobPostModel.updateJobPostDetailsStatus(
 				myApplication.job_post_details_id,
 				JOB_POST_DETAILS_STATUS.WorkFinished as unknown as IJobPostDetailsStatus
 			);
-
+			io.emit("end-job-task", {
+				id,
+				start_time: taskActivity.start_time,
+				end_time: new Date(),
+				total_working_hours: totalWorkingHours,
+				approved_at: null,
+			});
 			return {
 				success: true,
 				message: this.ResMsg.HTTP_OK,

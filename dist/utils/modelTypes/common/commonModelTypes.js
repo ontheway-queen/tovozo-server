@@ -4,6 +4,7 @@ exports.TypeEmitNotificationEnum = exports.NotificationTypeEnum = void 0;
 var NotificationTypeEnum;
 (function (NotificationTypeEnum) {
     NotificationTypeEnum["JOB_MATCH"] = "JOB_MATCH";
+    NotificationTypeEnum["JOB_TASK"] = "JOB_TASK";
     NotificationTypeEnum["REMINDER"] = "REMINDER";
     NotificationTypeEnum["APPLICATION_UPDATE"] = "APPLICATION_UPDATE";
     NotificationTypeEnum["PAYMENT"] = "PAYMENT";
