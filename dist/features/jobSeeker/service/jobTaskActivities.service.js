@@ -16,6 +16,8 @@ const abstract_service_1 = __importDefault(require("../../../abstract/abstract.s
 const socket_1 = require("../../../app/socket");
 const customError_1 = __importDefault(require("../../../utils/lib/customError"));
 const constants_1 = require("../../../utils/miscellaneous/constants");
+const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
+const commonModelTypes_1 = require("../../../utils/modelTypes/common/commonModelTypes");
 class JobTaskActivitiesService extends abstract_service_1.default {
     constructor() {
         super();
@@ -58,6 +60,16 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                 // 	myApplication.job_post_details_id,
                 // 	JOB_POST_DETAILS_STATUS.In_Progress
                 // );
+                const onlineUsers = (0, socket_1.getAllOnlineSocketIds)({
+                    user_id,
+                    type: constants_1.USER_TYPE.JOB_SEEKER,
+                });
+                yield this.insertNotification(trx, userModelTypes_1.TypeUser.HOTELIER, {
+                    user_id: myApplication.hotelier_id,
+                    content: `New tasks have been assigned to you.`,
+                    related_id: res[0].id,
+                    type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
+                });
                 socket_1.io.emit("start-job-task", {
                     id: res[0].id,
                     start_time: new Date(),

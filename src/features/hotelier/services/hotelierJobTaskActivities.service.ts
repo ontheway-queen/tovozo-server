@@ -298,13 +298,16 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 				JOB_POST_DETAILS_STATUS.In_Progress
 			);
 
-			io.emit("approve-end-job-task", {
-				id,
-				start_time: taskActivity.start_time,
-				end_time: taskActivity.end_time,
-				total_working_hours: totalWorkingHours,
-				end_approved_at: new Date(),
-			});
+			io.to(String(taskActivity.job_seeker_id)).emit(
+				"approve-end-job-task",
+				{
+					id,
+					start_time: taskActivity.start_time,
+					end_time: taskActivity.end_time,
+					total_working_hours: totalWorkingHours,
+					end_approved_at: new Date(),
+				}
+			);
 
 			return {
 				success: true,

@@ -1,13 +1,16 @@
 import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
-import { io } from "../../../app/socket";
+import { getAllOnlineSocketIds, io } from "../../../app/socket";
 import CustomError from "../../../utils/lib/customError";
 import {
 	JOB_APPLICATION_STATUS,
 	JOB_POST_DETAILS_STATUS,
+	USER_TYPE,
 } from "../../../utils/miscellaneous/constants";
 import { IJobPostDetailsStatus } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
 import { IUpdateJobTaskListPayload } from "../../hotelier/utils/types/hotelierJobTaskTypes";
+import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
+import { NotificationTypeEnum } from "../../../utils/modelTypes/common/commonModelTypes";
 
 export default class JobTaskActivitiesService extends AbstractServices {
 	constructor() {
@@ -76,6 +79,19 @@ export default class JobTaskActivitiesService extends AbstractServices {
 			// 	myApplication.job_post_details_id,
 			// 	JOB_POST_DETAILS_STATUS.In_Progress
 			// );
+
+			const onlineUsers = getAllOnlineSocketIds({
+				user_id,
+				type: USER_TYPE.JOB_SEEKER,
+			});
+
+			await this.insertNotification(trx, TypeUser.HOTELIER, {
+				user_id: myApplication.hotelier_id,
+				content: `New tasks have been assigned to you.`,
+				related_id: res[0].id,
+				type: NotificationTypeEnum.JOB_TASK,
+			});
+
 			io.emit("start-job-task", {
 				id: res[0].id,
 				start_time: new Date(),
@@ -84,6 +100,7 @@ export default class JobTaskActivitiesService extends AbstractServices {
 				start_approved_at: null,
 				end_approved_at: null,
 			});
+
 			return {
 				success: true,
 				message: this.ResMsg.HTTP_OK,
