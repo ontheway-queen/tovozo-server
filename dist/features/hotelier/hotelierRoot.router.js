@@ -8,6 +8,7 @@ const hotelierCancellationLog_router_1 = __importDefault(require("./router/hotel
 const hotelierJobPost_router_1 = __importDefault(require("./router/hotelierJobPost.router"));
 const hotelierJobTaskActivities_router_1 = __importDefault(require("./router/hotelierJobTaskActivities.router"));
 const hotelierReport_router_1 = __importDefault(require("./router/hotelierReport.router"));
+const payment_router_1 = __importDefault(require("./router/payment.router"));
 const profile_router_1 = __importDefault(require("./router/profile.router"));
 class HotelierRootRouter extends abstract_router_1.default {
     constructor() {
@@ -21,6 +22,7 @@ class HotelierRootRouter extends abstract_router_1.default {
         this.router.use("/cancellation-logs", new hotelierCancellationLog_router_1.default().router);
         this.router.use("/job-task-activity", new hotelierJobTaskActivities_router_1.default().router);
         this.router.use("/reports", new hotelierReport_router_1.default().router);
+        this.router.use("/payment", new payment_router_1.default().router);
     }
 }
 exports.default = HotelierRootRouter;

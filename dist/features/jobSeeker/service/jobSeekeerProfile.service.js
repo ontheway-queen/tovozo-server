@@ -16,6 +16,7 @@ const abstract_service_1 = __importDefault(require("../../../abstract/abstract.s
 const customError_1 = __importDefault(require("../../../utils/lib/customError"));
 const lib_1 = __importDefault(require("../../../utils/lib/lib"));
 const constants_1 = require("../../../utils/miscellaneous/constants");
+const stripe_1 = require("../../../utils/miscellaneous/stripe");
 class JobSeekerProfileService extends abstract_service_1.default {
     constructor() {
         super();
@@ -213,6 +214,40 @@ class JobSeekerProfileService extends abstract_service_1.default {
                     message: this.ResMsg.HTTP_INTERNAL_SERVER_ERROR,
                 };
             }
+        });
+    }
+    // Add Strie Payout Account
+    addStripePayoutAccount(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const { user_id } = req.jobSeeker;
+                const { email, country } = req.body;
+                const account = yield stripe_1.stripe.accounts.create({
+                    type: "express",
+                    country,
+                    email,
+                    capabilities: {
+                        card_payments: { requested: true },
+                        transfers: { requested: true },
+                    },
+                });
+                const accountLink = yield stripe_1.stripe.accountLinks.create({
+                    account: account.id,
+                    refresh_url: "https://tovozo.com/onboarding/refresh", // change as needed
+                    return_url: `http://10.10.220.73:9900/api/v1/stripe/onboarding/complete?stripe_acc_id=${account.id}`, // change as needed
+                    type: "account_onboarding",
+                });
+                // await this.Model.UserModel().addStripePayoutAccount({
+                // 	user_id,
+                // 	stripe_acc_id: account.id,
+                // });
+                return {
+                    success: true,
+                    code: this.StatusCode.HTTP_OK,
+                    message: this.ResMsg.HTTP_OK,
+                    data: { url: accountLink.url },
+                };
+            }));
         });
     }
 }

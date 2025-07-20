@@ -5,47 +5,52 @@ import HotelierRootRouter from "../features/hotelier/hotelierRoot.router";
 import JobSeekerRootRouter from "../features/jobSeeker/jobSeekerRoot.router";
 import PublicRouter from "../features/public/router/publicRouter";
 import AuthChecker from "../middleware/authChecker/authChecker";
+import StripeRouter from "../features/public/router/stripe.router";
 
 export default class RootRouter {
-  public Router = Router();
-  private publicRootRouter = new PublicRouter();
-  private authRootRouter = new AuthRootRouter();
-  private adminRootRouter = new AdminRootRouter();
-  private hotelierRootRouter = new HotelierRootRouter();
-  private jobSeekerRootRouter = new JobSeekerRootRouter();
+	public Router = Router();
+	private publicRootRouter = new PublicRouter();
+	private authRootRouter = new AuthRootRouter();
+	private adminRootRouter = new AdminRootRouter();
+	private hotelierRootRouter = new HotelierRootRouter();
+	private jobSeekerRootRouter = new JobSeekerRootRouter();
+	private stripeRouter = new StripeRouter();
 
-  // Auth checker
-  private authChecker = new AuthChecker();
-  constructor() {
-    this.callRouter();
-  }
+	// Auth checker
+	private authChecker = new AuthChecker();
+	constructor() {
+		this.callRouter();
+	}
 
-  private callRouter() {
-    // Public Routes
-    this.Router.use("/public", this.publicRootRouter.router);
+	private callRouter() {
+		// Public Routes
+		this.Router.use("/public", this.publicRootRouter.router);
 
-    // Auth Routes
-    this.Router.use("/auth", this.authRootRouter.AuthRouter);
+		// Auth Routes
+		this.Router.use("/auth", this.authRootRouter.AuthRouter);
 
-    // Admin Routes
-    this.Router.use(
-      "/admin",
-      this.authChecker.adminAuthChecker,
-      this.adminRootRouter.Router
-    );
+		// Admin Routes
+		this.Router.use(
+			"/admin",
+			this.authChecker.adminAuthChecker,
+			this.adminRootRouter.Router
+		);
 
-    // Job Seeker Routes
-    this.Router.use(
-      "/job-seeker",
-      this.authChecker.jobSeekerAuthChecker,
-      this.jobSeekerRootRouter.router
-    );
+		// Job Seeker Routes
+		this.Router.use(
+			"/job-seeker",
+			this.authChecker.jobSeekerAuthChecker,
+			this.jobSeekerRootRouter.router
+		);
 
-    // Hotelier Routes
-    this.Router.use(
-      "/hotelier",
-      this.authChecker.hotelierAuthChecker,
-      this.hotelierRootRouter.router
-    );
-  }
+		// Hotelier Routes
+		this.Router.use(
+			"/hotelier",
+			this.authChecker.hotelierAuthChecker,
+			this.hotelierRootRouter.router
+		);
+
+		// stripe
+		this.Router.use("/stripe", this.stripeRouter.router);
+	}
 }

@@ -31,6 +31,9 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                     job_application_id,
                     job_seeker_id: user_id,
                 });
+                if (!myApplication) {
+                    throw new customError_1.default(`Job application not found or does not belong to you.`, this.StatusCode.HTTP_NOT_FOUND);
+                }
                 if (myApplication.job_application_status !==
                     constants_1.JOB_APPLICATION_STATUS.PENDING) {
                     throw new customError_1.default(`Job application must be in 'PENDING' status to perform this action.`, this.StatusCode.HTTP_BAD_REQUEST);
@@ -50,6 +53,7 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                     job_application_id,
                     job_post_details_id,
                 };
+                console.log({ payload });
                 const res = yield jobTaskActivitiesModel.createJobTaskActivity(payload);
                 // await jobApplicationModel.updateMyJobApplicationStatus(
                 // 	job_application_id,

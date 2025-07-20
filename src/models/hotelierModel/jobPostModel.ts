@@ -436,11 +436,11 @@ class JobPostModel extends Schema {
 				"jp.organization_id",
 				"jp.title",
 				this.db.raw(`json_build_object(
-                    'id', j.id,
-                    'title', j.title,
-                    'details', j.details,
-                    'status', j.status
-                ) as job_category`),
+          'id', j.id,
+          'title', j.title,
+          'details', j.details,
+          'status', j.status
+        ) as job_category`),
 				"jp.hourly_rate",
 				"jp.title as job_title",
 				"jp.details as job_details",
@@ -458,25 +458,25 @@ class JobPostModel extends Schema {
 				"vwl.longitude",
 				"vwl.latitude",
 				this.db.raw(`(
-                    SELECT COUNT(*) 
-                    FROM dbo.job_post_details 
-                    WHERE job_post_id = jpd.job_post_id
-                ) AS vacancy`),
+          SELECT COUNT(*) 
+          FROM dbo.job_post_details 
+          WHERE job_post_id = jpd.job_post_id
+        ) AS vacancy`),
 				this.db.raw(`
           CASE
             WHEN js.id IS NOT NULL THEN json_build_object(
-                    'application_id', ja.id,
-                    'application_status', ja.status,
-                    'job_seeker_id', ja.job_seeker_id,
-                    'job_seeker_name', js.name,
-                    'gender', jsu.gender,
-                    'location_address', js_vwl.location_address,
-                    'city_name', js_vwl.city_name,
-                    'state_name', js_vwl.state_name,
-                    'country_name', js_vwl.country_name,
-                    'longitude', js_vwl.longitude,
-                    'latitude', js_vwl.latitude
-                )
+              'application_id', ja.id,
+              'application_status', ja.status,
+              'job_seeker_id', ja.job_seeker_id,
+              'job_seeker_name', js.name,
+              'gender', jsu.gender,
+              'location_address', js_vwl.location_address,
+              'city_name', js_vwl.city_name,
+              'state_name', js_vwl.state_name,
+              'country_name', js_vwl.country_name,
+              'longitude', js_vwl.longitude,
+              'latitude', js_vwl.latitude
+            )
               ELSE NULL
               END as job_seeker_details`),
 				this.db.raw(`

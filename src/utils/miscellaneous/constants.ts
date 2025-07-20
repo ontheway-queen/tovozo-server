@@ -222,3 +222,8 @@ export const REPORT_STATUS = {
 } as const;
 
 export const REPORT_STATUS_ENUM = ["Pending", "Acknowledge"] as const;
+
+// payment charges
+export const JobSeekerFixedCharge = 13;
+export const HotelierFixedCharge = 15;
+export const PlatformFee = 2;

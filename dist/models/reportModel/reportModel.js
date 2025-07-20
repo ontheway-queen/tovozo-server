@@ -158,27 +158,25 @@ class ReportModel extends schema_1.default {
             return yield this.db("reports as rp")
                 .withSchema(this.DBO_SCHEMA)
                 .select("rp.id", "rp.status as report_status", "rp.report_type", "rp.reason as report_reason", "jp.id as job_post_id", "jp.title", "jp.details", "jp.requirements", "jp.prefer_gender", "jp.hourly_rate", "jp.expire_time", "jpd.id as job_post_details_id", "jpd.start_time", "jpd.end_time", "jpd.status as job_post_details_status", "org.id as organization_id", "org.name as organization_name", "org_p.file as organization_photo", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.city_name", "vwl.state_name", "vwl.country_name", "vwl.longitude", "vwl.latitude", this.db.raw(`json_build_object(
-                    'application_id', ja.id,
-                    'application_status', ja.status,
-                    
-                    'job_seeker_id', ja.job_seeker_id,
-                    'job_seeker_name', jsu.name,
-                    'gender', js.gender,
-                    
-                    'location_address', js_vwl.location_address,
-                    'city_name', js_vwl.city_name,
-                    'state_name', js_vwl.state_name,
-                    'country_name', js_vwl.country_name,
-                    'longitude', js_vwl.longitude,
-                    'latitude', js_vwl.latitude
-                ) as job_seeker_details`), this.db.raw(`json_build_object(
-                    'id', jta.id,
-                    'start_time', jta.start_time,
-                    'end_time', jta.end_time,
-                    'total_working_hours', jta.total_working_hours,
-                    'start_approved_at', jta.start_approved_at,
-                    'end_approved_at', jta.end_approved_at,
-                ) as job_task_activity`))
+            'application_id', ja.id,
+            'application_status', ja.status,
+            'job_seeker_id', ja.job_seeker_id,
+            'job_seeker_name', jsu.name,
+            'gender', js.gender,
+            'location_address', js_vwl.location_address,
+            'city_name', js_vwl.city_name,
+            'state_name', js_vwl.state_name,
+            'country_name', js_vwl.country_name,
+            'longitude', js_vwl.longitude,
+            'latitude', js_vwl.latitude
+        ) as job_seeker_details`), this.db.raw(`json_build_object(
+            'id', jta.id,
+            'start_time', jta.start_time,
+            'end_time', jta.end_time,
+            'total_working_hours', jta.total_working_hours,
+            'start_approved_at', jta.start_approved_at,
+            'end_approved_at', jta.end_approved_at
+        ) as job_task_activity`))
                 .leftJoin("job_post_details as jpd", "jpd.id", "rp.job_post_details_id")
                 .leftJoin("job_post as jp", "jp.id", "jpd.job_post_id")
                 .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
