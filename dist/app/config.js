@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const dotenv_1 = __importDefault(require("dotenv"));
 const path_1 = __importDefault(require("path"));
 // Parsing the env file.
-dotenv_1.default.config({ path: path_1.default.resolve(__dirname, '../../.env') });
+dotenv_1.default.config({ path: path_1.default.resolve(__dirname, "../../.env") });
 // Loading process.env as  ENV interface
 const getConfig = () => {
     return {
@@ -24,6 +24,9 @@ const getConfig = () => {
         AWS_S3_BUCKET: process.env.AWS_S3_BUCKET,
         AWS_S3_ACCESS_KEY: process.env.AWS_S3_ACCESS_KEY,
         AWS_S3_SECRET_KEY: process.env.AWS_S3_SECRET_KEY,
+        STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+        STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
+        BASE_URL: process.env.BASE_URL,
     };
 };
 const getSanitzedConfig = (config) => {

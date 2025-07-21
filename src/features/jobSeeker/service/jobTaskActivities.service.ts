@@ -20,7 +20,6 @@ export default class JobTaskActivitiesService extends AbstractServices {
 	public startJobTaskActivities = async (req: Request) => {
 		const { user_id } = req.jobSeeker;
 		const { job_application_id, job_post_details_id } = req.body;
-
 		return await this.db.transaction(async (trx) => {
 			const jobApplicationModel = this.Model.jobApplicationModel(trx);
 			const jobTaskActivitiesModel =
@@ -32,7 +31,12 @@ export default class JobTaskActivitiesService extends AbstractServices {
 					job_seeker_id: user_id,
 				}
 			);
-
+			if (!myApplication) {
+				throw new CustomError(
+					`Job application not found or does not belong to you.`,
+					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
 			if (
 				myApplication.job_application_status !==
 				JOB_APPLICATION_STATUS.PENDING
@@ -66,7 +70,7 @@ export default class JobTaskActivitiesService extends AbstractServices {
 				job_application_id,
 				job_post_details_id,
 			};
-
+			console.log({ payload });
 			const res = await jobTaskActivitiesModel.createJobTaskActivity(
 				payload
 			);

@@ -4,8 +4,12 @@ import AbstractServices from "../../../abstract/abstract.service";
 import { io } from "../../../app/socket";
 import CustomError from "../../../utils/lib/customError";
 import {
+	HotelierFixedCharge,
 	JOB_APPLICATION_STATUS,
 	JOB_POST_DETAILS_STATUS,
+	JobSeekerFixedCharge,
+	PAYMENT_STATUS,
+	PlatformFee,
 } from "../../../utils/miscellaneous/constants";
 import { NotificationTypeEnum } from "../../../utils/modelTypes/common/commonModelTypes";
 import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
@@ -62,7 +66,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 				taskActivity.id,
 				{
 					start_time: new Date(),
-					approved_at: new Date().toISOString(),
+					start_approved_at: new Date().toISOString(),
 				}
 			);
 
@@ -224,6 +228,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 	public approveEndJobTaskActivity = async (req: Request) => {
 		const id = req.params.id;
 		return await this.db.transaction(async (trx) => {
+			const paymentModel = this.Model.paymnentModel(trx);
 			const jobPostModel = this.Model.jobPostModel(trx);
 			const jobApplicationModel = this.Model.jobApplicationModel(trx);
 			const jobTaskActivitiesModel =
@@ -233,12 +238,6 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 				await jobTaskActivitiesModel.getSingleTaskActivity({
 					id: Number(id),
 				});
-			console.log({ taskActivity });
-			// return {
-			// 	success: true,
-			// 	message: this.ResMsg.HTTP_OK,
-			// 	code: this.StatusCode.HTTP_OK,
-			// };
 			if (
 				taskActivity.application_status !==
 				JOB_APPLICATION_STATUS.IN_PROGRESS
@@ -260,7 +259,6 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 					this.StatusCode.HTTP_NOT_FOUND
 				);
 			}
-
 			await jobApplicationModel.updateMyJobApplicationStatus(
 				taskActivity.job_application_id,
 				taskActivity.job_seeker_id,
@@ -280,6 +278,27 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 				`${hours}.${minutes < 10 ? "0" + minutes : minutes}`
 			);
 
+			const lastPaymentId = await paymentModel.getLastPaymentId();
+			const payId = lastPaymentId && lastPaymentId?.split("-")[2];
+			const paymentId = Number(payId) + 1;
+
+			const paymentPayload = {
+				application_id: application.job_application_id,
+				total_amount: Number(
+					(totalWorkingHours * Number(HotelierFixedCharge)).toFixed(2)
+				),
+				status: PAYMENT_STATUS.UNPAID,
+				job_seeker_pay: Number(
+					(totalWorkingHours * JobSeekerFixedCharge).toFixed(2)
+				),
+				platform_fee: Number(
+					(totalWorkingHours * PlatformFee).toFixed(2)
+				),
+				payment_id: `TVZ-PAY-${paymentId}`,
+			};
+
+			await paymentModel.initializePayment(paymentPayload);
+
 			await jobTaskActivitiesModel.updateJobTaskActivity(
 				taskActivity.id,
 				{
@@ -293,10 +312,10 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 				JOB_POST_DETAILS_STATUS.WorkFinished as unknown as IJobPostDetailsStatus
 			);
 
-			await jobPostModel.updateJobPostDetailsStatus(
-				application.job_post_details_id,
-				JOB_POST_DETAILS_STATUS.In_Progress
-			);
+			// await jobPostModel.updateJobPostDetailsStatus(
+			// 	application.job_post_details_id,
+			// 	JOB_POST_DETAILS_STATUS.In_Progress
+			// );
 
 			io.to(String(taskActivity.job_seeker_id)).emit(
 				"approve-end-job-task",

@@ -202,12 +202,31 @@ export const PAYMENT_STATUS = {
 	PARTIAL_PAID: "PARTIAL_PAID",
 } as const;
 
+export const PAYMENT_TYPE = {
+	CASH: "CASH",
+	BANK_TRANSFER: "BANK_TRANSFER",
+	ONLINE_PAYMENT: "ONLINE_PAYMENT",
+	MOBILE_PAYMENT: "MOBILE_PAYMENT",
+} as const;
+
+export const PAYMENT_TYPE_ENUM = [
+	"CASH",
+	"BANK_TRANSFER",
+	"ONLINE_PAYMENT",
+	"MOBILE_PAYMENT",
+] as const;
+
 export const PAYMENT_STATUS_ENUM = [
 	"UNPAID",
 	"PAID",
 	"FAILED",
 	"PARTIAL_PAID",
 ] as const;
+
+export const PAY_LEDGER_TRX_TYPE = {
+	IN: "IN",
+	OUT: "OUT",
+} as const;
 
 export const REPORT_TYPE = {
 	TaskActivity: "TaskActivity",
@@ -222,3 +241,8 @@ export const REPORT_STATUS = {
 } as const;
 
 export const REPORT_STATUS_ENUM = ["Pending", "Acknowledge"] as const;
+
+// payment charges
+export const JobSeekerFixedCharge = 13;
+export const HotelierFixedCharge = 15;
+export const PlatformFee = 2;

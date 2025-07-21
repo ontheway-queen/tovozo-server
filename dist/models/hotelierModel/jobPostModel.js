@@ -268,29 +268,29 @@ class JobPostModel extends schema_1.default {
             return yield this.db("job_post as jp")
                 .withSchema(this.DBO_SCHEMA)
                 .select("jpd.id", "jpd.job_post_id", "jpd.status as job_post_details_status", "jpd.start_time", "jpd.end_time", "jp.organization_id", "jp.title", this.db.raw(`json_build_object(
-                    'id', j.id,
-                    'title', j.title,
-                    'details', j.details,
-                    'status', j.status
-                ) as job_category`), "jp.hourly_rate", "jp.title as job_title", "jp.details as job_details", "jp.requirements as job_requirements", "jp.prefer_gender", "jp.created_time", "org.name as organization_name", "org_p.file as organization_photo", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.city_name", "vwl.state_name", "vwl.country_name", "vwl.longitude", "vwl.latitude", this.db.raw(`(
-                    SELECT COUNT(*) 
-                    FROM dbo.job_post_details 
-                    WHERE job_post_id = jpd.job_post_id
-                ) AS vacancy`), this.db.raw(`
+          'id', j.id,
+          'title', j.title,
+          'details', j.details,
+          'status', j.status
+        ) as job_category`), "jp.hourly_rate", "jp.title as job_title", "jp.details as job_details", "jp.requirements as job_requirements", "jp.prefer_gender", "jp.created_time", "org.name as organization_name", "org_p.file as organization_photo", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.city_name", "vwl.state_name", "vwl.country_name", "vwl.longitude", "vwl.latitude", this.db.raw(`(
+          SELECT COUNT(*) 
+          FROM dbo.job_post_details 
+          WHERE job_post_id = jpd.job_post_id
+        ) AS vacancy`), this.db.raw(`
           CASE
             WHEN js.id IS NOT NULL THEN json_build_object(
-                    'application_id', ja.id,
-                    'application_status', ja.status,
-                    'job_seeker_id', ja.job_seeker_id,
-                    'job_seeker_name', js.name,
-                    'gender', jsu.gender,
-                    'location_address', js_vwl.location_address,
-                    'city_name', js_vwl.city_name,
-                    'state_name', js_vwl.state_name,
-                    'country_name', js_vwl.country_name,
-                    'longitude', js_vwl.longitude,
-                    'latitude', js_vwl.latitude
-                )
+              'application_id', ja.id,
+              'application_status', ja.status,
+              'job_seeker_id', ja.job_seeker_id,
+              'job_seeker_name', js.name,
+              'gender', jsu.gender,
+              'location_address', js_vwl.location_address,
+              'city_name', js_vwl.city_name,
+              'state_name', js_vwl.state_name,
+              'country_name', js_vwl.country_name,
+              'longitude', js_vwl.longitude,
+              'latitude', js_vwl.latitude
+            )
               ELSE NULL
               END as job_seeker_details`), this.db.raw(`
           CASE 
@@ -368,6 +368,7 @@ class JobPostModel extends schema_1.default {
     }
     updateJobPostDetailsStatus(id, status) {
         return __awaiter(this, void 0, void 0, function* () {
+            console.log({ id, status });
             return yield this.db("job_post_details")
                 .withSchema(this.DBO_SCHEMA)
                 .where("id", id)

@@ -113,5 +113,14 @@ class UserModel extends schema_1.default {
                 .where({ id });
         });
     }
+    // Add Strie Payout Account
+    addStripePayoutAccount(_a) {
+        return __awaiter(this, arguments, void 0, function* ({ user_id, stripe_acc_id, }) {
+            return yield this.db("user")
+                .withSchema(this.DBO_SCHEMA)
+                .update({ stripe_acc_id })
+                .where({ id: user_id });
+        });
+    }
 }
 exports.default = UserModel;

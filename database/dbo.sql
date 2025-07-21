@@ -371,26 +371,42 @@ CREATE TABLE IF NOT EXISTS dbo.reports (
 
 -- Payment and ledger Not completed because of changing project
 -- Payment status
-CREATE TYPE dbo.payment_status AS ENUM ('UNPAID', 'PAID', 'FAILED', "PARTIAL_PAID");
+CREATE TYPE dbo.payment_status AS ENUM ('UNPAID', 'PAID', 'FAILED', 'PARTIAL_PAID');
+
+create type dbo.payment_type AS ENUM (
+    'CASH',
+    'BANK_TRANSFER',
+    'ONLINE_PAYMENT',
+    'MOBILE_PAYMENT'
+);
 
 CREATE TABLE IF NOT EXISTS dbo.payment (
     id SERIAL PRIMARY KEY,
     application_id INTEGER NOT NULL REFERENCES dbo.job_applications(id),
     job_seeker_pay NUMERIC(10, 2) NOT NULL,
     platform_fee NUMERIC(10, 2) NOT NULL,
-    total_amount NUMERIC(10, 2),
+    total_amount NUMERIC(10, 2) NOT NULL,
+    payment_type dbo.payment_type,
     status dbo.payment_status NOT NULL DEFAULT 'UNPAID',
-    trx_id VARCHAR(255),
+    trx_id VARCHAR(255) UNIQUE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    paid_by INTEGER REFERENCES hotelier.organization(id),
     paid_at TIMESTAMP WITH TIME ZONE,
     is_deleted BOOLEAN DEFAULT FALSE
+)
+
+create type dbo.pay_ledger_trx_type AS ENUM (
+    'IN',
+    'OUT'
 );
 
 -- job seeker ledger
-CREATE TABLE IF NOT EXISTS jobseeker.job_seeker_ledger (
+CREATE TABLE IF NOT EXISTS dbo.payment_ledger (
     id SERIAL PRIMARY KEY,
-    job_seeker_id INTEGER NOT NULL REFERENCES dbo.user(id),
-    hotelier_id INTEGER NOT NULL REFERENCES dbo.user(id),
+    payment_id INTEGER REFERENCES dbo.payment(id),
+    user_id INTEGER REFERENCES dbo.user(id),
+    trx_type dbo.pay_ledger_trx_type NOT NULL,
+    user_type dbo.user_type NOT NULL,
     voucher_no VARCHAR(50) NOT NULL,
     amount NUMERIC(18,2) NOT NULL,
     details TEXT NOT NULL,

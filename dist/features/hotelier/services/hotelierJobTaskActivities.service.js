@@ -46,7 +46,7 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 yield jobApplicationModel.updateMyJobApplicationStatus(taskActivity.job_application_id, taskActivity.job_seeker_id, constants_1.JOB_APPLICATION_STATUS.IN_PROGRESS);
                 yield jobTaskActivitiesModel.updateJobTaskActivity(taskActivity.id, {
                     start_time: new Date(),
-                    approved_at: new Date().toISOString(),
+                    start_approved_at: new Date().toISOString(),
                 });
                 yield jobPostModel.updateJobPostDetailsStatus(application.job_post_details_id, constants_1.JOB_POST_DETAILS_STATUS.In_Progress);
                 return {
@@ -153,18 +153,13 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
         this.approveEndJobTaskActivity = (req) => __awaiter(this, void 0, void 0, function* () {
             const id = req.params.id;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const paymentModel = this.Model.paymnentModel(trx);
                 const jobPostModel = this.Model.jobPostModel(trx);
                 const jobApplicationModel = this.Model.jobApplicationModel(trx);
                 const jobTaskActivitiesModel = this.Model.jobTaskActivitiesModel(trx);
                 const taskActivity = yield jobTaskActivitiesModel.getSingleTaskActivity({
                     id: Number(id),
                 });
-                console.log({ taskActivity });
-                // return {
-                // 	success: true,
-                // 	message: this.ResMsg.HTTP_OK,
-                // 	code: this.StatusCode.HTTP_OK,
-                // };
                 if (taskActivity.application_status !==
                     constants_1.JOB_APPLICATION_STATUS.IN_PROGRESS) {
                     throw new customError_1.default(`You cannot perform this action because the application is still in progress.`, this.StatusCode.HTTP_FORBIDDEN);
@@ -183,12 +178,27 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 const hours = Math.floor(totalMinutes / 60);
                 const minutes = totalMinutes % 60;
                 const totalWorkingHours = Number(`${hours}.${minutes < 10 ? "0" + minutes : minutes}`);
+                const lastPaymentId = yield paymentModel.getLastPaymentId();
+                const payId = lastPaymentId && (lastPaymentId === null || lastPaymentId === void 0 ? void 0 : lastPaymentId.split("-")[2]);
+                const paymentId = Number(payId) + 1;
+                const paymentPayload = {
+                    application_id: application.job_application_id,
+                    total_amount: Number((totalWorkingHours * Number(constants_1.HotelierFixedCharge)).toFixed(2)),
+                    status: constants_1.PAYMENT_STATUS.UNPAID,
+                    job_seeker_pay: Number((totalWorkingHours * constants_1.JobSeekerFixedCharge).toFixed(2)),
+                    platform_fee: Number((totalWorkingHours * constants_1.PlatformFee).toFixed(2)),
+                    payment_id: `TVZ-PAY-${paymentId}`,
+                };
+                yield paymentModel.initializePayment(paymentPayload);
                 yield jobTaskActivitiesModel.updateJobTaskActivity(taskActivity.id, {
                     end_approved_at: new Date(),
                     total_working_hours: totalWorkingHours,
                 });
                 yield jobPostModel.updateJobPostDetailsStatus(application.job_post_details_id, constants_1.JOB_POST_DETAILS_STATUS.WorkFinished);
-                yield jobPostModel.updateJobPostDetailsStatus(application.job_post_details_id, constants_1.JOB_POST_DETAILS_STATUS.In_Progress);
+                // await jobPostModel.updateJobPostDetailsStatus(
+                // 	application.job_post_details_id,
+                // 	JOB_POST_DETAILS_STATUS.In_Progress
+                // );
                 socket_1.io.to(String(taskActivity.job_seeker_id)).emit("approve-end-job-task", {
                     id,
                     start_time: taskActivity.start_time,

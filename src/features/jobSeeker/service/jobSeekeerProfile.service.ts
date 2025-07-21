@@ -8,6 +8,7 @@ import {
 } from "../../../utils/miscellaneous/constants";
 import { IChangePasswordPayload } from "../../../utils/modelTypes/common/commonModelTypes";
 import { IJobSeekerAuthView } from "../../auth/utils/types/jobSeekerAuth.types";
+import { stripe } from "../../../utils/miscellaneous/stripe";
 
 export default class JobSeekerProfileService extends AbstractServices {
 	constructor() {
