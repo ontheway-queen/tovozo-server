@@ -7,7 +7,7 @@ export interface IInitializePaymentPayload {
 	platform_fee: number;
 	total_amount: number;
 	status: string;
-	payment_id: string;
+	payment_no: string;
 }
 
 export interface IGetPaymentsForHotelier {

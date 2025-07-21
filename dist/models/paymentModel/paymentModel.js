@@ -23,7 +23,7 @@ class PaymentModel extends schema_1.default {
             var _a;
             const result = yield this.db("payment")
                 .withSchema(this.DBO_SCHEMA)
-                .select("payment_id")
+                .select("payment_no")
                 .orderBy("id", "desc")
                 .first();
             return (_a = result === null || result === void 0 ? void 0 : result.id) !== null && _a !== void 0 ? _a : null;

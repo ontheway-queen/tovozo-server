@@ -233,7 +233,6 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 			const jobApplicationModel = this.Model.jobApplicationModel(trx);
 			const jobTaskActivitiesModel =
 				this.Model.jobTaskActivitiesModel(trx);
-
 			const taskActivity =
 				await jobTaskActivitiesModel.getSingleTaskActivity({
 					id: Number(id),
@@ -247,6 +246,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 					this.StatusCode.HTTP_FORBIDDEN
 				);
 			}
+			console.log({ taskActivity });
 
 			const application = await jobApplicationModel.getMyJobApplication({
 				job_application_id: taskActivity.job_application_id,
@@ -259,6 +259,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 					this.StatusCode.HTTP_NOT_FOUND
 				);
 			}
+			console.log({ application });
 			await jobApplicationModel.updateMyJobApplicationStatus(
 				taskActivity.job_application_id,
 				taskActivity.job_seeker_id,
@@ -294,8 +295,10 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 				platform_fee: Number(
 					(totalWorkingHours * PlatformFee).toFixed(2)
 				),
-				payment_id: `TVZ-PAY-${paymentId}`,
+				payment_no: `TVZ-PAY-${paymentId}`,
 			};
+
+			console.log({ paymentPayload });
 
 			await paymentModel.initializePayment(paymentPayload);
 

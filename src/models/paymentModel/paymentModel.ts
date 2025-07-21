@@ -19,7 +19,7 @@ export default class PaymentModel extends Schema {
 	public async getLastPaymentId(): Promise<string | null> {
 		const result = await this.db("payment")
 			.withSchema(this.DBO_SCHEMA)
-			.select("payment_id")
+			.select("payment_no")
 			.orderBy("id", "desc")
 			.first();
 
