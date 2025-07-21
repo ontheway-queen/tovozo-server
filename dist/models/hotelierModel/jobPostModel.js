@@ -368,6 +368,7 @@ class JobPostModel extends schema_1.default {
     }
     updateJobPostDetailsStatus(id, status) {
         return __awaiter(this, void 0, void 0, function* () {
+            console.log({ id, status });
             return yield this.db("job_post_details")
                 .withSchema(this.DBO_SCHEMA)
                 .where("id", id)

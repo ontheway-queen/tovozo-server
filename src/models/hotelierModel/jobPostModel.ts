@@ -580,6 +580,7 @@ class JobPostModel extends Schema {
 		id: number,
 		status: IJobPostDetailsStatus
 	) {
+		console.log({ id, status });
 		return await this.db("job_post_details")
 			.withSchema(this.DBO_SCHEMA)
 			.where("id", id)

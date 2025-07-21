@@ -25,12 +25,26 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_controller_1 = __importDefault(require("../../../abstract/abstract.controller"));
 const payment_service_1 = __importDefault(require("../services/payment.service"));
+const payment_validator_1 = __importDefault(require("../utils/validator/payment.validator"));
 class PaymentController extends abstract_controller_1.default {
     constructor() {
         super();
         this.paymentService = new payment_service_1.default();
-        this.getPaymentsForHotelier = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
+        this.validator = new payment_validator_1.default();
+        this.getPaymentsForHotelier = this.asyncWrapper.wrap({ querySchema: this.validator.getPaymentsForHotelierQueryValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
             const _a = yield this.paymentService.getPaymentsForHotelier(req), { code } = _a, data = __rest(_a, ["code"]);
+            res.status(code).json(data);
+        }));
+        this.getSinglePaymentForHotelier = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.getSingleItemWithIdValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.paymentService.getSinglePaymentForHotelier(req), { code } = _a, data = __rest(_a, ["code"]);
+            res.status(code).json(data);
+        }));
+        this.createCheckoutSession = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.paymentService.createCheckoutSession(req), { code } = _a, data = __rest(_a, ["code"]);
+            res.status(code).json(data);
+        }));
+        this.verifyCheckoutSession = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.paymentService.verifyCheckoutSession(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }

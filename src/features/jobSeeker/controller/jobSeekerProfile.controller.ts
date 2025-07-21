@@ -41,14 +41,4 @@ export default class JobSeekerProfileController extends AbstractController {
 			res.status(code).json(data);
 		}
 	);
-
-	// Add Strie Payout Account
-	public addStripePayoutAccount = this.asyncWrapper.wrap(
-		null,
-		async (req: Request, res: Response) => {
-			const { code, ...data } =
-				await this.profileService.addStripePayoutAccount(req);
-			res.status(code).json(data);
-		}
-	);
 }

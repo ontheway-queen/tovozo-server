@@ -297,7 +297,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 				payment_id: `TVZ-PAY-${paymentId}`,
 			};
 
-			await paymentModel.createPayment(paymentPayload);
+			await paymentModel.initializePayment(paymentPayload);
 
 			await jobTaskActivitiesModel.updateJobTaskActivity(
 				taskActivity.id,

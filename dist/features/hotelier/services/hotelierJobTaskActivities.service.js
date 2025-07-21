@@ -189,7 +189,7 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                     platform_fee: Number((totalWorkingHours * constants_1.PlatformFee).toFixed(2)),
                     payment_id: `TVZ-PAY-${paymentId}`,
                 };
-                yield paymentModel.createPayment(paymentPayload);
+                yield paymentModel.initializePayment(paymentPayload);
                 yield jobTaskActivitiesModel.updateJobTaskActivity(taskActivity.id, {
                     end_approved_at: new Date(),
                     total_working_hours: totalWorkingHours,

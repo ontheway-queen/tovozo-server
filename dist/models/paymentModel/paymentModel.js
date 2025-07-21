@@ -29,7 +29,7 @@ class PaymentModel extends schema_1.default {
             return (_a = result === null || result === void 0 ? void 0 : result.id) !== null && _a !== void 0 ? _a : null;
         });
     }
-    createPayment(payload) {
+    initializePayment(payload) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("payment")
                 .withSchema(this.DBO_SCHEMA)
@@ -42,7 +42,7 @@ class PaymentModel extends schema_1.default {
             const { hotelier_id, skip = 0, limit = 10, search = "" } = params;
             const baseQuery = this.db("payment as p")
                 .withSchema(this.DBO_SCHEMA)
-                .select("p.id", "p.payment_id", "p.application_id", "job_seeker.name as job_seeker_name", "jp.id as job_post_id", "jp.title as job_title", "p.payment_type", "p.status", "p.paid_at", "p.trx_id")
+                .select("p.id", "p.payment_no", "p.application_id", "p.total_amount", "job_seeker.id as job_seeker_id", "job_seeker.name as job_seeker_name", "jp.id as job_post_id", "jp.title as job_title", "p.payment_type", "p.status", "p.paid_at", "p.trx_id")
                 .leftJoin("job_applications as ja", "ja.id", "p.application_id")
                 .leftJoin("job_post as jp", "jp.id", "ja.job_post_id")
                 .joinRaw(`
@@ -66,12 +66,42 @@ class PaymentModel extends schema_1.default {
             };
         });
     }
+    getSinglePaymentForHotelier(id, hotelier_id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db
+                .withSchema(this.DBO_SCHEMA)
+                .from("payment as p")
+                .select("p.id", "p.payment_no", "p.application_id", "p.total_amount", "job_seeker.id as job_seeker_id", "job_seeker.name as job_seeker_name", "jp.id as job_post_id", "jp.title as job_title", "p.payment_type", "p.status", "p.paid_at", "p.trx_id")
+                .leftJoin("job_applications as ja", "ja.id", "p.application_id")
+                .leftJoin("job_post as jp", "jp.id", "ja.job_post_id")
+                .leftJoin("user as job_seeker", "job_seeker.id", "ja.job_seeker_id")
+                .joinRaw(`LEFT JOIN ?? as org ON org.id = jp.organization_id`, [
+                `${this.HOTELIER}.${this.TABLES.organization}`,
+            ])
+                .where("p.id", id)
+                .modify((qb) => {
+                if (hotelier_id) {
+                    qb.andWhere("org.user_id", hotelier_id);
+                }
+            })
+                .first();
+        });
+    }
+    // For Hotelier
+    verifyCheckoutSessionAndUpdatePayment(id, payload) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("payment")
+                .withSchema(this.DBO_SCHEMA)
+                .where({ id })
+                .update(payload, "id");
+        });
+    }
     // For Job Seeker
-    getPaymentsForJobSeeker(job_seeker_id_1) {
-        return __awaiter(this, arguments, void 0, function* (job_seeker_id, skip = 0, limit = 10, search = "") {
+    getPaymentsForJobSeeker(_a) {
+        return __awaiter(this, arguments, void 0, function* ({ job_seeker_id, skip, limit, search, }) {
             const baseQuery = this.db("payment as p")
                 .withSchema(this.DBO_SCHEMA)
-                .select("p.id", "p.payment_id", "p.application_id", "org.name as organization_name", "jp.id as job_post_id", "jp.title as job_title", "p.job_seeker_pay", "p.status", "p.paid_at", "p.trx_id")
+                .select("p.id", "p.payment_no", "p.application_id", "org.name as organization_name", "jp.id as job_post_id", "jp.title as job_title", "p.job_seeker_pay", "p.status", "p.paid_at", "p.trx_id")
                 .leftJoin("job_applications as ja", "ja.id", "p.application_id")
                 .leftJoin("job_post as jp", "jp.id", "ja.job_post_id")
                 .joinRaw(`
@@ -93,6 +123,31 @@ class PaymentModel extends schema_1.default {
                 data,
                 total: Number((countResult === null || countResult === void 0 ? void 0 : countResult.count) || 0),
             };
+        });
+    }
+    // Update payment
+    updatePayment(id, payload) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("payment")
+                .withSchema(this.DBO_SCHEMA)
+                .update(payload)
+                .where({ id });
+        });
+    }
+    // create payment ledger
+    createPaymentLedger(payload) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("payment_ledger")
+                .withSchema(this.DBO_SCHEMA)
+                .insert(payload, "id");
+        });
+    }
+    getSinglePayment(id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("payment")
+                .withSchema(this.DBO_SCHEMA)
+                .where({ id })
+                .first();
         });
     }
 }

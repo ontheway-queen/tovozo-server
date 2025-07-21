@@ -21,10 +21,6 @@ class jobSeekerProfileRouter extends abstract_router_1.default {
         this.router
             .route("/change-password")
             .post(this.controller.changePassword);
-        // Add Stripe Payout Account
-        this.router
-            .route("/add-stripe-payout-account")
-            .patch(this.controller.addStripePayoutAccount);
     }
 }
 exports.default = jobSeekerProfileRouter;

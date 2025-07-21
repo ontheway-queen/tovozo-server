@@ -10,7 +10,7 @@ const hotelierRoot_router_1 = __importDefault(require("../features/hotelier/hote
 const jobSeekerRoot_router_1 = __importDefault(require("../features/jobSeeker/jobSeekerRoot.router"));
 const publicRouter_1 = __importDefault(require("../features/public/router/publicRouter"));
 const authChecker_1 = __importDefault(require("../middleware/authChecker/authChecker"));
-const stripe_router_1 = __importDefault(require("../features/public/router/stripe.router"));
+const jobSeekerStripe_router_1 = __importDefault(require("../features/jobSeeker/router/jobSeekerStripe.router"));
 class RootRouter {
     constructor() {
         this.Router = (0, express_1.Router)();
@@ -19,7 +19,7 @@ class RootRouter {
         this.adminRootRouter = new adminRoot_router_1.default();
         this.hotelierRootRouter = new hotelierRoot_router_1.default();
         this.jobSeekerRootRouter = new jobSeekerRoot_router_1.default();
-        this.stripeRouter = new stripe_router_1.default();
+        this.stripeRouter = new jobSeekerStripe_router_1.default();
         // Auth checker
         this.authChecker = new authChecker_1.default();
         this.callRouter();

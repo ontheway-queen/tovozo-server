@@ -22,6 +22,7 @@ interface ENV {
 	AWS_S3_SECRET_KEY: string | undefined;
 	STRIPE_SECRET_KEY: string | undefined;
 	STRIPE_PUBLISHABLE_KEY: string | undefined;
+	BASE_URL: string | undefined;
 }
 
 // Config types
@@ -42,6 +43,7 @@ interface Config {
 	AWS_S3_SECRET_KEY: string;
 	STRIPE_SECRET_KEY: string;
 	STRIPE_PUBLISHABLE_KEY: string;
+	BASE_URL: string;
 }
 
 // Loading process.env as  ENV interface
@@ -63,6 +65,7 @@ const getConfig = (): ENV => {
 		AWS_S3_SECRET_KEY: process.env.AWS_S3_SECRET_KEY,
 		STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
 		STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
+		BASE_URL: process.env.BASE_URL,
 	};
 };
 

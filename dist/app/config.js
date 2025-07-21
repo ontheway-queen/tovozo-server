@@ -26,6 +26,7 @@ const getConfig = () => {
         AWS_S3_SECRET_KEY: process.env.AWS_S3_SECRET_KEY,
         STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
         STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
+        BASE_URL: process.env.BASE_URL,
     };
 };
 const getSanitzedConfig = (config) => {

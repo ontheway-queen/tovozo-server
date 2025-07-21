@@ -24,27 +24,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_controller_1 = __importDefault(require("../../../abstract/abstract.controller"));
-const jobSeekeerProfile_service_1 = __importDefault(require("../service/jobSeekeerProfile.service"));
-const profile_validator_1 = __importDefault(require("../utils/validator/profile.validator"));
-class JobSeekerProfileController extends abstract_controller_1.default {
+const jobSeekerStripe_service_1 = __importDefault(require("../service/jobSeekerStripe.service"));
+class JobSeekerStripeController extends abstract_controller_1.default {
     constructor() {
         super();
-        this.profileService = new jobSeekeerProfile_service_1.default();
-        this.validator = new profile_validator_1.default();
-        // get profile
-        this.getProfile = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.profileService.getProfile(req), { code } = _a, data = __rest(_a, ["code"]);
+        this.stripeService = new jobSeekerStripe_service_1.default();
+        // Add Strie Payout Account
+        this.addStripePayoutAccount = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.stripeService.addStripePayoutAccount(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
-        this.updateProfile = this.asyncWrapper.wrap({ bodySchema: this.validator.updateJobSeekerValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.profileService.updateProfile(req), { code } = _a, data = __rest(_a, ["code"]);
-            res.status(code).json(data);
-        }));
-        //change password
-        this.changePassword = this.asyncWrapper.wrap({ bodySchema: this.commonValidator.changePassInputValidation }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.profileService.changePassword(req), { code } = _a, data = __rest(_a, ["code"]);
+        this.onboardComplete = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.stripeService.onboardComplete(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }
 }
-exports.default = JobSeekerProfileController;
+exports.default = JobSeekerStripeController;

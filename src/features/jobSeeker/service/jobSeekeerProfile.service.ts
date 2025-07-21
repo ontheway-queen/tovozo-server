@@ -317,41 +317,4 @@ export default class JobSeekerProfileService extends AbstractServices {
 			};
 		}
 	}
-
-	// Add Strie Payout Account
-	public async addStripePayoutAccount(req: Request) {
-		return await this.db.transaction(async (trx) => {
-			const { user_id } = req.jobSeeker;
-			const { email, country } = req.body;
-
-			const account = await stripe.accounts.create({
-				type: "express",
-				country,
-				email,
-				capabilities: {
-					card_payments: { requested: true },
-					transfers: { requested: true },
-				},
-			});
-
-			const accountLink = await stripe.accountLinks.create({
-				account: account.id,
-				refresh_url: "https://tovozo.com/onboarding/refresh", // change as needed
-				return_url: `http://10.10.220.73:9900/api/v1/stripe/onboarding/complete?stripe_acc_id=${account.id}`, // change as needed
-				type: "account_onboarding",
-			});
-
-			// await this.Model.UserModel().addStripePayoutAccount({
-			// 	user_id,
-			// 	stripe_acc_id: account.id,
-			// });
-
-			return {
-				success: true,
-				code: this.StatusCode.HTTP_OK,
-				message: this.ResMsg.HTTP_OK,
-				data: { url: accountLink.url },
-			};
-		});
-	}
 }

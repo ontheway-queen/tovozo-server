@@ -5,7 +5,7 @@ import HotelierRootRouter from "../features/hotelier/hotelierRoot.router";
 import JobSeekerRootRouter from "../features/jobSeeker/jobSeekerRoot.router";
 import PublicRouter from "../features/public/router/publicRouter";
 import AuthChecker from "../middleware/authChecker/authChecker";
-import StripeRouter from "../features/public/router/stripe.router";
+import JobSeekerStripeRouter from "../features/jobSeeker/router/jobSeekerStripe.router";
 
 export default class RootRouter {
 	public Router = Router();
@@ -14,7 +14,7 @@ export default class RootRouter {
 	private adminRootRouter = new AdminRootRouter();
 	private hotelierRootRouter = new HotelierRootRouter();
 	private jobSeekerRootRouter = new JobSeekerRootRouter();
-	private stripeRouter = new StripeRouter();
+	private stripeRouter = new JobSeekerStripeRouter();
 
 	// Auth checker
 	private authChecker = new AuthChecker();
