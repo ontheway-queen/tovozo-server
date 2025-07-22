@@ -392,7 +392,8 @@ CREATE TABLE IF NOT EXISTS dbo.payment (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     paid_by INTEGER REFERENCES hotelier.organization(id),
     paid_at TIMESTAMP WITH TIME ZONE,
-    is_deleted BOOLEAN DEFAULT FALSE
+    is_deleted BOOLEAN DEFAULT FALSE,
+    payment_no VARCHAR(255) UNIQUE
 )
 
 create type dbo.pay_ledger_trx_type AS ENUM (
