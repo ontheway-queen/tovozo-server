@@ -10,6 +10,9 @@ class JobSeekerPaymentValidator {
             search: joi_1.default.string().valid().optional(),
             limit: joi_1.default.string().optional(),
             skip: joi_1.default.string().optional(),
+            status: joi_1.default.string()
+                .valid("UNPAID", "PAID", "FAILED", "PARTIAL_PAID")
+                .optional(),
         });
     }
 }

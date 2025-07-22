@@ -59,3 +59,33 @@ export interface IPaymentLedgerPayload {
 	amount: number;
 	details: string;
 }
+
+export interface IGetPaymentLedgerForHotelier {
+	id: number;
+	trx_type: string;
+	amount: string;
+	details: string;
+	ledger_date: string;
+	voucher_no: string;
+}
+
+export interface IGetAdminPayment {
+	id: number;
+	application_id: number;
+	job_seeker_pay: string;
+	platform_fee: string;
+	total_amount: string;
+	payment_type:
+		| "CASH"
+		| "BANK_TRANSFER"
+		| "ONLINE_PAYMENT"
+		| "MOBILE_PAYMENT";
+	status: "UNPAID" | "PAID" | "FAILED" | "PARTIAL_PAID";
+	trx_id: string;
+	created_at: string;
+	paid_by: number;
+	paid_at: Date;
+	is_deleted: boolean;
+	payment_no: string;
+	trx_fee: number;
+}

@@ -24,25 +24,23 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_controller_1 = __importDefault(require("../../../abstract/abstract.controller"));
-const jobSeekerPayment_service_1 = __importDefault(require("../service/jobSeekerPayment.service"));
-const payment_validator_1 = __importDefault(require("../utils/validator/payment.validator"));
-class JobSeekerPaymentController extends abstract_controller_1.default {
+const adminPayment_service_1 = __importDefault(require("../services/adminPayment.service"));
+class AdminPaymentController extends abstract_controller_1.default {
     constructor() {
         super();
-        this.service = new jobSeekerPayment_service_1.default();
-        this.validator = new payment_validator_1.default();
-        this.getJobSeekerPayments = this.asyncWrapper.wrap({ querySchema: this.validator.getPaymentsForJobSeekerQueryValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.getJobSeekerPayments(req), { code } = _a, data = __rest(_a, ["code"]);
+        this.service = new adminPayment_service_1.default();
+        this.getAllPaymentsForAdmin = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.getAllPaymentsForAdmin(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         this.getSinglePayment = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.getSingleItemWithIdValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
             const _a = yield this.service.getSinglePayment(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
-        this.getAllPaymentLedgersForJobSeeker = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.getAllPaymentLedgersForJobSeeker(req), { code } = _a, data = __rest(_a, ["code"]);
+        this.getAllPaymentLedgersForAdmin = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.getAllPaymentLedgersForAdmin(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }
 }
-exports.default = JobSeekerPaymentController;
+exports.default = AdminPaymentController;

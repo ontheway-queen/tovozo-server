@@ -10,5 +10,11 @@ export default class JobSeekerPaymentRouter extends AbstractRouter {
 
 	private callRouter() {
 		this.router.route("/").get(this.controller.getJobSeekerPayments);
+
+		this.router.route("/:id").get(this.controller.getSinglePayment);
+
+		this.router
+			.route("/payment-ledgers")
+			.get(this.controller.getAllPaymentLedgersForJobSeeker);
 	}
 }

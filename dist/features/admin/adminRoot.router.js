@@ -14,6 +14,7 @@ const jobs_router_1 = __importDefault(require("./router/jobs.router"));
 const jobSeeker_router_1 = __importDefault(require("./router/jobSeeker.router"));
 const profile_router_1 = __importDefault(require("./router/profile.router"));
 const report_router_1 = __importDefault(require("./router/report.router"));
+const adminPayment_router_1 = __importDefault(require("./router/adminPayment.router"));
 class AdminRootRouter {
     constructor() {
         this.Router = (0, express_1.Router)();
@@ -27,6 +28,7 @@ class AdminRootRouter {
         this.reportRouter = new report_router_1.default();
         this.jobApplicationRouter = new jobApplication_router_1.default();
         this.adminChatRouter = new adminChatRouter_1.default();
+        this.paymentRouter = new adminPayment_router_1.default();
         this.callRouter();
     }
     callRouter() {
@@ -50,6 +52,8 @@ class AdminRootRouter {
         this.Router.use("/job-application", this.jobApplicationRouter.router);
         // chat
         this.Router.use("/chat", this.adminChatRouter.router);
+        // payment
+        this.Router.use("/payments", this.paymentRouter.router);
     }
 }
 exports.default = AdminRootRouter;

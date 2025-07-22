@@ -21,13 +21,14 @@ export default class PaymentService extends AbstractServices {
 	}
 
 	public async getPaymentsForHotelier(req: Request) {
-		const { limit, skip, search } = req.query;
+		const { limit, skip, search, status } = req.query;
 		const { user_id } = req.hotelier;
 		const params = {
 			hotelier_id: user_id,
 			limit: Number(limit) || 100,
 			skip: Number(skip) || 0,
 			search: search ? String(search) : "",
+			status: status ? String(status) : undefined,
 		};
 		const paymentModel = this.Model.paymnentModel();
 		const { data, total } = await paymentModel.getPaymentsForHotelier(
@@ -86,10 +87,36 @@ export default class PaymentService extends AbstractServices {
 				);
 			}
 
-			// const loginLink = await stripe.accounts.createLoginLink(
-			// 	"acct_1Rmu4JFbg6WrkTSf"
-			// );
-			// console.log("Login Link:", loginLink.url);
+			const paymentModel = this.Model.paymnentModel();
+			const payment = await paymentModel.getSinglePayment(id);
+			if (!payment) {
+				throw new CustomError(
+					"Payment record not found",
+					this.StatusCode.HTTP_NOT_FOUND,
+					"ERROR"
+				);
+			}
+			if (payment.status === PAYMENT_STATUS.PAID) {
+				throw new CustomError(
+					"The payment is already paid",
+					this.StatusCode.HTTP_CONFLICT
+				);
+			}
+			if (
+				payment.total_amount !== total_amount ||
+				payment.platform_fee !== platform_fee
+			) {
+				throw new CustomError(
+					`Payment mismatch: expected total = ${payment.total_amount}, received total = ${total_amount}; expected fee = ${payment.platform_fee}, received fee = ${platform_fee}`,
+					this.StatusCode.HTTP_BAD_REQUEST,
+					"ERROR"
+				);
+			}
+
+			const loginLink = await stripe.accounts.createLoginLink(
+				"acct_1RnAa4FSzTsJiGrd"
+			);
+			console.log("Login Link:", loginLink.url);
 
 			// const account = await stripe.accounts.retrieve(
 			// 	"acct_1Rmu4JFbg6WrkTSf"
@@ -219,7 +246,7 @@ export default class PaymentService extends AbstractServices {
 					this.StatusCode.HTTP_CONFLICT
 				);
 			}
-
+			console.log({ 1: payment.status });
 			const charge = await stripe.charges.retrieve(
 				paymentIntent.latest_charge as string
 			);
@@ -270,6 +297,15 @@ export default class PaymentService extends AbstractServices {
 				details: `Platform fee received from job "${paymentIntent.metadata.job_title}" completed by ${paymentIntent.metadata.job_seeker_name}`,
 			});
 
+			await paymentModel.createPaymentLedger({
+				...baseLedgerPayload,
+				user_id: user_id,
+				trx_type: PAY_LEDGER_TRX_TYPE.OUT,
+				user_type: USER_TYPE.HOTELIER,
+				amount: payment.total_amount,
+				details: `Payment sent for job "${paymentIntent.metadata.job_title}" to ${paymentIntent.metadata.job_seeker_name}.`,
+			});
+
 			const updatedApplication =
 				await jobApplicationModel.updateMyJobApplicationStatus(
 					payment.application_id,
@@ -286,5 +322,28 @@ export default class PaymentService extends AbstractServices {
 				code: this.StatusCode.HTTP_OK,
 			};
 		});
+	}
+
+	// Ledger
+	public async getAllPaymentLedgerForHotelier(req: Request) {
+		const { limit, skip, search } = req.query;
+		const { user_id } = req.hotelier;
+
+		const paymentModel = this.Model.paymnentModel();
+		const { data, total } =
+			await paymentModel.getAllPaymentLedgerForHotelier({
+				limit: Number(limit) || 100,
+				skip: Number(skip) || 0,
+				search: search ? String(search) : "",
+				user_id,
+			});
+
+		return {
+			success: true,
+			message: this.ResMsg.HTTP_OK,
+			code: this.StatusCode.HTTP_OK,
+			data,
+			total,
+		};
 	}
 }
