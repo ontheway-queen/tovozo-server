@@ -19,4 +19,21 @@ export default class JobSeekerPaymentController extends AbstractController {
 			res.status(code).json(data);
 		}
 	);
+
+	public getSinglePayment = this.asyncWrapper.wrap(
+		{ paramSchema: this.commonValidator.getSingleItemWithIdValidator },
+		async (req: Request, res: Response) => {
+			const { code, ...data } = await this.service.getSinglePayment(req);
+			res.status(code).json(data);
+		}
+	);
+
+	public getAllPaymentLedgersForJobSeeker = this.asyncWrapper.wrap(
+		null,
+		async (req: Request, res: Response) => {
+			const { code, ...data } =
+				await this.service.getAllPaymentLedgersForJobSeeker(req);
+			res.status(code).json(data);
+		}
+	);
 }

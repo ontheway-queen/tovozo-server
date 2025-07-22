@@ -45,4 +45,13 @@ export default class PaymentController extends AbstractController {
 			res.status(code).json(data);
 		}
 	);
+
+	public getAllPaymentLedgerForHotelier = this.asyncWrapper.wrap(
+		null,
+		async (req: Request, res: Response) => {
+			const { code, ...data } =
+				await this.paymentService.getAllPaymentLedgerForHotelier(req);
+			res.status(code).json(data);
+		}
+	);
 }

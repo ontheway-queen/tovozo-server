@@ -22,13 +22,14 @@ class PaymentService extends abstract_service_1.default {
     }
     getPaymentsForHotelier(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { limit, skip, search } = req.query;
+            const { limit, skip, search, status } = req.query;
             const { user_id } = req.hotelier;
             const params = {
                 hotelier_id: user_id,
                 limit: Number(limit) || 100,
                 skip: Number(skip) || 0,
                 search: search ? String(search) : "",
+                status: status ? String(status) : undefined,
             };
             const paymentModel = this.Model.paymnentModel();
             const { data, total } = yield paymentModel.getPaymentsForHotelier(params);
@@ -67,10 +68,20 @@ class PaymentService extends abstract_service_1.default {
                 if (!id) {
                     throw new customError_1.default("Id not found", this.StatusCode.HTTP_NOT_FOUND);
                 }
-                // const loginLink = await stripe.accounts.createLoginLink(
-                // 	"acct_1Rmu4JFbg6WrkTSf"
-                // );
-                // console.log("Login Link:", loginLink.url);
+                const paymentModel = this.Model.paymnentModel();
+                const payment = yield paymentModel.getSinglePayment(id);
+                if (!payment) {
+                    throw new customError_1.default("Payment record not found", this.StatusCode.HTTP_NOT_FOUND, "ERROR");
+                }
+                if (payment.status === constants_1.PAYMENT_STATUS.PAID) {
+                    throw new customError_1.default("The payment is already paid", this.StatusCode.HTTP_CONFLICT);
+                }
+                if (payment.total_amount !== total_amount ||
+                    payment.platform_fee !== platform_fee) {
+                    throw new customError_1.default(`Payment mismatch: expected total = ${payment.total_amount}, received total = ${total_amount}; expected fee = ${payment.platform_fee}, received fee = ${platform_fee}`, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
+                }
+                const loginLink = yield stripe_1.stripe.accounts.createLoginLink("acct_1RnAa4FSzTsJiGrd");
+                console.log("Login Link:", loginLink.url);
                 // const account = await stripe.accounts.retrieve(
                 // 	"acct_1Rmu4JFbg6WrkTSf"
                 // );
@@ -158,6 +169,7 @@ class PaymentService extends abstract_service_1.default {
                 if (payment.status === "paid") {
                     throw new customError_1.default("The payment is aleady paid", this.StatusCode.HTTP_CONFLICT);
                 }
+                console.log({ 1: payment.status });
                 const charge = yield stripe_1.stripe.charges.retrieve(paymentIntent.latest_charge);
                 const balanceTransaction = yield stripe_1.stripe.balanceTransactions.retrieve(charge.balance_transaction);
                 const stripeFeeInCents = balanceTransaction.fee;
@@ -180,6 +192,7 @@ class PaymentService extends abstract_service_1.default {
                 };
                 yield paymentModel.createPaymentLedger(Object.assign(Object.assign({}, baseLedgerPayload), { user_id: paymentIntent.metadata.job_seeker_id, trx_type: constants_1.PAY_LEDGER_TRX_TYPE.IN, user_type: constants_1.USER_TYPE.JOB_SEEKER, amount: payment.job_seeker_pay, details: `Payment received for job "${paymentIntent.metadata.job_title}".` }));
                 yield paymentModel.createPaymentLedger(Object.assign(Object.assign({}, baseLedgerPayload), { trx_type: constants_1.PAY_LEDGER_TRX_TYPE.IN, user_type: constants_1.USER_TYPE.ADMIN, amount: payment.platform_fee, details: `Platform fee received from job "${paymentIntent.metadata.job_title}" completed by ${paymentIntent.metadata.job_seeker_name}` }));
+                yield paymentModel.createPaymentLedger(Object.assign(Object.assign({}, baseLedgerPayload), { user_id: user_id, trx_type: constants_1.PAY_LEDGER_TRX_TYPE.OUT, user_type: constants_1.USER_TYPE.HOTELIER, amount: payment.total_amount, details: `Payment sent for job "${paymentIntent.metadata.job_title}" to ${paymentIntent.metadata.job_seeker_name}.` }));
                 const updatedApplication = yield jobApplicationModel.updateMyJobApplicationStatus(payment.application_id, Number(paymentIntent.metadata.job_seeker_id), constants_1.JOB_APPLICATION_STATUS.COMPLETED);
                 yield jobPostModel.updateJobPostDetailsStatus(updatedApplication.job_post_details_id, constants_1.JOB_POST_DETAILS_STATUS.Completed);
                 return {
@@ -188,6 +201,27 @@ class PaymentService extends abstract_service_1.default {
                     code: this.StatusCode.HTTP_OK,
                 };
             }));
+        });
+    }
+    // Ledger
+    getAllPaymentLedgerForHotelier(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { limit, skip, search } = req.query;
+            const { user_id } = req.hotelier;
+            const paymentModel = this.Model.paymnentModel();
+            const { data, total } = yield paymentModel.getAllPaymentLedgerForHotelier({
+                limit: Number(limit) || 100,
+                skip: Number(skip) || 0,
+                search: search ? String(search) : "",
+                user_id,
+            });
+            return {
+                success: true,
+                message: this.ResMsg.HTTP_OK,
+                code: this.StatusCode.HTTP_OK,
+                data,
+                total,
+            };
         });
     }
 }

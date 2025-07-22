@@ -13,42 +13,21 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
-const stripe_1 = require("../../../utils/miscellaneous/stripe");
-class JobSeekerPaymentService extends abstract_service_1.default {
+const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
+class AdminPaymentService extends abstract_service_1.default {
     constructor() {
         super();
     }
-    getJobSeekerPayments(req) {
+    getAllPaymentsForAdmin(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { user_id } = req.jobSeeker;
             const { search, limit, skip, status } = req.query;
             const paymentModel = this.Model.paymnentModel();
-            const { data, total } = yield paymentModel.getPaymentsForJobSeeker({
-                job_seeker_id: user_id,
+            const { data, total } = yield paymentModel.getAllPaymentsForAdmin({
                 search: search,
                 limit: Number(limit),
                 skip: Number(skip),
                 status: status,
             });
-            const session = yield stripe_1.stripe.checkout.sessions.create({
-                payment_method_types: ["card"],
-                mode: "payment",
-                line_items: [
-                    {
-                        price_data: {
-                            currency: "usd",
-                            product_data: {
-                                name: "Test Product",
-                            },
-                            unit_amount: 1000000, // in cents => $10,000
-                        },
-                        quantity: 1,
-                    },
-                ],
-                success_url: `http://localhost:5000/success`,
-                cancel_url: `http://localhost:5000/cancel`,
-            });
-            console.log({ url: session.url });
             return {
                 success: true,
                 message: this.ResMsg.HTTP_OK,
@@ -78,16 +57,15 @@ class JobSeekerPaymentService extends abstract_service_1.default {
             };
         });
     }
-    getAllPaymentLedgersForJobSeeker(req) {
+    getAllPaymentLedgersForAdmin(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { user_id } = req.jobSeeker;
             const { search, limit, skip } = req.query;
             const paymentModel = this.Model.paymnentModel();
-            const { data, total } = yield paymentModel.getAllPaymentLedgerForJobSeeker({
-                job_seeker_id: user_id,
+            const { data, total } = yield paymentModel.getAllPaymentLedgerForAdmin({
                 search: search,
                 limit: Number(limit),
                 skip: Number(skip),
+                type: userModelTypes_1.TypeUser.ADMIN,
             });
             return {
                 success: true,
@@ -99,4 +77,4 @@ class JobSeekerPaymentService extends abstract_service_1.default {
         });
     }
 }
-exports.default = JobSeekerPaymentService;
+exports.default = AdminPaymentService;

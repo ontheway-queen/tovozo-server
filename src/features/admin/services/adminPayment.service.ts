@@ -1,44 +1,22 @@
 import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
-import { stripe } from "../../../utils/miscellaneous/stripe";
+import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
 
-export default class JobSeekerPaymentService extends AbstractServices {
+export default class AdminPaymentService extends AbstractServices {
 	constructor() {
 		super();
 	}
 
-	public async getJobSeekerPayments(req: Request) {
-		const { user_id } = req.jobSeeker;
+	public async getAllPaymentsForAdmin(req: Request) {
 		const { search, limit, skip, status } = req.query;
 
 		const paymentModel = this.Model.paymnentModel();
-		const { data, total } = await paymentModel.getPaymentsForJobSeeker({
-			job_seeker_id: user_id,
+		const { data, total } = await paymentModel.getAllPaymentsForAdmin({
 			search: search as string,
 			limit: Number(limit),
 			skip: Number(skip),
 			status: status as string,
 		});
-		const session = await stripe.checkout.sessions.create({
-			payment_method_types: ["card"],
-			mode: "payment",
-			line_items: [
-				{
-					price_data: {
-						currency: "usd",
-						product_data: {
-							name: "Test Product",
-						},
-						unit_amount: 1000000, // in cents => $10,000
-					},
-					quantity: 1,
-				},
-			],
-			success_url: `http://localhost:5000/success`,
-			cancel_url: `http://localhost:5000/cancel`,
-		});
-
-		console.log({ url: session.url });
 
 		return {
 			success: true,
@@ -68,18 +46,15 @@ export default class JobSeekerPaymentService extends AbstractServices {
 		};
 	}
 
-	public async getAllPaymentLedgersForJobSeeker(req: Request) {
-		const { user_id } = req.jobSeeker;
+	public async getAllPaymentLedgersForAdmin(req: Request) {
 		const { search, limit, skip } = req.query;
 		const paymentModel = this.Model.paymnentModel();
-		const { data, total } =
-			await paymentModel.getAllPaymentLedgerForJobSeeker({
-				job_seeker_id: user_id,
-				search: search as string,
-				limit: Number(limit),
-				skip: Number(skip),
-			});
-
+		const { data, total } = await paymentModel.getAllPaymentLedgerForAdmin({
+			search: search as string,
+			limit: Number(limit),
+			skip: Number(skip),
+			type: TypeUser.ADMIN,
+		});
 		return {
 			success: true,
 			message: this.ResMsg.HTTP_OK,

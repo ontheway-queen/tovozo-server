@@ -16,6 +16,10 @@ class PaymentRouter extends abstract_router_1.default {
         this.router
             .route("/get-initialize-payments")
             .get(this.controller.getPaymentsForHotelier);
+        // get all payment ledger
+        this.router
+            .route("/payment-ledgers")
+            .get(this.controller.getAllPaymentLedgerForHotelier);
         this.router
             .route("/:id")
             .get(this.controller.getSinglePaymentForHotelier);
