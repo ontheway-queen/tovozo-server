@@ -25,26 +25,26 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_controller_1 = __importDefault(require("../../../abstract/abstract.controller"));
 const cancellationReport_validator_1 = __importDefault(require("../utils/validator/cancellationReport.validator"));
-const cancellationReport_service_1 = __importDefault(require("../services/cancellationReport.service"));
+const cancellationLog_service_1 = __importDefault(require("../services/cancellationLog.service"));
 class CancellationReportController extends abstract_controller_1.default {
     constructor() {
         super();
-        this.service = new cancellationReport_service_1.default();
+        this.service = new cancellationLog_service_1.default();
         this.validator = new cancellationReport_validator_1.default();
-        this.getReports = this.asyncWrapper.wrap({ querySchema: this.validator.reportQuerySchema }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.getReports(req), { code } = _a, data = __rest(_a, ["code"]);
+        this.getCancellationLogs = this.asyncWrapper.wrap({ querySchema: this.validator.reportQuerySchema }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.getCancellationLogs(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
-        this.getSingleReport = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.getSingleItemWithIdValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.getSingleReport(req), { code } = _a, data = __rest(_a, ["code"]);
+        this.getSingleCancellationLog = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.getSingleItemWithIdValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.getSingleCancellationLog(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
-        this.updateCancellationReportStatus = this.asyncWrapper.wrap({
+        this.updateCancellationLogStatus = this.asyncWrapper.wrap({
             bodySchema: this.validator.cancellationReportSchema,
             paramSchema: this.commonValidator.getSingleItemWithIdValidator,
             querySchema: this.validator.reportTypeQuerySchema,
         }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.updateCancellationReportStatus(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _a = yield this.service.updateCancellationLogStatus(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }

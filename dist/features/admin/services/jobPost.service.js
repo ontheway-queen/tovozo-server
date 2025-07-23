@@ -18,23 +18,26 @@ class AdminJobPostService extends abstract_service_1.default {
     constructor() {
         super();
     }
-    getAllJobPosts(req) {
+    getJobPostListForAdmin(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { limit, skip, status } = req.query;
+            const { limit, skip, status, name: search, from_date, to_date, } = req.query;
             const model = this.Model.jobPostModel();
-            const data = yield model.getHotelierJobPostList({
-                limit,
-                skip,
-                status,
+            const data = yield model.getJobPostListForAdmin({
+                limit: Number(limit) || 100,
+                skip: Number(skip) || 0,
+                status: status,
+                search: search,
+                from_date: from_date,
+                to_date: to_date,
             });
             return Object.assign({ success: true, message: this.ResMsg.HTTP_OK, code: this.StatusCode.HTTP_OK }, data);
         });
     }
-    getSingleJobPost(req) {
+    getSingleJobPostForAdmin(req) {
         return __awaiter(this, void 0, void 0, function* () {
             const { id } = req.params;
             const model = this.Model.jobPostModel();
-            const data = yield model.getSingleJobPostWithJobSeekerDetails(Number(id));
+            const data = yield model.getSingleJobPostForAdmin(Number(id));
             if (!data) {
                 throw new customError_1.default("Job post not found!", this.StatusCode.HTTP_NOT_FOUND);
             }

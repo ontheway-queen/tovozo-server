@@ -9,6 +9,8 @@ import { TypeUser } from "../utils/modelTypes/user/userModelTypes";
 import { db } from "./database";
 import RootRouter from "./router";
 import { SocketServer, addOnlineUser, io, removeOnlineUser } from "./socket";
+import { stripe } from "../utils/miscellaneous/stripe";
+import bodyParser from "body-parser";
 
 class App {
 	public app: Application = express();

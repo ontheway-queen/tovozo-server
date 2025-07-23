@@ -172,7 +172,7 @@ class AdminHotelierService extends abstract_service_1.default {
                 organizationModel.getAmenities({ organization_id: data.id }),
                 organizationModel.getPhotos(data.id),
             ]);
-            const jobPosts = yield jobPostModel.getHotelierJobPostList({
+            const jobPosts = yield jobPostModel.getJobPostListForHotelier({
                 organization_id: data.id,
             });
             return {

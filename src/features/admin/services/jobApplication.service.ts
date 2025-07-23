@@ -24,7 +24,7 @@ export default class AdminJobApplicationService extends AbstractServices {
 			const cancellationReportModel =
 				this.Model.cancellationLogModel(trx);
 
-			const jobPost = await jobPostModel.getSingleJobPost(
+			const jobPost = await jobPostModel.getSingleJobPostForJobSeeker(
 				job_post_details_id
 			);
 

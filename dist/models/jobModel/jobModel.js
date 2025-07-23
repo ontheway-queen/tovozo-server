@@ -27,49 +27,44 @@ class JobModel extends schema_1.default {
     }
     getAllJobs(param_1) {
         return __awaiter(this, arguments, void 0, function* (param, need_total = true) {
+            const { title, status, limit, skip, orderBy = "id", orderTo = "desc", } = param;
+            const buildFilter = (qb) => {
+                qb.where("is_deleted", false);
+                if (title) {
+                    qb.andWhere((builder) => {
+                        builder
+                            .where("title", "ilike", `%${title}%`)
+                            .orWhere("details", "ilike", `%${title}%`);
+                    });
+                }
+                if (status !== undefined) {
+                    qb.andWhere("status", status);
+                }
+            };
             const data = yield this.db(this.TABLES.jobs)
                 .withSchema(this.DBO_SCHEMA)
-                .select("id", "title", "details", "status")
-                .where((qb) => {
-                qb.where("is_deleted", 0);
-                if (param.title) {
-                    qb.andWhere("title", param.title);
-                }
-                if (param.status) {
-                    qb.andWhere("status", param.status);
-                }
-            })
-                .orderBy(param.orderBy || "id", param.orderTo || "desc")
-                .limit(Number(param.limit || "100"))
-                .offset(Number(param.skip || "0"));
+                .select("id", "title", "details", "hourly_rate", "job_seeker_pay", "platform_fee", "status", "is_deleted")
+                .where(buildFilter)
+                .orderBy(orderBy, orderTo)
+                .limit(Number(limit || 100))
+                .offset(Number(skip || 0));
             let total;
             if (need_total) {
                 const totalQuery = yield this.db(this.TABLES.jobs)
                     .withSchema(this.DBO_SCHEMA)
                     .count("id as total")
-                    .where((qb) => {
-                    qb.where("is_deleted", false);
-                    if (param.title) {
-                        qb.andWhere("title", param.title);
-                    }
-                    if (param.status) {
-                        qb.andWhere("status", param.status);
-                    }
-                })
+                    .where(buildFilter)
                     .first();
                 total = (totalQuery === null || totalQuery === void 0 ? void 0 : totalQuery.total) ? Number(totalQuery.total) : undefined;
             }
-            return {
-                data,
-                total,
-            };
+            return { data, total };
         });
     }
     getSingleJob(id) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db(this.TABLES.jobs)
                 .withSchema(this.DBO_SCHEMA)
-                .select("id", "title", "details", "status")
+                .select("*")
                 .where((qb) => {
                 qb.where("is_deleted", false);
                 qb.andWhere({ id });

@@ -27,7 +27,7 @@ class AdminJobApplicationService extends abstract_service_1.default {
                 const model = this.Model.jobApplicationModel(trx);
                 const jobPostModel = this.Model.jobPostModel(trx);
                 const cancellationReportModel = this.Model.cancellationLogModel(trx);
-                const jobPost = yield jobPostModel.getSingleJobPost(job_post_details_id);
+                const jobPost = yield jobPostModel.getSingleJobPostForJobSeeker(job_post_details_id);
                 if (!jobPost) {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
                 }

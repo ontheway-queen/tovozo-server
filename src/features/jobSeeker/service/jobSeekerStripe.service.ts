@@ -25,7 +25,7 @@ export default class JobSeekerStripeService extends AbstractServices {
 					this.StatusCode.HTTP_NOT_FOUND
 				);
 			}
-
+			console.log({ user });
 			if (user[0].stripe_acc_id) {
 				throw new CustomError(
 					"Stripe account already exists for this user",

@@ -10,8 +10,8 @@ export default class AdminJobPostRouter extends AbstractRouter {
 	}
 
 	private callRouter() {
-		this.router.route("/").get(this.controller.getAllJobPosts);
+		this.router.route("/").get(this.controller.getJobPostListForAdmin);
 
-		this.router.route("/:id").get(this.controller.getSingleJobPost);
+		this.router.route("/:id").get(this.controller.getSingleJobPostForAdmin);
 	}
 }

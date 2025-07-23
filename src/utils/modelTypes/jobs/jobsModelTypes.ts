@@ -1,6 +1,9 @@
 export interface ICreateJobPayload {
 	title: string;
-	details?: string;
+	details: string;
+	hourly_rate: number;
+	job_seeker_pay: number;
+	platform_fee: number;
 }
 
 export interface IJobGetParam {

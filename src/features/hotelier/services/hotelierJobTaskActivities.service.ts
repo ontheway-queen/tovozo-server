@@ -72,7 +72,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 
 			await jobPostModel.updateJobPostDetailsStatus(
 				application.job_post_details_id,
-				JOB_POST_DETAILS_STATUS.In_Progress
+				JOB_POST_DETAILS_STATUS.In_Progress as unknown as IJobPostDetailsStatus
 			);
 
 			return {
@@ -246,7 +246,6 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 					this.StatusCode.HTTP_FORBIDDEN
 				);
 			}
-			console.log({ taskActivity });
 
 			const application = await jobApplicationModel.getMyJobApplication({
 				job_application_id: taskActivity.job_application_id,
@@ -259,7 +258,11 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 					this.StatusCode.HTTP_NOT_FOUND
 				);
 			}
-			console.log({ application });
+
+			const jobPost = await jobPostModel.getSingleJobPostForAdmin(
+				application.job_post_details_id
+			);
+
 			await jobApplicationModel.updateMyJobApplicationStatus(
 				taskActivity.job_application_id,
 				taskActivity.job_seeker_id,
@@ -286,14 +289,18 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 			const paymentPayload = {
 				application_id: application.job_application_id,
 				total_amount: Number(
-					(totalWorkingHours * Number(HotelierFixedCharge)).toFixed(2)
+					(totalWorkingHours * Number(jobPost.hourly_rate)).toFixed(2)
 				),
 				status: PAYMENT_STATUS.UNPAID,
 				job_seeker_pay: Number(
-					(totalWorkingHours * JobSeekerFixedCharge).toFixed(2)
+					(
+						totalWorkingHours * Number(jobPost.job_seeker_pay)
+					).toFixed(2)
 				),
 				platform_fee: Number(
-					(totalWorkingHours * PlatformFee).toFixed(2)
+					(totalWorkingHours * Number(jobPost.platform_fee)).toFixed(
+						2
+					)
 				),
 				payment_no: `TVZ-PAY-${paymentId}`,
 			};
@@ -301,7 +308,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 			console.log({ paymentPayload });
 
 			await paymentModel.initializePayment(paymentPayload);
-
+			console.log(1);
 			await jobTaskActivitiesModel.updateJobTaskActivity(
 				taskActivity.id,
 				{
@@ -309,7 +316,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 					total_working_hours: totalWorkingHours,
 				}
 			);
-
+			console.log(2);
 			await jobPostModel.updateJobPostDetailsStatus(
 				application.job_post_details_id,
 				JOB_POST_DETAILS_STATUS.WorkFinished as unknown as IJobPostDetailsStatus

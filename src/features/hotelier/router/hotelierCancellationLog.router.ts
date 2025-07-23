@@ -1,5 +1,5 @@
 import AbstractRouter from "../../../abstract/abstract.router";
-import HotelierCancellationReportController from "../controller/hotelierCancellationReport.controller";
+import HotelierCancellationReportController from "../controller/hotelierCancellationLog.controller";
 
 export default class HotelierCancellationLogRouter extends AbstractRouter {
 	private controller = new HotelierCancellationReportController();

@@ -62,7 +62,7 @@ class PaymentService extends abstract_service_1.default {
     createCheckoutSession(req) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const { total_amount, job_title, job_seeker_id, job_seeker_name, platform_fee, stripe_acc_id, } = req.body;
+                const { job_title, job_seeker_id, job_seeker_name, stripe_acc_id } = req.body;
                 const id = Number(req.params.id);
                 const { user_id } = req.hotelier;
                 if (!id) {
@@ -75,10 +75,6 @@ class PaymentService extends abstract_service_1.default {
                 }
                 if (payment.status === constants_1.PAYMENT_STATUS.PAID) {
                     throw new customError_1.default("The payment is already paid", this.StatusCode.HTTP_CONFLICT);
-                }
-                if (payment.total_amount !== total_amount ||
-                    payment.platform_fee !== platform_fee) {
-                    throw new customError_1.default(`Payment mismatch: expected total = ${payment.total_amount}, received total = ${total_amount}; expected fee = ${payment.platform_fee}, received fee = ${platform_fee}`, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
                 }
                 const loginLink = yield stripe_1.stripe.accounts.createLoginLink("acct_1RnAa4FSzTsJiGrd");
                 console.log("Login Link:", loginLink.url);
@@ -96,13 +92,13 @@ class PaymentService extends abstract_service_1.default {
                                 product_data: {
                                     name: `Payment for ${job_title} by ${job_seeker_name}`,
                                 },
-                                unit_amount: Math.round(total_amount * 100),
+                                unit_amount: Math.round(payment.total_amount * 100),
                             },
                             quantity: 1,
                         },
                     ],
                     payment_intent_data: {
-                        application_fee_amount: platform_fee * 100,
+                        application_fee_amount: Math.round(payment.platform_fee * 100),
                         transfer_data: {
                             destination: stripe_acc_id,
                         },

@@ -10,15 +10,7 @@ class HotelierJobPostValidator {
     constructor() {
         this.createJobPostSchema = joi_1.default.object({
             job_post: joi_1.default.object({
-                title: joi_1.default.string().required(),
-                details: joi_1.default.string().optional(),
-                created_time: joi_1.default.string().isoDate().optional(),
                 expire_time: joi_1.default.string().isoDate().optional(),
-                hourly_rate: joi_1.default.number().required(),
-                prefer_gender: joi_1.default.string()
-                    .valid(...constants_1.GENDERS)
-                    .optional(),
-                requirements: joi_1.default.string().optional(),
             }).required(),
             job_post_details: joi_1.default.array()
                 .items(joi_1.default.object({
@@ -35,7 +27,10 @@ class HotelierJobPostValidator {
             status: joi_1.default.string()
                 .valid(...constants_1.JOB_POST_DETAILS_STATUS_ENUM)
                 .optional(),
+            name: joi_1.default.string().optional(),
             title: joi_1.default.string().optional(),
+            from_date: joi_1.default.string().optional(),
+            to_date: joi_1.default.string().optional(),
         });
         this.getSingleJobPostSchema = joi_1.default.object({
             id: joi_1.default.number().integer().required(),

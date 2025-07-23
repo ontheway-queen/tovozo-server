@@ -8,15 +8,7 @@ import {
 export class HotelierJobPostValidator {
 	public createJobPostSchema = Joi.object({
 		job_post: Joi.object({
-			title: Joi.string().required(),
-			details: Joi.string().optional(),
-			created_time: Joi.string().isoDate().optional(),
 			expire_time: Joi.string().isoDate().optional(),
-			hourly_rate: Joi.number().required(),
-			prefer_gender: Joi.string()
-				.valid(...GENDERS)
-				.optional(),
-			requirements: Joi.string().optional(),
 		}).required(),
 		job_post_details: Joi.array()
 			.items(
@@ -36,7 +28,10 @@ export class HotelierJobPostValidator {
 		status: Joi.string()
 			.valid(...JOB_POST_DETAILS_STATUS_ENUM)
 			.optional(),
+		name: Joi.string().optional(),
 		title: Joi.string().optional(),
+		from_date: Joi.string().optional(),
+		to_date: Joi.string().optional(),
 	});
 
 	public getSingleJobPostSchema = Joi.object({

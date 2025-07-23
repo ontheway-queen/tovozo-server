@@ -1,5 +1,5 @@
 import AbstractRouter from "../../../abstract/abstract.router";
-import AdminCancellationReportController from "../controller/cancellationReport.controller";
+import AdminCancellationReportController from "../controller/cancellationLog.controller";
 
 class CancellationReportRouter extends AbstractRouter {
 	private controller = new AdminCancellationReportController();
@@ -10,12 +10,12 @@ class CancellationReportRouter extends AbstractRouter {
 	}
 
 	private callRouter() {
-		this.router.route("/").get(this.controller.getReports);
+		this.router.route("/").get(this.controller.getCancellationLogs);
 
 		this.router
 			.route("/:id")
-			.get(this.controller.getSingleReport)
-			.patch(this.controller.updateCancellationReportStatus);
+			.get(this.controller.getSingleCancellationLog)
+			.patch(this.controller.updateCancellationLogStatus);
 	}
 }
 

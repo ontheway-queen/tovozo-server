@@ -65,11 +65,12 @@ export default class HotelierCancellationLogService extends AbstractServices {
 		return await this.db.transaction(async (trx) => {
 			const { id } = req.params;
 			const model = this.Model.cancellationLogModel(trx);
-
+			console.log({ id });
 			const jobPostReport = await model.getSingleJobPostCancellationLog(
 				Number(id),
 				CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST
 			);
+			console.log({ jobPostReport });
 			if (!jobPostReport) {
 				throw new CustomError(
 					"Job post cancellation report not found",
