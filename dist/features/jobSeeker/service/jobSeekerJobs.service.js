@@ -18,10 +18,10 @@ const constants_1 = require("../../../utils/miscellaneous/constants");
 class JobSeekerServices extends abstract_service_1.default {
     constructor() {
         super();
-        this.getJobs = (req) => __awaiter(this, void 0, void 0, function* () {
+        this.getJobPostListForJobSeeker = (req) => __awaiter(this, void 0, void 0, function* () {
             const { user_id } = req.jobSeeker;
             const model = this.Model.jobPostModel();
-            const { data, total } = yield model.getJobPostList(Object.assign(Object.assign({}, req), { user_id, category_id: req.query.category_id, limit: req.query.limit, skip: req.query.skip, status: constants_1.JOB_POST_DETAILS_STATUS.Pending }));
+            const { data, total } = yield model.getJobPostListForJobSeeker(Object.assign(Object.assign({}, req), { user_id, category_id: req.query.category_id, limit: req.query.limit, skip: req.query.skip, status: constants_1.JOB_POST_DETAILS_STATUS.Pending }));
             return {
                 success: true,
                 message: this.ResMsg.HTTP_OK,
@@ -30,10 +30,10 @@ class JobSeekerServices extends abstract_service_1.default {
                 total: total || 0,
             };
         });
-        this.getJob = (req) => __awaiter(this, void 0, void 0, function* () {
+        this.getSingleJobPostForJobSeeker = (req) => __awaiter(this, void 0, void 0, function* () {
             const { id } = req.params;
             const model = this.Model.jobPostModel();
-            const data = yield model.getSingleJobPost(Number(id));
+            const data = yield model.getSingleJobPostForJobSeeker(Number(id));
             return {
                 success: true,
                 message: this.ResMsg.HTTP_OK,

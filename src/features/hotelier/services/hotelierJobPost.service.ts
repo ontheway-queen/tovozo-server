@@ -4,6 +4,7 @@ import CustomError from "../../../utils/lib/customError";
 import {
 	CANCELLATION_REPORT_TYPE,
 	JOB_POST_DETAILS_STATUS,
+	JOB_POST_STATUS,
 } from "../../../utils/miscellaneous/constants";
 import {
 	IGetJobPostListParams,
@@ -63,9 +64,14 @@ class HotelierJobPostService extends AbstractServices {
 					);
 				}
 
+				console.log({ checkJob });
+
 				jobPostDetails.push({
 					...detail,
 					job_post_id: res[0].id,
+					hourly_rate: checkJob.hourly_rate,
+					job_seeker_pay: checkJob.job_seeker_pay,
+					platform_fee: checkJob.platform_fee,
 				});
 			}
 
@@ -82,7 +88,7 @@ class HotelierJobPostService extends AbstractServices {
 		const { limit, skip, status, title } = req.query;
 		const { user_id } = req.hotelier;
 		const model = this.Model.jobPostModel();
-		const data = await model.getHotelierJobPostList({
+		const data = await model.getJobPostListForHotelier({
 			user_id,
 			limit,
 			skip,
@@ -97,12 +103,10 @@ class HotelierJobPostService extends AbstractServices {
 		};
 	}
 
-	public async getSingleJobPostWithJobSeekerDetails(req: Request) {
+	public async getSingleJobPostForHotelier(req: Request) {
 		const { id } = req.params;
 		const model = this.Model.jobPostModel();
-		const data = await model.getSingleJobPostWithJobSeekerDetails(
-			Number(id)
-		);
+		const data = await model.getSingleJobPostForHotelier(Number(id));
 		if (!data) {
 			throw new CustomError(
 				"Job post not found!",
@@ -121,9 +125,10 @@ class HotelierJobPostService extends AbstractServices {
 		const { id } = req.params;
 		const body = req.body;
 		return await this.db.transaction(async (trx) => {
+			const jobModel = this.Model.jobModel(trx);
 			const model = this.Model.jobPostModel(trx);
 			const jobPost: IHoiteleirJob =
-				await model.getSingleJobPostWithJobSeekerDetails(Number(id));
+				await model.getSingleJobPostForHotelier(Number(id));
 			if (!jobPost) {
 				throw new CustomError(
 					"Job post not found!",
@@ -152,7 +157,21 @@ class HotelierJobPostService extends AbstractServices {
 				);
 			}
 			if (hasJobPostDetails) {
-				const { start_time, end_time } = body.job_post_details;
+				const { job_id, start_time, end_time } = body.job_post_details;
+				const job = await jobModel.getSingleJob(job_id);
+				if (!job) {
+					throw new CustomError(
+						"The requested job with the ID is not found.",
+						this.StatusCode.HTTP_BAD_REQUEST
+					);
+				}
+				if (job.is_deleted) {
+					throw new CustomError(
+						"This job has been deleted for some reason.",
+						this.StatusCode.HTTP_BAD_REQUEST
+					);
+				}
+
 				if (
 					start_time &&
 					end_time &&
@@ -191,9 +210,7 @@ class HotelierJobPostService extends AbstractServices {
 			const model = this.Model.jobPostModel(trx);
 			const cancellationLogModel = this.Model.cancellationLogModel(trx);
 
-			const jobPost = await model.getSingleJobPostWithJobSeekerDetails(
-				Number(id)
-			);
+			const jobPost = await model.getSingleJobPostForHotelier(Number(id));
 			if (!jobPost) {
 				throw new CustomError(
 					"Job post not found!",

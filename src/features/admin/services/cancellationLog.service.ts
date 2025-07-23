@@ -11,9 +11,9 @@ import {
 import { IGetReportsQuery } from "../../../utils/modelTypes/cancellationReport/cancellationReport.types";
 import { IJobPostDetailsStatus } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
 
-class CancellationReportService extends AbstractServices {
+class CancellationLogService extends AbstractServices {
 	// get reports
-	public async getReports(req: Request) {
+	public async getCancellationLogs(req: Request) {
 		const query: IGetReportsQuery = req.query as any;
 		const model = this.Model.cancellationLogModel();
 		if (
@@ -44,7 +44,7 @@ class CancellationReportService extends AbstractServices {
 	}
 
 	// get single report
-	public async getSingleReport(req: Request) {
+	public async getSingleCancellationLog(req: Request) {
 		const { id } = req.params as unknown as { id: number };
 		const { report_type } = req.query;
 		const model = this.Model.cancellationLogModel();
@@ -75,7 +75,7 @@ class CancellationReportService extends AbstractServices {
 	}
 
 	// update cancellation report statu
-	public async updateCancellationReportStatus(req: Request) {
+	public async updateCancellationLogStatus(req: Request) {
 		return await this.db.transaction(async (trx) => {
 			const { user_id } = req.admin;
 			const body = req.body;
@@ -92,6 +92,7 @@ class CancellationReportService extends AbstractServices {
 					Number(id),
 					report_type
 				);
+				console.log({ report });
 			} else if (
 				report_type === CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION
 			) {
@@ -126,17 +127,20 @@ class CancellationReportService extends AbstractServices {
 			if (body.status === CANCELLATION_REPORT_STATUS.APPROVED) {
 				await reportModel.updateCancellationLogStatus(Number(id), body);
 				if (report_type === CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST) {
-					const jobPost = await jobPostModel.getSingleJobPost(
-						report.id
-					);
-
+					const jobPost =
+						await jobPostModel.getSingleJobPostForHotelier(
+							report.related_job_post_details
+						);
+					console.log({ jobPost });
 					await jobPostModel.cancelJobPost(
 						Number(jobPost.job_post_id)
 					);
+
 					await jobPostModel.updateJobPostDetailsStatus(
-						Number(jobPost.job_post_id),
-						JOB_POST_DETAILS_STATUS.Cancelled as unknown as IJobPostDetailsStatus
+						Number(jobPost.id),
+						JOB_POST_DETAILS_STATUS.Cancelled
 					);
+
 					await jobApplicationModel.cancelApplication(
 						Number(jobPost.job_post_id)
 					);
@@ -167,4 +171,4 @@ class CancellationReportService extends AbstractServices {
 	}
 }
 
-export default CancellationReportService;
+export default CancellationLogService;

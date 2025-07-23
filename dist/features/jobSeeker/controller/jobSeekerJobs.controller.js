@@ -30,12 +30,12 @@ class JobSeekerJobsController extends abstract_controller_1.default {
     constructor() {
         super();
         this.service = new jobSeekerJobs_service_1.JobSeekerServices();
-        this.getJobs = this.asyncWrapper.wrap({ querySchema: this.commonValidator.getLimitSkipQueryValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.getJobs(req), { code } = _a, data = __rest(_a, ["code"]);
+        this.getJobPostListForJobSeeker = this.asyncWrapper.wrap({ querySchema: this.commonValidator.getLimitSkipQueryValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.getJobPostListForJobSeeker(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
-        this.getJob = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.getSingleItemWithIdValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.getJob(req), { code } = _a, data = __rest(_a, ["code"]);
+        this.getSingleJobPostForJobSeeker = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.getSingleItemWithIdValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.getSingleJobPostForJobSeeker(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }

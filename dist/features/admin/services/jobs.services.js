@@ -21,6 +21,9 @@ class AdminJobService extends abstract_service_1.default {
             const body = req.body;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const model = this.Model.jobModel(trx);
+                if (body.hourly_rate !== body.job_seeker_pay + body.platform_fee) {
+                    throw new customError_1.default("Hourly rate must be equal to job_seeker_pay and platform_fee.", this.StatusCode.HTTP_BAD_REQUEST);
+                }
                 const check = yield model.getAllJobs({ title: body.title, limit: "1" }, false);
                 if (check.data.length) {
                     throw new customError_1.default("Job title already exists!", this.StatusCode.HTTP_CONFLICT);

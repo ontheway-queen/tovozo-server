@@ -10,18 +10,21 @@ export default class AdminJobPostController extends AbstractController {
 		super();
 	}
 
-	public getAllJobPosts = this.asyncWrapper.wrap(
+	public getJobPostListForAdmin = this.asyncWrapper.wrap(
 		{ querySchema: this.validator.getJobPostSchema },
 		async (req: Request, res: Response) => {
-			const { code, ...data } = await this.service.getAllJobPosts(req);
+			const { code, ...data } = await this.service.getJobPostListForAdmin(
+				req
+			);
 			res.status(code).json(data);
 		}
 	);
 
-	public getSingleJobPost = this.asyncWrapper.wrap(
+	public getSingleJobPostForAdmin = this.asyncWrapper.wrap(
 		{ paramSchema: this.validator.getSingleJobPostSchema },
 		async (req: Request, res: Response) => {
-			const { code, ...data } = await this.service.getSingleJobPost(req);
+			const { code, ...data } =
+				await this.service.getSingleJobPostForAdmin(req);
 			res.status(code).json(data);
 		}
 	);

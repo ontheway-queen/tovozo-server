@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const adminChatRouter_1 = __importDefault(require("./router/adminChatRouter"));
 const administration_router_1 = __importDefault(require("./router/administration.router"));
-const cancellationReport_router_1 = __importDefault(require("./router/cancellationReport.router"));
+const cancellationLog_router_1 = __importDefault(require("./router/cancellationLog.router"));
 const hotelier_router_1 = __importDefault(require("./router/hotelier.router"));
 const jobApplication_router_1 = __importDefault(require("./router/jobApplication.router"));
 const jobPost_router_1 = __importDefault(require("./router/jobPost.router"));
@@ -23,7 +23,7 @@ class AdminRootRouter {
         this.adminJobRouter = new jobs_router_1.default();
         this.adminJobSeekerRouter = new jobSeeker_router_1.default();
         this.adminHotelierRouter = new hotelier_router_1.default();
-        this.cancellationReportRouter = new cancellationReport_router_1.default();
+        this.cancellationReportRouter = new cancellationLog_router_1.default();
         this.jobPostRouter = new jobPost_router_1.default();
         this.reportRouter = new report_router_1.default();
         this.jobApplicationRouter = new jobApplication_router_1.default();

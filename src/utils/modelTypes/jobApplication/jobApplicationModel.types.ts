@@ -1,6 +1,7 @@
 import { JOB_APPLICATION_STATUS } from "../../miscellaneous/constants";
 
-export type IJobApplicationStatus = keyof typeof JOB_APPLICATION_STATUS;
+export type IJobApplicationStatus =
+	(typeof JOB_APPLICATION_STATUS)[keyof typeof JOB_APPLICATION_STATUS];
 
 export interface ICreateJobApplicationPayload {
 	job_post_details_id: number;

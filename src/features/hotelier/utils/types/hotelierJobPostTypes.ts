@@ -30,6 +30,8 @@ export interface IHoiteleirJob {
 	title: string;
 	job_category: IGetJobResponse;
 	hourly_rate: string;
+	job_seeker_pay: string;
+	platform_fee: string;
 	created_time: string;
 	prefer_gender: IGenderType;
 	organization_name: string;

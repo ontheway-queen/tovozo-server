@@ -23,68 +23,49 @@ class CancellationLogModel extends schema_1.default {
     getJobPostCancellationLogs(query) {
         return __awaiter(this, void 0, void 0, function* () {
             const { user_id, report_type, status, limit, skip, need_total = true, searchQuery, } = query;
-            const data = yield this.db("cancellation_logs as cr")
+            const baseQuery = this.db("cancellation_logs as cr")
                 .withSchema(this.DBO_SCHEMA)
-                .select("cr.id", "cr.related_id as related_job_post_details", "cr.report_type", "cr.status", "u.name as reporter_name", this.db.raw(`json_build_object(
-                    'title', jp.title,
-                    'details', jp.details,
-                    'requirements',jp.requirements,
-                    'prefer_gender', jp.prefer_gender,
-                    'hourly_rate', jp.hourly_rate,
-                    'start_time', jpd.start_time,
-                    'end_time', jpd.end_time
-                ) as job_post_details`), this.db.raw(`json_build_object(
-                    'id', category.id,
-                    'title', category.title,
-                    'details', category.details,
-                    'status', category.status,
-                    'is_deleted', category.is_deleted
-                    ) as category`), "cr.created_at as reported_at")
+                .select("cr.id", "cr.related_id as related_job_post_details", "cr.report_type", "cr.status", "u.name as reporter_name", "j.id as job_id", "j.title", "j.details", "j.status as job_status", "cr.created_at as reported_at", this.db.raw(`json_build_object(
+          'start_time', jpd.start_time,
+          'end_time', jpd.end_time
+        ) as job_post_details`))
                 .leftJoin("user as u", "u.id", "cr.reporter_id")
                 .leftJoin("job_post_details as jpd", "cr.related_id", "jpd.id")
                 .leftJoin("job_post as jp", "jpd.job_post_id", "jp.id")
-                .leftJoin("jobs as category", "jpd.job_id", "category.id")
+                .leftJoin("jobs as j", "jpd.job_id", "j.id")
                 .where((qb) => {
-                if (user_id) {
+                if (user_id)
                     qb.andWhere("cr.reporter_id", user_id);
-                }
-                if (searchQuery) {
-                    qb.andWhereILike("jp.title", `%${searchQuery}%`);
-                }
-                if (report_type) {
+                if (report_type)
                     qb.andWhere("cr.report_type", report_type);
-                }
-                if (status) {
+                if (status)
                     qb.andWhere("cr.status", status);
-                }
+                if (searchQuery)
+                    qb.andWhereILike("j.title", `%${searchQuery}%`);
             })
                 .limit(limit || 100)
                 .offset(skip || 0);
+            const data = yield baseQuery;
             let total;
             if (need_total) {
-                const totalQuery = yield this.db("cancellation_logs as cr")
+                const totalResult = yield this.db("cancellation_logs as cr")
                     .withSchema(this.DBO_SCHEMA)
                     .count("cr.id as total")
-                    .leftJoin("user as u", "u.id", "cr.reporter_id")
                     .leftJoin("job_post_details as jpd", "cr.related_id", "jpd.id")
                     .leftJoin("job_post as jp", "jpd.job_post_id", "jp.id")
-                    .leftJoin("jobs as category", "jpd.job_id", "category.id")
+                    .leftJoin("jobs as j", "jpd.job_id", "j.id")
                     .where((qb) => {
-                    if (user_id) {
+                    if (user_id)
                         qb.andWhere("cr.reporter_id", user_id);
-                    }
-                    if (searchQuery) {
-                        qb.andWhereILike("jp.title", `%${searchQuery}%`);
-                    }
-                    if (report_type) {
+                    if (report_type)
                         qb.andWhere("cr.report_type", report_type);
-                    }
-                    if (status) {
+                    if (status)
                         qb.andWhere("cr.status", status);
-                    }
+                    if (searchQuery)
+                        qb.andWhereILike("j.title", `%${searchQuery}%`);
                 })
                     .first();
-                total = (totalQuery === null || totalQuery === void 0 ? void 0 : totalQuery.total) ? Number(totalQuery.total) : 0;
+                total = (totalResult === null || totalResult === void 0 ? void 0 : totalResult.total) ? Number(totalResult.total) : 0;
             }
             return { data, total };
         });
@@ -94,11 +75,6 @@ class CancellationLogModel extends schema_1.default {
             return yield this.db("cancellation_logs as cr")
                 .withSchema(this.DBO_SCHEMA)
                 .select("cr.id", "cr.related_id as related_job_post_details", "cr.report_type", "cr.status", "u.name as reporter_name", this.db.raw(`json_build_object(
-                    'title', jp.title,
-                    'details', jp.details,
-                    'requirements',jp.requirements,
-                    'prefer_gender', jp.prefer_gender,
-                    'hourly_rate', jp.hourly_rate,
                     'start_time', jpd.start_time,
                     'end_time', jpd.end_time
                 ) as job_post_details`), this.db.raw(`json_build_object(

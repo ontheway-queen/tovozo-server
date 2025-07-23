@@ -84,23 +84,23 @@ export const OTP_TYPE_TWO_FA_ADMIN = "2fa_admin";
 export const OTP_TYPE_TWO_FA_HOTELIER = "2fa_hotelier";
 
 export const USER_STATUS = {
-	ACTIVE: "active",
-	INACTIVE: "inactive",
-	PENDING: "pending",
-	BLOCKED: "blocked",
-	UNDER_REVIEW: "under-review",
+	ACTIVE: "Active",
+	INACTIVE: "Inactive",
+	PENDING: "Pending",
+	BLOCKED: "Blocked",
+	UNDER_REVIEW: "Under Review",
 } as const;
 
 export const USER_STATUS_ENUM = [
-	"active",
-	"inactive",
-	"pending",
-	"blocked",
-	"under-review",
+	"Active",
+	"Inactive",
+	"Pending",
+	"Blocked",
+	"Under Review",
 ] as const;
 
 export const USER_AUTHENTICATION_VIEW = {
-	JOB_SEEKER: "vw_job_seeker_auth",
+	JOB_SEEKER: "job_seeker_auth_view",
 	HOTELIER: "vw_hotelier_auth",
 	ADMIN: "vw_admin_auth",
 } as const;
@@ -123,6 +123,15 @@ export const LOGIN_TOKEN_EXPIRES_IN = "14d";
 // Gender
 export const GENDERS = ["Male", "Female", "Other"] as const;
 
+// Job Post Status
+export const JOB_POST_STATUS = {
+	Live: "Live",
+	Cancelled: "Cancelled",
+	Expired: "Expired",
+} as const;
+
+export const JOB_POST_STATUS_ENUM = ["Live", "Cancelled", "Expired"] as const;
+
 // Job post details status
 export const JOB_POST_DETAILS_STATUS = {
 	Pending: "Pending",
@@ -131,7 +140,7 @@ export const JOB_POST_DETAILS_STATUS = {
 	Completed: "Completed",
 	WorkFinished: "Work Finished",
 	Cancelled: "Cancelled",
-	In_Progress: "In_Progress",
+	In_Progress: "In Progress",
 } as const;
 
 export const JOB_POST_DETAILS_STATUS_ENUM = [
@@ -141,7 +150,7 @@ export const JOB_POST_DETAILS_STATUS_ENUM = [
 	"Completed",
 	"Work Finished",
 	"Cancelled",
-	"In_Progress",
+	"In Progress",
 ] as const;
 
 export const GENDER_TYPE = {
@@ -165,68 +174,70 @@ export const CANCELLATION_REPORT_TYPE = {
 } as const;
 
 export const CANCELLATION_REPORT_STATUS_ENUM = [
-	"PENDING",
-	"APPROVED",
-	"REJECTED",
-	"CANCELLED",
+	"Pending",
+	"Approved",
+	"Rejected",
+	"Cancelled",
 ] as const;
 
 export const CANCELLATION_REPORT_STATUS = {
-	PENDING: "PENDING",
-	APPROVED: "APPROVED",
-	REJECTED: "REJECTED",
-	CANCELLED: "CANCELLED",
+	PENDING: "Pending",
+	APPROVED: "Approved",
+	REJECTED: "Rejected",
+	CANCELLED: "Cancelled",
 };
 
 export const JOB_APPLICATION_STATUS = {
-	PENDING: "PENDING",
-	ASSIGNED: "ASSIGNED",
-	CANCELLED: "CANCELLED",
-	COMPLETED: "COMPLETED",
-	IN_PROGRESS: "IN_PROGRESS",
-	ENDED: "ENDED",
+	PENDING: "Pending",
+	ASSIGNED: "Assigned",
+	CANCELLED: "Cancelled",
+	COMPLETED: "Completed",
+	IN_PROGRESS: "In Progress",
+	ENDED: "Ended",
 } as const;
 
 export const JOB_APPLICATION_STATUS_ENUM = [
-	"PENDING",
-	"ASSIGNED",
-	"CANCELLED",
-	"COMPLETED",
-	"IN_PROGRESS",
-	"ENDED",
-];
+	"Pending",
+	"Assigned",
+	"In Progress",
+	"Ended",
+	"Cancelled",
+	"Completed",
+] as const;
 
 export const PAYMENT_STATUS = {
-	UNPAID: "UNPAID",
-	PAID: "PAID",
-	FAILED: "FAILED",
-	PARTIAL_PAID: "PARTIAL_PAID",
+	UNPAID: "Unpaid",
+	PAID: "Paid",
+	FAILED: "Failed",
+	PARTIAL_PAID: "Partial Paid",
 } as const;
 
+export const PAYMENT_STATUS_ENUM = [
+	"Unpaid",
+	"Paid",
+	"Failed",
+	"Partial Paid",
+] as const;
+
 export const PAYMENT_TYPE = {
-	CASH: "CASH",
-	BANK_TRANSFER: "BANK_TRANSFER",
-	ONLINE_PAYMENT: "ONLINE_PAYMENT",
-	MOBILE_PAYMENT: "MOBILE_PAYMENT",
+	CARD: "Card",
+	CASH: "Cash",
+	BANK_TRANSFER: "Bank Transfer",
+	ONLINE_PAYMENT: "Online Payment",
+	MOBILE_PAYMENT: "Mobile Payment",
 } as const;
 
 export const PAYMENT_TYPE_ENUM = [
-	"CASH",
-	"BANK_TRANSFER",
-	"ONLINE_PAYMENT",
-	"MOBILE_PAYMENT",
-] as const;
-
-export const PAYMENT_STATUS_ENUM = [
-	"UNPAID",
-	"PAID",
-	"FAILED",
-	"PARTIAL_PAID",
+	"Card",
+	"Cash",
+	"Bank Transfer",
+	"Online Payment",
+	"Mobile Payment",
 ] as const;
 
 export const PAY_LEDGER_TRX_TYPE = {
-	IN: "IN",
-	OUT: "OUT",
+	IN: "In",
+	OUT: "Out",
 } as const;
 
 export const REPORT_TYPE = {

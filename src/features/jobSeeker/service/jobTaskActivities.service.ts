@@ -193,6 +193,12 @@ export default class JobTaskActivitiesService extends AbstractServices {
 				job_task_activity_id: Number(id),
 			});
 			console.log({ taskList });
+			if (!taskList.length || taskList.length === 0) {
+				throw new CustomError(
+					"The organization has not assigned any tasks for this job yet. Please wait until tasks are assigned.",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
 			const incompleteTasks = taskList.filter(
 				(task) => !task.is_completed
 			);

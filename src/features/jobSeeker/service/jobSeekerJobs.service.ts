@@ -8,10 +8,10 @@ export class JobSeekerServices extends AbstractServices {
 		super();
 	}
 
-	public getJobs = async (req: Request) => {
+	public getJobPostListForJobSeeker = async (req: Request) => {
 		const { user_id } = req.jobSeeker;
 		const model = this.Model.jobPostModel();
-		const { data, total } = await model.getJobPostList({
+		const { data, total } = await model.getJobPostListForJobSeeker({
 			...req,
 			user_id,
 			category_id: req.query.category_id,
@@ -28,10 +28,10 @@ export class JobSeekerServices extends AbstractServices {
 		};
 	};
 
-	public getJob = async (req: Request) => {
+	public getSingleJobPostForJobSeeker = async (req: Request) => {
 		const { id } = req.params;
 		const model = this.Model.jobPostModel();
-		const data = await model.getSingleJobPost(Number(id));
+		const data = await model.getSingleJobPostForJobSeeker(Number(id));
 		return {
 			success: true,
 			message: this.ResMsg.HTTP_OK,

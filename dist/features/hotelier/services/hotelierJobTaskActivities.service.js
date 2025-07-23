@@ -164,7 +164,6 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                     constants_1.JOB_APPLICATION_STATUS.IN_PROGRESS) {
                     throw new customError_1.default(`You cannot perform this action because the application is still in progress.`, this.StatusCode.HTTP_FORBIDDEN);
                 }
-                console.log({ taskActivity });
                 const application = yield jobApplicationModel.getMyJobApplication({
                     job_application_id: taskActivity.job_application_id,
                     job_seeker_id: taskActivity.job_seeker_id,
@@ -172,7 +171,7 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 if (!application) {
                     throw new customError_1.default(`Job application not found or does not belong to you.`, this.StatusCode.HTTP_NOT_FOUND);
                 }
-                console.log({ application });
+                const jobPost = yield jobPostModel.getSingleJobPostForAdmin(application.job_post_details_id);
                 yield jobApplicationModel.updateMyJobApplicationStatus(taskActivity.job_application_id, taskActivity.job_seeker_id, constants_1.JOB_APPLICATION_STATUS.ENDED);
                 const startTime = (0, dayjs_1.default)(taskActivity.start_time).valueOf();
                 const endTime = (0, dayjs_1.default)(new Date()).valueOf();
@@ -185,18 +184,20 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 const paymentId = Number(payId) + 1;
                 const paymentPayload = {
                     application_id: application.job_application_id,
-                    total_amount: Number((totalWorkingHours * Number(constants_1.HotelierFixedCharge)).toFixed(2)),
+                    total_amount: Number((totalWorkingHours * Number(jobPost.hourly_rate)).toFixed(2)),
                     status: constants_1.PAYMENT_STATUS.UNPAID,
-                    job_seeker_pay: Number((totalWorkingHours * constants_1.JobSeekerFixedCharge).toFixed(2)),
-                    platform_fee: Number((totalWorkingHours * constants_1.PlatformFee).toFixed(2)),
+                    job_seeker_pay: Number((totalWorkingHours * Number(jobPost.job_seeker_pay)).toFixed(2)),
+                    platform_fee: Number((totalWorkingHours * Number(jobPost.platform_fee)).toFixed(2)),
                     payment_no: `TVZ-PAY-${paymentId}`,
                 };
                 console.log({ paymentPayload });
                 yield paymentModel.initializePayment(paymentPayload);
+                console.log(1);
                 yield jobTaskActivitiesModel.updateJobTaskActivity(taskActivity.id, {
                     end_approved_at: new Date(),
                     total_working_hours: totalWorkingHours,
                 });
+                console.log(2);
                 yield jobPostModel.updateJobPostDetailsStatus(application.job_post_details_id, constants_1.JOB_POST_DETAILS_STATUS.WorkFinished);
                 // await jobPostModel.updateJobPostDetailsStatus(
                 // 	application.job_post_details_id,

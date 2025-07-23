@@ -1,5 +1,6 @@
 import { IJobSeekerJobApplication } from "../../features/jobSeeker/utils/types/jobSeekerJobApplicationTypes";
 import { TDB } from "../../features/public/utils/types/publicCommon.types";
+import { JOB_APPLICATION_STATUS } from "../../utils/miscellaneous/constants";
 import Schema from "../../utils/miscellaneous/schema";
 import {
 	ICreateJobApplicationPayload,
@@ -42,46 +43,30 @@ export default class JobApplicationModel extends Schema {
 			skip,
 			need_total = true,
 		} = params;
+
 		const data = await this.db("job_applications as ja")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
 				"ja.id as job_application_id",
 				"ja.status as job_application_status",
-				"ja.created_at as applied_at",
-				"jpd.id as job_post_details_id",
-				"jpd.status as job_post_details_status",
 				"jpd.start_time",
 				"jpd.end_time",
-				"jpd.job_post_id",
-				"jp.title as job_post_title",
-				"jp.details as job_post_details",
-				"jp.requirements as job_post_requirements",
-				"jp.hourly_rate",
-				"jp.prefer_gender",
+				"j.title as job_post_title",
+				"j.job_seeker_pay",
 				"org.id as organization_id",
 				"org.name as organization_name",
 				"org_p.file as organization_photo",
-				"vwl.location_id",
-				"vwl.location_name",
 				"vwl.location_address",
-				"vwl.country_name",
-				"vwl.state_name",
 				"vwl.city_name",
 				"vwl.longitude",
-				"vwl.latitude",
-				this.db.raw(`json_build_object(
-                    'id', j.id,
-                    'title', j.title,
-                    'details', j.details,
-                    'status', j.status,
-                    'is_deleted', j.is_deleted
-                ) as category`)
+				"vwl.latitude"
 			)
 			.leftJoin(
 				"job_post_details as jpd",
 				"ja.job_post_details_id",
 				"jpd.id"
 			)
+			.leftJoin("jobs as j", "jpd.job_id", "j.id")
 			.leftJoin("job_post as jp", "jpd.job_post_id", "jp.id")
 			.joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
 				`${this.HOTELIER}.${this.TABLES.organization}`,
@@ -91,7 +76,6 @@ export default class JobApplicationModel extends Schema {
 				"vwl.location_id",
 				"org.location_id"
 			)
-			.leftJoin("jobs as j", "jpd.job_id", "j.id")
 			.leftJoin(
 				this.db.raw(`?? as org_p ON org_p.organization_id = org.id`, [
 					`${this.HOTELIER}.${this.TABLES.organization_photos}`,
@@ -122,6 +106,7 @@ export default class JobApplicationModel extends Schema {
 
 			total = totalQuery?.total ? Number(totalQuery.total) : 0;
 		}
+
 		return { data, total };
 	}
 
@@ -137,36 +122,22 @@ export default class JobApplicationModel extends Schema {
 			.select(
 				"ja.id as job_application_id",
 				"ja.status as job_application_status",
-				"ja.created_at as applied_at",
 				"jpd.id as job_post_details_id",
 				"jpd.status as job_post_details_status",
 				"jpd.start_time",
 				"jpd.end_time",
 				"jpd.job_post_id",
-				"jp.title as job_post_title",
-				"jp.details as job_post_details",
-				"jp.requirements as job_post_requirements",
-				"jp.hourly_rate",
-				"jp.prefer_gender",
+				"j.title as job_post_title",
+				"j.details as job_post_details",
+				"j.job_seeker_pay",
 				"org.user_id as hotelier_id",
 				"org.id as organization_id",
 				"org.name as organization_name",
 				"org_p.file as organization_photo",
-				"vwl.location_id",
-				"vwl.location_name",
 				"vwl.location_address",
-				"vwl.country_name",
-				"vwl.state_name",
 				"vwl.city_name",
 				"vwl.longitude",
 				"vwl.latitude",
-				this.db.raw(`json_build_object(
-                    'id', j.id,
-                    'title', j.title,
-                    'details', j.details,
-                    'status', j.status,
-                    'is_deleted', j.is_deleted
-                ) as category`),
 				this.db.raw(`json_build_object(
             'id', jta.id,
             'start_time', jta.start_time,
@@ -254,7 +225,7 @@ export default class JobApplicationModel extends Schema {
 			.withSchema(this.DBO_SCHEMA)
 			.where("job_post_id", job_post_id)
 			.update({
-				status: "CANCELLED",
+				status: JOB_APPLICATION_STATUS.CANCELLED,
 				cancelled_at: new Date(),
 			});
 	}

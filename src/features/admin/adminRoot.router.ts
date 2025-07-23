@@ -1,7 +1,7 @@
 import { Router } from "express";
 import AdminChatRouter from "./router/adminChatRouter";
 import AdminAdministrationRouter from "./router/administration.router";
-import CancellationReportRouter from "./router/cancellationReport.router";
+import CancellationReportRouter from "./router/cancellationLog.router";
 import AdminHotelierRouter from "./router/hotelier.router";
 import AdminJobApplicationRouter from "./router/jobApplication.router";
 import AdminJobPostRouter from "./router/jobPost.router";

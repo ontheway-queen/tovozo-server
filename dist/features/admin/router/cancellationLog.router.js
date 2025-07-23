@@ -4,19 +4,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_router_1 = __importDefault(require("../../../abstract/abstract.router"));
-const cancellationReport_controller_1 = __importDefault(require("../controller/cancellationReport.controller"));
+const cancellationLog_controller_1 = __importDefault(require("../controller/cancellationLog.controller"));
 class CancellationReportRouter extends abstract_router_1.default {
     constructor() {
         super();
-        this.controller = new cancellationReport_controller_1.default();
+        this.controller = new cancellationLog_controller_1.default();
         this.callRouter();
     }
     callRouter() {
-        this.router.route("/").get(this.controller.getReports);
+        this.router.route("/").get(this.controller.getCancellationLogs);
         this.router
             .route("/:id")
-            .get(this.controller.getSingleReport)
-            .patch(this.controller.updateCancellationReportStatus);
+            .get(this.controller.getSingleCancellationLog)
+            .patch(this.controller.updateCancellationLogStatus);
     }
 }
 exports.default = CancellationReportRouter;

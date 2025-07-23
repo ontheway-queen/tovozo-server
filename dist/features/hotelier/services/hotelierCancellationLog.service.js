@@ -51,7 +51,9 @@ class HotelierCancellationLogService extends abstract_service_1.default {
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const { id } = req.params;
                 const model = this.Model.cancellationLogModel(trx);
+                console.log({ id });
                 const jobPostReport = yield model.getSingleJobPostCancellationLog(Number(id), constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST);
+                console.log({ jobPostReport });
                 if (!jobPostReport) {
                     throw new customError_1.default("Job post cancellation report not found", this.StatusCode.HTTP_NOT_FOUND);
                 }

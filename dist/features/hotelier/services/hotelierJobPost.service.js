@@ -44,7 +44,8 @@ class HotelierJobPostService extends abstract_service_1.default {
                     if (new Date(detail.start_time) >= new Date(detail.end_time)) {
                         throw new customError_1.default("Job post start time cannot be greater than or equal to end time.", this.StatusCode.HTTP_BAD_REQUEST);
                     }
-                    jobPostDetails.push(Object.assign(Object.assign({}, detail), { job_post_id: res[0].id }));
+                    console.log({ checkJob });
+                    jobPostDetails.push(Object.assign(Object.assign({}, detail), { job_post_id: res[0].id, hourly_rate: checkJob.hourly_rate, job_seeker_pay: checkJob.job_seeker_pay, platform_fee: checkJob.platform_fee }));
                 }
                 yield model.createJobPostDetails(jobPostDetails);
                 return {
@@ -60,7 +61,7 @@ class HotelierJobPostService extends abstract_service_1.default {
             const { limit, skip, status, title } = req.query;
             const { user_id } = req.hotelier;
             const model = this.Model.jobPostModel();
-            const data = yield model.getHotelierJobPostList({
+            const data = yield model.getJobPostListForHotelier({
                 user_id,
                 limit,
                 skip,
@@ -70,11 +71,11 @@ class HotelierJobPostService extends abstract_service_1.default {
             return Object.assign({ success: true, message: this.ResMsg.HTTP_OK, code: this.StatusCode.HTTP_OK }, data);
         });
     }
-    getSingleJobPostWithJobSeekerDetails(req) {
+    getSingleJobPostForHotelier(req) {
         return __awaiter(this, void 0, void 0, function* () {
             const { id } = req.params;
             const model = this.Model.jobPostModel();
-            const data = yield model.getSingleJobPostWithJobSeekerDetails(Number(id));
+            const data = yield model.getSingleJobPostForHotelier(Number(id));
             if (!data) {
                 throw new customError_1.default("Job post not found!", this.StatusCode.HTTP_NOT_FOUND);
             }
@@ -91,8 +92,9 @@ class HotelierJobPostService extends abstract_service_1.default {
             const { id } = req.params;
             const body = req.body;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const jobModel = this.Model.jobModel(trx);
                 const model = this.Model.jobPostModel(trx);
-                const jobPost = yield model.getSingleJobPostWithJobSeekerDetails(Number(id));
+                const jobPost = yield model.getSingleJobPostForHotelier(Number(id));
                 if (!jobPost) {
                     throw new customError_1.default("Job post not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }
@@ -107,7 +109,14 @@ class HotelierJobPostService extends abstract_service_1.default {
                     yield model.updateJobPost(Number(jobPost.job_post_id), body.job_post);
                 }
                 if (hasJobPostDetails) {
-                    const { start_time, end_time } = body.job_post_details;
+                    const { job_id, start_time, end_time } = body.job_post_details;
+                    const job = yield jobModel.getSingleJob(job_id);
+                    if (!job) {
+                        throw new customError_1.default("The requested job with the ID is not found.", this.StatusCode.HTTP_BAD_REQUEST);
+                    }
+                    if (job.is_deleted) {
+                        throw new customError_1.default("This job has been deleted for some reason.", this.StatusCode.HTTP_BAD_REQUEST);
+                    }
                     if (start_time &&
                         end_time &&
                         new Date(start_time) >= new Date(end_time)) {
@@ -134,7 +143,7 @@ class HotelierJobPostService extends abstract_service_1.default {
                 const user = req.hotelier;
                 const model = this.Model.jobPostModel(trx);
                 const cancellationLogModel = this.Model.cancellationLogModel(trx);
-                const jobPost = yield model.getSingleJobPostWithJobSeekerDetails(Number(id));
+                const jobPost = yield model.getSingleJobPostForHotelier(Number(id));
                 if (!jobPost) {
                     throw new customError_1.default("Job post not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }

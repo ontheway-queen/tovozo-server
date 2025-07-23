@@ -8,18 +8,20 @@ export class JobSeekerJobsController extends AbstractController {
 		super();
 	}
 
-	public getJobs = this.asyncWrapper.wrap(
+	public getJobPostListForJobSeeker = this.asyncWrapper.wrap(
 		{ querySchema: this.commonValidator.getLimitSkipQueryValidator },
 		async (req: Request, res: Response) => {
-			const { code, ...data } = await this.service.getJobs(req);
+			const { code, ...data } =
+				await this.service.getJobPostListForJobSeeker(req);
 			res.status(code).json(data);
 		}
 	);
 
-	public getJob = this.asyncWrapper.wrap(
+	public getSingleJobPostForJobSeeker = this.asyncWrapper.wrap(
 		{ paramSchema: this.commonValidator.getSingleItemWithIdValidator },
 		async (req: Request, res: Response) => {
-			const { code, ...data } = await this.service.getJob(req);
+			const { code, ...data } =
+				await this.service.getSingleJobPostForJobSeeker(req);
 			res.status(code).json(data);
 		}
 	);

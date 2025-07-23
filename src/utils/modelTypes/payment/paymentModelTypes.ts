@@ -1,4 +1,8 @@
-import { PAY_LEDGER_TRX_TYPE } from "../../miscellaneous/constants";
+import {
+	PAY_LEDGER_TRX_TYPE,
+	PAYMENT_STATUS,
+	PAYMENT_TYPE,
+} from "../../miscellaneous/constants";
 import { TypeUser } from "../user/userModelTypes";
 
 export interface IInitializePaymentPayload {
@@ -54,7 +58,7 @@ export interface IPaymentLedgerPayload {
 	updated_at: Date;
 	trx_id: string;
 	user_id?: number | string;
-	trx_type: keyof typeof PAY_LEDGER_TRX_TYPE;
+	trx_type: (typeof PAY_LEDGER_TRX_TYPE)[keyof typeof PAY_LEDGER_TRX_TYPE];
 	user_type: `${TypeUser}`;
 	amount: number;
 	details: string;
@@ -75,12 +79,8 @@ export interface IGetAdminPayment {
 	job_seeker_pay: string;
 	platform_fee: string;
 	total_amount: string;
-	payment_type:
-		| "CASH"
-		| "BANK_TRANSFER"
-		| "ONLINE_PAYMENT"
-		| "MOBILE_PAYMENT";
-	status: "UNPAID" | "PAID" | "FAILED" | "PARTIAL_PAID";
+	payment_type: (typeof PAYMENT_TYPE)[keyof typeof PAYMENT_TYPE];
+	status: (typeof PAYMENT_STATUS)[keyof typeof PAYMENT_STATUS];
 	trx_id: string;
 	created_at: string;
 	paid_by: number;
