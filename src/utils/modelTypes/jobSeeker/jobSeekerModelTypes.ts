@@ -94,9 +94,15 @@ export interface IJobSeekerProfile {
 	passport_copy?: string;
 	visa_copy?: string;
 	id_copy?: string;
-	job_preferences: IJobPreferences[];
-	job_locations: IJobLocation[];
-	job_shifts: string[];
+	applied_jobs?:
+		| {
+				id: number;
+				job_post_details_id: number;
+				application_status: string;
+				title: string;
+				details: string;
+		  }[]
+		| [];
 }
 
 export interface IJobPreferences {

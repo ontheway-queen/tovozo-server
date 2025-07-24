@@ -9,7 +9,8 @@ export type IGenderType = (typeof GENDERS)[number];
 
 export type IJobPostStatus = keyof typeof JOB_POST_STATUS;
 
-export type IJobPostDetailsStatus = keyof typeof JOB_POST_DETAILS_STATUS;
+export type IJobPostDetailsStatus =
+	(typeof JOB_POST_DETAILS_STATUS)[keyof typeof JOB_POST_DETAILS_STATUS];
 export interface IJobPostPayload {
 	organization_id: number;
 	expire_time: string;
@@ -29,6 +30,7 @@ export interface IJobPostDetailsPayload {
 
 export interface IJobPost {
 	expire_time?: string;
+	status?: (typeof JOB_POST_STATUS)[keyof typeof JOB_POST_STATUS];
 }
 
 export interface IJobPostDetails {

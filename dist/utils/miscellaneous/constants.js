@@ -23,6 +23,9 @@ exports.OTP_TYPES = {
     reset_job_seeker: "reset_job_seeker",
     verify_job_seeker: "verify_job_seeker",
     register_job_seeker: "register_job_seeker",
+    two_fa_job_seeker: "2fa_job_seeker",
+    two_fa_admin: "2fa_admin",
+    two_fa_hotelier: "2fa_hotelier",
 };
 //Project Info
 exports.PROJECT_NAME = "Tovozo";
@@ -154,6 +157,7 @@ exports.CANCELLATION_REPORT_STATUS = {
 };
 exports.JOB_APPLICATION_STATUS = {
     PENDING: "Pending",
+    WaitingForApproval: "Waiting for Approval",
     ASSIGNED: "Assigned",
     CANCELLED: "Cancelled",
     COMPLETED: "Completed",
@@ -167,6 +171,7 @@ exports.JOB_APPLICATION_STATUS_ENUM = [
     "Ended",
     "Cancelled",
     "Completed",
+    "Waiting for Approval",
 ];
 exports.PAYMENT_STATUS = {
     UNPAID: "Unpaid",

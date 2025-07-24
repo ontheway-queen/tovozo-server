@@ -45,6 +45,19 @@ class HotelierJobPostService extends AbstractServices {
 					this.StatusCode.HTTP_BAD_REQUEST
 				);
 			}
+			const expireTime = new Date(res[0].expire_time).getTime();
+			const now = Date.now();
+			const delay = Math.max(expireTime - now, 0);
+			const queue = this.getQueue("expire-job-post");
+			await queue.add(
+				"expire-job-post",
+				{ id: res[0].id },
+				{
+					delay,
+					removeOnComplete: true,
+					removeOnFail: false,
+				}
+			);
 
 			const jobPostDetails: IJobPostDetailsPayload[] = [];
 

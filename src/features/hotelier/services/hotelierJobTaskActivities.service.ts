@@ -36,10 +36,10 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 			console.log({ taskActivity });
 			if (
 				taskActivity.application_status !==
-				JOB_APPLICATION_STATUS.PENDING
+				JOB_APPLICATION_STATUS.WaitingForApproval
 			) {
 				throw new CustomError(
-					`You cannot perform this action because the application is still in progress.`,
+					`You cannot perform this action because the job application is not awaiting approval.`,
 					this.StatusCode.HTTP_FORBIDDEN
 				);
 			}
@@ -59,7 +59,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 			await jobApplicationModel.updateMyJobApplicationStatus(
 				taskActivity.job_application_id,
 				taskActivity.job_seeker_id,
-				JOB_APPLICATION_STATUS.IN_PROGRESS
+				JOB_APPLICATION_STATUS.ASSIGNED
 			);
 
 			await jobTaskActivitiesModel.updateJobTaskActivity(
@@ -90,6 +90,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 		};
 
 		return await this.db.transaction(async (trx) => {
+			const jobApplicationModel = this.Model.jobApplicationModel(trx);
 			const jobTaskActivitiesModel =
 				this.Model.jobTaskActivitiesModel(trx);
 			const jobTaskListModel = this.Model.jobTaskListModel(trx);
@@ -107,10 +108,11 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 					this.StatusCode.HTTP_NOT_FOUND
 				);
 			}
-
+			console.log({ taskActivity });
 			if (
 				taskActivity.application_status !==
-				JOB_APPLICATION_STATUS.IN_PROGRESS
+					JOB_APPLICATION_STATUS.ASSIGNED &&
+				!taskActivity.start_time
 			) {
 				throw new CustomError(
 					`You cannot perform this action because the application is not in progress. Your application status is ${taskActivity.application_status}`,
@@ -130,6 +132,12 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 					this.StatusCode.HTTP_BAD_REQUEST
 				);
 			}
+
+			await jobApplicationModel.updateMyJobApplicationStatus(
+				taskActivity.job_application_id,
+				taskActivity.job_seeker_id,
+				JOB_APPLICATION_STATUS.IN_PROGRESS
+			);
 
 			await this.insertNotification(trx, TypeUser.JOB_SEEKER, {
 				user_id: taskActivity.job_seeker_id,

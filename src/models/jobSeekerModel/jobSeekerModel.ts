@@ -180,15 +180,57 @@ export default class JobSeekerModel extends Schema {
 	public async getJobSeekerDetails(where: {
 		user_id: number;
 	}): Promise<IJobSeekerProfile> {
-		return await this.db("vw_full_job_seeker_profile")
+		const profile = await this.db("vw_full_job_seeker_profile")
 			.withSchema(this.JOB_SEEKER)
-			.select("*")
-			.where((qb) => {
-				if (where.user_id) {
-					qb.andWhere("user_id", where.user_id);
-				}
-			})
+			.select(
+				"user_id",
+				"email",
+				"name",
+				"phone_number",
+				"photo",
+				"user_status",
+				"user_type",
+				"user_created_at",
+				"date_of_birth",
+				"gender",
+				"nationality",
+				"work_permit",
+				"account_status",
+				"home_location_name",
+				"home_address",
+				"home_postal_code",
+				"home_status",
+				"is_home_address",
+				"languages",
+				"passport_copy",
+				"visa_copy",
+				"id_copy",
+				"job_locations"
+			)
+			.where("user_id", where.user_id)
 			.first();
+
+		const appliedJobs = await this.db("job_applications as ja")
+			.withSchema(this.DBO_SCHEMA)
+			.select(
+				"ja.id",
+				"ja.job_post_details_id",
+				"ja.status as application_status",
+				"j.title",
+				"j.details"
+			)
+			.leftJoin(
+				"job_post_details as jpd",
+				"jpd.id",
+				"ja.job_post_details_id"
+			)
+			.leftJoin("jobs as j", "jpd.job_id", "j.id")
+			.where("ja.job_seeker_id", where.user_id);
+
+		return {
+			...profile,
+			applied_jobs: appliedJobs ?? [],
+		};
 	}
 
 	public async deleteJobSeeker(where: { user_id: number }) {

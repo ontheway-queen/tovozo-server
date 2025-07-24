@@ -124,15 +124,18 @@ class JobSeekerModel extends schema_1.default {
     // get single job seeker details
     getJobSeekerDetails(where) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db("vw_full_job_seeker_profile")
+            const profile = yield this.db("vw_full_job_seeker_profile")
                 .withSchema(this.JOB_SEEKER)
-                .select("*")
-                .where((qb) => {
-                if (where.user_id) {
-                    qb.andWhere("user_id", where.user_id);
-                }
-            })
+                .select("user_id", "email", "name", "phone_number", "photo", "user_status", "user_type", "user_created_at", "date_of_birth", "gender", "nationality", "work_permit", "account_status", "home_location_name", "home_address", "home_postal_code", "home_status", "is_home_address", "languages", "passport_copy", "visa_copy", "id_copy", "job_locations")
+                .where("user_id", where.user_id)
                 .first();
+            const appliedJobs = yield this.db("job_applications as ja")
+                .withSchema(this.DBO_SCHEMA)
+                .select("ja.id", "ja.job_post_details_id", "ja.status as application_status", "j.title", "j.details")
+                .leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
+                .leftJoin("jobs as j", "jpd.job_id", "j.id")
+                .where("ja.job_seeker_id", where.user_id);
+            return Object.assign(Object.assign({}, profile), { applied_jobs: appliedJobs !== null && appliedJobs !== void 0 ? appliedJobs : [] });
         });
     }
     deleteJobSeeker(where) {

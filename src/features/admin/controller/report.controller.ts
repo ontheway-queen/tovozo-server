@@ -20,15 +20,6 @@ export default class AdminReportController extends AbstractController {
 		}
 	);
 
-	public getSingleReportWithInfo = this.asyncWrapper.wrap(
-		null,
-		async (req: Request, res: Response) => {
-			const { code, ...data } =
-				await this.adminReportService.getSingleReportWithInfo(req);
-			res.status(code).json(data);
-		}
-	);
-
 	public reportMarkAsAcknowledge = this.asyncWrapper.wrap(
 		{
 			paramSchema: this.commonValidator.getSingleItemWithIdValidator,

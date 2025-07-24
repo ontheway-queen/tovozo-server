@@ -22,6 +22,7 @@ const userModelTypes_1 = require("../utils/modelTypes/user/userModelTypes");
 const database_1 = require("./database");
 const router_1 = __importDefault(require("./router"));
 const socket_1 = require("./socket");
+const workers_1 = __importDefault(require("../utils/workers"));
 class App {
     constructor(port) {
         this.app = (0, express_1.default)();
@@ -35,6 +36,7 @@ class App {
         this.notFoundRouter();
         this.errorHandle();
         this.disableXPoweredBy();
+        this.workers = new workers_1.default();
     }
     // Run cron jobs
     runCron() {

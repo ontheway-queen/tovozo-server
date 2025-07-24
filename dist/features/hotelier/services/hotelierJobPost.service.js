@@ -35,6 +35,15 @@ class HotelierJobPostService extends abstract_service_1.default {
                 if (!res.length) {
                     throw new customError_1.default(this.ResMsg.HTTP_BAD_REQUEST, this.StatusCode.HTTP_BAD_REQUEST);
                 }
+                const expireTime = new Date(res[0].expire_time).getTime();
+                const now = Date.now();
+                const delay = Math.max(expireTime - now, 0);
+                const queue = this.getQueue("expire-job-post");
+                yield queue.add("expire-job-post", { id: res[0].id }, {
+                    delay,
+                    removeOnComplete: true,
+                    removeOnFail: false,
+                });
                 const jobPostDetails = [];
                 for (const detail of body.job_post_details) {
                     const checkJob = yield jobModel.getSingleJob(detail.job_id);

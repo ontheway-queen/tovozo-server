@@ -52,6 +52,7 @@ export default class JobApplicationModel extends Schema {
 				"jpd.start_time",
 				"jpd.end_time",
 				"j.title as job_post_title",
+				"j.details as job_post_details",
 				"j.job_seeker_pay",
 				"org.id as organization_id",
 				"org.name as organization_name",

@@ -23,7 +23,7 @@ class JobPostModel extends schema_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db(this.TABLES.job_post)
                 .withSchema(this.DBO_SCHEMA)
-                .insert(payload, "id");
+                .insert(payload, ["id", "expire_time"]);
         });
     }
     createJobPostDetails(payload) {
@@ -39,7 +39,7 @@ class JobPostModel extends schema_1.default {
             const { user_id, title, category_id, city_id, limit, skip, need_total = true, } = params;
             const baseQuery = this.db("job_post as jp")
                 .withSchema(this.DBO_SCHEMA)
-                .select(this.db.raw("DISTINCT ON (jp.id) jp.id"), "jpd.id as job_post_detail_id", "jpd.start_time", "jpd.end_time", "jpd.status", "jp.organization_id", "j.title as job_title", "j.job_seeker_pay", "jp.created_time", "org.name as organization_name", "org_p.file as organization_photo", "vwl.location_address", "vwl.city_name", "vwl.longitude", "vwl.latitude")
+                .select(this.db.raw("DISTINCT ON (jp.id) jp.id"), "jpd.id as job_post_detail_id", "jpd.start_time", "jpd.end_time", "jpd.status", "jp.organization_id", "j.title as job_title", "j.details as job_details", "j.job_seeker_pay", "jp.created_time", "org.name as organization_name", "org_p.file as organization_photo", "vwl.location_address", "vwl.city_name", "vwl.longitude", "vwl.latitude")
                 .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
                 `${this.HOTELIER}.${this.TABLES.organization}`,
             ])
@@ -238,6 +238,8 @@ class JobPostModel extends schema_1.default {
 						'application_status', ja.status,
 						'job_seeker_id', ja.job_seeker_id,
 						'job_seeker_name', js.name,
+            'location_address', js_vwl.location_address,
+            'city', js_vwl.city_name,
 						'longitude', js_vwl.longitude,
 						'latitude', js_vwl.latitude
 					)
@@ -451,6 +453,15 @@ class JobPostModel extends schema_1.default {
             ]))
                 .where("jpd.id", id)
                 .first();
+        });
+    }
+    // Get all Job post using job post id
+    getAllJobsUsingJobPostId(id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("job_post_details")
+                .withSchema(this.DBO_SCHEMA)
+                .select("id")
+                .where("job_post_id", id);
         });
     }
 }

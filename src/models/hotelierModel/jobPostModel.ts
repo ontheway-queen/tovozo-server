@@ -28,7 +28,7 @@ class JobPostModel extends Schema {
 	public async createJobPost(payload: IJobPostPayload) {
 		return await this.db(this.TABLES.job_post)
 			.withSchema(this.DBO_SCHEMA)
-			.insert(payload, "id");
+			.insert(payload, ["id", "expire_time"]);
 	}
 
 	public async createJobPostDetails(
@@ -63,6 +63,7 @@ class JobPostModel extends Schema {
 				"jpd.status",
 				"jp.organization_id",
 				"j.title as job_title",
+				"j.details as job_details",
 				"j.job_seeker_pay",
 				"jp.created_time",
 				"org.name as organization_name",
@@ -351,6 +352,8 @@ class JobPostModel extends Schema {
 						'application_status', ja.status,
 						'job_seeker_id', ja.job_seeker_id,
 						'job_seeker_name', js.name,
+            'location_address', js_vwl.location_address,
+            'city', js_vwl.city_name,
 						'longitude', js_vwl.longitude,
 						'latitude', js_vwl.latitude
 					)
@@ -659,6 +662,14 @@ class JobPostModel extends Schema {
 			)
 			.where("jpd.id", id)
 			.first();
+	}
+
+	// Get all Job post using job post id
+	public async getAllJobsUsingJobPostId(id: number) {
+		return await this.db("job_post_details")
+			.withSchema(this.DBO_SCHEMA)
+			.select("id")
+			.where("job_post_id", id);
 	}
 }
 

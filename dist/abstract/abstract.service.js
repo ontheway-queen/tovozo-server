@@ -21,6 +21,7 @@ const responseMessage_1 = __importDefault(require("../utils/miscellaneous/respon
 const statusCode_1 = __importDefault(require("../utils/miscellaneous/statusCode"));
 const commonModelTypes_1 = require("../utils/modelTypes/common/commonModelTypes");
 const userModelTypes_1 = require("../utils/modelTypes/user/userModelTypes");
+const queue_1 = require("../utils/queue/queue");
 class AbstractServices {
     constructor() {
         this.db = database_1.db;
@@ -29,6 +30,7 @@ class AbstractServices {
         this.socketService = new socketService_1.default();
         this.StatusCode = statusCode_1.default;
         this.Model = new rootModel_1.default();
+        this.queueManager = queue_1.QueueManager.getInstance();
     }
     insertAdminAudit(trx, payload) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -88,7 +90,9 @@ class AbstractServices {
                         });
                     }
                 }
-                const getUserSocketIds = yield (0, socket_1.getAllOnlineSocketIds)({ type: userType });
+                const getUserSocketIds = yield (0, socket_1.getAllOnlineSocketIds)({
+                    type: userType,
+                });
                 if (!getUserSocketIds.length)
                     return;
                 for (const { user_id, socketId } of getUserSocketIds) {
@@ -108,6 +112,10 @@ class AbstractServices {
                 return;
             yield commonModel.createNotification(notificationPayload);
         });
+    }
+    // Queue
+    getQueue(queueName) {
+        return this.queueManager.getQueue(queueName);
     }
 }
 exports.default = AbstractServices;

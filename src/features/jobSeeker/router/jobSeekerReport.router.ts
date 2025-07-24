@@ -11,11 +11,6 @@ export default class JobSeekerReportRouter extends AbstractRouter {
 	private callRouter() {
 		this.router
 			.route("/")
-			.post(this.jobSeekerReportController.submitReport)
-			.get(this.jobSeekerReportController.getReportsWithInfo);
-
-		this.router
-			.route("/:id")
-			.get(this.jobSeekerReportController.getSingleReportWithInfo);
+			.post(this.jobSeekerReportController.submitReport);
 	}
 }

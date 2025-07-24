@@ -9,14 +9,15 @@ import { TypeUser } from "../utils/modelTypes/user/userModelTypes";
 import { db } from "./database";
 import RootRouter from "./router";
 import { SocketServer, addOnlineUser, io, removeOnlineUser } from "./socket";
-import { stripe } from "../utils/miscellaneous/stripe";
-import bodyParser from "body-parser";
+import Workers from "../utils/workers";
 
 class App {
 	public app: Application = express();
 	private server: Server;
 	private port: number;
 	private origin: string[] = origin;
+
+	private workers: Workers;
 
 	constructor(port: number) {
 		this.server = SocketServer(this.app);
@@ -28,6 +29,7 @@ class App {
 		this.notFoundRouter();
 		this.errorHandle();
 		this.disableXPoweredBy();
+		this.workers = new Workers();
 	}
 
 	// Run cron jobs

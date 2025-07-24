@@ -18,22 +18,4 @@ export default class JobSeekerReportController extends AbstractController {
 			res.status(code).json(data);
 		}
 	);
-
-	public getReportsWithInfo = this.asyncWrapper.wrap(
-		{ querySchema: this.commonValidator.getReportQueryValidator },
-		async (req: Request, res: Response) => {
-			const { code, ...data } =
-				await this.jobSeekerReportService.getReportsWithInfo(req);
-			res.status(code).json(data);
-		}
-	);
-
-	public getSingleReportWithInfo = this.asyncWrapper.wrap(
-		{ paramSchema: this.commonValidator.getSingleItemWithIdValidator },
-		async (req: Request, res: Response) => {
-			const { code, ...data } =
-				await this.jobSeekerReportService.getSingleReportWithInfo(req);
-			res.status(code).json(data);
-		}
-	);
 }
