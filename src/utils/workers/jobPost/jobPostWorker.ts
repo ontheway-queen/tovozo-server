@@ -14,8 +14,6 @@ export default class JobPostWorker {
 				status: JOB_POST_STATUS.Expired,
 			});
 
-			console.log({ jobPost });
-
 			const jobs = await jobPostModel.getAllJobsUsingJobPostId(id);
 
 			if (jobs.length > 0) {
@@ -29,16 +27,5 @@ export default class JobPostWorker {
 				);
 			}
 		});
-		const trx = await db.transaction();
-
-		try {
-			const model = new Models().jobPostModel(trx);
-			await model.updateJobPost(id, { status: "Expired" });
-			await trx.commit();
-		} catch (err) {
-			await trx.rollback();
-			console.error(`❌ Failed to expire job post ${id}:`, err);
-			throw err;
-		}
 	}
 }

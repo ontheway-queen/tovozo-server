@@ -12,24 +12,27 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const database_1 = require("../../../app/database");
-const rootModel_1 = __importDefault(require("../../../models/rootModel"));
-const constants_1 = require("../../miscellaneous/constants");
-class JobPostWorker {
-    expireJobPost(job) {
+const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
+const adminStats_model_1 = __importDefault(require("../../../models/adminStats/adminStats.model"));
+class AdminStatsService extends abstract_service_1.default {
+    constructor() {
+        super();
+        this.model = new adminStats_model_1.default(this.db);
+    }
+    generateStatistic(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { id } = job.data;
-            return yield database_1.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
-                const jobPostModel = new rootModel_1.default().jobPostModel(trx);
-                const jobPost = yield jobPostModel.updateJobPost(id, {
-                    status: constants_1.JOB_POST_STATUS.Expired,
-                });
-                const jobs = yield jobPostModel.getAllJobsUsingJobPostId(id);
-                if (jobs.length > 0) {
-                    yield Promise.all(jobs.map((job) => jobPostModel.updateJobPostDetailsStatus(job.id, constants_1.JOB_POST_DETAILS_STATUS.Expired)));
-                }
-            }));
+            const { from, to } = req.query;
+            const data = yield this.model.generateStatistic({
+                from: from,
+                to: to,
+            });
+            return {
+                success: false,
+                message: "Admin stats getting successfully",
+                code: this.StatusCode.HTTP_OK,
+                data,
+            };
         });
     }
 }
-exports.default = JobPostWorker;
+exports.default = AdminStatsService;

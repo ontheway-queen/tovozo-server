@@ -93,7 +93,15 @@ class JobPostModel extends Schema {
 				if (city_id) qb.andWhere("vwl.city_id", city_id);
 				if (title) qb.andWhereILike("jp.title", `%${title}%`);
 			})
-			.andWhere("jpd.status", "Pending");
+			.andWhere("jpd.status", "Pending")
+			.orderBy("jp.id").orderByRaw(`
+  CASE
+    WHEN jpd.start_time <= NOW() AND jpd.end_time >= NOW() THEN 0  
+    WHEN jpd.start_time > NOW() THEN 1                       
+    WHEN jpd.end_time < NOW() THEN 2                         
+  END,
+  jpd.start_time DESC
+`);
 
 		// Exclude jobs already applied by the job seeker
 		if (user_id) {
@@ -106,10 +114,7 @@ class JobPostModel extends Schema {
 			});
 		}
 
-		baseQuery
-			.orderByRaw("jp.id, jpd.start_time DESC")
-			.limit(limit || 100)
-			.offset(skip || 0);
+		baseQuery.limit(limit || 100).offset(skip || 0);
 
 		const data = await baseQuery;
 
@@ -280,14 +285,13 @@ class JobPostModel extends Schema {
 			})
 			.orderByRaw(
 				`
-			CASE 
-				WHEN jpd.start_time <= NOW() AND jpd.end_time >= NOW() THEN 0
-				WHEN jpd.start_time > NOW() THEN 1
-				WHEN jpd.end_time < NOW() THEN 2
-				ELSE 3
-			END,
-			jpd.start_time ASC
-		`
+          CASE
+            WHEN jpd.start_time <= NOW() AND jpd.end_time >= NOW() THEN 0  
+            WHEN jpd.start_time > NOW() THEN 1                       
+            WHEN jpd.end_time < NOW() THEN 2                         
+          END,
+          start_time ASC
+        `
 			)
 			.limit(limit || 100)
 			.offset(skip || 0);
@@ -310,7 +314,7 @@ class JobPostModel extends Schema {
 					if (category_id) qb.andWhere("j.id", category_id);
 					if (status) qb.andWhere("jpd.status", status);
 					if (title) qb.andWhereILike("jp.title", `%${title}%`);
-					if (city_id) qb.andWhere("js_vwl.city_id", city_id); // Still required here if filtering
+					if (city_id) qb.andWhere("js_vwl.city_id", city_id);
 				})
 				.first();
 
@@ -674,3 +678,9 @@ class JobPostModel extends Schema {
 }
 
 export default JobPostModel;
+
+/* 
+27 - In Progress - Applied - Pending
+28 - In Progress - Applied - Pending
+25 - Expired
+*/

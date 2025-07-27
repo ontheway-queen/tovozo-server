@@ -323,5 +323,20 @@ class JobSeekerModel extends schema_1.default {
                 .first();
         });
     }
+    getJobSeekerLocation() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("job_seeker as js")
+                .withSchema(this.JOB_SEEKER)
+                .select("js.user_id", "js.location_id", "l.latitude", "l.longitude")
+                .joinRaw(`LEFT JOIN ?? as l ON l.id = js.location_id`, [
+                `${this.DBO_SCHEMA}.${this.TABLES.location}`,
+            ])
+                .joinRaw(`INNER JOIN ?? as u ON u.id = js.user_id`, [
+                `${this.DBO_SCHEMA}.${this.TABLES.user}`,
+            ])
+                .whereNotNull("js.location_id")
+                .andWhere("u.type", constants_1.USER_TYPE.JOB_SEEKER);
+        });
+    }
 }
 exports.default = JobSeekerModel;

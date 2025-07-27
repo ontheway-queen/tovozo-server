@@ -57,7 +57,15 @@ class JobPostModel extends schema_1.default {
                 if (title)
                     qb.andWhereILike("jp.title", `%${title}%`);
             })
-                .andWhere("jpd.status", "Pending");
+                .andWhere("jpd.status", "Pending")
+                .orderBy("jp.id").orderByRaw(`
+  CASE
+    WHEN jpd.start_time <= NOW() AND jpd.end_time >= NOW() THEN 0  
+    WHEN jpd.start_time > NOW() THEN 1                       
+    WHEN jpd.end_time < NOW() THEN 2                         
+  END,
+  jpd.start_time DESC
+`);
             // Exclude jobs already applied by the job seeker
             if (user_id) {
                 const that = this;
@@ -68,10 +76,7 @@ class JobPostModel extends schema_1.default {
                         .andWhere("ja.job_seeker_id", user_id);
                 });
             }
-            baseQuery
-                .orderByRaw("jp.id, jpd.start_time DESC")
-                .limit(limit || 100)
-                .offset(skip || 0);
+            baseQuery.limit(limit || 100).offset(skip || 0);
             const data = yield baseQuery;
             let total = 0;
             if (need_total) {
@@ -177,14 +182,13 @@ class JobPostModel extends schema_1.default {
                     qb.andWhere("jpd.status", status);
             })
                 .orderByRaw(`
-			CASE 
-				WHEN jpd.start_time <= NOW() AND jpd.end_time >= NOW() THEN 0
-				WHEN jpd.start_time > NOW() THEN 1
-				WHEN jpd.end_time < NOW() THEN 2
-				ELSE 3
-			END,
-			jpd.start_time ASC
-		`)
+          CASE
+            WHEN jpd.start_time <= NOW() AND jpd.end_time >= NOW() THEN 0  
+            WHEN jpd.start_time > NOW() THEN 1                       
+            WHEN jpd.end_time < NOW() THEN 2                         
+          END,
+          start_time ASC
+        `)
                 .limit(limit || 100)
                 .offset(skip || 0);
             let total;
@@ -210,7 +214,7 @@ class JobPostModel extends schema_1.default {
                     if (title)
                         qb.andWhereILike("jp.title", `%${title}%`);
                     if (city_id)
-                        qb.andWhere("js_vwl.city_id", city_id); // Still required here if filtering
+                        qb.andWhere("js_vwl.city_id", city_id);
                 })
                     .first();
                 total = (totalQuery === null || totalQuery === void 0 ? void 0 : totalQuery.total) ? Number(totalQuery.total) : 0;
@@ -466,3 +470,8 @@ class JobPostModel extends schema_1.default {
     }
 }
 exports.default = JobPostModel;
+/*
+27 - In Progress - Applied - Pending
+28 - In Progress - Applied - Pending
+25 - Expired
+*/

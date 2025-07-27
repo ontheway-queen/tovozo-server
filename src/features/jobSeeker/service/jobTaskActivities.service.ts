@@ -74,6 +74,7 @@ export default class JobTaskActivitiesService extends AbstractServices {
 			const res = await jobTaskActivitiesModel.createJobTaskActivity(
 				payload
 			);
+			console.log({ res });
 			await jobApplicationModel.updateMyJobApplicationStatus(
 				job_application_id,
 				user_id,
@@ -84,25 +85,20 @@ export default class JobTaskActivitiesService extends AbstractServices {
 			// 	JOB_POST_DETAILS_STATUS.In_Progress
 			// );
 
-			const onlineUsers = getAllOnlineSocketIds({
-				user_id,
-				type: USER_TYPE.JOB_SEEKER,
-			});
-
 			await this.insertNotification(trx, TypeUser.HOTELIER, {
 				user_id: myApplication.hotelier_id,
-				content: `New tasks have been assigned to you.`,
+				content: `The job ${job_post_details_id} is waiting for your approval.`,
 				related_id: res[0].id,
 				type: NotificationTypeEnum.JOB_TASK,
 			});
 
-			io.emit("start-job-task", {
-				id: res[0].id,
-				start_time: new Date(),
-				end_time: null,
-				total_working_hours: null,
-				start_approved_at: null,
-				end_approved_at: null,
+			io.to(String(myApplication.hotelier_id)).emit("approve-job", {
+				user_id: myApplication.hotelier_id,
+				content: `The job ${job_post_details_id} is waiting for your approval.`,
+				related_id: res[0].id,
+				type: NotificationTypeEnum.JOB_TASK,
+				read_status: false,
+				created_at: new Date().toISOString(),
 			});
 
 			return {
@@ -159,7 +155,6 @@ export default class JobTaskActivitiesService extends AbstractServices {
 
 	public endJobTaskActivities = async (req: Request) => {
 		const id = req.params.id;
-		const { user_id } = req.jobSeeker;
 
 		return await this.db.transaction(async (trx) => {
 			const jobApplicationModel = this.Model.jobApplicationModel(trx);
@@ -192,7 +187,6 @@ export default class JobTaskActivitiesService extends AbstractServices {
 			const taskList = await jobTaskListModel.getJobTaskList({
 				job_task_activity_id: Number(id),
 			});
-			console.log({ taskList });
 			if (!taskList.length || taskList.length === 0) {
 				throw new CustomError(
 					"The organization has not assigned any tasks for this job yet. Please wait until tasks are assigned.",
@@ -224,18 +218,27 @@ export default class JobTaskActivitiesService extends AbstractServices {
 				);
 			}
 
-			await jobTaskActivitiesModel.updateJobTaskActivity(
+			const res = await jobTaskActivitiesModel.updateJobTaskActivity(
 				taskActivity.id,
 				{
 					end_time: new Date(),
 				}
 			);
 
-			io.emit("end-job-task", {
-				id,
-				start_time: taskActivity.start_time,
-				start_approved_at: taskActivity.start_approved_at,
-				end_time: new Date(),
+			await this.insertNotification(trx, TypeUser.HOTELIER, {
+				user_id: myApplication.hotelier_id,
+				content: `All job task submitted for job ${taskActivity.job_post_details_id}`,
+				related_id: res[0].id,
+				type: NotificationTypeEnum.JOB_POST,
+			});
+
+			io.to(String(myApplication.hotelier_id)).emit("end-job", {
+				user_id: myApplication.hotelier_id,
+				content: `All job task submitted for job ${taskActivity.job_post_details_id}`,
+				related_id: res[0].id,
+				type: NotificationTypeEnum.JOB_POST,
+				read_status: false,
+				created_at: new Date().toISOString(),
 			});
 
 			return {

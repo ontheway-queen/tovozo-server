@@ -10,6 +10,7 @@ import AdminJobSeekerRouter from "./router/jobSeeker.router";
 import AdminProfileRouter from "./router/profile.router";
 import AdminReportRouter from "./router/report.router";
 import AdminPaymentRouter from "./router/adminPayment.router";
+import AdminStatsRouter from "./router/adminStats.router";
 
 export default class AdminRootRouter {
 	public Router = Router();
@@ -24,6 +25,7 @@ export default class AdminRootRouter {
 	private jobApplicationRouter = new AdminJobApplicationRouter();
 	private adminChatRouter = new AdminChatRouter();
 	private paymentRouter = new AdminPaymentRouter();
+	private adminStatsRouter = new AdminStatsRouter();
 
 	constructor() {
 		this.callRouter();
@@ -65,5 +67,8 @@ export default class AdminRootRouter {
 
 		// payment
 		this.Router.use("/payments", this.paymentRouter.router);
+
+		// statistics
+		this.Router.use("/statistics", this.adminStatsRouter.router);
 	}
 }
