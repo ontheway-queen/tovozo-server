@@ -8,11 +8,11 @@ export default class AdminPaymentService extends AbstractServices {
 	}
 
 	public async getAllPaymentsForAdmin(req: Request) {
-		const { search, limit, skip, status } = req.query;
+		const { name, limit, skip, status } = req.query;
 
 		const paymentModel = this.Model.paymnentModel();
 		const { data, total } = await paymentModel.getAllPaymentsForAdmin({
-			search: search as string,
+			search: name as string,
 			limit: Number(limit),
 			skip: Number(skip),
 			status: status as string,
@@ -47,13 +47,14 @@ export default class AdminPaymentService extends AbstractServices {
 	}
 
 	public async getAllPaymentLedgersForAdmin(req: Request) {
-		const { search, limit, skip } = req.query;
+		const { search, limit, skip, type } = req.query;
+		console.log(typeof type);
 		const paymentModel = this.Model.paymnentModel();
 		const { data, total } = await paymentModel.getAllPaymentLedgerForAdmin({
 			search: search as string,
 			limit: Number(limit),
 			skip: Number(skip),
-			type: TypeUser.ADMIN,
+			type: type as TypeUser,
 		});
 		return {
 			success: true,

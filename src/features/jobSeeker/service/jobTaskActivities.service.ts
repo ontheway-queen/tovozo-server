@@ -10,7 +10,10 @@ import {
 import { IJobPostDetailsStatus } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
 import { IUpdateJobTaskListPayload } from "../../hotelier/utils/types/hotelierJobTaskTypes";
 import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
-import { NotificationTypeEnum } from "../../../utils/modelTypes/common/commonModelTypes";
+import {
+	NotificationTypeEnum,
+	TypeEmitNotificationEnum,
+} from "../../../utils/modelTypes/common/commonModelTypes";
 
 export default class JobTaskActivitiesService extends AbstractServices {
 	constructor() {
@@ -92,14 +95,17 @@ export default class JobTaskActivitiesService extends AbstractServices {
 				type: NotificationTypeEnum.JOB_TASK,
 			});
 
-			io.to(String(myApplication.hotelier_id)).emit("approve-job", {
-				user_id: myApplication.hotelier_id,
-				content: `The job ${job_post_details_id} is waiting for your approval.`,
-				related_id: res[0].id,
-				type: NotificationTypeEnum.JOB_TASK,
-				read_status: false,
-				created_at: new Date().toISOString(),
-			});
+			io.to(String(myApplication.hotelier_id)).emit(
+				TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION,
+				{
+					user_id: myApplication.hotelier_id,
+					content: `The job ${job_post_details_id} is waiting for your approval.`,
+					related_id: res[0].id,
+					type: NotificationTypeEnum.JOB_TASK,
+					read_status: false,
+					created_at: new Date().toISOString(),
+				}
+			);
 
 			return {
 				success: true,
@@ -118,6 +124,7 @@ export default class JobTaskActivitiesService extends AbstractServices {
 			const jobTaskListModel = this.Model.jobTaskListModel(trx);
 
 			const taskList = await jobTaskListModel.getJobTaskList({ id });
+			console.log({ taskList });
 			if (!taskList.length) {
 				throw new CustomError(
 					"Job task not found. Please create task to proceed.",
@@ -132,7 +139,6 @@ export default class JobTaskActivitiesService extends AbstractServices {
 					this.StatusCode.HTTP_BAD_REQUEST
 				);
 			}
-
 			const payload: IUpdateJobTaskListPayload = {
 				is_completed: isCompleted,
 				completed_at: isCompleted ? new Date().toISOString() : null,
@@ -144,6 +150,33 @@ export default class JobTaskActivitiesService extends AbstractServices {
 				id,
 				message: taskList[0].message,
 			});
+
+			await this.insertNotification(trx, TypeUser.HOTELIER, {
+				user_id: taskList[0].hotelier_id,
+				content: `The task ${taskList[0].message} is ${
+					taskList[0].is_completed
+						? "completed."
+						: "not complete yet."
+				}`,
+				related_id: taskList[0].id,
+				type: NotificationTypeEnum.JOB_TASK,
+			});
+
+			io.to(String(taskList[0].hotelier_id)).emit(
+				TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION,
+				{
+					user_id: taskList[0].hotelier_id,
+					content: `The task ${taskList[0].message} is ${
+						taskList[0].is_completed
+							? "completed."
+							: "not complete yet."
+					}`,
+					related_id: taskList[0].id,
+					type: NotificationTypeEnum.JOB_TASK,
+					read_status: false,
+					created_at: new Date().toISOString(),
+				}
+			);
 
 			return {
 				success: true,
@@ -229,14 +262,14 @@ export default class JobTaskActivitiesService extends AbstractServices {
 				user_id: myApplication.hotelier_id,
 				content: `All job task submitted for job ${taskActivity.job_post_details_id}`,
 				related_id: res[0].id,
-				type: NotificationTypeEnum.JOB_POST,
+				type: NotificationTypeEnum.JOB_TASK,
 			});
 
 			io.to(String(myApplication.hotelier_id)).emit("end-job", {
 				user_id: myApplication.hotelier_id,
 				content: `All job task submitted for job ${taskActivity.job_post_details_id}`,
 				related_id: res[0].id,
-				type: NotificationTypeEnum.JOB_POST,
+				type: NotificationTypeEnum.JOB_TASK,
 				read_status: false,
 				created_at: new Date().toISOString(),
 			});

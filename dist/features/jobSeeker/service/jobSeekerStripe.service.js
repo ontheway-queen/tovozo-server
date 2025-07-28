@@ -95,5 +95,29 @@ class JobSeekerStripeService extends abstract_service_1.default {
             };
         });
     }
+    loginStripeAccount(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { user_id } = req.jobSeeker;
+            const userModel = this.Model.UserModel();
+            const checkUser = yield userModel.checkUser({ id: user_id });
+            if (checkUser.length < 1) {
+                throw new customError_1.default("User not found!", this.StatusCode.HTTP_NOT_FOUND);
+            }
+            // if (!checkUser[0].stripe_acc_id) {
+            // 	throw new Error(
+            // 		"Stripe Account not found. Please complete your profile first!"
+            // 	);
+            // }
+            const loginLink = yield stripe_1.stripe.accounts.createLoginLink(checkUser[0].stripe_acc_id || "acct_1RnAa4FSzTsJiGrd");
+            return {
+                success: true,
+                message: this.ResMsg.HTTP_OK,
+                code: this.StatusCode.HTTP_OK,
+                data: {
+                    url: loginLink.url,
+                },
+            };
+        });
+    }
 }
 exports.default = JobSeekerStripeService;

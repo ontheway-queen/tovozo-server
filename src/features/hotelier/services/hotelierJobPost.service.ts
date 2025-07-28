@@ -151,7 +151,7 @@ class HotelierJobPostService extends AbstractServices {
 					user_id: seeker.user_id,
 					content: `A new job post is available near you!`,
 					related_id: res[0].id,
-					type: NotificationTypeEnum.JOB_POST,
+					type: NotificationTypeEnum.JOB_TASK,
 				});
 
 				// 2. Emit via socket
@@ -161,7 +161,7 @@ class HotelierJobPostService extends AbstractServices {
 						user_id: seeker.user_id,
 						content: `A new job post is available near you!`,
 						related_id: res[0].id,
-						type: NotificationTypeEnum.JOB_POST,
+						type: NotificationTypeEnum.JOB_TASK,
 						read_status: false,
 						created_at: new Date().toISOString(),
 					}
@@ -301,6 +301,7 @@ class HotelierJobPostService extends AbstractServices {
 			const user = req.hotelier;
 			const model = this.Model.jobPostModel(trx);
 			const cancellationLogModel = this.Model.cancellationLogModel(trx);
+			const jobApplicationModel = this.Model.jobApplicationModel(trx);
 
 			const jobPost = await model.getSingleJobPostForHotelier(Number(id));
 			if (!jobPost) {
@@ -336,12 +337,18 @@ class HotelierJobPostService extends AbstractServices {
 
 			if (hoursDiff > 24) {
 				await model.cancelJobPost(Number(jobPost.job_post_id));
-				await model.updateJobPostDetailsStatus(
-					Number(jobPost.id),
-					JOB_POST_DETAILS_STATUS.Cancelled as unknown as IJobPostDetailsStatus
+
+				const vacancy = await model.getAllJobsUsingJobPostId(
+					Number(jobPost.job_post_id)
 				);
 
-				const jobApplicationModel = this.Model.jobApplicationModel(trx);
+				for (const job of vacancy) {
+					await model.updateJobPostDetailsStatus(
+						Number(job.id),
+						JOB_POST_DETAILS_STATUS.Cancelled as unknown as IJobPostDetailsStatus
+					);
+				}
+
 				await jobApplicationModel.cancelApplication(
 					jobPost.job_post_id
 				);

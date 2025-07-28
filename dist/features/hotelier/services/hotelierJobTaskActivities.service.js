@@ -44,11 +44,25 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                     throw new customError_1.default(`Job application not found or does not belong to you.`, this.StatusCode.HTTP_NOT_FOUND);
                 }
                 yield jobApplicationModel.updateMyJobApplicationStatus(taskActivity.job_application_id, taskActivity.job_seeker_id, constants_1.JOB_APPLICATION_STATUS.ASSIGNED);
-                yield jobTaskActivitiesModel.updateJobTaskActivity(taskActivity.id, {
+                const res = yield jobTaskActivitiesModel.updateJobTaskActivity(taskActivity.id, {
                     start_time: new Date(),
                     start_approved_at: new Date().toISOString(),
                 });
                 yield jobPostModel.updateJobPostDetailsStatus(application.job_post_details_id, constants_1.JOB_POST_DETAILS_STATUS.In_Progress);
+                yield this.insertNotification(trx, userModelTypes_1.TypeUser.JOB_SEEKER, {
+                    user_id: taskActivity.job_seeker_id,
+                    content: `You are assigned for the job. Please read the requirements carefully!`,
+                    related_id: res[0].id,
+                    type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
+                });
+                socket_1.io.to(String(taskActivity.job_seeker_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION, {
+                    user_id: taskActivity.job_seeker_id,
+                    content: `You are assigned for the job. Please read the requirements carefully!`,
+                    related_id: res[0].id,
+                    type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
+                    read_status: false,
+                    created_at: new Date().toISOString(),
+                });
                 return {
                     success: true,
                     message: this.ResMsg.HTTP_OK,
@@ -196,7 +210,7 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 console.log({ paymentPayload });
                 yield paymentModel.initializePayment(paymentPayload);
                 console.log(1);
-                yield jobTaskActivitiesModel.updateJobTaskActivity(taskActivity.id, {
+                const res = yield jobTaskActivitiesModel.updateJobTaskActivity(taskActivity.id, {
                     end_approved_at: new Date(),
                     total_working_hours: totalWorkingHours,
                 });
@@ -206,12 +220,19 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 // 	application.job_post_details_id,
                 // 	JOB_POST_DETAILS_STATUS.In_Progress
                 // );
-                socket_1.io.to(String(taskActivity.job_seeker_id)).emit("approve-end-job-task", {
-                    id,
-                    start_time: taskActivity.start_time,
-                    end_time: taskActivity.end_time,
-                    total_working_hours: totalWorkingHours,
-                    end_approved_at: new Date(),
+                yield this.insertNotification(trx, userModelTypes_1.TypeUser.JOB_SEEKER, {
+                    user_id: taskActivity.job_seeker_id,
+                    content: `You task in under review. Please wait some moments!`,
+                    related_id: res[0].id,
+                    type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
+                });
+                socket_1.io.to(String(taskActivity.job_seeker_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION, {
+                    user_id: taskActivity.job_seeker_id,
+                    content: `You task in under review. Please wait some moments!`,
+                    related_id: res[0].id,
+                    type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
+                    read_status: false,
+                    created_at: new Date().toISOString(),
                 });
                 return {
                     success: true,

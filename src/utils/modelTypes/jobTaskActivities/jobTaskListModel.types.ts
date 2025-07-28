@@ -11,6 +11,7 @@ export interface IGetJobTaskList {
 	created_at: string;
 	job_seeker_id: number;
 	job_seeker_name: string;
+	hotelier_id: number;
 }
 export interface IJobTaskListQuery {
 	id?: number;

@@ -245,7 +245,9 @@ class JobPostModel extends schema_1.default {
             'location_address', js_vwl.location_address,
             'city', js_vwl.city_name,
 						'longitude', js_vwl.longitude,
-						'latitude', js_vwl.latitude
+						'latitude', js_vwl.latitude,
+            'stripe_acc_id', js.stripe_acc_id,
+            'payment_id', pay.id
 					)
 				END as job_seeker_details
 			`), this.db.raw(`
@@ -265,6 +267,7 @@ class JobPostModel extends schema_1.default {
                 .join("job_post_details as jpd", "jp.id", "jpd.job_post_id")
                 .join("jobs as j", "j.id", "jpd.job_id")
                 .leftJoin("job_applications as ja", "ja.job_post_details_id", "jpd.id")
+                .leftJoin("payment as pay", "pay.application_id", "ja.id")
                 .leftJoin("user as js", "js.id", "ja.job_seeker_id")
                 .joinRaw(`LEFT JOIN ?? as jsu ON jsu.user_id = js.id`, [
                 `${this.JOB_SEEKER}.${this.TABLES.job_seeker}`,

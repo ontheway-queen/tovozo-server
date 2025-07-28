@@ -19,19 +19,15 @@ class CancellationLogService extends abstract_service_1.default {
     // get reports
     getCancellationLogs(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const query = req.query;
+            const { report_type, status, skip, limit, name } = req.query;
             const model = this.Model.cancellationLogModel();
-            if (query.report_type !== constants_1.CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION &&
-                query.report_type !== constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST) {
-                throw new customError_1.default("Report type is invalid. Please add report type in the query", this.StatusCode.HTTP_BAD_REQUEST);
-            }
-            let data;
-            if (query.report_type === constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST) {
-                data = yield model.getJobPostCancellationLogs(query);
-            }
-            else if (query.report_type === constants_1.CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION) {
-                data = yield model.getJobApplicationCancellationLogs(query);
-            }
+            const data = yield model.getCancellationLogsForAdmin({
+                report_type: report_type,
+                status: status,
+                skip: Number(skip),
+                limit: Number(limit),
+                name: name,
+            });
             return Object.assign({ success: true, code: this.StatusCode.HTTP_OK, message: this.ResMsg.HTTP_OK }, data);
         });
     }

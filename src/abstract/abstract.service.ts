@@ -63,7 +63,7 @@ abstract class AbstractServices {
 
 			case TypeUser.JOB_SEEKER: {
 				if (
-					payload.type === NotificationTypeEnum.JOB_POST &&
+					payload.type === NotificationTypeEnum.JOB_TASK &&
 					payload.user_id
 				) {
 					users = [{ user_id: payload.user_id }];

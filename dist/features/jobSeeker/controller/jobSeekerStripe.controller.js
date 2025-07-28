@@ -38,6 +38,10 @@ class JobSeekerStripeController extends abstract_controller_1.default {
             const _a = yield this.stripeService.onboardComplete(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
+        this.loginStripeAccount = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.stripeService.loginStripeAccount(req), { code } = _a, data = __rest(_a, ["code"]);
+            res.status(code).json(data);
+        }));
     }
 }
 exports.default = JobSeekerStripeController;

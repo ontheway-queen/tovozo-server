@@ -135,7 +135,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     if (!data) {
                         throw new customError_1.default("Application data with the requested id not found", this.StatusCode.HTTP_NOT_FOUND);
                     }
-                    yield jobPostModel.updateJobPostDetailsStatus(data.job_post_id, constants_1.JOB_POST_DETAILS_STATUS.Pending);
+                    yield jobPostModel.updateJobPostDetailsStatus(data.job_post_details_id, constants_1.JOB_POST_DETAILS_STATUS.Pending);
                     return {
                         success: true,
                         message: this.ResMsg.HTTP_OK,
@@ -146,7 +146,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     if (body.report_type !==
                         constants_1.CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION ||
                         !body.reason) {
-                        throw new customError_1.default(this.ResMsg.HTTP_UNPROCESSABLE_ENTITY, this.StatusCode.HTTP_UNPROCESSABLE_ENTITY);
+                        throw new customError_1.default("Cancellation report must include a valid reason and type 'CANCEL_APPLICATION'.", this.StatusCode.HTTP_UNPROCESSABLE_ENTITY);
                     }
                     body.reporter_id = user_id;
                     body.related_id = id;

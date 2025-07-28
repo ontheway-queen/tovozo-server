@@ -99,4 +99,33 @@ export default class JobSeekerStripeService extends AbstractServices {
 			message: "Onboarding completed successfully",
 		};
 	}
+
+	public async loginStripeAccount(req: Request) {
+		const { user_id } = req.jobSeeker;
+		const userModel = this.Model.UserModel();
+		const checkUser = await userModel.checkUser({ id: user_id });
+		if (checkUser.length < 1) {
+			throw new CustomError(
+				"User not found!",
+				this.StatusCode.HTTP_NOT_FOUND
+			);
+		}
+		// if (!checkUser[0].stripe_acc_id) {
+		// 	throw new Error(
+		// 		"Stripe Account not found. Please complete your profile first!"
+		// 	);
+		// }
+
+		const loginLink = await stripe.accounts.createLoginLink(
+			checkUser[0].stripe_acc_id || "acct_1RnAa4FSzTsJiGrd"
+		);
+		return {
+			success: true,
+			message: this.ResMsg.HTTP_OK,
+			code: this.StatusCode.HTTP_OK,
+			data: {
+				url: loginLink.url,
+			},
+		};
+	}
 }

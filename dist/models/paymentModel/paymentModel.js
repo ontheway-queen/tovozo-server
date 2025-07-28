@@ -108,8 +108,10 @@ class PaymentModel extends schema_1.default {
         return __awaiter(this, arguments, void 0, function* ({ job_seeker_id, skip, limit, search, status, }) {
             const baseQuery = this.db("payment as p")
                 .withSchema(this.DBO_SCHEMA)
-                .select("p.id", "p.payment_no", "p.application_id", "org.name as organization_name", "jp.id as job_post_id", "jp.title as job_title", "p.job_seeker_pay", "p.status", "p.paid_at", "p.trx_id")
+                .select("p.id", "p.payment_no", "p.application_id", "org.name as organization_name", "j.id as job_post_id", "j.title as job_title", "p.job_seeker_pay", "p.status", "p.paid_at", "p.trx_id")
                 .leftJoin("job_applications as ja", "ja.id", "p.application_id")
+                .leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
+                .leftJoin("jobs as j", "j.id", "jpd.job_id")
                 .leftJoin("job_post as jp", "jp.id", "ja.job_post_id")
                 .joinRaw(`
       LEFT JOIN hotelier.organization AS org ON org.id = jp.organization_id
@@ -117,7 +119,7 @@ class PaymentModel extends schema_1.default {
                 .leftJoin("user as job_seeker", "job_seeker.id", "ja.job_seeker_id")
                 .where("job_seeker.id", job_seeker_id);
             if (search) {
-                baseQuery.andWhere("jp.title", "ilike", `%${search}%`);
+                baseQuery.andWhere("j.title", "ilike", `%${search}%`);
             }
             if (status) {
                 baseQuery.andWhere("p.status", status);
@@ -165,8 +167,10 @@ class PaymentModel extends schema_1.default {
             const { limit, skip, search, status } = params;
             const data = yield this.db("payment as p")
                 .withSchema(this.DBO_SCHEMA)
-                .select("p.id", "p.application_id", "jp.title as job_title", "job_seeker.id as job_seeker_id", "job_seeker.name as job_seeker_name", "org.id as paid_by_id", "org.name as paid_by", "p.total_amount", "p.job_seeker_pay", "p.platform_fee", "p.status", "p.payment_no", "p.trx_id", "p.paid_at")
+                .select("p.id", "p.application_id", "j.title as job_title", "job_seeker.id as job_seeker_id", "job_seeker.name as job_seeker_name", "org.id as paid_by_id", "org.name as paid_by", "p.total_amount", "p.job_seeker_pay", "p.platform_fee", "p.status", "p.payment_no", "p.trx_id", "p.paid_at")
                 .leftJoin("job_applications as ja", "ja.id", "p.application_id")
+                .leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
+                .leftJoin("jobs as j", "j.id", "jpd.job_id")
                 .leftJoin("job_post as jp", "jp.id", "ja.job_post_id")
                 .leftJoin("user as job_seeker", "job_seeker.id", "ja.job_seeker_id")
                 .joinRaw(`LEFT JOIN ?? AS org ON org.id = jp.organization_id`, [
@@ -174,7 +178,11 @@ class PaymentModel extends schema_1.default {
             ])
                 .where((qb) => {
                 if (search) {
-                    qb.where("jp.title", "ilike", `%${search}%`);
+                    qb.andWhere((subQb) => {
+                        subQb
+                            .whereILike("j.title", `%${search}%`)
+                            .orWhereILike("job_seeker.name", `%${search}%`);
+                    });
                 }
                 if (status) {
                     qb.andWhere("p.status", status);
@@ -186,10 +194,17 @@ class PaymentModel extends schema_1.default {
             const totalResult = yield this.db("payment as p")
                 .withSchema(this.DBO_SCHEMA)
                 .leftJoin("job_applications as ja", "ja.id", "p.application_id")
+                .leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
+                .leftJoin("jobs as j", "j.id", "jpd.job_id")
                 .leftJoin("job_post as jp", "jp.id", "ja.job_post_id")
+                .leftJoin("user as job_seeker", "job_seeker.id", "ja.job_seeker_id") // ✅ Add this line
                 .where((qb) => {
                 if (search) {
-                    qb.where("jp.title", "ilike", `%${search}%`);
+                    qb.andWhere((subQb) => {
+                        subQb
+                            .whereILike("j.title", `%${search}%`)
+                            .orWhereILike("job_seeker.name", `%${search}%`);
+                    });
                 }
                 if (status) {
                     qb.andWhere("p.status", status);
@@ -219,6 +234,7 @@ class PaymentModel extends schema_1.default {
     // Update payment
     updatePayment(id, payload) {
         return __awaiter(this, void 0, void 0, function* () {
+            console.log({ payload });
             return yield this.db("payment")
                 .withSchema(this.DBO_SCHEMA)
                 .update(payload)
@@ -304,31 +320,43 @@ class PaymentModel extends schema_1.default {
     }
     getAllPaymentLedgerForAdmin(params) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a;
+            var _a, _b;
             const { limit, skip, search, type } = params;
-            const data = yield this.db("payment_ledger")
+            const baseQuery = this.db("payment_ledger as pl")
                 .withSchema(this.DBO_SCHEMA)
-                .select("id", "trx_type", "amount", "details", "ledger_date", "voucher_no")
-                .where("user_type", type)
-                .andWhere((qb) => {
+                .select("pl.id", "pl.trx_type", "pl.amount", "pl.details", "pl.ledger_date", "pl.voucher_no", "j.title as job_title", "org.name as organization_name", "job_seeker.name as job_seeker_name", "p.paid_at")
+                .leftJoin("payment as p", "p.payment_no", "pl.voucher_no")
+                .leftJoin("job_applications as ja", "ja.id", "p.application_id")
+                .leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
+                .leftJoin("jobs as j", "j.id", "jpd.job_id")
+                .leftJoin("job_post as jp", "jp.id", "ja.job_post_id")
+                .joinRaw(`LEFT JOIN hotelier.organization AS org ON org.id = jp.organization_id`)
+                .leftJoin("user as job_seeker", "job_seeker.id", "ja.job_seeker_id")
+                .modify((qb) => {
+                if (type) {
+                    qb.where("pl.user_type", type);
+                }
                 if (search) {
-                    qb.where("details", "ilike", `%${search}%`);
+                    qb.whereILike("pl.details", `%${search}%`);
                 }
             })
-                .orderBy("id", "desc")
+                .orderBy("pl.id", "desc")
                 .offset(skip)
                 .limit(limit);
-            const totalResult = yield this.db("payment_ledger")
+            const data = yield baseQuery;
+            const countQuery = this.db("payment_ledger as pl")
                 .withSchema(this.DBO_SCHEMA)
                 .count("* as count")
-                .where("user_type", type)
-                .andWhere((qb) => {
+                .modify((qb) => {
+                if (type) {
+                    qb.where("pl.user_type", type);
+                }
                 if (search) {
-                    qb.where("details", "ilike", `%${search}%`);
+                    qb.whereILike("pl.details", `%${search}%`);
                 }
             })
                 .first();
-            const total = Number((_a = totalResult === null || totalResult === void 0 ? void 0 : totalResult.count) !== null && _a !== void 0 ? _a : 0);
+            const total = Number((_b = (_a = (yield countQuery)) === null || _a === void 0 ? void 0 : _a.count) !== null && _b !== void 0 ? _b : 0);
             return { data, total };
         });
     }

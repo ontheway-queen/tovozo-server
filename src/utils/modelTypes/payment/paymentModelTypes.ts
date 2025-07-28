@@ -56,7 +56,7 @@ export interface IPaymentLedgerPayload {
 	ledger_date: Date;
 	created_at: Date;
 	updated_at: Date;
-	trx_id: string;
+	// trx_id: string;
 	user_id?: number | string;
 	trx_type: (typeof PAY_LEDGER_TRX_TYPE)[keyof typeof PAY_LEDGER_TRX_TYPE];
 	user_type: `${TypeUser}`;
@@ -64,7 +64,7 @@ export interface IPaymentLedgerPayload {
 	details: string;
 }
 
-export interface IGetPaymentLedgerForHotelier {
+export interface IGetPaymentLedger {
 	id: number;
 	trx_type: string;
 	amount: string;

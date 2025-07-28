@@ -209,5 +209,79 @@ class CancellationLogModel extends schema_1.default {
                 .update(payload);
         });
     }
+    // Get cancellation logs for admin
+    getCancellationLogsForAdmin(query) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { status, limit = 100, skip = 0, need_total = true, name, report_type, } = query;
+            const jobPostQuery = this.db
+                .select("cr.id", "j.title", "u.name as reporter_name", "cr.report_type", "cr.status")
+                .from("cancellation_logs as cr")
+                .withSchema(this.DBO_SCHEMA)
+                .leftJoin("user as u", "u.id", "cr.reporter_id")
+                .leftJoin("job_post_details as jpd", "cr.related_id", "jpd.id")
+                .leftJoin("jobs as j", "jpd.job_id", "j.id")
+                .where("cr.report_type", "CANCEL_JOB_POST");
+            const jobApplicationQuery = this.db
+                .select("cr.id", "j.title", "u.name as reporter_name", "cr.report_type", "cr.status")
+                .from("cancellation_logs as cr")
+                .withSchema(this.DBO_SCHEMA)
+                .leftJoin("user as u", "u.id", "cr.reporter_id")
+                .leftJoin("job_applications as ja", "cr.related_id", "ja.id")
+                .leftJoin("job_post_details as jpd", "ja.job_post_details_id", "jpd.id")
+                .leftJoin("jobs as j", "jpd.job_id", "j.id")
+                .where("cr.report_type", "CANCEL_APPLICATION");
+            const applyFilters = (qb) => {
+                if (status)
+                    qb.andWhere("cr.status", status);
+                if (report_type)
+                    qb.andWhere("cr.report_type", report_type);
+                if (name) {
+                    qb.andWhere((subQb) => {
+                        subQb
+                            .whereILike("j.title", `%${name}%`)
+                            .orWhereILike("u.name", `%${name}%`);
+                    });
+                }
+            };
+            applyFilters(jobPostQuery);
+            applyFilters(jobApplicationQuery);
+            const unioned = this.db
+                .from((qb) => {
+                qb.unionAll([jobPostQuery, jobApplicationQuery], true).as("combined");
+            })
+                .select("*")
+                .limit(limit)
+                .offset(skip);
+            const data = yield unioned;
+            let total = undefined;
+            if (need_total) {
+                const jobPostTotal = this.db("cancellation_logs as cr")
+                    .withSchema(this.DBO_SCHEMA)
+                    .count("cr.id as count")
+                    .leftJoin("user as u", "u.id", "cr.reporter_id")
+                    .leftJoin("job_post_details as jpd", "cr.related_id", "jpd.id")
+                    .leftJoin("jobs as j", "jpd.job_id", "j.id")
+                    .where("cr.report_type", "CANCEL_JOB_POST");
+                const jobAppTotal = this.db("cancellation_logs as cr")
+                    .withSchema(this.DBO_SCHEMA)
+                    .count("cr.id as count")
+                    .leftJoin("user as u", "u.id", "cr.reporter_id")
+                    .leftJoin("job_applications as ja", "cr.related_id", "ja.id")
+                    .leftJoin("job_post_details as jpd", "ja.job_post_details_id", "jpd.id")
+                    .leftJoin("jobs as j", "jpd.job_id", "j.id")
+                    .where("cr.report_type", "CANCEL_APPLICATION");
+                applyFilters(jobPostTotal);
+                applyFilters(jobAppTotal);
+                const [jobPostCount, jobAppCount] = yield Promise.all([
+                    jobPostTotal.first(),
+                    jobAppTotal.first(),
+                ]);
+                total =
+                    Number((jobPostCount === null || jobPostCount === void 0 ? void 0 : jobPostCount.count) || 0) +
+                        Number((jobAppCount === null || jobAppCount === void 0 ? void 0 : jobAppCount.count) || 0);
+            }
+            return { data, total };
+        });
+    }
 }
 exports.default = CancellationLogModel;

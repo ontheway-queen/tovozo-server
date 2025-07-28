@@ -65,7 +65,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 				JOB_APPLICATION_STATUS.ASSIGNED
 			);
 
-			await jobTaskActivitiesModel.updateJobTaskActivity(
+			const res = await jobTaskActivitiesModel.updateJobTaskActivity(
 				taskActivity.id,
 				{
 					start_time: new Date(),
@@ -76,6 +76,25 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 			await jobPostModel.updateJobPostDetailsStatus(
 				application.job_post_details_id,
 				JOB_POST_DETAILS_STATUS.In_Progress as unknown as IJobPostDetailsStatus
+			);
+
+			await this.insertNotification(trx, TypeUser.JOB_SEEKER, {
+				user_id: taskActivity.job_seeker_id,
+				content: `You are assigned for the job. Please read the requirements carefully!`,
+				related_id: res[0].id,
+				type: NotificationTypeEnum.JOB_TASK,
+			});
+
+			io.to(String(taskActivity.job_seeker_id)).emit(
+				TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION,
+				{
+					user_id: taskActivity.job_seeker_id,
+					content: `You are assigned for the job. Please read the requirements carefully!`,
+					related_id: res[0].id,
+					type: NotificationTypeEnum.JOB_TASK,
+					read_status: false,
+					created_at: new Date().toISOString(),
+				}
 			);
 
 			return {
@@ -326,7 +345,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 
 			await paymentModel.initializePayment(paymentPayload);
 			console.log(1);
-			await jobTaskActivitiesModel.updateJobTaskActivity(
+			const res = await jobTaskActivitiesModel.updateJobTaskActivity(
 				taskActivity.id,
 				{
 					end_approved_at: new Date(),
@@ -344,14 +363,22 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 			// 	JOB_POST_DETAILS_STATUS.In_Progress
 			// );
 
+			await this.insertNotification(trx, TypeUser.JOB_SEEKER, {
+				user_id: taskActivity.job_seeker_id,
+				content: `You task in under review. Please wait some moments!`,
+				related_id: res[0].id,
+				type: NotificationTypeEnum.JOB_TASK,
+			});
+
 			io.to(String(taskActivity.job_seeker_id)).emit(
-				"approve-end-job-task",
+				TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION,
 				{
-					id,
-					start_time: taskActivity.start_time,
-					end_time: taskActivity.end_time,
-					total_working_hours: totalWorkingHours,
-					end_approved_at: new Date(),
+					user_id: taskActivity.job_seeker_id,
+					content: `You task in under review. Please wait some moments!`,
+					related_id: res[0].id,
+					type: NotificationTypeEnum.JOB_TASK,
+					read_status: false,
+					created_at: new Date().toISOString(),
 				}
 			);
 
