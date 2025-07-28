@@ -1,5 +1,6 @@
 import { IJobSeekerJobApplication } from "../../features/jobSeeker/utils/types/jobSeekerJobApplicationTypes";
 import { TDB } from "../../features/public/utils/types/publicCommon.types";
+import { JOB_APPLICATION_STATUS } from "../../utils/miscellaneous/constants";
 import Schema from "../../utils/miscellaneous/schema";
 import {
 	ICreateJobApplicationPayload,
@@ -42,46 +43,31 @@ export default class JobApplicationModel extends Schema {
 			skip,
 			need_total = true,
 		} = params;
+
 		const data = await this.db("job_applications as ja")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
 				"ja.id as job_application_id",
 				"ja.status as job_application_status",
-				"ja.created_at as applied_at",
-				"jpd.id as job_post_details_id",
-				"jpd.status as job_post_details_status",
 				"jpd.start_time",
 				"jpd.end_time",
-				"jpd.job_post_id",
-				"jp.title as job_post_title",
-				"jp.details as job_post_details",
-				"jp.requirements as job_post_requirements",
-				"jp.hourly_rate",
-				"jp.prefer_gender",
+				"j.title as job_post_title",
+				"j.details as job_post_details",
+				"j.job_seeker_pay",
 				"org.id as organization_id",
 				"org.name as organization_name",
 				"org_p.file as organization_photo",
-				"vwl.location_id",
-				"vwl.location_name",
 				"vwl.location_address",
-				"vwl.country_name",
-				"vwl.state_name",
 				"vwl.city_name",
 				"vwl.longitude",
-				"vwl.latitude",
-				this.db.raw(`json_build_object(
-                    'id', j.id,
-                    'title', j.title,
-                    'details', j.details,
-                    'status', j.status,
-                    'is_deleted', j.is_deleted
-                ) as category`)
+				"vwl.latitude"
 			)
 			.leftJoin(
 				"job_post_details as jpd",
 				"ja.job_post_details_id",
 				"jpd.id"
 			)
+			.leftJoin("jobs as j", "jpd.job_id", "j.id")
 			.leftJoin("job_post as jp", "jpd.job_post_id", "jp.id")
 			.joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
 				`${this.HOTELIER}.${this.TABLES.organization}`,
@@ -91,7 +77,6 @@ export default class JobApplicationModel extends Schema {
 				"vwl.location_id",
 				"org.location_id"
 			)
-			.leftJoin("jobs as j", "jpd.job_id", "j.id")
 			.leftJoin(
 				this.db.raw(`?? as org_p ON org_p.organization_id = org.id`, [
 					`${this.HOTELIER}.${this.TABLES.organization_photos}`,
@@ -122,6 +107,7 @@ export default class JobApplicationModel extends Schema {
 
 			total = totalQuery?.total ? Number(totalQuery.total) : 0;
 		}
+
 		return { data, total };
 	}
 
@@ -137,42 +123,31 @@ export default class JobApplicationModel extends Schema {
 			.select(
 				"ja.id as job_application_id",
 				"ja.status as job_application_status",
-				"ja.created_at as applied_at",
 				"jpd.id as job_post_details_id",
 				"jpd.status as job_post_details_status",
 				"jpd.start_time",
 				"jpd.end_time",
 				"jpd.job_post_id",
-				"jp.title as job_post_title",
-				"jp.details as job_post_details",
-				"jp.requirements as job_post_requirements",
-				"jp.hourly_rate",
-				"jp.prefer_gender",
+				"j.title as job_post_title",
+				"j.details as job_post_details",
+				"j.job_seeker_pay",
+				"org.user_id as hotelier_id",
 				"org.id as organization_id",
 				"org.name as organization_name",
 				"org_p.file as organization_photo",
-				"vwl.location_id",
-				"vwl.location_name",
 				"vwl.location_address",
-				"vwl.country_name",
-				"vwl.state_name",
 				"vwl.city_name",
 				"vwl.longitude",
 				"vwl.latitude",
 				this.db.raw(`json_build_object(
-                    'id', j.id,
-                    'title', j.title,
-                    'details', j.details,
-                    'status', j.status,
-                    'is_deleted', j.is_deleted
-                ) as category`),
-				this.db.raw(`json_build_object(
-                    'id', jta.id,
-                    'start_time', jta.start_time,
-                    'end_time', jta.end_time,
-                    'total_working_hours', jta.total_working_hours,
-                    'approved_at', jta.approved_at
-                ) as job_task_activity`)
+            'id', jta.id,
+            'start_time', jta.start_time,
+            'end_time', jta.end_time,
+            'total_working_hours', jta.total_working_hours,
+            'start_approved_at', jta.start_approved_at,
+            'end_approved_at', jta.end_approved_at,
+            'tasks', task_list_agg.tasks
+        ) as job_task_activity`)
 			)
 			.leftJoin(
 				"job_post_details as jpd",
@@ -198,6 +173,25 @@ export default class JobApplicationModel extends Schema {
 				"job_task_activities as jta",
 				"jta.job_application_id",
 				"ja.id"
+			)
+			.leftJoin(
+				this.db
+					.select(
+						"jtl.job_task_activity_id",
+						this.db
+							.raw(`COALESCE(json_agg(DISTINCT jsonb_build_object(
+                  'id', jtl.id,
+        'message', jtl.message,
+        'is_completed', jtl.is_completed,
+        'completed_at', jtl.completed_at
+      )) FILTER (WHERE jtl.id IS NOT NULL), '[]'::json) as tasks`)
+					)
+					.from(`${this.DBO_SCHEMA}.job_task_list as jtl`)
+					.where("jtl.is_deleted", false)
+					.groupBy("jtl.job_task_activity_id")
+					.as("task_list_agg"),
+				"task_list_agg.job_task_activity_id",
+				"jta.id"
 			)
 			.where("ja.job_seeker_id", job_seeker_id)
 			.modify((qb) => {
@@ -232,7 +226,7 @@ export default class JobApplicationModel extends Schema {
 			.withSchema(this.DBO_SCHEMA)
 			.where("job_post_id", job_post_id)
 			.update({
-				status: "CANCELLED",
+				status: JOB_APPLICATION_STATUS.CANCELLED,
 				cancelled_at: new Date(),
 			});
 	}

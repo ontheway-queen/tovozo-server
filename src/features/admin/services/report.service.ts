@@ -34,24 +34,6 @@ export default class AdminReportService extends AbstractServices {
 		};
 	};
 
-	public getSingleReportWithInfo = async (req: Request) => {
-		const id = req.params.id;
-		const model = this.Model.reportModel();
-		const res = await model.getSingleReportWithInfo(Number(id));
-		if (!res) {
-			throw new CustomError(
-				`The requested report with ID-${id} not found`,
-				this.StatusCode.HTTP_NOT_FOUND
-			);
-		}
-		return {
-			success: true,
-			code: this.StatusCode.HTTP_OK,
-			message: this.ResMsg.HTTP_OK,
-			data: res,
-		};
-	};
-
 	public reportMarkAsAcknowledge = async (req: Request) => {
 		return await this.db.transaction(async (trx) => {
 			const { user_id } = req.admin;

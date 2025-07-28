@@ -1,23 +1,19 @@
 import {
 	GENDERS,
 	JOB_POST_DETAILS_STATUS,
+	JOB_POST_STATUS,
 	PAYMENT_STATUS,
 } from "../../miscellaneous/constants";
 
 export type IGenderType = (typeof GENDERS)[number];
 
-export type IJobPostDetailsStatus = keyof typeof JOB_POST_DETAILS_STATUS;
+export type IJobPostStatus = keyof typeof JOB_POST_STATUS;
+
+export type IJobPostDetailsStatus =
+	(typeof JOB_POST_DETAILS_STATUS)[keyof typeof JOB_POST_DETAILS_STATUS];
 export interface IJobPostPayload {
-	id: number;
 	organization_id: number;
-	title: string;
-	details?: string;
-	created_time?: string;
-	expire_time?: string;
-	status?: IJobPostDetailsStatus;
-	hourly_rate: number;
-	prefer_gender?: IGenderType;
-	requirements?: string;
+	expire_time: string;
 }
 
 export interface IJobPostDetailsPayload {
@@ -27,15 +23,14 @@ export interface IJobPostDetailsPayload {
 	start_time: string;
 	end_time: string;
 	status?: IJobPostDetailsStatus;
+	hourly_rate: number;
+	job_seeker_pay: number;
+	platform_fee: number;
 }
 
 export interface IJobPost {
-	title?: string;
-	details?: string;
 	expire_time?: string;
-	hourly_rate?: number;
-	prefer_gender?: IGenderType;
-	requirements?: string;
+	status?: (typeof JOB_POST_STATUS)[keyof typeof JOB_POST_STATUS];
 }
 
 export interface IJobPostDetails {
@@ -62,4 +57,7 @@ export interface IGetJobPostListParams {
 	limit?: number;
 	skip?: number;
 	need_total?: boolean;
+	from_date?: string;
+	to_date?: string;
+	search?: string;
 }

@@ -21,6 +21,11 @@ export default class HotelierJobTaskActivitiesRouter extends AbstractRouter {
 
 		this.router
 			.route("/:id")
-			.patch(this.hotelierJobTaskActivityController.approveJobTaskActivity);
+			.patch(
+				this.hotelierJobTaskActivityController.approveJobTaskActivity
+			)
+			.put(
+				this.hotelierJobTaskActivityController.approveEndJobTaskActivity
+			);
 	}
 }

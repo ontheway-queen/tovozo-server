@@ -31,12 +31,12 @@ class AdminJobPostController extends abstract_controller_1.default {
         super();
         this.service = new jobPost_service_1.default();
         this.validator = new hotelierJobPost_validator_1.HotelierJobPostValidator();
-        this.getAllJobPosts = this.asyncWrapper.wrap({ querySchema: this.validator.getJobPostSchema }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.getAllJobPosts(req), { code } = _a, data = __rest(_a, ["code"]);
+        this.getJobPostListForAdmin = this.asyncWrapper.wrap({ querySchema: this.validator.getJobPostSchema }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.getJobPostListForAdmin(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
-        this.getSingleJobPost = this.asyncWrapper.wrap({ paramSchema: this.validator.getSingleJobPostSchema }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _b = yield this.service.getSingleJobPost(req), { code } = _b, data = __rest(_b, ["code"]);
+        this.getSingleJobPostForAdmin = this.asyncWrapper.wrap({ paramSchema: this.validator.getSingleJobPostSchema }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.getSingleJobPostForAdmin(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }

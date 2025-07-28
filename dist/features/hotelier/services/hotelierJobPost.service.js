@@ -15,12 +15,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
 const customError_1 = __importDefault(require("../../../utils/lib/customError"));
 const constants_1 = require("../../../utils/miscellaneous/constants");
+const socket_1 = require("../../../app/socket");
+const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
+const commonModelTypes_1 = require("../../../utils/modelTypes/common/commonModelTypes");
 class HotelierJobPostService extends abstract_service_1.default {
     createJobPost(req) {
         return __awaiter(this, void 0, void 0, function* () {
             const { user_id } = req.hotelier;
             const body = req.body;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const jobSeeker = this.Model.jobSeekerModel(trx);
                 const model = this.Model.jobPostModel(trx);
                 const organizationModel = this.Model.organizationModel(trx);
                 const jobModel = this.Model.jobModel(trx);
@@ -30,11 +34,21 @@ class HotelierJobPostService extends abstract_service_1.default {
                 if (!checkOrganization) {
                     throw new customError_1.default("Organization not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }
+                console.log({ checkOrganization });
                 body.job_post.organization_id = checkOrganization.id;
                 const res = yield model.createJobPost(body.job_post);
                 if (!res.length) {
                     throw new customError_1.default(this.ResMsg.HTTP_BAD_REQUEST, this.StatusCode.HTTP_BAD_REQUEST);
                 }
+                const expireTime = new Date(res[0].expire_time).getTime();
+                const now = Date.now();
+                const delay = Math.max(expireTime - now, 0);
+                const queue = this.getQueue("expire-job-post");
+                yield queue.add("expire-job-post", { id: res[0].id }, {
+                    delay,
+                    removeOnComplete: true,
+                    removeOnFail: false,
+                });
                 const jobPostDetails = [];
                 for (const detail of body.job_post_details) {
                     const checkJob = yield jobModel.getSingleJob(detail.job_id);
@@ -44,9 +58,51 @@ class HotelierJobPostService extends abstract_service_1.default {
                     if (new Date(detail.start_time) >= new Date(detail.end_time)) {
                         throw new customError_1.default("Job post start time cannot be greater than or equal to end time.", this.StatusCode.HTTP_BAD_REQUEST);
                     }
-                    jobPostDetails.push(Object.assign(Object.assign({}, detail), { job_post_id: res[0].id }));
+                    console.log({ checkJob });
+                    jobPostDetails.push(Object.assign(Object.assign({}, detail), { job_post_id: res[0].id, hourly_rate: checkJob.hourly_rate, job_seeker_pay: checkJob.job_seeker_pay, platform_fee: checkJob.platform_fee }));
                 }
                 yield model.createJobPostDetails(jobPostDetails);
+                // Job Post Nearby
+                const orgLat = parseFloat(checkOrganization.latitude);
+                const orgLng = parseFloat(checkOrganization.longitude);
+                function getDistanceFromLatLng(hLat1, hLng1, lat2, lng2) {
+                    const toRad = (value) => (value * Math.PI) / 180;
+                    const R = 6371; // Earth's radius in km
+                    const dLat = toRad(lat2 - hLat1);
+                    const dLng = toRad(lng2 - hLng1);
+                    const a = Math.sin(dLat / 2) ** 2 +
+                        Math.cos(toRad(hLat1)) *
+                            Math.cos(toRad(lat2)) *
+                            Math.sin(dLng / 2) ** 2;
+                    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                    return R * c;
+                }
+                const all = yield jobSeeker.getJobSeekerLocation();
+                console.log({ all });
+                for (const seeker of all) {
+                    const seekerLat = parseFloat(seeker.latitude);
+                    const seekerLng = parseFloat(seeker.longitude);
+                    const distance = getDistanceFromLatLng(orgLat, orgLng, seekerLat, seekerLng);
+                    if (distance > 10)
+                        continue;
+                    console.log(`Job seeker ${seeker.user_id} is within ${distance.toFixed(2)} km`);
+                    // 1. Insert into DB
+                    yield this.insertNotification(trx, userModelTypes_1.TypeUser.JOB_SEEKER, {
+                        user_id: seeker.user_id,
+                        content: `A new job post is available near you!`,
+                        related_id: res[0].id,
+                        type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
+                    });
+                    // 2. Emit via socket
+                    socket_1.io.to(String(seeker.user_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION, {
+                        user_id: seeker.user_id,
+                        content: `A new job post is available near you!`,
+                        related_id: res[0].id,
+                        type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
+                        read_status: false,
+                        created_at: new Date().toISOString(),
+                    });
+                }
                 return {
                     success: true,
                     message: this.ResMsg.HTTP_SUCCESSFUL,
@@ -57,23 +113,24 @@ class HotelierJobPostService extends abstract_service_1.default {
     }
     getJobPostList(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { limit, skip, status } = req.query;
+            const { limit, skip, status, title } = req.query;
             const { user_id } = req.hotelier;
             const model = this.Model.jobPostModel();
-            const data = yield model.getHotelierJobPostList({
+            const data = yield model.getJobPostListForHotelier({
                 user_id,
                 limit,
                 skip,
                 status,
+                title,
             });
             return Object.assign({ success: true, message: this.ResMsg.HTTP_OK, code: this.StatusCode.HTTP_OK }, data);
         });
     }
-    getSingleJobPostWithJobSeekerDetails(req) {
+    getSingleJobPostForHotelier(req) {
         return __awaiter(this, void 0, void 0, function* () {
             const { id } = req.params;
             const model = this.Model.jobPostModel();
-            const data = yield model.getSingleJobPostWithJobSeekerDetails(Number(id));
+            const data = yield model.getSingleJobPostForHotelier(Number(id));
             if (!data) {
                 throw new customError_1.default("Job post not found!", this.StatusCode.HTTP_NOT_FOUND);
             }
@@ -90,8 +147,9 @@ class HotelierJobPostService extends abstract_service_1.default {
             const { id } = req.params;
             const body = req.body;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const jobModel = this.Model.jobModel(trx);
                 const model = this.Model.jobPostModel(trx);
-                const jobPost = yield model.getSingleJobPostWithJobSeekerDetails(Number(id));
+                const jobPost = yield model.getSingleJobPostForHotelier(Number(id));
                 if (!jobPost) {
                     throw new customError_1.default("Job post not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }
@@ -100,12 +158,20 @@ class HotelierJobPostService extends abstract_service_1.default {
                     throw new customError_1.default("The job post cannot be updated because its status is not 'Pending'.", this.StatusCode.HTTP_BAD_REQUEST);
                 }
                 const hasJobPost = body.job_post && Object.keys(body.job_post).length > 0;
-                const hasJobPostDetails = body.job_post_details && Object.keys(body.job_post_details).length > 0;
+                const hasJobPostDetails = body.job_post_details &&
+                    Object.keys(body.job_post_details).length > 0;
                 if (hasJobPost) {
                     yield model.updateJobPost(Number(jobPost.job_post_id), body.job_post);
                 }
                 if (hasJobPostDetails) {
-                    const { start_time, end_time } = body.job_post_details;
+                    const { job_id, start_time, end_time } = body.job_post_details;
+                    const job = yield jobModel.getSingleJob(job_id);
+                    if (!job) {
+                        throw new customError_1.default("The requested job with the ID is not found.", this.StatusCode.HTTP_BAD_REQUEST);
+                    }
+                    if (job.is_deleted) {
+                        throw new customError_1.default("This job has been deleted for some reason.", this.StatusCode.HTTP_BAD_REQUEST);
+                    }
                     if (start_time &&
                         end_time &&
                         new Date(start_time) >= new Date(end_time)) {
@@ -132,7 +198,8 @@ class HotelierJobPostService extends abstract_service_1.default {
                 const user = req.hotelier;
                 const model = this.Model.jobPostModel(trx);
                 const cancellationLogModel = this.Model.cancellationLogModel(trx);
-                const jobPost = yield model.getSingleJobPostWithJobSeekerDetails(Number(id));
+                const jobApplicationModel = this.Model.jobApplicationModel(trx);
+                const jobPost = yield model.getSingleJobPostForHotelier(Number(id));
                 if (!jobPost) {
                     throw new customError_1.default("Job post not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }
@@ -146,11 +213,14 @@ class HotelierJobPostService extends abstract_service_1.default {
                 }
                 const currentTime = new Date();
                 const startTime = new Date(jobPost.start_time);
-                const hoursDiff = (startTime.getTime() - currentTime.getTime()) / (1000 * 60 * 60);
+                const hoursDiff = (startTime.getTime() - currentTime.getTime()) /
+                    (1000 * 60 * 60);
                 if (hoursDiff > 24) {
                     yield model.cancelJobPost(Number(jobPost.job_post_id));
-                    yield model.updateJobPostDetailsStatus(Number(jobPost.id), constants_1.JOB_POST_DETAILS_STATUS.Cancelled);
-                    const jobApplicationModel = this.Model.jobApplicationModel(trx);
+                    const vacancy = yield model.getAllJobsUsingJobPostId(Number(jobPost.job_post_id));
+                    for (const job of vacancy) {
+                        yield model.updateJobPostDetailsStatus(Number(job.id), constants_1.JOB_POST_DETAILS_STATUS.Cancelled);
+                    }
                     yield jobApplicationModel.cancelApplication(jobPost.job_post_id);
                     return {
                         success: true,
@@ -159,7 +229,8 @@ class HotelierJobPostService extends abstract_service_1.default {
                     };
                 }
                 else {
-                    if (body.report_type !== constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST ||
+                    if (body.report_type !==
+                        constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST ||
                         !body.reason) {
                         throw new customError_1.default("Invalid request: 'report_type' and 'reason' is required.", this.StatusCode.HTTP_UNPROCESSABLE_ENTITY);
                     }

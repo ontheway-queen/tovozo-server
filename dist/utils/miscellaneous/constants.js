@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GENDER_TYPE = exports.JOB_POST_DETAILS_STATUS_ENUM = exports.JOB_POST_DETAILS_STATUS = exports.GENDERS = exports.LOGIN_TOKEN_EXPIRES_IN = exports.BRITISH_ID = exports.OTP_FOR = exports.USER_TYPE = exports.USER_AUTHENTICATION_VIEW = exports.USER_STATUS_ENUM = exports.USER_STATUS = exports.OTP_TYPE_TWO_FA_HOTELIER = exports.OTP_TYPE_TWO_FA_ADMIN = exports.OTP_TYPE_TWO_FA_JOB_SEEKER = exports.OTP_TYPE_FORGET_HOTELIER = exports.OTP_TYPE_VERIFY_ADMIN = exports.OTP_TYPE_VERIFY_HOTELIER = exports.OTP_TYPE_VERIFY_JOB_SEEKER = exports.OTP_TYPE_FORGET_JOB_SEEKER = exports.OTP_TYPE_FORGET_ADMIN = exports.SOURCE_ADMIN = exports.SOURCE_EXTERNAL = exports.SOURCE_B2C = exports.SOURCE_AGENT_B2C = exports.SOURCE_SUB_AGENT = exports.SOURCE_AGENT = exports.ERROR_LEVEL_CRITICAL = exports.ERROR_LEVEL_ERROR = exports.ERROR_LEVEL_WARNING = exports.ERROR_LEVEL_INFO = exports.ERROR_LEVEL_DEBUG = exports.OTP_DEFAULT_EXPIRY = exports.DATA_LIMIT = exports.OTP_EMAIL_SUBJECT = exports.JOB_SEEKER_PLAY_STORE_URL = exports.JOB_SEEKER_APP_STORE_URL = exports.HOTELIER_PLAY_STORE_URL = exports.HOTELIER_APP_STORE_URL = exports.CLIENT_URL = exports.PROJECT_ADDRESS = exports.PROJECT_NUMBER = exports.PROJECT_EMAIL = exports.PROJECT_LINK = exports.APP_STORE_ICON = exports.PLAY_STORE_ICON = exports.PROJECT_ICON = exports.PROJECT_LOGO = exports.PROJECT_NAME = exports.OTP_TYPES = exports.origin = void 0;
-exports.REPORT_STATUS_ENUM = exports.REPORT_STATUS = exports.REPORT_TYPE_ENUM = exports.REPORT_TYPE = exports.PAYMENT_STATUS_ENUM = exports.PAYMENT_STATUS = exports.JOB_APPLICATION_STATUS_ENUM = exports.JOB_APPLICATION_STATUS = exports.CANCELLATION_REPORT_STATUS = exports.CANCELLATION_REPORT_STATUS_ENUM = exports.CANCELLATION_REPORT_TYPE = exports.CANCELLATION_REPORT_TYPE_ENUM = exports.CANCEL_APPLICATION_ENUM = exports.CANCEL_JOB_POST_ENUM = void 0;
+exports.JOB_POST_DETAILS_STATUS = exports.JOB_POST_STATUS_ENUM = exports.JOB_POST_STATUS = exports.GENDERS = exports.LOGIN_TOKEN_EXPIRES_IN = exports.BRITISH_ID = exports.OTP_FOR = exports.USER_TYPE = exports.USER_AUTHENTICATION_VIEW = exports.USER_STATUS_ENUM = exports.USER_STATUS = exports.OTP_TYPE_TWO_FA_HOTELIER = exports.OTP_TYPE_TWO_FA_ADMIN = exports.OTP_TYPE_TWO_FA_JOB_SEEKER = exports.OTP_TYPE_FORGET_HOTELIER = exports.OTP_TYPE_VERIFY_ADMIN = exports.OTP_TYPE_VERIFY_HOTELIER = exports.OTP_TYPE_VERIFY_JOB_SEEKER = exports.OTP_TYPE_FORGET_JOB_SEEKER = exports.OTP_TYPE_FORGET_ADMIN = exports.SOURCE_ADMIN = exports.SOURCE_EXTERNAL = exports.SOURCE_B2C = exports.SOURCE_AGENT_B2C = exports.SOURCE_SUB_AGENT = exports.SOURCE_AGENT = exports.ERROR_LEVEL_CRITICAL = exports.ERROR_LEVEL_ERROR = exports.ERROR_LEVEL_WARNING = exports.ERROR_LEVEL_INFO = exports.ERROR_LEVEL_DEBUG = exports.OTP_DEFAULT_EXPIRY = exports.DATA_LIMIT = exports.OTP_EMAIL_SUBJECT = exports.JOB_SEEKER_PLAY_STORE_URL = exports.JOB_SEEKER_APP_STORE_URL = exports.HOTELIER_PLAY_STORE_URL = exports.HOTELIER_APP_STORE_URL = exports.CLIENT_URL = exports.PROJECT_ADDRESS = exports.PROJECT_NUMBER = exports.PROJECT_EMAIL = exports.PROJECT_LINK = exports.APP_STORE_ICON = exports.PLAY_STORE_ICON = exports.PROJECT_ICON = exports.PROJECT_LOGO = exports.PROJECT_NAME = exports.OTP_TYPES = exports.origin = void 0;
+exports.PlatformFee = exports.HotelierFixedCharge = exports.JobSeekerFixedCharge = exports.REPORT_STATUS_ENUM = exports.REPORT_STATUS = exports.REPORT_TYPE_ENUM = exports.REPORT_TYPE = exports.PAY_LEDGER_TRX_TYPE = exports.PAYMENT_TYPE_ENUM = exports.PAYMENT_TYPE = exports.PAYMENT_STATUS_ENUM = exports.PAYMENT_STATUS = exports.JOB_APPLICATION_STATUS_ENUM = exports.JOB_APPLICATION_STATUS = exports.CANCELLATION_REPORT_STATUS = exports.CANCELLATION_REPORT_STATUS_ENUM = exports.CANCELLATION_REPORT_TYPE = exports.CANCELLATION_REPORT_TYPE_ENUM = exports.CANCEL_APPLICATION_ENUM = exports.CANCEL_JOB_POST_ENUM = exports.GENDER_TYPE = exports.JOB_POST_DETAILS_STATUS_ENUM = void 0;
 exports.origin = [
     "http://localhost:3000",
     "http://localhost:3001",
@@ -11,6 +11,7 @@ exports.origin = [
     "http://10.10.220.46:3000",
     "http://10.10.220.46:3001",
     "http://10.10.220.46:3002",
+    "https://main.d3hmr74pp6xhci.amplifyapp.com",
 ];
 // OTP types constants
 exports.OTP_TYPES = {
@@ -22,6 +23,9 @@ exports.OTP_TYPES = {
     reset_job_seeker: "reset_job_seeker",
     verify_job_seeker: "verify_job_seeker",
     register_job_seeker: "register_job_seeker",
+    two_fa_job_seeker: "2fa_job_seeker",
+    two_fa_admin: "2fa_admin",
+    two_fa_hotelier: "2fa_hotelier",
 };
 //Project Info
 exports.PROJECT_NAME = "Tovozo";
@@ -67,21 +71,21 @@ exports.OTP_TYPE_TWO_FA_JOB_SEEKER = "2fa_job_seeker";
 exports.OTP_TYPE_TWO_FA_ADMIN = "2fa_admin";
 exports.OTP_TYPE_TWO_FA_HOTELIER = "2fa_hotelier";
 exports.USER_STATUS = {
-    ACTIVE: "active",
-    INACTIVE: "inactive",
-    PENDING: "pending",
-    BLOCKED: "blocked",
-    UNDER_REVIEW: "under-review",
+    ACTIVE: "Active",
+    INACTIVE: "Inactive",
+    PENDING: "Pending",
+    BLOCKED: "Blocked",
+    UNDER_REVIEW: "Under Review",
 };
 exports.USER_STATUS_ENUM = [
-    "active",
-    "inactive",
-    "pending",
-    "blocked",
-    "under-review",
+    "Active",
+    "Inactive",
+    "Pending",
+    "Blocked",
+    "Under Review",
 ];
 exports.USER_AUTHENTICATION_VIEW = {
-    JOB_SEEKER: "vw_job_seeker_auth",
+    JOB_SEEKER: "job_seeker_auth_view",
     HOTELIER: "vw_hotelier_auth",
     ADMIN: "vw_admin_auth",
 };
@@ -98,6 +102,13 @@ exports.BRITISH_ID = 26;
 exports.LOGIN_TOKEN_EXPIRES_IN = "14d";
 // Gender
 exports.GENDERS = ["Male", "Female", "Other"];
+// Job Post Status
+exports.JOB_POST_STATUS = {
+    Live: "Live",
+    Cancelled: "Cancelled",
+    Expired: "Expired",
+};
+exports.JOB_POST_STATUS_ENUM = ["Live", "Cancelled", "Expired"];
 // Job post details status
 exports.JOB_POST_DETAILS_STATUS = {
     Pending: "Pending",
@@ -106,7 +117,7 @@ exports.JOB_POST_DETAILS_STATUS = {
     Completed: "Completed",
     WorkFinished: "Work Finished",
     Cancelled: "Cancelled",
-    In_Progress: "In_Progress",
+    In_Progress: "In Progress",
 };
 exports.JOB_POST_DETAILS_STATUS_ENUM = [
     "Pending",
@@ -115,7 +126,7 @@ exports.JOB_POST_DETAILS_STATUS_ENUM = [
     "Completed",
     "Work Finished",
     "Cancelled",
-    "In_Progress",
+    "In Progress",
 ];
 exports.GENDER_TYPE = {
     Male: "Male",
@@ -133,45 +144,65 @@ exports.CANCELLATION_REPORT_TYPE = {
     CANCEL_APPLICATION: "CANCEL_APPLICATION",
 };
 exports.CANCELLATION_REPORT_STATUS_ENUM = [
-    "PENDING",
-    "APPROVED",
-    "REJECTED",
-    "CANCELLED",
+    "Pending",
+    "Approved",
+    "Rejected",
+    "Cancelled",
 ];
 exports.CANCELLATION_REPORT_STATUS = {
-    PENDING: "PENDING",
-    APPROVED: "APPROVED",
-    REJECTED: "REJECTED",
-    CANCELLED: "CANCELLED",
+    PENDING: "Pending",
+    APPROVED: "Approved",
+    REJECTED: "Rejected",
+    CANCELLED: "Cancelled",
 };
 exports.JOB_APPLICATION_STATUS = {
-    PENDING: "PENDING",
-    ASSIGNED: "ASSIGNED",
-    CANCELLED: "CANCELLED",
-    COMPLETED: "COMPLETED",
-    IN_PROGRESS: "IN_PROGRESS",
-    ENDED: "ENDED",
+    PENDING: "Pending",
+    WaitingForApproval: "Waiting for Approval",
+    ASSIGNED: "Assigned",
+    CANCELLED: "Cancelled",
+    COMPLETED: "Completed",
+    IN_PROGRESS: "In Progress",
+    ENDED: "Ended",
 };
 exports.JOB_APPLICATION_STATUS_ENUM = [
-    "PENDING",
-    "ASSIGNED",
-    "CANCELLED",
-    "COMPLETED",
-    "IN_PROGRESS",
-    "ENDED",
+    "Pending",
+    "Assigned",
+    "In Progress",
+    "Ended",
+    "Cancelled",
+    "Completed",
+    "Waiting for Approval",
 ];
 exports.PAYMENT_STATUS = {
-    UNPAID: "UNPAID",
-    PAID: "PAID",
-    FAILED: "FAILED",
-    PARTIAL_PAID: "PARTIAL_PAID",
+    UNPAID: "Unpaid",
+    PAID: "Paid",
+    FAILED: "Failed",
+    PARTIAL_PAID: "Partial Paid",
 };
 exports.PAYMENT_STATUS_ENUM = [
-    "UNPAID",
-    "PAID",
-    "FAILED",
-    "PARTIAL_PAID",
+    "Unpaid",
+    "Paid",
+    "Failed",
+    "Partial Paid",
 ];
+exports.PAYMENT_TYPE = {
+    CARD: "Card",
+    CASH: "Cash",
+    BANK_TRANSFER: "Bank Transfer",
+    ONLINE_PAYMENT: "Online Payment",
+    MOBILE_PAYMENT: "Mobile Payment",
+};
+exports.PAYMENT_TYPE_ENUM = [
+    "Card",
+    "Cash",
+    "Bank Transfer",
+    "Online Payment",
+    "Mobile Payment",
+];
+exports.PAY_LEDGER_TRX_TYPE = {
+    IN: "In",
+    OUT: "Out",
+};
 exports.REPORT_TYPE = {
     TaskActivity: "TaskActivity",
     JobPost: "JobPost",
@@ -182,3 +213,7 @@ exports.REPORT_STATUS = {
     Acknowledge: "Acknowledge",
 };
 exports.REPORT_STATUS_ENUM = ["Pending", "Acknowledge"];
+// payment charges
+exports.JobSeekerFixedCharge = 13;
+exports.HotelierFixedCharge = 15;
+exports.PlatformFee = 2;

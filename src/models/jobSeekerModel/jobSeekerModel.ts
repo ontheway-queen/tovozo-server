@@ -2,7 +2,10 @@ import {
 	TDB,
 	UserStatusType,
 } from "../../features/public/utils/types/publicCommon.types";
-import { JOB_APPLICATION_STATUS } from "../../utils/miscellaneous/constants";
+import {
+	JOB_APPLICATION_STATUS,
+	USER_TYPE,
+} from "../../utils/miscellaneous/constants";
 import Schema from "../../utils/miscellaneous/schema";
 import { IJobApplicationStatus } from "../../utils/modelTypes/jobApplication/jobApplicationModel.types";
 import {
@@ -180,15 +183,57 @@ export default class JobSeekerModel extends Schema {
 	public async getJobSeekerDetails(where: {
 		user_id: number;
 	}): Promise<IJobSeekerProfile> {
-		return await this.db("vw_full_job_seeker_profile")
+		const profile = await this.db("vw_full_job_seeker_profile")
 			.withSchema(this.JOB_SEEKER)
-			.select("*")
-			.where((qb) => {
-				if (where.user_id) {
-					qb.andWhere("user_id", where.user_id);
-				}
-			})
+			.select(
+				"user_id",
+				"email",
+				"name",
+				"phone_number",
+				"photo",
+				"user_status",
+				"user_type",
+				"user_created_at",
+				"date_of_birth",
+				"gender",
+				"nationality",
+				"work_permit",
+				"account_status",
+				"home_location_name",
+				"home_address",
+				"home_postal_code",
+				"home_status",
+				"is_home_address",
+				"languages",
+				"passport_copy",
+				"visa_copy",
+				"id_copy",
+				"job_locations"
+			)
+			.where("user_id", where.user_id)
 			.first();
+
+		const appliedJobs = await this.db("job_applications as ja")
+			.withSchema(this.DBO_SCHEMA)
+			.select(
+				"ja.id",
+				"ja.job_post_details_id",
+				"ja.status as application_status",
+				"j.title",
+				"j.details"
+			)
+			.leftJoin(
+				"job_post_details as jpd",
+				"jpd.id",
+				"ja.job_post_details_id"
+			)
+			.leftJoin("jobs as j", "jpd.job_id", "j.id")
+			.where("ja.job_seeker_id", where.user_id);
+
+		return {
+			...profile,
+			applied_jobs: appliedJobs ?? [],
+		};
 	}
 
 	public async deleteJobSeeker(where: { user_id: number }) {
@@ -396,5 +441,19 @@ export default class JobSeekerModel extends Schema {
 				}
 			})
 			.first();
+	}
+
+	public async getJobSeekerLocation() {
+		return await this.db("job_seeker as js")
+			.withSchema(this.JOB_SEEKER)
+			.select("js.user_id", "js.location_id", "l.latitude", "l.longitude")
+			.joinRaw(`LEFT JOIN ?? as l ON l.id = js.location_id`, [
+				`${this.DBO_SCHEMA}.${this.TABLES.location}`,
+			])
+			.joinRaw(`INNER JOIN ?? as u ON u.id = js.user_id`, [
+				`${this.DBO_SCHEMA}.${this.TABLES.user}`,
+			])
+			.whereNotNull("js.location_id")
+			.andWhere("u.type", USER_TYPE.JOB_SEEKER);
 	}
 }

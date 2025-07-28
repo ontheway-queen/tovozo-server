@@ -7,56 +7,56 @@ import { client } from "./redis";
 export let io: Server;
 
 export const SocketServer = (app: Application) => {
-  const server = http.createServer(app);
-  io = new Server(server, {
-    cors: { origin: origin },
-  });
+	const server = http.createServer(app);
+	io = new Server(server, {
+		cors: { origin: origin },
+	});
 
-  return server;
+	return server;
 };
 
 export async function addOnlineUser(
-  userId: number,
-  socketId: string,
-  type: `${TypeUser}`
+	userId: number,
+	socketId: string,
+	type: `${TypeUser}`
 ) {
-  await client.sAdd(`socket:user:${userId}`, socketId);
-  await client.set(`socket:user-type:${userId}`, type);
+	await client.sAdd(`socket:user:${userId}`, socketId);
+	await client.set(`socket:user-type:${userId}`, type);
 }
 
 export async function removeOnlineUser(userId: number, socketId: string) {
-  await client.sRem(`socket:user:${userId}`, socketId);
+	await client.sRem(`socket:user:${userId}`, socketId);
 
-  const remaining = await client.sCard(`socket:user:${userId}`);
-  if (remaining === 0) {
-    await client.del(`socket:user:${userId}`);
-    await client.del(`socket:user-type:${userId}`);
-    console.log(`User ${userId} is now offline`);
-  }
+	const remaining = await client.sCard(`socket:user:${userId}`);
+	if (remaining === 0) {
+		await client.del(`socket:user:${userId}`);
+		await client.del(`socket:user-type:${userId}`);
+		console.log(`User ${userId} is now offline`);
+	}
 }
 
 export async function getAllOnlineSocketIds({
-  user_id,
-  type,
+	user_id,
+	type,
 }: {
-  user_id?: number;
-  type?: `${TypeUser}`;
+	user_id?: number;
+	type?: `${TypeUser}`;
 }): Promise<{ user_id: number; socketId: string }[]> {
-  const results: { user_id: number; socketId: string }[] = [];
-  const keys = await client.keys("socket:user:*");
+	const results: { user_id: number; socketId: string }[] = [];
+	const keys = await client.keys("socket:user:*");
 
-  for (const key of keys) {
-    const id = parseInt(key.split(":")[2]);
-    if (user_id !== undefined && id !== user_id) continue;
+	for (const key of keys) {
+		const id = parseInt(key.split(":")[2]);
+		if (user_id !== undefined && id !== user_id) continue;
 
-    const userType = await client.get(`socket:user-type:${id}`);
-    if (type && userType !== type) continue;
+		const userType = await client.get(`socket:user-type:${id}`);
+		if (type && userType !== type) continue;
 
-    const socketIds = await client.sMembers(key);
-    socketIds.forEach((socketId) => {
-      results.push({ user_id: id, socketId });
-    });
-  }
+		const socketIds = await client.sMembers(key);
+		socketIds.forEach((socketId: string) => {
+			results.push({ user_id: id, socketId });
+		});
+	}
 
-  return results;
+	return results;
 }

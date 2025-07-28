@@ -3,11 +3,13 @@ import AbstractServices from "../../../abstract/abstract.service";
 import CustomError from "../../../utils/lib/customError";
 import Lib from "../../../utils/lib/lib";
 import {
+	JOB_APPLICATION_STATUS,
 	USER_AUTHENTICATION_VIEW,
 	USER_TYPE,
 } from "../../../utils/miscellaneous/constants";
 import { IChangePasswordPayload } from "../../../utils/modelTypes/common/commonModelTypes";
 import { IJobSeekerAuthView } from "../../auth/utils/types/jobSeekerAuth.types";
+import { stripe } from "../../../utils/miscellaneous/stripe";
 
 export default class JobSeekerProfileService extends AbstractServices {
 	constructor() {
@@ -19,15 +21,26 @@ export default class JobSeekerProfileService extends AbstractServices {
 		const { user_id } = req.jobSeeker;
 		const jobSeekerModel = this.Model.jobSeekerModel();
 
-		const jobSeekerDetails = await jobSeekerModel.getJobSeekerDetails({
-			user_id,
-		});
+		const { applied_jobs, ...rest } =
+			await jobSeekerModel.getJobSeekerDetails({
+				user_id,
+			});
+
+		const isWaitingForApproval = applied_jobs?.filter(
+			(job) =>
+				job.application_status ===
+				JOB_APPLICATION_STATUS.WaitingForApproval
+		);
 
 		return {
 			success: true,
 			code: this.StatusCode.HTTP_OK,
 			message: this.ResMsg.HTTP_OK,
-			data: jobSeekerDetails,
+			data: {
+				...rest,
+				is_waiting_for_approval: isWaitingForApproval!.length > 0,
+				applied_jobs,
+			},
 		};
 	};
 

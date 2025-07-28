@@ -112,41 +112,41 @@ CREATE TABLE IF NOT EXISTS dbo.jobs
 (
     id SERIAL NOT NULL,
     title character varying(255) NOT NULL,
-    details text,
+    details text NOT NULL,
+    hourly_rate DECIMAL(8,2) NOT NULL,
+    job_seeker_pay DECIMAL(8,2) NOT NULL,
+    platform_fee DECIMAL(8,2) NOT NULL,
     status boolean NOT NULL DEFAULT 'true',
     is_deleted boolean NOT NULL DEFAULT 'false',
     CONSTRAINT jobs_pkey PRIMARY KEY (id)
 );
 
-
 -- Organization
-CREATE TYPE dbo.job_post_status AS ENUM('Live','Cancelled');
+CREATE TYPE dbo.job_post_status AS ENUM('Live','Cancelled', 'Expired');
 
 -- Job post
 CREATE TABLE IF NOT EXISTS dbo.job_post
 (
     id SERIAL NOT NULL,
     organization_id integer NOT NULL,
-    title character varying(255) NOT NULL,
-    details text,
-    requirements text,
-    hourly_rate DECIMAL(8,2) NOT NULL
-    expire_time TIMESTAMP,
-    prefer_gender varying(42) not null,
     status dbo.job_post_status DEFAULT 'Live',
+    expire_time TIMESTAMP,
     created_time timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT job_post_pkey PRIMARY KEY (id)
 );
 
-CREATE TYPE dbo.job_post_details_status AS ENUM('Pending','Applied','Expired', 'Completed','Work Finished', 'Cancelled');
+CREATE TYPE dbo.job_post_details_status AS ENUM('Pending','Applied','In Progress' ,'Expired', 'Completed','Work Finished', 'Cancelled');
 
 CREATE TABLE IF NOT EXISTS dbo.job_post_details
 (
     id SERIAL NOT NULL,
-    job_post_id integer NOT NULL,
-    job_id integer NOT NULL,
+    job_post_id integer NOT NULL REFERENCES dbo.job_post(id),
+    job_id INTEGER NOT NULL REFERENCES dbo.jobs(id),
     start_time TIMESTAMP NOT NULL,
     end_time TIMESTAMP NOT NULL,
+    hourly_rate DECIMAL(8,2) NOT NULL,
+    job_seeker_pay DECIMAL(8,2) NOT NULL,
+    platform_fee DECIMAL(8,2) NOT NULL,
     status dbo.job_post_details_status DEFAULT 'Pending',
     CONSTRAINT job_post_details_pkey PRIMARY KEY (id)
 );
@@ -285,7 +285,7 @@ CREATE TYPE dbo.cancellation_report_type AS ENUM
 
 -- Cancellation report status
 CREATE TYPE dbo.cancellation_report_status AS ENUM
-    ('PENDING', 'APPROVED', 'REJECTED', "CANCELLED");
+    ('Pending', 'Approved', 'Rejected', "Cancelled");
 
 CREATE TABLE dbo.cancellation_logs (
     id SERIAL PRIMARY KEY,
@@ -293,7 +293,7 @@ CREATE TABLE dbo.cancellation_logs (
     report_type dbo.cancellation_report_type NOT NULL,
     related_id INT NOT NULL,
     reason TEXT,
-    status dbo.cancellation_report_status DEFAULT 'PENDING',
+    status dbo.cancellation_report_status DEFAULT 'Pending',
     reviewed_by INT REFERENCES dbo.user(id),
     reviewed_at TIMESTAMP,
     reject_reason TEXT,
@@ -302,15 +302,14 @@ CREATE TABLE dbo.cancellation_logs (
 );
 
 -- job status
-CREATE TYPE dbo.job_status AS ENUM ('PENDING', 'ASSIGNED', 'IN_PROGRESS','ENDED', 'CANCELLED', 'COMPLETED');
+CREATE TYPE dbo.job_application_status AS ENUM ('Pending', 'Assigned', 'In Progress','Ended', 'Cancelled', 'Completed');
 
 CREATE TABLE IF NOT EXISTS dbo.job_applications (
     id SERIAL PRIMARY KEY,
     job_post_details_id INTEGER NOT NULL REFERENCES dbo.job_post_details(id),
     job_post_id INTEGER NOT NULL REFERENCES dbo.job_post(id),
     job_seeker_id INTEGER NOT NULL REFERENCES jobseeker.job_seeker(user_id),
-    status dbo.job_status DEFAULT 'PENDING',
-    payment_status dbo.payment_status DEFAULT 'UNPAID',
+    status dbo.job_application_status DEFAULT 'Pending',
     cancelled_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE
@@ -321,12 +320,11 @@ CREATE TABLE IF NOT EXISTS dbo.job_task_activities (
     id SERIAL PRIMARY KEY,
     job_application_id INTEGER NOT NULL REFERENCES dbo.job_applications(id),
     job_post_details_id INTEGER NOT NULL REFERENCES dbo.job_post_details(id),
-    -- job_seeker_id INTEGER NOT NULL REFERENCES jobseeker.job_seeker(user_id),
-    -- organization_id integer NOT NULL REFERENCES hotelier.organization(id),
     start_time TIMESTAMP,
     end_time TIMESTAMP,
     total_working_hours NUMERIC(6, 2),
-    approved_at TIMESTAMP,
+    start_approved_at TIMESTAMP,
+    end_approved_at TIMESTAMP,
     is_deleted BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -370,32 +368,51 @@ CREATE TABLE IF NOT EXISTS dbo.reports (
 
 -- Payment and ledger Not completed because of changing project
 -- Payment status
-CREATE TYPE dbo.payment_status AS ENUM ('UNPAID', 'PAID', 'FAILED', "PARTIAL_PAID");
+CREATE TYPE dbo.payment_status AS ENUM ('Unpaid', 'Paid', 'Failed', 'Partial Paid');
+
+create type dbo.payment_type AS ENUM (
+    'Card',
+    'Cash',
+    'Bank Transfer',
+    'Online Payment',
+    'Mobile Payment'
+);
 
 CREATE TABLE IF NOT EXISTS dbo.payment (
     id SERIAL PRIMARY KEY,
     application_id INTEGER NOT NULL REFERENCES dbo.job_applications(id),
     job_seeker_pay NUMERIC(10, 2) NOT NULL,
     platform_fee NUMERIC(10, 2) NOT NULL,
-    total_amount NUMERIC(10, 2),
-    status dbo.payment_status NOT NULL DEFAULT 'UNPAID',
-    trx_id VARCHAR(255),
+    total_amount NUMERIC(10, 2) NOT NULL,
+    payment_type dbo.payment_type,
+    status dbo.payment_status NOT NULL DEFAULT 'Unpaid',
+    trx_id VARCHAR(255) UNIQUE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    paid_by INTEGER REFERENCES hotelier.organization(id),
     paid_at TIMESTAMP WITH TIME ZONE,
-    is_deleted BOOLEAN DEFAULT FALSE
+    is_deleted BOOLEAN DEFAULT FALSE,
+    payment_no VARCHAR(255) UNIQUE
+    trx_fee NUMERIC(10, 2),
+)
+
+create type dbo.pay_ledger_trx_type AS ENUM (
+    'In',
+    'Out'
 );
 
 -- job seeker ledger
-CREATE TABLE IF NOT EXISTS jobseeker.job_seeker_ledger (
+CREATE TABLE IF NOT EXISTS dbo.payment_ledger (
     id SERIAL PRIMARY KEY,
-    job_seeker_id INTEGER NOT NULL REFERENCES dbo.user(id),
-    hotelier_id INTEGER NOT NULL REFERENCES dbo.user(id),
+    payment_id INTEGER REFERENCES dbo.payment(id),
+    user_id INTEGER REFERENCES dbo.user(id),
+    trx_type dbo.pay_ledger_trx_type NOT NULL,
+    user_type dbo.user_type NOT NULL,
     voucher_no VARCHAR(50) NOT NULL,
     amount NUMERIC(18,2) NOT NULL,
     details TEXT NOT NULL,
     ledger_date TIMESTAMP,
     created_at TIMESTAMP,
-    updated_at TIMESTAMP,
+    updated_at TIMESTAMP
 )
 -- Payment and ledger Not completed because of changing project
 

@@ -16,10 +16,12 @@ class HotelierJobPostRouter extends abstract_router_1.default {
             .route("/")
             .post(this.controller.createJobPost)
             .get(this.controller.getJobPostList);
-        this.router.route("/track/:id").get(this.controller.trackJobSeekerLocation);
+        this.router
+            .route("/track/:id")
+            .get(this.controller.trackJobSeekerLocation);
         this.router
             .route("/:id")
-            .get(this.controller.getSingleJobPostWithJobSeekerDetails)
+            .get(this.controller.getSingleJobPostForHotelier)
             .patch(this.controller.updateJobPost)
             .delete(this.controller.cancelJobPost);
     }

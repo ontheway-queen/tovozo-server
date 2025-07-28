@@ -30,7 +30,7 @@ class JobTaskActivitiesModel extends schema_1.default {
         return __awaiter(this, arguments, void 0, function* ({ id, job_post_details_id, hotelier_id, }) {
             return yield this.db("job_task_activities as jta")
                 .withSchema(this.DBO_SCHEMA)
-                .select("jta.id", "jta.job_application_id", "jta.job_post_details_id", "jta.start_time", "jta.end_time", "jta.approved_at", "ja.status as application_status", "ja.job_seeker_id", "u.name as job_seeker_name")
+                .select("jta.id", "jta.job_application_id", "jta.job_post_details_id", "jta.start_time", "jta.end_time", "jta.start_approved_at", "jta.end_approved_at", "ja.status as application_status", "ja.job_seeker_id", "u.name as job_seeker_name")
                 .leftJoin("job_applications as ja", "ja.job_post_details_id", "jta.job_post_details_id")
                 .join("user as u", "u.id", "ja.job_seeker_id")
                 .join("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
@@ -55,7 +55,7 @@ class JobTaskActivitiesModel extends schema_1.default {
             return yield this.db("job_task_activities")
                 .withSchema(this.DBO_SCHEMA)
                 .where("id", id)
-                .update(payload);
+                .update(payload, "id");
         });
     }
 }

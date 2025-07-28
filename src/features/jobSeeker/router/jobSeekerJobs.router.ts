@@ -10,8 +10,10 @@ export class JobSeekerJobsRouter extends AbstractRouter {
 	}
 
 	private callRouter() {
-		this.router.route("/").get(this.controller.getJobs);
+		this.router.route("/").get(this.controller.getJobPostListForJobSeeker);
 
-		this.router.route("/:id").get(this.controller.getJob);
+		this.router
+			.route("/:id")
+			.get(this.controller.getSingleJobPostForJobSeeker);
 	}
 }

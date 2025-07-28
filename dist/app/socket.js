@@ -12,7 +12,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAllOnlineSocketIds = exports.removeOnlineUser = exports.addOnlineUser = exports.SocketServer = exports.io = void 0;
+exports.SocketServer = exports.io = void 0;
+exports.addOnlineUser = addOnlineUser;
+exports.removeOnlineUser = removeOnlineUser;
+exports.getAllOnlineSocketIds = getAllOnlineSocketIds;
 const http_1 = __importDefault(require("http"));
 const socket_io_1 = require("socket.io");
 const constants_1 = require("../utils/miscellaneous/constants");
@@ -31,7 +34,6 @@ function addOnlineUser(userId, socketId, type) {
         yield redis_1.client.set(`socket:user-type:${userId}`, type);
     });
 }
-exports.addOnlineUser = addOnlineUser;
 function removeOnlineUser(userId, socketId) {
     return __awaiter(this, void 0, void 0, function* () {
         yield redis_1.client.sRem(`socket:user:${userId}`, socketId);
@@ -43,7 +45,6 @@ function removeOnlineUser(userId, socketId) {
         }
     });
 }
-exports.removeOnlineUser = removeOnlineUser;
 function getAllOnlineSocketIds(_a) {
     return __awaiter(this, arguments, void 0, function* ({ user_id, type, }) {
         const results = [];
@@ -63,4 +64,3 @@ function getAllOnlineSocketIds(_a) {
         return results;
     });
 }
-exports.getAllOnlineSocketIds = getAllOnlineSocketIds;

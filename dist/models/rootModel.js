@@ -18,6 +18,8 @@ const jobTaskActivitiesModel_1 = __importDefault(require("./jobTaskActivitiesMod
 const jobTaskListModel_1 = __importDefault(require("./jobTaskActivitiesModel/jobTaskListModel"));
 const reportModel_1 = __importDefault(require("./reportModel/reportModel"));
 const userModel_1 = __importDefault(require("./userModel/userModel"));
+const paymentModel_1 = __importDefault(require("./paymentModel/paymentModel"));
+const adminStats_model_1 = __importDefault(require("./adminStats/adminStats.model"));
 class Models {
     UserModel(trx) {
         return new userModel_1.default(trx || database_1.db);
@@ -72,6 +74,14 @@ class Models {
     // chat
     chatModel(trx) {
         return new chatModel_1.default(trx || database_1.db);
+    }
+    // payment
+    paymnentModel(trx) {
+        return new paymentModel_1.default(trx || database_1.db);
+    }
+    // Admin stats
+    adminStatsModel(trx) {
+        return new adminStats_model_1.default(trx || database_1.db);
     }
 }
 exports.default = Models;

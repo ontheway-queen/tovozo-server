@@ -8,14 +8,25 @@ export default class AdminJobPostService extends AbstractServices {
 		super();
 	}
 
-	public async getAllJobPosts(req: Request) {
-		const { limit, skip, status } = req.query;
-		const model = this.Model.jobPostModel();
-		const data = await model.getHotelierJobPostList({
+	public async getJobPostListForAdmin(req: Request) {
+		const {
 			limit,
 			skip,
 			status,
-		} as IGetJobPostListParams);
+			name: search,
+			from_date,
+			to_date,
+		} = req.query;
+		const model = this.Model.jobPostModel();
+		const data = await model.getJobPostListForAdmin({
+			limit: Number(limit) || 100,
+			skip: Number(skip) || 0,
+			status: status as string | undefined,
+			search: search as string | undefined,
+			from_date: from_date as string | undefined,
+			to_date: to_date as string | undefined,
+		});
+
 		return {
 			success: true,
 			message: this.ResMsg.HTTP_OK,
@@ -24,12 +35,10 @@ export default class AdminJobPostService extends AbstractServices {
 		};
 	}
 
-	public async getSingleJobPost(req: Request) {
+	public async getSingleJobPostForAdmin(req: Request) {
 		const { id } = req.params;
 		const model = this.Model.jobPostModel();
-		const data = await model.getSingleJobPostWithJobSeekerDetails(
-			Number(id)
-		);
+		const data = await model.getSingleJobPostForAdmin(Number(id));
 		if (!data) {
 			throw new CustomError(
 				"Job post not found!",

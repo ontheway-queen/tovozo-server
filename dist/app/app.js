@@ -22,6 +22,7 @@ const userModelTypes_1 = require("../utils/modelTypes/user/userModelTypes");
 const database_1 = require("./database");
 const router_1 = __importDefault(require("./router"));
 const socket_1 = require("./socket");
+const workers_1 = __importDefault(require("../utils/workers"));
 class App {
     constructor(port) {
         this.app = (0, express_1.default)();
@@ -35,6 +36,7 @@ class App {
         this.notFoundRouter();
         this.errorHandle();
         this.disableXPoweredBy();
+        this.workers = new workers_1.default();
     }
     // Run cron jobs
     runCron() {
@@ -73,11 +75,14 @@ class App {
         });
         socket_1.io.on("connection", (socket) => __awaiter(this, void 0, void 0, function* () {
             const { id, type } = socket.handshake.auth;
+            console.log({ id, type });
             if (id && type) {
                 (0, socket_1.addOnlineUser)(id, socket.id, type);
             }
+            console.log("Socket Connected");
             let lastLocation = {};
             if (type === userModelTypes_1.TypeUser.JOB_SEEKER) {
+                socket.join(String(id));
                 socket.on("send-location", (data) => {
                     console.log("send-location", data);
                     socket_1.io.to(`watch:jobseeker:${id}`).emit("receive-location", data);
@@ -88,13 +93,25 @@ class App {
                 socket.on("hotelier:watch", ({ jobSeekerId }) => {
                     socket.join(`watch:jobseeker:${jobSeekerId}`);
                 });
+                socket.on("hotelier:location-start", ({ jobSeekerId }) => {
+                    socket
+                        .to(jobSeekerId)
+                        .emit(`jobseeker:location-start-${jobSeekerId}`);
+                });
+                socket.on("hotelier:location-stop", ({ jobSeekerId }) => {
+                    socket
+                        .to(jobSeekerId)
+                        .emit(`jobseeker:location-stop-${jobSeekerId}`);
+                });
+                socket.join(String(id));
             }
             socket.on("disconnect", (event) => __awaiter(this, void 0, void 0, function* () {
                 console.log(socket.id, "-", id, "-", type, " disconnected...");
-                (0, socket_1.removeOnlineUser)(id, socket.id);
+                yield (0, socket_1.removeOnlineUser)(id, socket.id);
                 if (type === userModelTypes_1.TypeUser.JOB_SEEKER &&
                     lastLocation.latitude &&
                     lastLocation.longitude) {
+                    console.log({ lastLocation });
                     const getLocation = yield (0, database_1.db)("job_seeker")
                         .withSchema("jobseeker")
                         .select("location_id")
@@ -109,6 +126,7 @@ class App {
                         })
                             .where({ id: getLocation === null || getLocation === void 0 ? void 0 : getLocation.location_id });
                     }
+                    console.log({ getLocation });
                 }
                 socket.disconnect();
             }));

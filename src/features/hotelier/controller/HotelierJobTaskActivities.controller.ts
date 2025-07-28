@@ -15,7 +15,9 @@ export default class HotelierJobTaskActivitiesController extends AbstractControl
 		{ paramSchema: this.commonValidator.getSingleItemWithIdValidator },
 		async (req: Request, res: Response) => {
 			const { code, ...data } =
-				await this.hotelierJobTaskActivitiesService.approveJobTaskActivity(req);
+				await this.hotelierJobTaskActivitiesService.approveJobTaskActivity(
+					req
+				);
 			res.status(code).json(data);
 		}
 	);
@@ -23,8 +25,11 @@ export default class HotelierJobTaskActivitiesController extends AbstractControl
 	public createJobTaskList = this.asyncWrapper.wrap(
 		{ bodySchema: this.validator.createJobTaskList },
 		async (req: Request, res: Response) => {
+			console.log("body", req.body);
 			const { code, ...data } =
-				await this.hotelierJobTaskActivitiesService.createJobTaskList(req);
+				await this.hotelierJobTaskActivitiesService.createJobTaskList(
+					req
+				);
 			res.status(code).json(data);
 		}
 	);
@@ -36,7 +41,9 @@ export default class HotelierJobTaskActivitiesController extends AbstractControl
 		},
 		async (req: Request, res: Response) => {
 			const { code, ...data } =
-				await this.hotelierJobTaskActivitiesService.updateJobTaskList(req);
+				await this.hotelierJobTaskActivitiesService.updateJobTaskList(
+					req
+				);
 			res.status(code).json(data);
 		}
 	);
@@ -44,8 +51,22 @@ export default class HotelierJobTaskActivitiesController extends AbstractControl
 	public deleteJobTaskList = this.asyncWrapper.wrap(
 		{ paramSchema: this.commonValidator.getSingleItemWithIdValidator },
 		async (req: Request, res: Response) => {
+			console.log("id", req.params);
 			const { code, ...data } =
-				await this.hotelierJobTaskActivitiesService.deleteJobTaskList(req);
+				await this.hotelierJobTaskActivitiesService.deleteJobTaskList(
+					req
+				);
+			res.status(code).json(data);
+		}
+	);
+
+	public approveEndJobTaskActivity = this.asyncWrapper.wrap(
+		{ paramSchema: this.commonValidator.getSingleItemWithIdValidator },
+		async (req: Request, res: Response) => {
+			const { code, ...data } =
+				await this.hotelierJobTaskActivitiesService.approveEndJobTaskActivity(
+					req
+				);
 			res.status(code).json(data);
 		}
 	);

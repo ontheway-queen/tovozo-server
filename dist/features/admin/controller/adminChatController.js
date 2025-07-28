@@ -35,15 +35,15 @@ class AdminChatController extends abstract_controller_1.default {
             res.status(code).json(data);
         }));
         this.getChatSession = this.asyncWrapper.wrap({ querySchema: joi_1.default.object().unknown(true) }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _b = yield this.services.getChatSession(req), { code } = _b, data = __rest(_b, ["code"]);
+            const _a = yield this.services.getChatSession(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         this.getChatMessages = this.asyncWrapper.wrap({ querySchema: joi_1.default.object().unknown(true) }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _c = yield this.services.getChatMessages(req), { code } = _c, data = __rest(_c, ["code"]);
+            const _a = yield this.services.getChatMessages(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         this.createChatMessage = this.asyncWrapper.wrap({ bodySchema: joi_1.default.object().unknown(true) }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _d = yield this.services.createChatMessage(req), { code } = _d, data = __rest(_d, ["code"]);
+            const _a = yield this.services.createChatMessage(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }

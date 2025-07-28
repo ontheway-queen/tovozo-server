@@ -238,8 +238,8 @@ class PublicCommonValidator {
         });
         this.getNotificationValidator = joi_1.default.object({
             user_id: joi_1.default.number().integer().positive().required(),
-            limit: joi_1.default.number().integer().positive().optional(),
-            skip: joi_1.default.number().integer().positive().optional(),
+            limit: joi_1.default.number().integer().optional(),
+            skip: joi_1.default.number().integer().optional(),
         });
         this.mutationNotificationValidator = joi_1.default.object({
             user_id: joi_1.default.number().integer().positive().required(),

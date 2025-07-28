@@ -5,7 +5,8 @@ export interface IJobTaskActivity {
 	job_seeker_name: string;
 	job_task_activity: string;
 	created_at: string;
-	approved_at: string | null;
+	start_approved_at: string | null;
+	end_approved_at: string | null;
 }
 
 export interface IJobTaskList {

@@ -27,7 +27,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const jobPostModel = new jobPostModel_1.default(trx);
                 const cancellationLogModel = new cancellationLogModel_1.default(trx);
-                const jobPost = yield jobPostModel.getSingleJobPost(job_post_details_id);
+                const jobPost = yield jobPostModel.getSingleJobPostForJobSeeker(job_post_details_id);
                 if (!jobPost) {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
                 }
@@ -40,28 +40,17 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     jobPostReport.status === constants_1.CANCELLATION_REPORT_STATUS.PENDING) {
                     throw new customError_1.default("A cancellation request is already pending for this job post.", this.StatusCode.HTTP_CONFLICT);
                 }
-                if (jobPost.gender !== constants_1.GENDER_TYPE.Other &&
-                    gender &&
-                    gender !== constants_1.GENDER_TYPE.Other &&
-                    gender !== jobPost.gender) {
-                    throw new customError_1.default("Your gender does not meet the eligibility criteria for this job.", this.StatusCode.HTTP_BAD_REQUEST);
-                }
                 const model = this.Model.jobApplicationModel(trx);
                 const existPendingApplication = yield model.getMyJobApplication({
                     job_seeker_id: user_id,
                 });
-                // if (
-                // 	existPendingApplication &&
-                // 	(existPendingApplication.job_application_status ===
-                // 		JOB_APPLICATION_STATUS.PENDING ||
-                // 		existPendingApplication.job_application_status ===
-                // 			JOB_APPLICATION_STATUS.IN_PROGRESS)
-                // ) {
-                // 	throw new CustomError(
-                // 		"Hold on! You need to complete your current job before moving on to the next.",
-                // 		this.StatusCode.HTTP_BAD_REQUEST
-                // 	);
-                // }
+                if (existPendingApplication &&
+                    (existPendingApplication.job_application_status ===
+                        constants_1.JOB_APPLICATION_STATUS.PENDING ||
+                        existPendingApplication.job_application_status ===
+                            constants_1.JOB_APPLICATION_STATUS.IN_PROGRESS)) {
+                    throw new customError_1.default("Hold on! You need to complete your current job before moving on to the next.", this.StatusCode.HTTP_BAD_REQUEST);
+                }
                 const payload = {
                     job_post_details_id: Number(job_post_details_id),
                     job_seeker_id: user_id,
@@ -128,7 +117,8 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 if (!application) {
                     throw new customError_1.default("Application not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }
-                if (application.job_application_status !== constants_1.JOB_APPLICATION_STATUS.PENDING) {
+                if (application.job_application_status !==
+                    constants_1.JOB_APPLICATION_STATUS.PENDING) {
                     throw new customError_1.default("This application cannot be cancelled because it has already been processed.", this.StatusCode.HTTP_BAD_REQUEST);
                 }
                 const cancellationLogModel = this.Model.cancellationLogModel(trx);
@@ -138,13 +128,14 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 }
                 const currentTime = new Date();
                 const startTime = new Date(application === null || application === void 0 ? void 0 : application.start_time);
-                const hoursDiff = (startTime.getTime() - currentTime.getTime()) / (1000 * 60 * 60);
+                const hoursDiff = (startTime.getTime() - currentTime.getTime()) /
+                    (1000 * 60 * 60);
                 if (hoursDiff > 24) {
                     const data = yield applicationModel.updateMyJobApplicationStatus(parseInt(id), user_id, constants_1.JOB_APPLICATION_STATUS.CANCELLED);
                     if (!data) {
                         throw new customError_1.default("Application data with the requested id not found", this.StatusCode.HTTP_NOT_FOUND);
                     }
-                    yield jobPostModel.updateJobPostDetailsStatus(data.job_post_id, constants_1.JOB_POST_DETAILS_STATUS.Pending);
+                    yield jobPostModel.updateJobPostDetailsStatus(data.job_post_details_id, constants_1.JOB_POST_DETAILS_STATUS.Pending);
                     return {
                         success: true,
                         message: this.ResMsg.HTTP_OK,
@@ -152,9 +143,10 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     };
                 }
                 else {
-                    if (body.report_type !== constants_1.CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION ||
+                    if (body.report_type !==
+                        constants_1.CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION ||
                         !body.reason) {
-                        throw new customError_1.default(this.ResMsg.HTTP_UNPROCESSABLE_ENTITY, this.StatusCode.HTTP_UNPROCESSABLE_ENTITY);
+                        throw new customError_1.default("Cancellation report must include a valid reason and type 'CANCEL_APPLICATION'.", this.StatusCode.HTTP_UNPROCESSABLE_ENTITY);
                     }
                     body.reporter_id = user_id;
                     body.related_id = id;

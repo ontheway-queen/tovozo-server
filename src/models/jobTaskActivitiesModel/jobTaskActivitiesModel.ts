@@ -37,7 +37,8 @@ export default class JobTaskActivitiesModel extends Schema {
 				"jta.job_post_details_id",
 				"jta.start_time",
 				"jta.end_time",
-				"jta.approved_at",
+				"jta.start_approved_at",
+				"jta.end_approved_at",
 				"ja.status as application_status",
 				"ja.job_seeker_id",
 				"u.name as job_seeker_name"
@@ -69,6 +70,6 @@ export default class JobTaskActivitiesModel extends Schema {
 		return await this.db("job_task_activities")
 			.withSchema(this.DBO_SCHEMA)
 			.where("id", id)
-			.update(payload);
+			.update(payload, "id");
 	}
 }

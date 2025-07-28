@@ -21,7 +21,8 @@ class HotelierJobTaskActivitiesRouter extends abstract_router_1.default {
             .delete(this.hotelierJobTaskActivityController.deleteJobTaskList);
         this.router
             .route("/:id")
-            .patch(this.hotelierJobTaskActivityController.approveJobTaskActivity);
+            .patch(this.hotelierJobTaskActivityController.approveJobTaskActivity)
+            .put(this.hotelierJobTaskActivityController.approveEndJobTaskActivity);
     }
 }
 exports.default = HotelierJobTaskActivitiesRouter;

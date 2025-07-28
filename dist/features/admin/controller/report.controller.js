@@ -35,15 +35,11 @@ class AdminReportController extends abstract_controller_1.default {
             const _a = yield this.adminReportService.getReportsWithInfo(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
-        this.getSingleReportWithInfo = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _b = yield this.adminReportService.getSingleReportWithInfo(req), { code } = _b, data = __rest(_b, ["code"]);
-            res.status(code).json(data);
-        }));
         this.reportMarkAsAcknowledge = this.asyncWrapper.wrap({
             paramSchema: this.commonValidator.getSingleItemWithIdValidator,
             bodySchema: this.validator.markAsAcknowledgeReportSchema,
         }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _c = yield this.adminReportService.reportMarkAsAcknowledge(req), { code } = _c, data = __rest(_c, ["code"]);
+            const _a = yield this.adminReportService.reportMarkAsAcknowledge(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }

@@ -15,7 +15,6 @@ export default class AdminReportRouter extends AbstractRouter {
 
 		this.router
 			.route("/:id")
-			.get(this.adminReportController.getSingleReportWithInfo)
 			.patch(this.adminReportController.reportMarkAsAcknowledge);
 	}
 }

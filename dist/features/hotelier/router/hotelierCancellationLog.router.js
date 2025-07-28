@@ -4,11 +4,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_router_1 = __importDefault(require("../../../abstract/abstract.router"));
-const hotelierCancellationReport_controller_1 = __importDefault(require("../controller/hotelierCancellationReport.controller"));
+const hotelierCancellationLog_controller_1 = __importDefault(require("../controller/hotelierCancellationLog.controller"));
 class HotelierCancellationLogRouter extends abstract_router_1.default {
     constructor() {
         super();
-        this.controller = new hotelierCancellationReport_controller_1.default();
+        this.controller = new hotelierCancellationLog_controller_1.default();
         this.callRouter();
     }
     callRouter() {
