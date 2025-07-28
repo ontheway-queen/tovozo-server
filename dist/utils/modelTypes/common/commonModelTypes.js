@@ -13,6 +13,7 @@ var NotificationTypeEnum;
     NotificationTypeEnum["HOTELIER_VERIFICATION"] = "HOTELIER_VERIFICATION";
     NotificationTypeEnum["SECURITY_ALERT"] = "SECURITY_ALERT";
     NotificationTypeEnum["SYSTEM_UPDATE"] = "SYSTEM_UPDATE";
+    NotificationTypeEnum["JOB_POST"] = "JOB_POST";
 })(NotificationTypeEnum || (exports.NotificationTypeEnum = NotificationTypeEnum = {}));
 var TypeEmitNotificationEnum;
 (function (TypeEmitNotificationEnum) {

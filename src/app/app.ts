@@ -4,19 +4,20 @@ import { Server } from "http";
 import morgan from "morgan";
 import ErrorHandler from "../middleware/errorHandler/errorHandler";
 import CustomError from "../utils/lib/customError";
-import { origin } from "../utils/miscellaneous/constants";
+import { origin, USER_TYPE } from "../utils/miscellaneous/constants";
 import { TypeUser } from "../utils/modelTypes/user/userModelTypes";
 import { db } from "./database";
 import RootRouter from "./router";
 import { SocketServer, addOnlineUser, io, removeOnlineUser } from "./socket";
-import { stripe } from "../utils/miscellaneous/stripe";
-import bodyParser from "body-parser";
+import Workers from "../utils/workers";
 
 class App {
 	public app: Application = express();
 	private server: Server;
 	private port: number;
 	private origin: string[] = origin;
+
+	private workers: Workers;
 
 	constructor(port: number) {
 		this.server = SocketServer(this.app);
@@ -28,6 +29,7 @@ class App {
 		this.notFoundRouter();
 		this.errorHandle();
 		this.disableXPoweredBy();
+		this.workers = new Workers();
 	}
 
 	// Run cron jobs
@@ -67,15 +69,19 @@ class App {
 
 		io.on("connection", async (socket) => {
 			const { id, type } = socket.handshake.auth;
+			console.log({ id, type });
 
 			if (id && type) {
 				addOnlineUser(id, socket.id, type);
 			}
+			console.log("Socket Connected");
 			let lastLocation: {
 				latitude?: number;
 				longitude?: number;
 			} = {};
 			if (type === TypeUser.JOB_SEEKER) {
+				socket.join(String(id));
+
 				socket.on("send-location", (data) => {
 					console.log("send-location", data);
 					io.to(`watch:jobseeker:${id}`).emit(
@@ -102,11 +108,13 @@ class App {
 						.to(jobSeekerId)
 						.emit(`jobseeker:location-stop-${jobSeekerId}`);
 				});
+
+				socket.join(String(id));
 			}
 
 			socket.on("disconnect", async (event) => {
 				console.log(socket.id, "-", id, "-", type, " disconnected...");
-				removeOnlineUser(id, socket.id);
+				await removeOnlineUser(id, socket.id);
 				if (
 					type === TypeUser.JOB_SEEKER &&
 					lastLocation.latitude &&

@@ -55,7 +55,7 @@ class JobTaskActivitiesModel extends schema_1.default {
             return yield this.db("job_task_activities")
                 .withSchema(this.DBO_SCHEMA)
                 .where("id", id)
-                .update(payload);
+                .update(payload, "id");
         });
     }
 }

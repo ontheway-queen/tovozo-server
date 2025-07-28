@@ -30,20 +30,6 @@ class AdminReportService extends abstract_service_1.default {
             });
             return Object.assign({ success: true, code: this.StatusCode.HTTP_OK, message: this.ResMsg.HTTP_OK }, res);
         });
-        this.getSingleReportWithInfo = (req) => __awaiter(this, void 0, void 0, function* () {
-            const id = req.params.id;
-            const model = this.Model.reportModel();
-            const res = yield model.getSingleReportWithInfo(Number(id));
-            if (!res) {
-                throw new customError_1.default(`The requested report with ID-${id} not found`, this.StatusCode.HTTP_NOT_FOUND);
-            }
-            return {
-                success: true,
-                code: this.StatusCode.HTTP_OK,
-                message: this.ResMsg.HTTP_OK,
-                data: res,
-            };
-        });
         this.reportMarkAsAcknowledge = (req) => __awaiter(this, void 0, void 0, function* () {
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const { user_id } = req.admin;

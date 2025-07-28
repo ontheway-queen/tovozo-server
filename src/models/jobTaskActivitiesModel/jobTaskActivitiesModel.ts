@@ -70,6 +70,6 @@ export default class JobTaskActivitiesModel extends Schema {
 		return await this.db("job_task_activities")
 			.withSchema(this.DBO_SCHEMA)
 			.where("id", id)
-			.update(payload);
+			.update(payload, "id");
 	}
 }

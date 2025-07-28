@@ -46,45 +46,4 @@ export default class JobSeekerReportService extends AbstractServices {
 			data: res[0]?.id,
 		};
 	};
-
-	public getReportsWithInfo = async (req: Request) => {
-		const { limit, skip, searchQuery, type, report_status } = req.query;
-		const { user_id } = req.jobSeeker;
-		const model = this.Model.reportModel();
-		const res = await model.getReportsWithInfo({
-			user_id,
-			type: (type as IReportType) || REPORT_TYPE.JobPost,
-			limit: Number(limit),
-			skip: Number(skip),
-			searchQuery: searchQuery as string,
-			report_status: report_status as IReportStatus,
-		});
-		return {
-			success: true,
-			code: this.StatusCode.HTTP_OK,
-			message: this.ResMsg.HTTP_OK,
-			...res,
-		};
-	};
-
-	public getSingleReportWithInfo = async (req: Request) => {
-		const id = req.params.id;
-		const model = this.Model.reportModel();
-		const res = await model.getSingleReportWithInfo(
-			Number(id),
-			REPORT_TYPE.JobPost
-		);
-		if (!res) {
-			throw new CustomError(
-				`The requested report with ID-${id} not found`,
-				this.StatusCode.HTTP_NOT_FOUND
-			);
-		}
-		return {
-			success: true,
-			code: this.StatusCode.HTTP_OK,
-			message: this.ResMsg.HTTP_OK,
-			data: res,
-		};
-	};
 }

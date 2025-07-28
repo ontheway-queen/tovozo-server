@@ -15,12 +15,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
 const customError_1 = __importDefault(require("../../../utils/lib/customError"));
 const constants_1 = require("../../../utils/miscellaneous/constants");
+const socket_1 = require("../../../app/socket");
+const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
+const commonModelTypes_1 = require("../../../utils/modelTypes/common/commonModelTypes");
 class HotelierJobPostService extends abstract_service_1.default {
     createJobPost(req) {
         return __awaiter(this, void 0, void 0, function* () {
             const { user_id } = req.hotelier;
             const body = req.body;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const jobSeeker = this.Model.jobSeekerModel(trx);
                 const model = this.Model.jobPostModel(trx);
                 const organizationModel = this.Model.organizationModel(trx);
                 const jobModel = this.Model.jobModel(trx);
@@ -30,11 +34,21 @@ class HotelierJobPostService extends abstract_service_1.default {
                 if (!checkOrganization) {
                     throw new customError_1.default("Organization not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }
+                console.log({ checkOrganization });
                 body.job_post.organization_id = checkOrganization.id;
                 const res = yield model.createJobPost(body.job_post);
                 if (!res.length) {
                     throw new customError_1.default(this.ResMsg.HTTP_BAD_REQUEST, this.StatusCode.HTTP_BAD_REQUEST);
                 }
+                const expireTime = new Date(res[0].expire_time).getTime();
+                const now = Date.now();
+                const delay = Math.max(expireTime - now, 0);
+                const queue = this.getQueue("expire-job-post");
+                yield queue.add("expire-job-post", { id: res[0].id }, {
+                    delay,
+                    removeOnComplete: true,
+                    removeOnFail: false,
+                });
                 const jobPostDetails = [];
                 for (const detail of body.job_post_details) {
                     const checkJob = yield jobModel.getSingleJob(detail.job_id);
@@ -48,6 +62,47 @@ class HotelierJobPostService extends abstract_service_1.default {
                     jobPostDetails.push(Object.assign(Object.assign({}, detail), { job_post_id: res[0].id, hourly_rate: checkJob.hourly_rate, job_seeker_pay: checkJob.job_seeker_pay, platform_fee: checkJob.platform_fee }));
                 }
                 yield model.createJobPostDetails(jobPostDetails);
+                // Job Post Nearby
+                const orgLat = parseFloat(checkOrganization.latitude);
+                const orgLng = parseFloat(checkOrganization.longitude);
+                function getDistanceFromLatLng(hLat1, hLng1, lat2, lng2) {
+                    const toRad = (value) => (value * Math.PI) / 180;
+                    const R = 6371; // Earth's radius in km
+                    const dLat = toRad(lat2 - hLat1);
+                    const dLng = toRad(lng2 - hLng1);
+                    const a = Math.sin(dLat / 2) ** 2 +
+                        Math.cos(toRad(hLat1)) *
+                            Math.cos(toRad(lat2)) *
+                            Math.sin(dLng / 2) ** 2;
+                    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                    return R * c;
+                }
+                const all = yield jobSeeker.getJobSeekerLocation();
+                console.log({ all });
+                for (const seeker of all) {
+                    const seekerLat = parseFloat(seeker.latitude);
+                    const seekerLng = parseFloat(seeker.longitude);
+                    const distance = getDistanceFromLatLng(orgLat, orgLng, seekerLat, seekerLng);
+                    if (distance > 10)
+                        continue;
+                    console.log(`Job seeker ${seeker.user_id} is within ${distance.toFixed(2)} km`);
+                    // 1. Insert into DB
+                    yield this.insertNotification(trx, userModelTypes_1.TypeUser.JOB_SEEKER, {
+                        user_id: seeker.user_id,
+                        content: `A new job post is available near you!`,
+                        related_id: res[0].id,
+                        type: commonModelTypes_1.NotificationTypeEnum.JOB_POST,
+                    });
+                    // 2. Emit via socket
+                    socket_1.io.to(String(seeker.user_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION, {
+                        user_id: seeker.user_id,
+                        content: `A new job post is available near you!`,
+                        related_id: res[0].id,
+                        type: commonModelTypes_1.NotificationTypeEnum.JOB_POST,
+                        read_status: false,
+                        created_at: new Date().toISOString(),
+                    });
+                }
                 return {
                     success: true,
                     message: this.ResMsg.HTTP_SUCCESSFUL,

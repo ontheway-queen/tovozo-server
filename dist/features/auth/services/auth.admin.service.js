@@ -27,6 +27,7 @@ const abstract_service_1 = __importDefault(require("../../../abstract/abstract.s
 const config_1 = __importDefault(require("../../../app/config"));
 const lib_1 = __importDefault(require("../../../utils/lib/lib"));
 const constants_1 = require("../../../utils/miscellaneous/constants");
+const sendEmailOtpTemplate_1 = require("../../../utils/templates/sendEmailOtpTemplate");
 class AdminAuthService extends abstract_service_1.default {
     //login
     loginService(req) {
@@ -34,6 +35,7 @@ class AdminAuthService extends abstract_service_1.default {
             const { email, password } = req.body;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const userModel = this.Model.UserModel(trx);
+                const commonModel = this.Model.commonModel(trx);
                 const checkUser = yield userModel.getSingleCommonAuthUser({
                     schema_name: "admin",
                     table_name: constants_1.USER_AUTHENTICATION_VIEW.ADMIN,
@@ -63,6 +65,36 @@ class AdminAuthService extends abstract_service_1.default {
                     };
                 }
                 if (rest.is_2fa_on) {
+                    const checkOtp = yield commonModel.getOTP({
+                        email: checkUser.email,
+                        type: constants_1.OTP_TYPES.two_fa_admin,
+                    });
+                    if (checkOtp.length) {
+                        return {
+                            success: false,
+                            code: this.StatusCode.HTTP_GONE,
+                            message: this.ResMsg.THREE_TIMES_EXPIRED,
+                        };
+                    }
+                    const generateOtp = lib_1.default.otpGenNumber(6);
+                    const hashed_otp = yield lib_1.default.hashValue(generateOtp);
+                    const insertOtp = yield commonModel.insertOTP({
+                        email: checkUser.email,
+                        type: constants_1.OTP_TYPES.two_fa_admin,
+                        hashed_otp,
+                    });
+                    if (!insertOtp) {
+                        return {
+                            success: false,
+                            code: this.StatusCode.HTTP_INTERNAL_SERVER_ERROR,
+                            message: "Cannot send email at the moment ",
+                        };
+                    }
+                    yield lib_1.default.sendEmailDefault({
+                        email: checkUser.email,
+                        emailSub: "Two Factor Verification",
+                        emailBody: (0, sendEmailOtpTemplate_1.sendEmailOtpTemplate)(generateOtp, "two factor verification"),
+                    });
                     return {
                         success: true,
                         code: this.StatusCode.HTTP_OK,

@@ -28,7 +28,7 @@ class JobPostModel extends Schema {
 	public async createJobPost(payload: IJobPostPayload) {
 		return await this.db(this.TABLES.job_post)
 			.withSchema(this.DBO_SCHEMA)
-			.insert(payload, "id");
+			.insert(payload, ["id", "expire_time"]);
 	}
 
 	public async createJobPostDetails(
@@ -63,6 +63,7 @@ class JobPostModel extends Schema {
 				"jpd.status",
 				"jp.organization_id",
 				"j.title as job_title",
+				"j.details as job_details",
 				"j.job_seeker_pay",
 				"jp.created_time",
 				"org.name as organization_name",
@@ -92,7 +93,15 @@ class JobPostModel extends Schema {
 				if (city_id) qb.andWhere("vwl.city_id", city_id);
 				if (title) qb.andWhereILike("jp.title", `%${title}%`);
 			})
-			.andWhere("jpd.status", "Pending");
+			.andWhere("jpd.status", "Pending")
+			.orderBy("jp.id").orderByRaw(`
+  CASE
+    WHEN jpd.start_time <= NOW() AND jpd.end_time >= NOW() THEN 0  
+    WHEN jpd.start_time > NOW() THEN 1                       
+    WHEN jpd.end_time < NOW() THEN 2                         
+  END,
+  jpd.start_time DESC
+`);
 
 		// Exclude jobs already applied by the job seeker
 		if (user_id) {
@@ -105,10 +114,7 @@ class JobPostModel extends Schema {
 			});
 		}
 
-		baseQuery
-			.orderByRaw("jp.id, jpd.start_time DESC")
-			.limit(limit || 100)
-			.offset(skip || 0);
+		baseQuery.limit(limit || 100).offset(skip || 0);
 
 		const data = await baseQuery;
 
@@ -279,14 +285,13 @@ class JobPostModel extends Schema {
 			})
 			.orderByRaw(
 				`
-			CASE 
-				WHEN jpd.start_time <= NOW() AND jpd.end_time >= NOW() THEN 0
-				WHEN jpd.start_time > NOW() THEN 1
-				WHEN jpd.end_time < NOW() THEN 2
-				ELSE 3
-			END,
-			jpd.start_time ASC
-		`
+          CASE
+            WHEN jpd.start_time <= NOW() AND jpd.end_time >= NOW() THEN 0  
+            WHEN jpd.start_time > NOW() THEN 1                       
+            WHEN jpd.end_time < NOW() THEN 2                         
+          END,
+          start_time ASC
+        `
 			)
 			.limit(limit || 100)
 			.offset(skip || 0);
@@ -309,7 +314,7 @@ class JobPostModel extends Schema {
 					if (category_id) qb.andWhere("j.id", category_id);
 					if (status) qb.andWhere("jpd.status", status);
 					if (title) qb.andWhereILike("jp.title", `%${title}%`);
-					if (city_id) qb.andWhere("js_vwl.city_id", city_id); // Still required here if filtering
+					if (city_id) qb.andWhere("js_vwl.city_id", city_id);
 				})
 				.first();
 
@@ -351,6 +356,8 @@ class JobPostModel extends Schema {
 						'application_status', ja.status,
 						'job_seeker_id', ja.job_seeker_id,
 						'job_seeker_name', js.name,
+            'location_address', js_vwl.location_address,
+            'city', js_vwl.city_name,
 						'longitude', js_vwl.longitude,
 						'latitude', js_vwl.latitude
 					)
@@ -660,6 +667,20 @@ class JobPostModel extends Schema {
 			.where("jpd.id", id)
 			.first();
 	}
+
+	// Get all Job post using job post id
+	public async getAllJobsUsingJobPostId(id: number) {
+		return await this.db("job_post_details")
+			.withSchema(this.DBO_SCHEMA)
+			.select("id")
+			.where("job_post_id", id);
+	}
 }
 
 export default JobPostModel;
+
+/* 
+27 - In Progress - Applied - Pending
+28 - In Progress - Applied - Pending
+25 - Expired
+*/

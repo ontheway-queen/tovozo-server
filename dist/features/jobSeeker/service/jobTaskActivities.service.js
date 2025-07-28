@@ -55,32 +55,25 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                 };
                 console.log({ payload });
                 const res = yield jobTaskActivitiesModel.createJobTaskActivity(payload);
-                // await jobApplicationModel.updateMyJobApplicationStatus(
-                // 	job_application_id,
-                // 	user_id,
-                // 	JOB_APPLICATION_STATUS.IN_PROGRESS
-                // );
+                console.log({ res });
+                yield jobApplicationModel.updateMyJobApplicationStatus(job_application_id, user_id, constants_1.JOB_APPLICATION_STATUS.WaitingForApproval);
                 // await jobPostModel.updateJobPostDetailsStatus(
                 // 	myApplication.job_post_details_id,
                 // 	JOB_POST_DETAILS_STATUS.In_Progress
                 // );
-                const onlineUsers = (0, socket_1.getAllOnlineSocketIds)({
-                    user_id,
-                    type: constants_1.USER_TYPE.JOB_SEEKER,
-                });
                 yield this.insertNotification(trx, userModelTypes_1.TypeUser.HOTELIER, {
                     user_id: myApplication.hotelier_id,
-                    content: `New tasks have been assigned to you.`,
+                    content: `The job ${job_post_details_id} is waiting for your approval.`,
                     related_id: res[0].id,
                     type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                 });
-                socket_1.io.emit("start-job-task", {
-                    id: res[0].id,
-                    start_time: new Date(),
-                    end_time: null,
-                    total_working_hours: null,
-                    start_approved_at: null,
-                    end_approved_at: null,
+                socket_1.io.to(String(myApplication.hotelier_id)).emit("approve-job", {
+                    user_id: myApplication.hotelier_id,
+                    content: `The job ${job_post_details_id} is waiting for your approval.`,
+                    related_id: res[0].id,
+                    type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
+                    read_status: false,
+                    created_at: new Date().toISOString(),
                 });
                 return {
                     success: true,
@@ -120,7 +113,6 @@ class JobTaskActivitiesService extends abstract_service_1.default {
         });
         this.endJobTaskActivities = (req) => __awaiter(this, void 0, void 0, function* () {
             const id = req.params.id;
-            const { user_id } = req.jobSeeker;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const jobApplicationModel = this.Model.jobApplicationModel(trx);
                 const jobTaskActivitiesModel = this.Model.jobTaskActivitiesModel(trx);
@@ -139,7 +131,6 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                 const taskList = yield jobTaskListModel.getJobTaskList({
                     job_task_activity_id: Number(id),
                 });
-                console.log({ taskList });
                 if (!taskList.length || taskList.length === 0) {
                     throw new customError_1.default("The organization has not assigned any tasks for this job yet. Please wait until tasks are assigned.", this.StatusCode.HTTP_BAD_REQUEST);
                 }
@@ -156,14 +147,22 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                 if (!myApplication) {
                     throw new customError_1.default(`Job application not found or does not belong to you.`, this.StatusCode.HTTP_NOT_FOUND);
                 }
-                yield jobTaskActivitiesModel.updateJobTaskActivity(taskActivity.id, {
+                const res = yield jobTaskActivitiesModel.updateJobTaskActivity(taskActivity.id, {
                     end_time: new Date(),
                 });
-                socket_1.io.emit("end-job-task", {
-                    id,
-                    start_time: taskActivity.start_time,
-                    start_approved_at: taskActivity.start_approved_at,
-                    end_time: new Date(),
+                yield this.insertNotification(trx, userModelTypes_1.TypeUser.HOTELIER, {
+                    user_id: myApplication.hotelier_id,
+                    content: `All job task submitted for job ${taskActivity.job_post_details_id}`,
+                    related_id: res[0].id,
+                    type: commonModelTypes_1.NotificationTypeEnum.JOB_POST,
+                });
+                socket_1.io.to(String(myApplication.hotelier_id)).emit("end-job", {
+                    user_id: myApplication.hotelier_id,
+                    content: `All job task submitted for job ${taskActivity.job_post_details_id}`,
+                    related_id: res[0].id,
+                    type: commonModelTypes_1.NotificationTypeEnum.JOB_POST,
+                    read_status: false,
+                    created_at: new Date().toISOString(),
                 });
                 return {
                     success: true,

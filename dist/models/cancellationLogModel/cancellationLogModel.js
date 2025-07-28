@@ -106,22 +106,17 @@ class CancellationLogModel extends schema_1.default {
             const { user_id, report_type, status, limit, skip, need_total = true, searchQuery, } = query;
             const data = yield this.db("cancellation_logs as cr")
                 .withSchema(this.DBO_SCHEMA)
-                .select("cr.id", "u.name as reporter_name", "u.phone_number as reporter_phone_number", "cr.report_type", "cr.status", "cr.reason as cancellation_reason", "cr.reject_reason", this.db.raw(`json_build_object(
-                    'id', jp.id,
-                    'title', jp.title,
-                    'details', jp.details,
-                    'requirements', jp.requirements
-                ) as job_post`))
+                .select("cr.id", "u.name as reporter_name", "u.phone_number as reporter_phone_number", "cr.report_type", "cr.status", "cr.reason as cancellation_reason", "cr.reject_reason", "j.title", "j.details", "j.hourly_rate", "j.job_seeker_pay", "j.platform_fee")
                 .leftJoin("user as u", "u.id", "cr.reporter_id")
                 .leftJoin("job_applications as ja", "cr.related_id", "ja.id")
                 .leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
-                .leftJoin("job_post as jp", "jp.id", "jpd.job_post_id")
+                .leftJoin("jobs as j", "j.id", "jpd.job_id")
                 .where((qb) => {
                 if (user_id) {
                     qb.andWhere("cr.reporter_id", user_id);
                 }
                 if (searchQuery) {
-                    qb.andWhereILike("jp.title", `%${searchQuery}%`);
+                    qb.andWhereILike("j.title", `%${searchQuery}%`);
                 }
                 if (report_type) {
                     qb.andWhere("cr.report_type", report_type);
@@ -140,13 +135,13 @@ class CancellationLogModel extends schema_1.default {
                     .leftJoin("user as u", "u.id", "cr.reporter_id")
                     .leftJoin("job_applications as ja", "cr.related_id", "ja.id")
                     .leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
-                    .leftJoin("job_post as jp", "jp.id", "jpd.job_post_id")
+                    .leftJoin("jobs as j", "j.id", "jpd.job_id")
                     .where((qb) => {
                     if (user_id) {
                         qb.andWhere("cr.reporter_id", user_id);
                     }
                     if (searchQuery) {
-                        qb.andWhereILike("jp.title", `%${searchQuery}%`);
+                        qb.andWhereILike("j.title", `%${searchQuery}%`);
                     }
                     if (report_type) {
                         qb.andWhere("cr.report_type", report_type);

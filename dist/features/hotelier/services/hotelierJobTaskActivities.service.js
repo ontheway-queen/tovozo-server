@@ -33,8 +33,8 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 });
                 console.log({ taskActivity });
                 if (taskActivity.application_status !==
-                    constants_1.JOB_APPLICATION_STATUS.PENDING) {
-                    throw new customError_1.default(`You cannot perform this action because the application is still in progress.`, this.StatusCode.HTTP_FORBIDDEN);
+                    constants_1.JOB_APPLICATION_STATUS.WaitingForApproval) {
+                    throw new customError_1.default(`You cannot perform this action because the job application is not awaiting approval.`, this.StatusCode.HTTP_FORBIDDEN);
                 }
                 const application = yield jobApplicationModel.getMyJobApplication({
                     job_application_id: taskActivity.job_application_id,
@@ -43,7 +43,7 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 if (!application) {
                     throw new customError_1.default(`Job application not found or does not belong to you.`, this.StatusCode.HTTP_NOT_FOUND);
                 }
-                yield jobApplicationModel.updateMyJobApplicationStatus(taskActivity.job_application_id, taskActivity.job_seeker_id, constants_1.JOB_APPLICATION_STATUS.IN_PROGRESS);
+                yield jobApplicationModel.updateMyJobApplicationStatus(taskActivity.job_application_id, taskActivity.job_seeker_id, constants_1.JOB_APPLICATION_STATUS.ASSIGNED);
                 yield jobTaskActivitiesModel.updateJobTaskActivity(taskActivity.id, {
                     start_time: new Date(),
                     start_approved_at: new Date().toISOString(),
@@ -59,6 +59,7 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
         this.createJobTaskList = (req) => __awaiter(this, void 0, void 0, function* () {
             const body = req.body;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const jobApplicationModel = this.Model.jobApplicationModel(trx);
                 const jobTaskActivitiesModel = this.Model.jobTaskActivitiesModel(trx);
                 const jobTaskListModel = this.Model.jobTaskListModel(trx);
                 const { user_id } = req.hotelier;
@@ -70,8 +71,12 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                     throw new customError_1.default("Task activity not found", this.StatusCode.HTTP_NOT_FOUND);
                 }
                 if (taskActivity.application_status !==
-                    constants_1.JOB_APPLICATION_STATUS.IN_PROGRESS) {
+                    constants_1.JOB_APPLICATION_STATUS.ASSIGNED &&
+                    !taskActivity.start_time) {
                     throw new customError_1.default(`You cannot perform this action because the application is not in progress. Your application status is ${taskActivity.application_status}`, this.StatusCode.HTTP_FORBIDDEN);
+                }
+                if (taskActivity.end_time) {
+                    throw new customError_1.default("You cannot add task. Because It has already been submitted for approval.", this.StatusCode.HTTP_BAD_REQUEST);
                 }
                 // Build insert payload
                 const taskList = body.tasks.map((task) => ({
@@ -82,6 +87,7 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 if (!res.length) {
                     throw new customError_1.default("Failed to create job task list", this.StatusCode.HTTP_BAD_REQUEST);
                 }
+                yield jobApplicationModel.updateMyJobApplicationStatus(taskActivity.job_application_id, taskActivity.job_seeker_id, constants_1.JOB_APPLICATION_STATUS.IN_PROGRESS);
                 yield this.insertNotification(trx, userModelTypes_1.TypeUser.JOB_SEEKER, {
                     user_id: taskActivity.job_seeker_id,
                     content: `New tasks have been assigned to you.`,
@@ -91,17 +97,14 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 const allMessages = taskList
                     .map((task, index) => `${index + 1}. ${task.message}`)
                     .join("\n");
-                socket_1.io.emit("create:job-task-list", {
-                    id: res[0].id,
-                    job_task_activity_id: body.job_task_activity_id,
-                    message: allMessages,
-                    is_completed: false,
-                    completed_at: null,
+                socket_1.io.to(String(taskActivity.job_seeker_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION, {
+                    user_id: taskActivity.job_seeker_id,
+                    content: allMessages,
+                    related_id: res[0].id,
+                    type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
+                    read_status: false,
                     created_at: new Date().toISOString(),
-                    job_seeker_id: taskActivity.job_seeker_id,
-                    job_seeker_name: taskActivity.job_seeker_name,
                 });
-                console.log(4);
                 return {
                     success: true,
                     message: this.ResMsg.HTTP_OK,

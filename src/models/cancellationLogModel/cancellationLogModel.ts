@@ -155,12 +155,11 @@ class CancellationLogModel extends Schema {
 				"cr.status",
 				"cr.reason as cancellation_reason",
 				"cr.reject_reason",
-				this.db.raw(`json_build_object(
-                    'id', jp.id,
-                    'title', jp.title,
-                    'details', jp.details,
-                    'requirements', jp.requirements
-                ) as job_post`)
+				"j.title",
+				"j.details",
+				"j.hourly_rate",
+				"j.job_seeker_pay",
+				"j.platform_fee"
 			)
 			.leftJoin("user as u", "u.id", "cr.reporter_id")
 			.leftJoin("job_applications as ja", "cr.related_id", "ja.id")
@@ -169,13 +168,13 @@ class CancellationLogModel extends Schema {
 				"jpd.id",
 				"ja.job_post_details_id"
 			)
-			.leftJoin("job_post as jp", "jp.id", "jpd.job_post_id")
+			.leftJoin("jobs as j", "j.id", "jpd.job_id")
 			.where((qb) => {
 				if (user_id) {
 					qb.andWhere("cr.reporter_id", user_id);
 				}
 				if (searchQuery) {
-					qb.andWhereILike("jp.title", `%${searchQuery}%`);
+					qb.andWhereILike("j.title", `%${searchQuery}%`);
 				}
 				if (report_type) {
 					qb.andWhere("cr.report_type", report_type);
@@ -199,13 +198,13 @@ class CancellationLogModel extends Schema {
 					"jpd.id",
 					"ja.job_post_details_id"
 				)
-				.leftJoin("job_post as jp", "jp.id", "jpd.job_post_id")
+				.leftJoin("jobs as j", "j.id", "jpd.job_id")
 				.where((qb) => {
 					if (user_id) {
 						qb.andWhere("cr.reporter_id", user_id);
 					}
 					if (searchQuery) {
-						qb.andWhereILike("jp.title", `%${searchQuery}%`);
+						qb.andWhereILike("j.title", `%${searchQuery}%`);
 					}
 					if (report_type) {
 						qb.andWhere("cr.report_type", report_type);

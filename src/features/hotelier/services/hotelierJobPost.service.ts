@@ -5,6 +5,7 @@ import {
 	CANCELLATION_REPORT_TYPE,
 	JOB_POST_DETAILS_STATUS,
 	JOB_POST_STATUS,
+	USER_TYPE,
 } from "../../../utils/miscellaneous/constants";
 import {
 	IGetJobPostListParams,
@@ -13,6 +14,12 @@ import {
 	IJobPostPayload,
 } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
 import { IHoiteleirJob } from "../utils/types/hotelierJobPostTypes";
+import { io } from "../../../app/socket";
+import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
+import {
+	NotificationTypeEnum,
+	TypeEmitNotificationEnum,
+} from "../../../utils/modelTypes/common/commonModelTypes";
 
 class HotelierJobPostService extends AbstractServices {
 	public async createJobPost(req: Request) {
@@ -22,6 +29,7 @@ class HotelierJobPostService extends AbstractServices {
 			job_post_details: IJobPostDetailsPayload[];
 		};
 		return await this.db.transaction(async (trx) => {
+			const jobSeeker = this.Model.jobSeekerModel(trx);
 			const model = this.Model.jobPostModel(trx);
 			const organizationModel = this.Model.organizationModel(trx);
 			const jobModel = this.Model.jobModel(trx);
@@ -34,6 +42,7 @@ class HotelierJobPostService extends AbstractServices {
 					this.StatusCode.HTTP_NOT_FOUND
 				);
 			}
+			console.log({ checkOrganization });
 
 			body.job_post.organization_id = checkOrganization.id;
 
@@ -45,6 +54,19 @@ class HotelierJobPostService extends AbstractServices {
 					this.StatusCode.HTTP_BAD_REQUEST
 				);
 			}
+			const expireTime = new Date(res[0].expire_time).getTime();
+			const now = Date.now();
+			const delay = Math.max(expireTime - now, 0);
+			const queue = this.getQueue("expire-job-post");
+			await queue.add(
+				"expire-job-post",
+				{ id: res[0].id },
+				{
+					delay,
+					removeOnComplete: true,
+					removeOnFail: false,
+				}
+			);
 
 			const jobPostDetails: IJobPostDetailsPayload[] = [];
 
@@ -76,6 +98,76 @@ class HotelierJobPostService extends AbstractServices {
 			}
 
 			await model.createJobPostDetails(jobPostDetails);
+
+			// Job Post Nearby
+			const orgLat = parseFloat(checkOrganization.latitude as string);
+			const orgLng = parseFloat(checkOrganization.longitude as string);
+			function getDistanceFromLatLng(
+				hLat1: number,
+				hLng1: number,
+				lat2: number,
+				lng2: number
+			): number {
+				const toRad = (value: number) => (value * Math.PI) / 180;
+				const R = 6371; // Earth's radius in km
+
+				const dLat = toRad(lat2 - hLat1);
+				const dLng = toRad(lng2 - hLng1);
+
+				const a =
+					Math.sin(dLat / 2) ** 2 +
+					Math.cos(toRad(hLat1)) *
+						Math.cos(toRad(lat2)) *
+						Math.sin(dLng / 2) ** 2;
+
+				const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+				return R * c;
+			}
+
+			const all = await jobSeeker.getJobSeekerLocation();
+			console.log({ all });
+			for (const seeker of all) {
+				const seekerLat = parseFloat(seeker.latitude);
+				const seekerLng = parseFloat(seeker.longitude);
+
+				const distance = getDistanceFromLatLng(
+					orgLat,
+					orgLng,
+					seekerLat,
+					seekerLng
+				);
+
+				if (distance > 10) continue;
+
+				console.log(
+					`Job seeker ${seeker.user_id} is within ${distance.toFixed(
+						2
+					)} km`
+				);
+
+				// 1. Insert into DB
+				await this.insertNotification(trx, TypeUser.JOB_SEEKER, {
+					user_id: seeker.user_id,
+					content: `A new job post is available near you!`,
+					related_id: res[0].id,
+					type: NotificationTypeEnum.JOB_POST,
+				});
+
+				// 2. Emit via socket
+				io.to(String(seeker.user_id)).emit(
+					TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION,
+					{
+						user_id: seeker.user_id,
+						content: `A new job post is available near you!`,
+						related_id: res[0].id,
+						type: NotificationTypeEnum.JOB_POST,
+						read_status: false,
+						created_at: new Date().toISOString(),
+					}
+				);
+			}
+
 			return {
 				success: true,
 				message: this.ResMsg.HTTP_SUCCESSFUL,

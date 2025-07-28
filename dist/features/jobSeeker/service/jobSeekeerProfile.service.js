@@ -8,6 +8,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -23,14 +34,16 @@ class JobSeekerProfileService extends abstract_service_1.default {
         this.getProfile = (req) => __awaiter(this, void 0, void 0, function* () {
             const { user_id } = req.jobSeeker;
             const jobSeekerModel = this.Model.jobSeekerModel();
-            const jobSeekerDetails = yield jobSeekerModel.getJobSeekerDetails({
+            const _a = yield jobSeekerModel.getJobSeekerDetails({
                 user_id,
-            });
+            }), { applied_jobs } = _a, rest = __rest(_a, ["applied_jobs"]);
+            const isWaitingForApproval = applied_jobs === null || applied_jobs === void 0 ? void 0 : applied_jobs.filter((job) => job.application_status ===
+                constants_1.JOB_APPLICATION_STATUS.WaitingForApproval);
             return {
                 success: true,
                 code: this.StatusCode.HTTP_OK,
                 message: this.ResMsg.HTTP_OK,
-                data: jobSeekerDetails,
+                data: Object.assign(Object.assign({}, rest), { is_waiting_for_approval: isWaitingForApproval.length > 0, applied_jobs }),
             };
         });
     }

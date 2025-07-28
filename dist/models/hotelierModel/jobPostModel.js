@@ -23,7 +23,7 @@ class JobPostModel extends schema_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db(this.TABLES.job_post)
                 .withSchema(this.DBO_SCHEMA)
-                .insert(payload, "id");
+                .insert(payload, ["id", "expire_time"]);
         });
     }
     createJobPostDetails(payload) {
@@ -39,7 +39,7 @@ class JobPostModel extends schema_1.default {
             const { user_id, title, category_id, city_id, limit, skip, need_total = true, } = params;
             const baseQuery = this.db("job_post as jp")
                 .withSchema(this.DBO_SCHEMA)
-                .select(this.db.raw("DISTINCT ON (jp.id) jp.id"), "jpd.id as job_post_detail_id", "jpd.start_time", "jpd.end_time", "jpd.status", "jp.organization_id", "j.title as job_title", "j.job_seeker_pay", "jp.created_time", "org.name as organization_name", "org_p.file as organization_photo", "vwl.location_address", "vwl.city_name", "vwl.longitude", "vwl.latitude")
+                .select(this.db.raw("DISTINCT ON (jp.id) jp.id"), "jpd.id as job_post_detail_id", "jpd.start_time", "jpd.end_time", "jpd.status", "jp.organization_id", "j.title as job_title", "j.details as job_details", "j.job_seeker_pay", "jp.created_time", "org.name as organization_name", "org_p.file as organization_photo", "vwl.location_address", "vwl.city_name", "vwl.longitude", "vwl.latitude")
                 .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
                 `${this.HOTELIER}.${this.TABLES.organization}`,
             ])
@@ -57,7 +57,15 @@ class JobPostModel extends schema_1.default {
                 if (title)
                     qb.andWhereILike("jp.title", `%${title}%`);
             })
-                .andWhere("jpd.status", "Pending");
+                .andWhere("jpd.status", "Pending")
+                .orderBy("jp.id").orderByRaw(`
+  CASE
+    WHEN jpd.start_time <= NOW() AND jpd.end_time >= NOW() THEN 0  
+    WHEN jpd.start_time > NOW() THEN 1                       
+    WHEN jpd.end_time < NOW() THEN 2                         
+  END,
+  jpd.start_time DESC
+`);
             // Exclude jobs already applied by the job seeker
             if (user_id) {
                 const that = this;
@@ -68,10 +76,7 @@ class JobPostModel extends schema_1.default {
                         .andWhere("ja.job_seeker_id", user_id);
                 });
             }
-            baseQuery
-                .orderByRaw("jp.id, jpd.start_time DESC")
-                .limit(limit || 100)
-                .offset(skip || 0);
+            baseQuery.limit(limit || 100).offset(skip || 0);
             const data = yield baseQuery;
             let total = 0;
             if (need_total) {
@@ -177,14 +182,13 @@ class JobPostModel extends schema_1.default {
                     qb.andWhere("jpd.status", status);
             })
                 .orderByRaw(`
-			CASE 
-				WHEN jpd.start_time <= NOW() AND jpd.end_time >= NOW() THEN 0
-				WHEN jpd.start_time > NOW() THEN 1
-				WHEN jpd.end_time < NOW() THEN 2
-				ELSE 3
-			END,
-			jpd.start_time ASC
-		`)
+          CASE
+            WHEN jpd.start_time <= NOW() AND jpd.end_time >= NOW() THEN 0  
+            WHEN jpd.start_time > NOW() THEN 1                       
+            WHEN jpd.end_time < NOW() THEN 2                         
+          END,
+          start_time ASC
+        `)
                 .limit(limit || 100)
                 .offset(skip || 0);
             let total;
@@ -210,7 +214,7 @@ class JobPostModel extends schema_1.default {
                     if (title)
                         qb.andWhereILike("jp.title", `%${title}%`);
                     if (city_id)
-                        qb.andWhere("js_vwl.city_id", city_id); // Still required here if filtering
+                        qb.andWhere("js_vwl.city_id", city_id);
                 })
                     .first();
                 total = (totalQuery === null || totalQuery === void 0 ? void 0 : totalQuery.total) ? Number(totalQuery.total) : 0;
@@ -238,6 +242,8 @@ class JobPostModel extends schema_1.default {
 						'application_status', ja.status,
 						'job_seeker_id', ja.job_seeker_id,
 						'job_seeker_name', js.name,
+            'location_address', js_vwl.location_address,
+            'city', js_vwl.city_name,
 						'longitude', js_vwl.longitude,
 						'latitude', js_vwl.latitude
 					)
@@ -453,5 +459,19 @@ class JobPostModel extends schema_1.default {
                 .first();
         });
     }
+    // Get all Job post using job post id
+    getAllJobsUsingJobPostId(id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("job_post_details")
+                .withSchema(this.DBO_SCHEMA)
+                .select("id")
+                .where("job_post_id", id);
+        });
+    }
 }
 exports.default = JobPostModel;
+/*
+27 - In Progress - Applied - Pending
+28 - In Progress - Applied - Pending
+25 - Expired
+*/

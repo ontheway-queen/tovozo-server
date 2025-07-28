@@ -40,14 +40,17 @@ class OrganizationModel extends schema_1.default {
     }
     getOrganization(where) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db("organization")
+            return yield this.db("organization as org")
                 .withSchema(this.HOTELIER)
-                .select("*")
+                .select("org.id", "org.name", "org.user_id", "org.details", "org.status", "org.is_deleted", "org.is_2fa_on", "org.location_id", "l.longitude", "l.latitude")
+                .joinRaw(`LEFT JOIN ?? as l ON l.id = org.location_id`, [
+                `${this.DBO_SCHEMA}.${this.TABLES.location}`,
+            ])
                 .where((qb) => {
                 if (where.id)
-                    qb.andWhere("id", where.id);
+                    qb.andWhere("org.id", where.id);
                 if (where.user_id)
-                    qb.andWhere("user_id", where.user_id);
+                    qb.andWhere("org.user_id", where.user_id);
             })
                 .first();
         });
@@ -93,7 +96,10 @@ class OrganizationModel extends schema_1.default {
                 if (params.name)
                     qb.andWhereILike("name", `%${params.name}%`);
                 if (params.from_date && params.to_date)
-                    qb.andWhereBetween("created_at", [params.from_date, params.to_date]);
+                    qb.andWhereBetween("created_at", [
+                        params.from_date,
+                        params.to_date,
+                    ]);
             })
                 .first();
             return {

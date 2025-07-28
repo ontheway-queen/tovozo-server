@@ -92,7 +92,10 @@ class PublicService extends abstract_service_1.default {
                     }
                 }
                 const commonModel = this.Model.commonModel(trx);
-                const checkOtp = yield commonModel.getOTP({ email: email, type: type });
+                const checkOtp = yield commonModel.getOTP({
+                    email: email,
+                    type: type,
+                });
                 if (checkOtp.length) {
                     return {
                         success: false,
@@ -154,6 +157,7 @@ class PublicService extends abstract_service_1.default {
                 const commonModel = this.Model.commonModel(trx);
                 const userModel = this.Model.UserModel(trx);
                 const checkOtp = yield commonModel.getOTP({ email, type });
+                console.log({ checkOtp });
                 if (!checkOtp.length) {
                     return {
                         success: false,
@@ -170,6 +174,7 @@ class PublicService extends abstract_service_1.default {
                     };
                 }
                 const otpValidation = yield lib_1.default.compareHashValue(otp.toString(), hashed_otp);
+                console.log({ otpValidation });
                 if (!otpValidation) {
                     yield commonModel.updateOTP({
                         tried: tried + 1,
