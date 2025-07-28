@@ -203,7 +203,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 				}
 
 				await jobPostModel.updateJobPostDetailsStatus(
-					data.job_post_id,
+					data.job_post_details_id,
 					JOB_POST_DETAILS_STATUS.Pending as unknown as IJobPostDetailsStatus
 				);
 
@@ -219,7 +219,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 					!body.reason
 				) {
 					throw new CustomError(
-						this.ResMsg.HTTP_UNPROCESSABLE_ENTITY,
+						"Cancellation report must include a valid reason and type 'CANCEL_APPLICATION'.",
 						this.StatusCode.HTTP_UNPROCESSABLE_ENTITY
 					);
 				}

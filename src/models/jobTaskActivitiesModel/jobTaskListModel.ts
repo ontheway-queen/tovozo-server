@@ -34,7 +34,8 @@ class JobTaskListModel extends Schema {
 				"jtl.completed_at",
 				"js.id as job_seeker_id",
 				"js.name as job_seeker_name",
-				"jtl.created_at"
+				"jtl.created_at",
+				"org.user_id as hotelier_id"
 			)
 			.withSchema(this.DBO_SCHEMA)
 			.join(
@@ -43,6 +44,10 @@ class JobTaskListModel extends Schema {
 				"jtl.job_task_activity_id"
 			)
 			.join("job_applications as ja", "ja.id", "jta.job_application_id")
+			.leftJoin("job_post as jp", "jp.id", "ja.job_post_id")
+			.joinRaw(`LEFT JOIN ?? as org ON org.id = jp.organization_id`, [
+				`${this.HOTELIER}.${this.TABLES.organization}`,
+			])
 			.join("user as js", "js.id", "ja.job_seeker_id")
 			.where((qb) => {
 				qb.where("jtl.is_deleted", false);

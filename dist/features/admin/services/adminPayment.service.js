@@ -13,17 +13,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
-const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
 class AdminPaymentService extends abstract_service_1.default {
     constructor() {
         super();
     }
     getAllPaymentsForAdmin(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { search, limit, skip, status } = req.query;
+            const { name, limit, skip, status } = req.query;
             const paymentModel = this.Model.paymnentModel();
             const { data, total } = yield paymentModel.getAllPaymentsForAdmin({
-                search: search,
+                search: name,
                 limit: Number(limit),
                 skip: Number(skip),
                 status: status,
@@ -59,13 +58,14 @@ class AdminPaymentService extends abstract_service_1.default {
     }
     getAllPaymentLedgersForAdmin(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { search, limit, skip } = req.query;
+            const { search, limit, skip, type } = req.query;
+            console.log(typeof type);
             const paymentModel = this.Model.paymnentModel();
             const { data, total } = yield paymentModel.getAllPaymentLedgerForAdmin({
                 search: search,
                 limit: Number(limit),
                 skip: Number(skip),
-                type: userModelTypes_1.TypeUser.ADMIN,
+                type: type,
             });
             return {
                 success: true,

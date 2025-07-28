@@ -2,13 +2,14 @@ import { TDB } from "../../features/public/utils/types/publicCommon.types";
 import Schema from "../../utils/miscellaneous/schema";
 import {
 	IGetAdminPayment,
-	IGetPaymentLedgerForHotelier,
+	IGetPaymentLedger,
 	IGetPaymentsForHotelier,
 	IGetPaymentsForJobSeeker,
 	IInitializePaymentPayload,
 	IPaymentLedgerPayload,
 	IPaymentUpdate,
 } from "../../utils/modelTypes/payment/paymentModelTypes";
+import { TypeUser } from "../../utils/modelTypes/user/userModelTypes";
 
 export default class PaymentModel extends Schema {
 	private db: TDB;
@@ -171,14 +172,20 @@ export default class PaymentModel extends Schema {
 				"p.payment_no",
 				"p.application_id",
 				"org.name as organization_name",
-				"jp.id as job_post_id",
-				"jp.title as job_title",
+				"j.id as job_post_id",
+				"j.title as job_title",
 				"p.job_seeker_pay",
 				"p.status",
 				"p.paid_at",
 				"p.trx_id"
 			)
 			.leftJoin("job_applications as ja", "ja.id", "p.application_id")
+			.leftJoin(
+				"job_post_details as jpd",
+				"jpd.id",
+				"ja.job_post_details_id"
+			)
+			.leftJoin("jobs as j", "j.id", "jpd.job_id")
 			.leftJoin("job_post as jp", "jp.id", "ja.job_post_id")
 			.joinRaw(
 				`
@@ -189,7 +196,7 @@ export default class PaymentModel extends Schema {
 			.where("job_seeker.id", job_seeker_id);
 
 		if (search) {
-			baseQuery.andWhere("jp.title", "ilike", `%${search}%`);
+			baseQuery.andWhere("j.title", "ilike", `%${search}%`);
 		}
 		if (status) {
 			baseQuery.andWhere("p.status", status);
@@ -251,7 +258,7 @@ export default class PaymentModel extends Schema {
 	public async getAllPaymentsForAdmin(params: {
 		limit: number;
 		skip: number;
-		search: string;
+		search?: string;
 		status?: string;
 	}): Promise<{ data: IGetAdminPayment[]; total: number }> {
 		const { limit, skip, search, status } = params;
@@ -261,7 +268,7 @@ export default class PaymentModel extends Schema {
 			.select(
 				"p.id",
 				"p.application_id",
-				"jp.title as job_title",
+				"j.title as job_title",
 				"job_seeker.id as job_seeker_id",
 				"job_seeker.name as job_seeker_name",
 				"org.id as paid_by_id",
@@ -275,6 +282,12 @@ export default class PaymentModel extends Schema {
 				"p.paid_at"
 			)
 			.leftJoin("job_applications as ja", "ja.id", "p.application_id")
+			.leftJoin(
+				"job_post_details as jpd",
+				"jpd.id",
+				"ja.job_post_details_id"
+			)
+			.leftJoin("jobs as j", "j.id", "jpd.job_id")
 			.leftJoin("job_post as jp", "jp.id", "ja.job_post_id")
 			.leftJoin("user as job_seeker", "job_seeker.id", "ja.job_seeker_id")
 			.joinRaw(`LEFT JOIN ?? AS org ON org.id = jp.organization_id`, [
@@ -282,7 +295,11 @@ export default class PaymentModel extends Schema {
 			])
 			.where((qb) => {
 				if (search) {
-					qb.where("jp.title", "ilike", `%${search}%`);
+					qb.andWhere((subQb) => {
+						subQb
+							.whereILike("j.title", `%${search}%`)
+							.orWhereILike("job_seeker.name", `%${search}%`);
+					});
 				}
 				if (status) {
 					qb.andWhere("p.status", status);
@@ -295,10 +312,21 @@ export default class PaymentModel extends Schema {
 		const totalResult = await this.db("payment as p")
 			.withSchema(this.DBO_SCHEMA)
 			.leftJoin("job_applications as ja", "ja.id", "p.application_id")
+			.leftJoin(
+				"job_post_details as jpd",
+				"jpd.id",
+				"ja.job_post_details_id"
+			)
+			.leftJoin("jobs as j", "j.id", "jpd.job_id")
 			.leftJoin("job_post as jp", "jp.id", "ja.job_post_id")
+			.leftJoin("user as job_seeker", "job_seeker.id", "ja.job_seeker_id") // ✅ Add this line
 			.where((qb) => {
 				if (search) {
-					qb.where("jp.title", "ilike", `%${search}%`);
+					qb.andWhere((subQb) => {
+						subQb
+							.whereILike("j.title", `%${search}%`)
+							.orWhereILike("job_seeker.name", `%${search}%`);
+					});
 				}
 				if (status) {
 					qb.andWhere("p.status", status);
@@ -344,6 +372,7 @@ export default class PaymentModel extends Schema {
 
 	// Update payment
 	public async updatePayment(id: number, payload: IPaymentUpdate) {
+		console.log({ payload });
 		return await this.db("payment")
 			.withSchema(this.DBO_SCHEMA)
 			.update(payload)
@@ -370,7 +399,7 @@ export default class PaymentModel extends Schema {
 		limit: number;
 		skip: number;
 		search: string;
-	}): Promise<{ data: IGetPaymentLedgerForHotelier[]; total: number }> {
+	}): Promise<{ data: IGetPaymentLedger[]; total: number }> {
 		const { user_id, limit, skip, search } = params;
 
 		const data = await this.db("payment_ledger")
@@ -414,7 +443,7 @@ export default class PaymentModel extends Schema {
 		limit: number;
 		skip: number;
 		search: string;
-	}): Promise<{ data: IGetPaymentLedgerForHotelier[]; total: number }> {
+	}): Promise<{ data: IGetPaymentLedger[]; total: number }> {
 		const { job_seeker_id, limit, skip, search } = params;
 		const data = await this.db("payment_ledger")
 			.withSchema(this.DBO_SCHEMA)
@@ -453,41 +482,80 @@ export default class PaymentModel extends Schema {
 		limit: number;
 		skip: number;
 		search: string;
-		type: "ADMIN";
-	}) {
+		type: TypeUser;
+	}): Promise<{
+		data: {
+			id: number;
+			trx_type: string;
+			amount: string;
+			details: string;
+			ledger_date: string;
+			voucher_no: string;
+			job_title: string;
+			organization_name: string;
+			job_seeker_name: string;
+			paid_at: string;
+		}[];
+		total: number;
+	}> {
 		const { limit, skip, search, type } = params;
-		const data = await this.db("payment_ledger")
+
+		const baseQuery = this.db("payment_ledger as pl")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
-				"id",
-				"trx_type",
-				"amount",
-				"details",
-				"ledger_date",
-				"voucher_no"
+				"pl.id",
+				"pl.trx_type",
+				"pl.amount",
+				"pl.details",
+				"pl.ledger_date",
+				"pl.voucher_no",
+				"j.title as job_title",
+				"org.name as organization_name",
+				"job_seeker.name as job_seeker_name",
+				"p.paid_at"
 			)
-			.where("user_type", type)
-			.andWhere((qb) => {
+			.leftJoin("payment as p", "p.payment_no", "pl.voucher_no")
+			.leftJoin("job_applications as ja", "ja.id", "p.application_id")
+			.leftJoin(
+				"job_post_details as jpd",
+				"jpd.id",
+				"ja.job_post_details_id"
+			)
+			.leftJoin("jobs as j", "j.id", "jpd.job_id")
+			.leftJoin("job_post as jp", "jp.id", "ja.job_post_id")
+			.joinRaw(
+				`LEFT JOIN hotelier.organization AS org ON org.id = jp.organization_id`
+			)
+			.leftJoin("user as job_seeker", "job_seeker.id", "ja.job_seeker_id")
+			.modify((qb) => {
+				if (type) {
+					qb.where("pl.user_type", type);
+				}
 				if (search) {
-					qb.where("details", "ilike", `%${search}%`);
+					qb.whereILike("pl.details", `%${search}%`);
 				}
 			})
-			.orderBy("id", "desc")
+			.orderBy("pl.id", "desc")
 			.offset(skip)
 			.limit(limit);
 
-		const totalResult = await this.db("payment_ledger")
+		const data = await baseQuery;
+
+		const countQuery = this.db("payment_ledger as pl")
 			.withSchema(this.DBO_SCHEMA)
 			.count("* as count")
-			.where("user_type", type)
-			.andWhere((qb) => {
+			.modify((qb) => {
+				if (type) {
+					qb.where("pl.user_type", type);
+				}
 				if (search) {
-					qb.where("details", "ilike", `%${search}%`);
+					qb.whereILike("pl.details", `%${search}%`);
 				}
 			})
 			.first();
 
-		const total = Number(totalResult?.count ?? 0);
+		const total = Number((await countQuery)?.count ?? 0);
+
 		return { data, total };
 	}
 }

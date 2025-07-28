@@ -137,7 +137,7 @@ export default class PaymentService extends AbstractServices {
 						paid_by: user_id,
 					},
 				},
-				success_url: `https://tovozo.com/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+				success_url: `http://10.10.220.73:9900/api/v1/hotelier/payment/verify-checkout-session?session_id={CHECKOUT_SESSION_ID}`,
 				cancel_url: `https://tovozo.com/payment/cancelled`,
 			});
 
@@ -205,7 +205,7 @@ export default class PaymentService extends AbstractServices {
 					"ERROR"
 				);
 			}
-
+			console.log({ session });
 			const paymentIntentId = session.payment_intent as string;
 			const transactionId = paymentIntentId.slice(-10);
 
@@ -215,7 +215,7 @@ export default class PaymentService extends AbstractServices {
 					expand: ["charges"],
 				}
 			);
-
+			console.log({ paymentIntent });
 			const payment = await paymentModel.getSinglePayment(
 				Number(paymentIntent.metadata.id)
 			);
@@ -232,7 +232,7 @@ export default class PaymentService extends AbstractServices {
 					this.StatusCode.HTTP_CONFLICT
 				);
 			}
-			console.log({ 1: payment.status });
+			console.log({ payment });
 			const charge = await stripe.charges.retrieve(
 				paymentIntent.latest_charge as string
 			);
@@ -263,7 +263,7 @@ export default class PaymentService extends AbstractServices {
 				ledger_date: new Date(),
 				created_at: new Date(),
 				updated_at: new Date(),
-				trx_id: `TRX-${transactionId}`,
+				// trx_id: `TRX-${transactionId}`,
 			};
 
 			await paymentModel.createPaymentLedger({
@@ -306,6 +306,14 @@ export default class PaymentService extends AbstractServices {
 				success: true,
 				message: this.ResMsg.HTTP_OK,
 				code: this.StatusCode.HTTP_OK,
+				data: {
+					trx_id: `TRX-${transactionId}`,
+					paid_at: new Date(),
+					status: PAYMENT_STATUS.PAID,
+					total: payment.total_amount,
+					job_seeker_name: paymentIntent.metadata.job_seeker_name,
+					job_title: paymentIntent.metadata.job_title,
+				},
 			};
 		});
 	}

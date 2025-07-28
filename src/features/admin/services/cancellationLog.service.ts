@@ -8,32 +8,27 @@ import {
 	JOB_POST_DETAILS_STATUS,
 	REPORT_TYPE,
 } from "../../../utils/miscellaneous/constants";
-import { IGetReportsQuery } from "../../../utils/modelTypes/cancellationReport/cancellationReport.types";
+import {
+	ICancellationReportStatus,
+	ICancellationReportType,
+	IGetReportsQuery,
+} from "../../../utils/modelTypes/cancellationReport/cancellationReport.types";
 import { IJobPostDetailsStatus } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
 
 class CancellationLogService extends AbstractServices {
 	// get reports
 	public async getCancellationLogs(req: Request) {
-		const query: IGetReportsQuery = req.query as any;
-		const model = this.Model.cancellationLogModel();
-		if (
-			query.report_type !== CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION &&
-			query.report_type !== CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST
-		) {
-			throw new CustomError(
-				"Report type is invalid. Please add report type in the query",
-				this.StatusCode.HTTP_BAD_REQUEST
-			);
-		}
+		const { report_type, status, skip, limit, name } = req.query;
 
-		let data;
-		if (query.report_type === CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST) {
-			data = await model.getJobPostCancellationLogs(query);
-		} else if (
-			query.report_type === CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION
-		) {
-			data = await model.getJobApplicationCancellationLogs(query);
-		}
+		const model = this.Model.cancellationLogModel();
+
+		const data = await model.getCancellationLogsForAdmin({
+			report_type: report_type as ICancellationReportType,
+			status: status as ICancellationReportStatus,
+			skip: Number(skip),
+			limit: Number(limit),
+			name: name as string,
+		});
 
 		return {
 			success: true,

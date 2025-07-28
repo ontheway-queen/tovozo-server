@@ -20,6 +20,9 @@ class JobSeekerStripeRouter extends abstract_router_1.default {
         this.router
             .route("/onboard/complete")
             .get(this.stripeController.onboardComplete);
+        this.router
+            .route("/auth/login")
+            .get(this.stripeController.loginStripeAccount);
     }
 }
 exports.default = JobSeekerStripeRouter;

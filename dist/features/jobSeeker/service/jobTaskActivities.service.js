@@ -67,7 +67,7 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                     related_id: res[0].id,
                     type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                 });
-                socket_1.io.to(String(myApplication.hotelier_id)).emit("approve-job", {
+                socket_1.io.to(String(myApplication.hotelier_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION, {
                     user_id: myApplication.hotelier_id,
                     content: `The job ${job_post_details_id} is waiting for your approval.`,
                     related_id: res[0].id,
@@ -89,6 +89,7 @@ class JobTaskActivitiesService extends abstract_service_1.default {
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const jobTaskListModel = this.Model.jobTaskListModel(trx);
                 const taskList = yield jobTaskListModel.getJobTaskList({ id });
+                console.log({ taskList });
                 if (!taskList.length) {
                     throw new customError_1.default("Job task not found. Please create task to proceed.", this.StatusCode.HTTP_NOT_FOUND);
                 }
@@ -103,6 +104,24 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                 socket_1.io.emit("update:job-task-list", {
                     id,
                     message: taskList[0].message,
+                });
+                yield this.insertNotification(trx, userModelTypes_1.TypeUser.HOTELIER, {
+                    user_id: taskList[0].hotelier_id,
+                    content: `The task ${taskList[0].message} is ${taskList[0].is_completed
+                        ? "completed."
+                        : "not complete yet."}`,
+                    related_id: taskList[0].id,
+                    type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
+                });
+                socket_1.io.to(String(taskList[0].hotelier_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION, {
+                    user_id: taskList[0].hotelier_id,
+                    content: `The task ${taskList[0].message} is ${taskList[0].is_completed
+                        ? "completed."
+                        : "not complete yet."}`,
+                    related_id: taskList[0].id,
+                    type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
+                    read_status: false,
+                    created_at: new Date().toISOString(),
                 });
                 return {
                     success: true,
@@ -154,13 +173,13 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                     user_id: myApplication.hotelier_id,
                     content: `All job task submitted for job ${taskActivity.job_post_details_id}`,
                     related_id: res[0].id,
-                    type: commonModelTypes_1.NotificationTypeEnum.JOB_POST,
+                    type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                 });
                 socket_1.io.to(String(myApplication.hotelier_id)).emit("end-job", {
                     user_id: myApplication.hotelier_id,
                     content: `All job task submitted for job ${taskActivity.job_post_details_id}`,
                     related_id: res[0].id,
-                    type: commonModelTypes_1.NotificationTypeEnum.JOB_POST,
+                    type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                     read_status: false,
                     created_at: new Date().toISOString(),
                 });

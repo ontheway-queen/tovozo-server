@@ -110,7 +110,7 @@ class PaymentService extends abstract_service_1.default {
                             paid_by: user_id,
                         },
                     },
-                    success_url: `https://tovozo.com/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+                    success_url: `http://10.10.220.73:9900/api/v1/hotelier/payment/verify-checkout-session?session_id={CHECKOUT_SESSION_ID}`,
                     cancel_url: `https://tovozo.com/payment/cancelled`,
                 });
                 console.log({ session });
@@ -153,11 +153,13 @@ class PaymentService extends abstract_service_1.default {
                 if (!session || session.payment_status !== "paid") {
                     throw new customError_1.default("Payment not completed or session not found", this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
                 }
+                console.log({ session });
                 const paymentIntentId = session.payment_intent;
                 const transactionId = paymentIntentId.slice(-10);
                 const paymentIntent = yield stripe_1.stripe.paymentIntents.retrieve(paymentIntentId, {
                     expand: ["charges"],
                 });
+                console.log({ paymentIntent });
                 const payment = yield paymentModel.getSinglePayment(Number(paymentIntent.metadata.id));
                 if (!payment) {
                     throw new customError_1.default("Payment record not found", this.StatusCode.HTTP_NOT_FOUND, "ERROR");
@@ -165,7 +167,7 @@ class PaymentService extends abstract_service_1.default {
                 if (payment.status === "paid") {
                     throw new customError_1.default("The payment is aleady paid", this.StatusCode.HTTP_CONFLICT);
                 }
-                console.log({ 1: payment.status });
+                console.log({ payment });
                 const charge = yield stripe_1.stripe.charges.retrieve(paymentIntent.latest_charge);
                 const balanceTransaction = yield stripe_1.stripe.balanceTransactions.retrieve(charge.balance_transaction);
                 const stripeFeeInCents = balanceTransaction.fee;
@@ -184,7 +186,7 @@ class PaymentService extends abstract_service_1.default {
                     ledger_date: new Date(),
                     created_at: new Date(),
                     updated_at: new Date(),
-                    trx_id: `TRX-${transactionId}`,
+                    // trx_id: `TRX-${transactionId}`,
                 };
                 yield paymentModel.createPaymentLedger(Object.assign(Object.assign({}, baseLedgerPayload), { user_id: paymentIntent.metadata.job_seeker_id, trx_type: constants_1.PAY_LEDGER_TRX_TYPE.IN, user_type: constants_1.USER_TYPE.JOB_SEEKER, amount: payment.job_seeker_pay, details: `Payment received for job "${paymentIntent.metadata.job_title}".` }));
                 yield paymentModel.createPaymentLedger(Object.assign(Object.assign({}, baseLedgerPayload), { trx_type: constants_1.PAY_LEDGER_TRX_TYPE.IN, user_type: constants_1.USER_TYPE.ADMIN, amount: payment.platform_fee, details: `Platform fee received from job "${paymentIntent.metadata.job_title}" completed by ${paymentIntent.metadata.job_seeker_name}` }));
@@ -195,6 +197,14 @@ class PaymentService extends abstract_service_1.default {
                     success: true,
                     message: this.ResMsg.HTTP_OK,
                     code: this.StatusCode.HTTP_OK,
+                    data: {
+                        trx_id: `TRX-${transactionId}`,
+                        paid_at: new Date(),
+                        status: constants_1.PAYMENT_STATUS.PAID,
+                        total: payment.total_amount,
+                        job_seeker_name: paymentIntent.metadata.job_seeker_name,
+                        job_title: paymentIntent.metadata.job_title,
+                    },
                 };
             }));
         });

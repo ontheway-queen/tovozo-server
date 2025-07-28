@@ -28,4 +28,13 @@ export default class JobSeekerStripeController extends AbstractController {
 			res.status(code).json(data);
 		}
 	);
+
+	public loginStripeAccount = this.asyncWrapper.wrap(
+		null,
+		async (req: Request, res: Response) => {
+			const { code, ...data } =
+				await this.stripeService.loginStripeAccount(req);
+			res.status(code).json(data);
+		}
+	);
 }

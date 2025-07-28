@@ -91,14 +91,14 @@ class HotelierJobPostService extends abstract_service_1.default {
                         user_id: seeker.user_id,
                         content: `A new job post is available near you!`,
                         related_id: res[0].id,
-                        type: commonModelTypes_1.NotificationTypeEnum.JOB_POST,
+                        type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                     });
                     // 2. Emit via socket
                     socket_1.io.to(String(seeker.user_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION, {
                         user_id: seeker.user_id,
                         content: `A new job post is available near you!`,
                         related_id: res[0].id,
-                        type: commonModelTypes_1.NotificationTypeEnum.JOB_POST,
+                        type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                         read_status: false,
                         created_at: new Date().toISOString(),
                     });
@@ -198,6 +198,7 @@ class HotelierJobPostService extends abstract_service_1.default {
                 const user = req.hotelier;
                 const model = this.Model.jobPostModel(trx);
                 const cancellationLogModel = this.Model.cancellationLogModel(trx);
+                const jobApplicationModel = this.Model.jobApplicationModel(trx);
                 const jobPost = yield model.getSingleJobPostForHotelier(Number(id));
                 if (!jobPost) {
                     throw new customError_1.default("Job post not found!", this.StatusCode.HTTP_NOT_FOUND);
@@ -216,8 +217,10 @@ class HotelierJobPostService extends abstract_service_1.default {
                     (1000 * 60 * 60);
                 if (hoursDiff > 24) {
                     yield model.cancelJobPost(Number(jobPost.job_post_id));
-                    yield model.updateJobPostDetailsStatus(Number(jobPost.id), constants_1.JOB_POST_DETAILS_STATUS.Cancelled);
-                    const jobApplicationModel = this.Model.jobApplicationModel(trx);
+                    const vacancy = yield model.getAllJobsUsingJobPostId(Number(jobPost.job_post_id));
+                    for (const job of vacancy) {
+                        yield model.updateJobPostDetailsStatus(Number(job.id), constants_1.JOB_POST_DETAILS_STATUS.Cancelled);
+                    }
                     yield jobApplicationModel.cancelApplication(jobPost.job_post_id);
                     return {
                         success: true,

@@ -57,7 +57,7 @@ class AbstractServices {
                     break;
                 }
                 case userModelTypes_1.TypeUser.JOB_SEEKER: {
-                    if (payload.type === commonModelTypes_1.NotificationTypeEnum.JOB_POST &&
+                    if (payload.type === commonModelTypes_1.NotificationTypeEnum.JOB_TASK &&
                         payload.user_id) {
                         users = [{ user_id: payload.user_id }];
                     }

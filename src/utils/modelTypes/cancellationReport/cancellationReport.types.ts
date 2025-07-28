@@ -27,6 +27,14 @@ export interface IGetReportsQuery {
 	need_total: boolean;
 	searchQuery: string;
 }
+export interface IGetCancellationLogAdminQuery {
+	report_type?: ICancellationReportType;
+	status?: ICancellationReportStatus;
+	limit?: number;
+	skip?: number;
+	need_total?: boolean;
+	name?: string;
+}
 
 export type ICancellationReportType = keyof typeof CANCELLATION_REPORT_TYPE;
 

@@ -166,7 +166,10 @@ class HotelierAuthService extends abstract_service_1.default {
                     message: this.ResMsg.WRONG_CREDENTIALS,
                 };
             }
-            if (rest.organization_status !== constants_1.USER_STATUS.ACTIVE) {
+            console.log(rest.organization_status);
+            console.log(constants_1.USER_STATUS.ACTIVE);
+            if (rest.organization_status.toLowerCase() !==
+                constants_1.USER_STATUS.ACTIVE.toLowerCase()) {
                 return {
                     success: false,
                     code: this.StatusCode.HTTP_FORBIDDEN,

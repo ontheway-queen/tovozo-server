@@ -8,9 +8,9 @@ import { platform } from "os";
 class AdminJobValidator {
 	public createJobSchema = Joi.object({
 		title: Joi.string().min(1).max(255).required(),
-		details: Joi.string().min(200).messages({
+		details: Joi.string().min(100).messages({
 			"string.empty": "Details is required",
-			"string.min": "Details must be at least 200 characters long",
+			"string.min": "Details must be at least 100 characters long",
 		}),
 		hourly_rate: Joi.number().required(),
 		job_seeker_pay: Joi.number().required(),

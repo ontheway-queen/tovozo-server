@@ -392,6 +392,7 @@ CREATE TABLE IF NOT EXISTS dbo.payment (
     paid_at TIMESTAMP WITH TIME ZONE,
     is_deleted BOOLEAN DEFAULT FALSE,
     payment_no VARCHAR(255) UNIQUE
+    trx_fee NUMERIC(10, 2),
 )
 
 create type dbo.pay_ledger_trx_type AS ENUM (
