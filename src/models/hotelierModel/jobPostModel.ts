@@ -53,10 +53,11 @@ class JobPostModel extends Schema {
 			need_total = true,
 		} = params;
 
+		const DBO_SCHEMA = this.DBO_SCHEMA;
 		const baseQuery = this.db("job_post as jp")
-			.withSchema(this.DBO_SCHEMA)
+			.withSchema(DBO_SCHEMA)
 			.select(
-				this.db.raw("DISTINCT ON (jp.id) jp.id"),
+				"jp.id",
 				"jpd.id as job_post_detail_id",
 				"jpd.start_time",
 				"jpd.end_time",
@@ -94,27 +95,18 @@ class JobPostModel extends Schema {
 				if (title) qb.andWhereILike("jp.title", `%${title}%`);
 			})
 			.andWhere("jpd.status", "Pending")
-			.orderBy("jp.id").orderByRaw(`
-  CASE
-    WHEN jpd.start_time <= NOW() AND jpd.end_time >= NOW() THEN 0  
-    WHEN jpd.start_time > NOW() THEN 1                       
-    WHEN jpd.end_time < NOW() THEN 2                         
-  END,
-  jpd.start_time DESC
-`);
+			.orderBy("jp.created_time", "desc")
+			.limit(limit || 100)
+			.offset(skip || 0);
 
-		// Exclude jobs already applied by the job seeker
 		if (user_id) {
-			const that = this;
 			baseQuery.whereNotExists(function () {
 				this.select("*")
-					.from(`${that.DBO_SCHEMA}.job_applications as ja`)
+					.from(`${DBO_SCHEMA}.job_applications as ja`)
 					.whereRaw("ja.job_post_id = jp.id")
 					.andWhere("ja.job_seeker_id", user_id);
 			});
 		}
-
-		baseQuery.limit(limit || 100).offset(skip || 0);
 
 		const data = await baseQuery;
 
@@ -147,10 +139,9 @@ class JobPostModel extends Schema {
 				.andWhere("jpd.status", "Pending");
 
 			if (user_id) {
-				const that = this;
 				totalQuery.whereNotExists(function () {
 					this.select("*")
-						.from(`${that.DBO_SCHEMA}.job_applications as ja`)
+						.from(`${DBO_SCHEMA}.job_applications as ja`)
 						.whereRaw("ja.job_post_id = jp.id")
 						.andWhere("ja.job_seeker_id", user_id);
 				});
@@ -360,7 +351,7 @@ class JobPostModel extends Schema {
             'city', js_vwl.city_name,
 						'longitude', js_vwl.longitude,
 						'latitude', js_vwl.latitude,
-            'stripe_acc_id', js.stripe_acc_id,
+            'stripe_acc_id', jsu.stripe_acc_id,
             'payment_id', pay.id
 					)
 				END as job_seeker_details

@@ -12,6 +12,7 @@ export interface IInitializePaymentPayload {
 	total_amount: number;
 	status: string;
 	payment_no: string;
+	trx_fee: number;
 }
 
 export interface IGetPaymentsForHotelier {

@@ -24,10 +24,6 @@ class AdminJobValidator {
             hourly_rate: joi_1.default.number().optional(),
             job_seeker_pay: joi_1.default.number().optional(),
             platform_fee: joi_1.default.number().optional(),
-        })
-            .and("hourly_rate", "job_seeker_pay", "platform_fee")
-            .messages({
-            "object.and": `"hourly_rate" requires both "job_seeker_pay" and "platform_fee" to be provided together.`,
         });
         this.getAllJobSchema = joi_1.default.object({
             title: joi_1.default.string().min(1).max(255).optional(),

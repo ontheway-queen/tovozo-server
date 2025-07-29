@@ -1,20 +1,20 @@
 import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
-import AdminStatsModel from "../../../models/adminStats/adminStats.model";
+import StatisticsModel from "../../../models/statistics/statistics.model";
 
 export default class AdminStatsService extends AbstractServices {
-	private model: AdminStatsModel;
+	private model: StatisticsModel;
 
 	constructor() {
 		super();
-		this.model = new AdminStatsModel(this.db);
+		this.model = new StatisticsModel(this.db);
 	}
 
 	public async generateStatistic(req: Request) {
-		const { from, to } = req.query;
-		const data = await this.model.generateStatistic({
-			from: from as string,
-			to: to as string,
+		const { from_date, to_date } = req.query;
+		const data = await this.model.generateAdminStatistic({
+			from: from_date as string,
+			to: to_date as string,
 		});
 		return {
 			success: false,

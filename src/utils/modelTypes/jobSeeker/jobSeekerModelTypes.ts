@@ -59,7 +59,6 @@ export interface IJobSeekerProfile {
 	user_status: string;
 	user_type: string;
 	user_created_at: string;
-	socket_id?: string;
 	date_of_birth?: string;
 	gender?: string;
 	nationality?: string;
@@ -94,6 +93,7 @@ export interface IJobSeekerProfile {
 	passport_copy?: string;
 	visa_copy?: string;
 	id_copy?: string;
+	stripe_acc_id?: string;
 	applied_jobs?:
 		| {
 				id: number;

@@ -59,6 +59,9 @@ class PublicCommonValidator {
             limit: joi_1.default.number().integer().optional(),
             skip: joi_1.default.number().integer().optional(),
             category_id: joi_1.default.string().optional(),
+            city_id: joi_1.default.string().optional(),
+            from_date: joi_1.default.string().optional(),
+            to_date: joi_1.default.string().optional(),
         });
         // Get nationality validator
         this.getNationality = joi_1.default.object({

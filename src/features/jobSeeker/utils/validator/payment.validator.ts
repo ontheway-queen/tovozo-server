@@ -6,7 +6,7 @@ export default class JobSeekerPaymentValidator {
 		limit: Joi.string().optional(),
 		skip: Joi.string().optional(),
 		status: Joi.string()
-			.valid("UNPAID", "PAID", "FAILED", "PARTIAL_PAID")
+			.valid("Unpaid", "Paid", "Failed", "Partial Paid")
 			.optional(),
 	});
 }

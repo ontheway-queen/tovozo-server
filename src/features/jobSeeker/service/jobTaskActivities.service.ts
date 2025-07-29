@@ -144,19 +144,19 @@ export default class JobTaskActivitiesService extends AbstractServices {
 				completed_at: isCompleted ? new Date().toISOString() : null,
 			};
 
-			await jobTaskListModel.updateJobTaskList(id, payload);
+			const res = await jobTaskListModel.updateJobTaskList(id, payload);
 
 			io.emit("update:job-task-list", {
 				id,
 				message: taskList[0].message,
 			});
-
+			console.log({ res });
 			await this.insertNotification(trx, TypeUser.HOTELIER, {
 				user_id: taskList[0].hotelier_id,
-				content: `The task ${taskList[0].message} is ${
+				content: `The task ${res[0].id} is ${
 					taskList[0].is_completed
 						? "completed."
-						: "not complete yet."
+						: "remain incomplete."
 				}`,
 				related_id: taskList[0].id,
 				type: NotificationTypeEnum.JOB_TASK,
@@ -166,10 +166,10 @@ export default class JobTaskActivitiesService extends AbstractServices {
 				TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION,
 				{
 					user_id: taskList[0].hotelier_id,
-					content: `The task ${taskList[0].message} is ${
+					content: `The task ${res[0].id} is ${
 						taskList[0].is_completed
 							? "completed."
-							: "not complete yet."
+							: "remain incomplete."
 					}`,
 					related_id: taskList[0].id,
 					type: NotificationTypeEnum.JOB_TASK,

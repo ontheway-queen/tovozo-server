@@ -71,6 +71,19 @@ class AdminJobService extends abstract_service_1.default {
                         throw new customError_1.default("Job title already exists!", this.StatusCode.HTTP_CONFLICT);
                     }
                 }
+                if (body.job_seeker_pay || body.platform_fee) {
+                    const total = (body.job_seeker_pay
+                        ? body.job_seeker_pay
+                        : check.job_seeker_pay) +
+                        (body.platform_fee
+                            ? body.platform_fee
+                            : check.platform_fee);
+                    console.log(total);
+                    console.log(check.hourly_rate);
+                    if (total !== Number(check.hourly_rate)) {
+                        throw new customError_1.default(`Rate mismatch: expected ${check.hourly_rate}, but received ${total}`, this.StatusCode.HTTP_BAD_REQUEST);
+                    }
+                }
                 yield model.updateJob(body, id);
                 yield this.insertAdminAudit(trx, {
                     details: `The job titled "${check.title}(${id})" has been updated.`,

@@ -100,24 +100,25 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                     is_completed: isCompleted,
                     completed_at: isCompleted ? new Date().toISOString() : null,
                 };
-                yield jobTaskListModel.updateJobTaskList(id, payload);
+                const res = yield jobTaskListModel.updateJobTaskList(id, payload);
                 socket_1.io.emit("update:job-task-list", {
                     id,
                     message: taskList[0].message,
                 });
+                console.log({ res });
                 yield this.insertNotification(trx, userModelTypes_1.TypeUser.HOTELIER, {
                     user_id: taskList[0].hotelier_id,
-                    content: `The task ${taskList[0].message} is ${taskList[0].is_completed
+                    content: `The task ${res[0].id} is ${taskList[0].is_completed
                         ? "completed."
-                        : "not complete yet."}`,
+                        : "remain incomplete."}`,
                     related_id: taskList[0].id,
                     type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                 });
                 socket_1.io.to(String(taskList[0].hotelier_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION, {
                     user_id: taskList[0].hotelier_id,
-                    content: `The task ${taskList[0].message} is ${taskList[0].is_completed
+                    content: `The task ${res[0].id} is ${taskList[0].is_completed
                         ? "completed."
-                        : "not complete yet."}`,
+                        : "remain incomplete."}`,
                     related_id: taskList[0].id,
                     type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                     read_status: false,
