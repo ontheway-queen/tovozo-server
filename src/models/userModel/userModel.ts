@@ -30,7 +30,7 @@ export default class UserModel extends Schema {
 	}
 	//update
 	public async updateProfile(
-		payload: Partial<ICreateUserPayload> & { socket_id?: string },
+		payload: Partial<ICreateUserPayload>,
 		where: { id?: number }
 	) {
 		return await this.db("user")
@@ -136,9 +136,9 @@ export default class UserModel extends Schema {
 		user_id: number;
 		stripe_acc_id: string;
 	}) {
-		return await this.db("user")
-			.withSchema(this.DBO_SCHEMA)
+		return await this.db("job_seeker")
+			.withSchema(this.JOB_SEEKER)
 			.update({ stripe_acc_id })
-			.where({ id: user_id });
+			.where({ user_id });
 	}
 }

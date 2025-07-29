@@ -14,29 +14,33 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const constants_1 = require("../../utils/miscellaneous/constants");
 const schema_1 = __importDefault(require("../../utils/miscellaneous/schema"));
-class AdminStatsModel extends schema_1.default {
+class StatisticsModel extends schema_1.default {
     constructor(db) {
         super();
         this.db = db;
     }
-    generateStatistic(query) {
+    generateAdminStatistic(query) {
         return __awaiter(this, void 0, void 0, function* () {
             const { from, to } = query;
-            const dateFilter = (qb, table = "created_at") => {
-                if (from)
-                    qb.where(table, ">=", from);
-                if (to)
-                    qb.where(table, "<=", to);
+            const today = new Date();
+            const startOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+            const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0); // last day of previous month
+            const finalFrom = from || startOfLastMonth.toISOString().split("T")[0];
+            const finalTo = to || endOfLastMonth.toISOString().split("T")[0];
+            const dateFilter = (qb, table = "paid_at") => {
+                if (from || startOfLastMonth.toISOString())
+                    qb.where(table, ">=", from || startOfLastMonth.toISOString());
+                if (to || endOfLastMonth.toISOString())
+                    qb.where(table, "<=", to || endOfLastMonth.toISOString());
             };
             const [totalJobSeekers] = yield this.db("job_seeker")
                 .withSchema(this.JOB_SEEKER)
-                .modify((qb) => dateFilter(qb))
+                // .modify((qb) => dateFilter(qb))
                 .count("user_id as total");
             const [totalHoteliers] = yield this.db("organization")
                 .withSchema(this.HOTELIER)
-                .modify((qb) => dateFilter(qb))
+                // .modify((qb) => dateFilter(qb))
                 .count("user_id as total");
-            const today = new Date().toISOString().split("T")[0];
             const [newJobSeekers] = yield this.db("user")
                 .withSchema(this.DBO_SCHEMA)
                 .whereRaw(`DATE(created_at) = ?`, [today])
@@ -49,49 +53,89 @@ class AdminStatsModel extends schema_1.default {
                 .count("id as total");
             const [totalJobPosts] = yield this.db("job_post")
                 .withSchema(this.DBO_SCHEMA)
-                .modify((qb) => dateFilter(qb))
+                // .modify((qb) => dateFilter(qb))
                 .count("id as total");
             const [activeJobPosts] = yield this.db("job_post")
                 .withSchema(this.DBO_SCHEMA)
                 .where("status", "Live")
-                .modify((qb) => dateFilter(qb))
+                // .modify((qb) => dateFilter(qb))
                 .count("id as total");
             const [cancelledJobPosts] = yield this.db("job_post")
                 .withSchema(this.DBO_SCHEMA)
                 .where("status", "Cancelled")
-                .modify((qb) => dateFilter(qb))
+                // .modify((qb) => dateFilter(qb))
                 .count("id as total");
             const [successfulHires] = yield this.db("payment")
                 .withSchema(this.DBO_SCHEMA)
                 .where("status", "Paid")
-                .modify((qb) => dateFilter(qb))
+                // .modify((qb) => dateFilter(qb))
                 .countDistinct("application_id as total");
             const [totalPayments] = yield this.db("payment")
                 .withSchema(this.DBO_SCHEMA)
-                .modify((qb) => dateFilter(qb))
+                // .modify((qb) => dateFilter(qb))
                 .sum("total_amount as total");
             const [pendingPayments] = yield this.db("payment")
                 .withSchema(this.DBO_SCHEMA)
                 .where("status", "Unpaid")
-                .modify((qb) => dateFilter(qb))
+                // .modify((qb) => dateFilter(qb))
                 .sum("total_amount as total");
             const [paidPayments] = yield this.db("payment")
                 .withSchema(this.DBO_SCHEMA)
                 .where("status", "Paid")
-                .modify((qb) => dateFilter(qb))
+                // .modify((qb) => dateFilter(qb))
                 .sum("total_amount as total");
-            const [totalReports] = yield this.db("reports")
+            const [pendingReports] = yield this.db("reports")
                 .withSchema(this.DBO_SCHEMA)
-                .modify((qb) => dateFilter(qb))
+                .where("status", "Pending")
+                // .modify((qb) => dateFilter(qb))
                 .count("id as total");
+            const latestApplications = yield this.db("job_applications as ja")
+                .withSchema(this.DBO_SCHEMA)
+                .select("ja.id", "ja.job_post_details_id", "j.title as job_title", "ja.job_seeker_id", "jsu.name as job_seeker_name", "jsu.photo as job_seeker_photo", "ja.status", "ja.created_at")
+                .leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
+                .leftJoin("jobs as j", "j.id", "jpd.job_id")
+                .leftJoin("user as jsu", "jsu.id", "ja.job_seeker_id")
+                .orderBy("created_at", "desc")
+                .where("ja.status", "Pending")
+                .limit(5);
+            const [pendingJobSeekers] = yield this.db("job_seeker")
+                .withSchema(this.JOB_SEEKER)
+                .where("account_status", "Pending")
+                .count("user_id as total");
+            console.log({ pendingJobSeekers });
+            const [inactiveJobSeekers] = yield this.db("job_seeker")
+                .withSchema(this.JOB_SEEKER)
+                .where("account_status", "Inactive")
+                .count("user_id as total");
+            const [pendingHoteliers] = yield this.db("organization")
+                .withSchema(this.HOTELIER)
+                .where("status", "Pending")
+                .count("user_id as total");
+            const [inactiveHoteliers] = yield this.db("organization")
+                .withSchema(this.HOTELIER)
+                .where("status", "Inactive")
+                .count("user_id as total");
+            const [lastMonthStats] = yield this.db("payment")
+                .withSchema(this.DBO_SCHEMA)
+                .where("status", "Paid")
+                // .modify((qb) => dateFilter(qb, "paid_at"))
+                .sum({
+                hotelier_paid: "total_amount",
+                job_seeker_get: "job_seeker_pay",
+                admin_earned: "platform_fee",
+            });
             return {
                 jobSeekers: {
                     total: Number(totalJobSeekers.total),
                     new: Number(newJobSeekers.total),
+                    pending: Number(pendingJobSeekers.total),
+                    inactive: Number(inactiveJobSeekers.total),
                 },
                 hoteliers: {
                     total: Number(totalHoteliers.total),
                     new: Number(newHoteliers.total),
+                    pending: Number(pendingHoteliers.total),
+                    inactive: Number(inactiveHoteliers.total),
                 },
                 jobPosts: {
                     total: Number(totalJobPosts.total),
@@ -104,9 +148,17 @@ class AdminStatsModel extends schema_1.default {
                     paid: Number(paidPayments.total || 0),
                     pending: Number(pendingPayments.total || 0),
                 },
-                reports: Number(totalReports.total),
+                reports: {
+                    pending: Number(pendingReports.total),
+                },
+                latestApplications,
+                lastMonthFinancials: {
+                    hotelier_paid: Number(lastMonthStats.hotelier_paid || 0),
+                    job_seeker_get: Number(lastMonthStats.job_seeker_get || 0),
+                    admin_earned: Number(lastMonthStats.admin_earned || 0),
+                },
             };
         });
     }
 }
-exports.default = AdminStatsModel;
+exports.default = StatisticsModel;

@@ -199,6 +199,7 @@ export default class JobSeekerModel extends Schema {
 				"nationality",
 				"work_permit",
 				"account_status",
+				"stripe_acc_id",
 				"home_location_name",
 				"home_address",
 				"home_postal_code",

@@ -4,7 +4,13 @@ CREATE SCHEMA IF NOT EXISTS hotelier;
 
 
 --Create Types-----------------------------------------------------------------------------------
-CREATE TYPE hotelier.organization_status AS ENUM ('Pending', 'Approved', 'Blocked');
+CREATE TYPE hotelier.organization_status AS ENUM (
+	'Active',
+	'Inactive',
+	'Pending',
+	'Blocked',
+	'Under Review'
+);
 
 -------------------------------------------------------------------------------------------------
 
@@ -17,7 +23,7 @@ CREATE TABLE hotelier.organization (
     user_id INTEGER NOT NULL,
     details TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status hotelier.organization_status NOT NULL DEFAULT 'Pending',  -- e.g. Pending, Approved, Blocked
+    status hotelier.organization_status NOT NULL DEFAULT 'Pending',
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     location_id INT REFERENCES dbo.location(id),
     CONSTRAINT fk_org_user FOREIGN KEY (user_id) REFERENCES dbo."user" (id) ON DELETE CASCADE

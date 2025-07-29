@@ -103,6 +103,7 @@ export default class JobSeekerStripeService extends AbstractServices {
 	public async loginStripeAccount(req: Request) {
 		const { user_id } = req.jobSeeker;
 		const userModel = this.Model.UserModel();
+		const jobSeekerModel = this.Model.jobSeekerModel();
 		const checkUser = await userModel.checkUser({ id: user_id });
 		if (checkUser.length < 1) {
 			throw new CustomError(
@@ -110,14 +111,23 @@ export default class JobSeekerStripeService extends AbstractServices {
 				this.StatusCode.HTTP_NOT_FOUND
 			);
 		}
-		// if (!checkUser[0].stripe_acc_id) {
+
+		const jobSeeker = await jobSeekerModel.getJobSeekerDetails({ user_id });
+		if (!jobSeeker) {
+			throw new CustomError(
+				"Job seeker not found",
+				this.StatusCode.HTTP_NOT_FOUND
+			);
+		}
+
+		// if (!jobSeeker.stripe_acc_id) {
 		// 	throw new Error(
 		// 		"Stripe Account not found. Please complete your profile first!"
 		// 	);
 		// }
 
 		const loginLink = await stripe.accounts.createLoginLink(
-			checkUser[0].stripe_acc_id || "acct_1RnAa4FSzTsJiGrd"
+			jobSeeker.stripe_acc_id || "acct_1RnAa4FSzTsJiGrd"
 		);
 		return {
 			success: true,

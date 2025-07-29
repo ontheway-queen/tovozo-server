@@ -15,7 +15,7 @@ import JobTaskListModel from "./jobTaskActivitiesModel/jobTaskListModel";
 import ReportModel from "./reportModel/reportModel";
 import UserModel from "./userModel/userModel";
 import PaymentModel from "./paymentModel/paymentModel";
-import AdminStatsModel from "./adminStats/adminStats.model";
+import StatisticsModel from "./statistics/statistics.model";
 
 export default class Models {
 	public UserModel(trx?: Knex.Transaction) {
@@ -91,7 +91,7 @@ export default class Models {
 	}
 
 	// Admin stats
-	public adminStatsModel(trx?: Knex.Transaction) {
-		return new AdminStatsModel(trx || db);
+	public statisticsModel(trx?: Knex.Transaction) {
+		return new StatisticsModel(trx || db);
 	}
 }

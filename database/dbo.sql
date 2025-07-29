@@ -44,7 +44,6 @@ CREATE TABLE IF NOT EXISTS dbo."user"
     phone_number character varying(20) COLLATE pg_catalog."default",
     photo character varying(255) COLLATE pg_catalog."default",
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    socket_id character varying(255) COLLATE pg_catalog."default",
     type dbo.user_type NOT NULL,
     status boolean NOT NULL DEFAULT true,
     is_deleted boolean NOT NULL DEFAULT false,

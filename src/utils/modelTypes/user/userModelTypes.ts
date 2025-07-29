@@ -31,7 +31,6 @@ export interface ICheckUserData {
 	phone_number: string;
 	photo: string | null;
 	created_at: string;
-	socket_id: string | null;
 	type: `${TypeUser}`;
 	status: boolean;
 	is_deleted: boolean;

@@ -199,36 +199,43 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 const lastPaymentId = yield paymentModel.getLastPaymentId();
                 const payId = lastPaymentId && (lastPaymentId === null || lastPaymentId === void 0 ? void 0 : lastPaymentId.split("-")[2]);
                 const paymentId = Number(payId) + 1;
+                const hourlyRate = Number(jobPost.hourly_rate);
+                const jobSeekerPayRate = Number(jobPost.job_seeker_pay);
+                const platformFeeRate = Number(jobPost.platform_fee);
+                const baseAmount = Number((totalWorkingHours * hourlyRate).toFixed(2));
+                // Transaction fee (e.g., 2.9% + 0.30)
+                const feePercentage = 0.029;
+                const fixedFee = 0.3;
+                const transactionFee = Number((baseAmount * feePercentage + fixedFee).toFixed(2));
+                // Total amount includes transaction fee
+                const totalAmount = Number((baseAmount + transactionFee).toFixed(2));
+                const jobSeekerPay = Number((totalWorkingHours * jobSeekerPayRate).toFixed(2));
+                const platformFee = Number((totalWorkingHours * platformFeeRate).toFixed(2));
                 const paymentPayload = {
                     application_id: application.job_application_id,
-                    total_amount: Number((totalWorkingHours * Number(jobPost.hourly_rate)).toFixed(2)),
+                    total_amount: totalAmount,
                     status: constants_1.PAYMENT_STATUS.UNPAID,
-                    job_seeker_pay: Number((totalWorkingHours * Number(jobPost.job_seeker_pay)).toFixed(2)),
-                    platform_fee: Number((totalWorkingHours * Number(jobPost.platform_fee)).toFixed(2)),
+                    job_seeker_pay: jobSeekerPay,
+                    platform_fee: platformFee,
+                    transaction_fee: transactionFee,
+                    trx_fee: transactionFee,
                     payment_no: `TVZ-PAY-${paymentId}`,
                 };
-                console.log({ paymentPayload });
                 yield paymentModel.initializePayment(paymentPayload);
-                console.log(1);
                 const res = yield jobTaskActivitiesModel.updateJobTaskActivity(taskActivity.id, {
                     end_approved_at: new Date(),
                     total_working_hours: totalWorkingHours,
                 });
-                console.log(2);
                 yield jobPostModel.updateJobPostDetailsStatus(application.job_post_details_id, constants_1.JOB_POST_DETAILS_STATUS.WorkFinished);
-                // await jobPostModel.updateJobPostDetailsStatus(
-                // 	application.job_post_details_id,
-                // 	JOB_POST_DETAILS_STATUS.In_Progress
-                // );
                 yield this.insertNotification(trx, userModelTypes_1.TypeUser.JOB_SEEKER, {
                     user_id: taskActivity.job_seeker_id,
-                    content: `You task in under review. Please wait some moments!`,
+                    content: `Your task is under review. Please wait a few moments!`,
                     related_id: res[0].id,
                     type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                 });
                 socket_1.io.to(String(taskActivity.job_seeker_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION, {
                     user_id: taskActivity.job_seeker_id,
-                    content: `You task in under review. Please wait some moments!`,
+                    content: `Your task is under review. Please wait a few moments!`,
                     related_id: res[0].id,
                     type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                     read_status: false,

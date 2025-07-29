@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS jobSeeker.job_seeker (
     work_permit BOOLEAN,
     account_status jobSeeker.job_seeker_account_status DEFAULT 'Pending',
     criminal_convictions BOOLEAN,
+    stripe_acc_id VARCHAR(255),
     FOREIGN KEY (user_id) REFERENCES dbo."user" (id) ON DELETE CASCADE
 );
 
@@ -126,12 +127,12 @@ CREATE OR REPLACE VIEW jobseeker.vw_full_job_seeker_profile
     u.status AS user_status,
     u.type AS user_type,
     u.created_at AS user_created_at,
-    u.socket_id,
     js.date_of_birth,
     js.gender,
     js.nationality,
     js.work_permit,
     js.account_status,
+    js.stripe_acc_id,
     js.criminal_convictions,
     loc.id AS home_location_id,
     loc.city_id AS home_city_id,

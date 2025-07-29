@@ -99,16 +99,21 @@ class JobSeekerStripeService extends abstract_service_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             const { user_id } = req.jobSeeker;
             const userModel = this.Model.UserModel();
+            const jobSeekerModel = this.Model.jobSeekerModel();
             const checkUser = yield userModel.checkUser({ id: user_id });
             if (checkUser.length < 1) {
                 throw new customError_1.default("User not found!", this.StatusCode.HTTP_NOT_FOUND);
             }
-            // if (!checkUser[0].stripe_acc_id) {
+            const jobSeeker = yield jobSeekerModel.getJobSeekerDetails({ user_id });
+            if (!jobSeeker) {
+                throw new customError_1.default("Job seeker not found", this.StatusCode.HTTP_NOT_FOUND);
+            }
+            // if (!jobSeeker.stripe_acc_id) {
             // 	throw new Error(
             // 		"Stripe Account not found. Please complete your profile first!"
             // 	);
             // }
-            const loginLink = yield stripe_1.stripe.accounts.createLoginLink(checkUser[0].stripe_acc_id || "acct_1RnAa4FSzTsJiGrd");
+            const loginLink = yield stripe_1.stripe.accounts.createLoginLink(jobSeeker.stripe_acc_id || "acct_1RnAa4FSzTsJiGrd");
             return {
                 success: true,
                 message: this.ResMsg.HTTP_OK,
