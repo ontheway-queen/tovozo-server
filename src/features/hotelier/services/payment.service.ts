@@ -14,6 +14,7 @@ import {
 	IPaymentLedgerPayload,
 	IPaymentUpdate,
 } from "../../../utils/modelTypes/payment/paymentModelTypes";
+import config from "../../../app/config";
 
 export default class PaymentService extends AbstractServices {
 	constructor() {
@@ -137,8 +138,8 @@ export default class PaymentService extends AbstractServices {
 						paid_by: user_id,
 					},
 				},
-				success_url: `http://10.10.220.73:9900/api/v1/hotelier/payment/verify-checkout-session?session_id={CHECKOUT_SESSION_ID}`,
-				cancel_url: `https://tovozo.com/payment/cancelled`,
+				success_url: `${config.BASE_URL}/hotelier/payment/verify-checkout-session?session_id={CHECKOUT_SESSION_ID}`,
+				cancel_url: `${config.BASE_URL}/hotelier/payment/cancelled`,
 			});
 
 			console.log({ session });
