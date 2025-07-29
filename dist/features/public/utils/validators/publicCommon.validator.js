@@ -165,7 +165,7 @@ class PublicCommonValidator {
                 // gender: Joi.string().valid("Male", "Female", "Other").required(),
                 nationality: joi_1.default.number().integer().required(),
                 // work_permit: Joi.boolean().required(),
-                account_status: joi_1.default.string().max(42).default("pending"),
+                account_status: joi_1.default.string().max(42).default("Pending"),
                 // criminal_convictions: Joi.boolean().required(),
             }).required(),
             passport_copy: joi_1.default.string().max(255).allow("").optional(),
