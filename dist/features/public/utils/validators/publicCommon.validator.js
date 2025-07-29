@@ -162,7 +162,7 @@ class PublicCommonValidator {
             }).required(),
             job_seeker: joi_1.default.object({
                 // date_of_birth: Joi.date().required(),
-                gender: joi_1.default.string().valid("Male", "Female", "Other").required(),
+                // gender: Joi.string().valid("Male", "Female", "Other").required(),
                 nationality: joi_1.default.number().integer().required(),
                 // work_permit: Joi.boolean().required(),
                 account_status: joi_1.default.string().max(42).default("pending"),

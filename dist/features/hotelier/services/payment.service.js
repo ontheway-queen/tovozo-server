@@ -16,6 +16,7 @@ const abstract_service_1 = __importDefault(require("../../../abstract/abstract.s
 const stripe_1 = require("../../../utils/miscellaneous/stripe");
 const customError_1 = __importDefault(require("../../../utils/lib/customError"));
 const constants_1 = require("../../../utils/miscellaneous/constants");
+const config_1 = __importDefault(require("../../../app/config"));
 class PaymentService extends abstract_service_1.default {
     constructor() {
         super();
@@ -110,8 +111,8 @@ class PaymentService extends abstract_service_1.default {
                             paid_by: user_id,
                         },
                     },
-                    success_url: `http://10.10.220.73:9900/api/v1/hotelier/payment/verify-checkout-session?session_id={CHECKOUT_SESSION_ID}`,
-                    cancel_url: `https://tovozo.com/payment/cancelled`,
+                    success_url: `${config_1.default.BASE_URL}/hotelier/payment/verify-checkout-session?session_id={CHECKOUT_SESSION_ID}`,
+                    cancel_url: `${config_1.default.BASE_URL}/hotelier/payment/cancelled`,
                 });
                 console.log({ session });
                 return {
