@@ -5,6 +5,7 @@ import CustomError from "../../../utils/lib/customError";
 import Lib from "../../../utils/lib/lib";
 import {
 	LOGIN_TOKEN_EXPIRES_IN,
+	OTP_TYPES,
 	PROJECT_NAME,
 	USER_AUTHENTICATION_VIEW,
 	USER_STATUS,
@@ -24,6 +25,7 @@ import {
 	IOrganizationAmenitiesType,
 	IOrganizationName,
 } from "../utils/types/hotelierAuth.types";
+import { sendEmailOtpTemplate } from "../../../utils/templates/sendEmailOtpTemplate";
 
 export default class HotelierAuthService extends AbstractServices {
 	constructor() {
@@ -183,6 +185,7 @@ export default class HotelierAuthService extends AbstractServices {
 			password: string;
 		};
 		const userModel = this.Model.UserModel();
+		const commonModel = this.Model.commonModel();
 		const checkUser =
 			await userModel.getSingleCommonAuthUser<IHotelierAuthView>({
 				schema_name: "hotelier",
@@ -222,6 +225,42 @@ export default class HotelierAuthService extends AbstractServices {
 		}
 
 		if (rest.is_2fa_on) {
+			const checkOtp = await commonModel.getOTP({
+				email: checkUser.email,
+				type: OTP_TYPES.two_fa_admin,
+			});
+
+			if (checkOtp.length) {
+				return {
+					success: false,
+					code: this.StatusCode.HTTP_GONE,
+					message: this.ResMsg.THREE_TIMES_EXPIRED,
+				};
+			}
+			const generateOtp = Lib.otpGenNumber(6);
+			const hashed_otp = await Lib.hashValue(generateOtp);
+
+			const insertOtp = await commonModel.insertOTP({
+				email: checkUser.email,
+				type: OTP_TYPES.two_fa_admin,
+				hashed_otp,
+			});
+			if (!insertOtp) {
+				return {
+					success: false,
+					code: this.StatusCode.HTTP_INTERNAL_SERVER_ERROR,
+					message: "Cannot send email at the moment ",
+				};
+			}
+
+			await Lib.sendEmailDefault({
+				email: checkUser.email,
+				emailSub: "Two Factor Verification",
+				emailBody: sendEmailOtpTemplate(
+					generateOtp,
+					"two factor verification"
+				),
+			});
 			return {
 				success: true,
 				code: this.StatusCode.HTTP_OK,

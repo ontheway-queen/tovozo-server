@@ -6,6 +6,7 @@ import Lib from "../../../utils/lib/lib";
 import {
 	BRITISH_ID,
 	LOGIN_TOKEN_EXPIRES_IN,
+	OTP_TYPES,
 	PROJECT_NAME,
 	USER_AUTHENTICATION_VIEW,
 	USER_STATUS,
@@ -23,6 +24,7 @@ import {
 	IJobSeekerNationalityBody,
 	IJobSeekerUserBody,
 } from "../utils/types/jobSeekerAuth.types";
+import { sendEmailOtpTemplate } from "../../../utils/templates/sendEmailOtpTemplate";
 
 class JobSeekerAuthService extends AbstractServices {
 	//registration service
@@ -183,6 +185,7 @@ class JobSeekerAuthService extends AbstractServices {
 			email: string;
 			password: string;
 		};
+		const commonModel = this.Model.commonModel();
 		const userModel = this.Model.UserModel();
 		const checkUser =
 			await userModel.getSingleCommonAuthUser<IJobSeekerAuthView>({
@@ -219,6 +222,42 @@ class JobSeekerAuthService extends AbstractServices {
 		}
 
 		if (rest.is_2fa_on) {
+			const checkOtp = await commonModel.getOTP({
+				email: checkUser.email,
+				type: OTP_TYPES.two_fa_admin,
+			});
+
+			if (checkOtp.length) {
+				return {
+					success: false,
+					code: this.StatusCode.HTTP_GONE,
+					message: this.ResMsg.THREE_TIMES_EXPIRED,
+				};
+			}
+			const generateOtp = Lib.otpGenNumber(6);
+			const hashed_otp = await Lib.hashValue(generateOtp);
+
+			const insertOtp = await commonModel.insertOTP({
+				email: checkUser.email,
+				type: OTP_TYPES.two_fa_admin,
+				hashed_otp,
+			});
+			if (!insertOtp) {
+				return {
+					success: false,
+					code: this.StatusCode.HTTP_INTERNAL_SERVER_ERROR,
+					message: "Cannot send email at the moment ",
+				};
+			}
+
+			await Lib.sendEmailDefault({
+				email: checkUser.email,
+				emailSub: "Two Factor Verification",
+				emailBody: sendEmailOtpTemplate(
+					generateOtp,
+					"two factor verification"
+				),
+			});
 			return {
 				success: true,
 				code: this.StatusCode.HTTP_OK,
