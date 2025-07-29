@@ -31,6 +31,7 @@ const constants_1 = require("../../../utils/miscellaneous/constants");
 const commonModelTypes_1 = require("../../../utils/modelTypes/common/commonModelTypes");
 const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
 const jobSeekerRegistrationTemplate_1 = require("../../../utils/templates/jobSeekerRegistrationTemplate");
+const sendEmailOtpTemplate_1 = require("../../../utils/templates/sendEmailOtpTemplate");
 class JobSeekerAuthService extends abstract_service_1.default {
     //registration service
     registrationService(req) {
@@ -138,6 +139,7 @@ class JobSeekerAuthService extends abstract_service_1.default {
     loginService(req) {
         return __awaiter(this, void 0, void 0, function* () {
             const { email, password } = req.body;
+            const commonModel = this.Model.commonModel();
             const userModel = this.Model.UserModel();
             const checkUser = yield userModel.getSingleCommonAuthUser({
                 schema_name: "jobseeker",
@@ -168,6 +170,36 @@ class JobSeekerAuthService extends abstract_service_1.default {
                 };
             }
             if (rest.is_2fa_on) {
+                const checkOtp = yield commonModel.getOTP({
+                    email: checkUser.email,
+                    type: constants_1.OTP_TYPES.two_fa_admin,
+                });
+                if (checkOtp.length) {
+                    return {
+                        success: false,
+                        code: this.StatusCode.HTTP_GONE,
+                        message: this.ResMsg.THREE_TIMES_EXPIRED,
+                    };
+                }
+                const generateOtp = lib_1.default.otpGenNumber(6);
+                const hashed_otp = yield lib_1.default.hashValue(generateOtp);
+                const insertOtp = yield commonModel.insertOTP({
+                    email: checkUser.email,
+                    type: constants_1.OTP_TYPES.two_fa_admin,
+                    hashed_otp,
+                });
+                if (!insertOtp) {
+                    return {
+                        success: false,
+                        code: this.StatusCode.HTTP_INTERNAL_SERVER_ERROR,
+                        message: "Cannot send email at the moment ",
+                    };
+                }
+                yield lib_1.default.sendEmailDefault({
+                    email: checkUser.email,
+                    emailSub: "Two Factor Verification",
+                    emailBody: (0, sendEmailOtpTemplate_1.sendEmailOtpTemplate)(generateOtp, "two factor verification"),
+                });
                 return {
                     success: true,
                     code: this.StatusCode.HTTP_OK,
