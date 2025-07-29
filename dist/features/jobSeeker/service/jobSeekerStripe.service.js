@@ -48,8 +48,8 @@ class JobSeekerStripeService extends abstract_service_1.default {
                 });
                 const accountLink = yield stripe_1.stripe.accountLinks.create({
                     account: account.id,
-                    refresh_url: `${config_1.default.BASE_URL}/job-seeker/stripe/onboard/refresh`, // change as needed
-                    return_url: `${config_1.default.BASE_URL}/job-seeker/stripe/onboard/complete?stripe_acc_id=${account.id}`, // change as needed
+                    refresh_url: `${config_1.default.BASE_URL}/job-seeker/stripe/onboard/refresh`,
+                    return_url: `${config_1.default.BASE_URL}/job-seeker/stripe/onboard/complete?stripe_acc_id=${account.id}`,
                     type: "account_onboarding",
                 });
                 // await this.Model.UserModel().addStripePayoutAccount({
