@@ -13,18 +13,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
-const adminStats_model_1 = __importDefault(require("../../../models/adminStats/adminStats.model"));
+const statistics_model_1 = __importDefault(require("../../../models/statistics/statistics.model"));
 class AdminStatsService extends abstract_service_1.default {
     constructor() {
         super();
-        this.model = new adminStats_model_1.default(this.db);
+        this.model = new statistics_model_1.default(this.db);
     }
     generateStatistic(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { from, to } = req.query;
-            const data = yield this.model.generateStatistic({
-                from: from,
-                to: to,
+            const { from_date, to_date } = req.query;
+            const data = yield this.model.generateAdminStatistic({
+                from: from_date,
+                to: to_date,
             });
             return {
                 success: false,

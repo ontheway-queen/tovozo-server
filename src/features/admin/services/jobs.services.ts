@@ -93,6 +93,24 @@ class AdminJobService extends AbstractServices {
 				}
 			}
 
+			if (body.job_seeker_pay || body.platform_fee) {
+				const total =
+					(body.job_seeker_pay
+						? body.job_seeker_pay
+						: check.job_seeker_pay) +
+					(body.platform_fee
+						? body.platform_fee
+						: check.platform_fee);
+				console.log(total);
+				console.log(check.hourly_rate);
+				if (total !== Number(check.hourly_rate)) {
+					throw new CustomError(
+						`Rate mismatch: expected ${check.hourly_rate}, but received ${total}`,
+						this.StatusCode.HTTP_BAD_REQUEST
+					);
+				}
+			}
+
 			await model.updateJob(body, id);
 			await this.insertAdminAudit(trx, {
 				details: `The job titled "${check.title}(${id})" has been updated.`,

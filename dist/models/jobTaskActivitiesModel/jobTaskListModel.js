@@ -56,7 +56,7 @@ class JobTaskListModel extends schema_1.default {
                 .withSchema(this.DBO_SCHEMA)
                 .where("id", id)
                 .andWhere("is_deleted", false)
-                .update(payload);
+                .update(payload, ["id", "is_completed"]);
         });
     }
     deleteJobTaskList(id) {

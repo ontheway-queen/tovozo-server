@@ -18,6 +18,9 @@ export class JobSeekerServices extends AbstractServices {
 			limit: req.query.limit,
 			skip: req.query.skip,
 			status: JOB_POST_DETAILS_STATUS.Pending,
+			city_id: req.query.city_id,
+			from_date: req.query.from_date,
+			to_date: req.query.to_date,
 		} as IGetJobPostListParams);
 		return {
 			success: true,

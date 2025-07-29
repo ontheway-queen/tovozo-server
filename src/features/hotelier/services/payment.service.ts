@@ -205,9 +205,7 @@ export default class PaymentService extends AbstractServices {
 					"ERROR"
 				);
 			}
-			console.log({ session });
 			const paymentIntentId = session.payment_intent as string;
-			const transactionId = paymentIntentId.slice(-10);
 
 			const paymentIntent = await stripe.paymentIntents.retrieve(
 				paymentIntentId,
@@ -215,7 +213,6 @@ export default class PaymentService extends AbstractServices {
 					expand: ["charges"],
 				}
 			);
-			console.log({ paymentIntent });
 			const payment = await paymentModel.getSinglePayment(
 				Number(paymentIntent.metadata.id)
 			);
@@ -232,24 +229,13 @@ export default class PaymentService extends AbstractServices {
 					this.StatusCode.HTTP_CONFLICT
 				);
 			}
-			console.log({ payment });
-			const charge = await stripe.charges.retrieve(
-				paymentIntent.latest_charge as string
-			);
-			const balanceTransaction =
-				await stripe.balanceTransactions.retrieve(
-					charge.balance_transaction as string
-				);
-
-			const stripeFeeInCents = balanceTransaction.fee;
 
 			const paymentPayload = {
 				payment_type: PAYMENT_TYPE.ONLINE_PAYMENT,
 				status: PAYMENT_STATUS.PAID,
-				trx_id: `TRX-${transactionId}`,
+				trx_id: paymentIntent.id,
 				paid_at: new Date(),
 				paid_by: organization.id,
-				trx_fee: (stripeFeeInCents / 100).toFixed(2),
 			};
 
 			await paymentModel.updatePayment(
@@ -263,7 +249,6 @@ export default class PaymentService extends AbstractServices {
 				ledger_date: new Date(),
 				created_at: new Date(),
 				updated_at: new Date(),
-				// trx_id: `TRX-${transactionId}`,
 			};
 
 			await paymentModel.createPaymentLedger({
@@ -307,7 +292,7 @@ export default class PaymentService extends AbstractServices {
 				message: this.ResMsg.HTTP_OK,
 				code: this.StatusCode.HTTP_OK,
 				data: {
-					trx_id: `TRX-${transactionId}`,
+					trx_id: paymentIntent.id,
 					paid_at: new Date(),
 					status: PAYMENT_STATUS.PAID,
 					total: payment.total_amount,

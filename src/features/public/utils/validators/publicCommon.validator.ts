@@ -85,6 +85,9 @@ export default class PublicCommonValidator {
 		limit: Joi.number().integer().optional(),
 		skip: Joi.number().integer().optional(),
 		category_id: Joi.string().optional(),
+		city_id: Joi.string().optional(),
+		from_date: Joi.string().optional(),
+		to_date: Joi.string().optional(),
 	});
 
 	// Get nationality validator
