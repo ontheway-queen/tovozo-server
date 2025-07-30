@@ -97,7 +97,8 @@ class HotelierJobPostService extends AbstractServices {
 				});
 			}
 
-			await model.createJobPostDetails(jobPostDetails);
+			const x = await model.createJobPostDetails(jobPostDetails);
+			console.log({ x });
 
 			// Job Post Nearby
 			const orgLat = parseFloat(checkOrganization.latitude as string);
@@ -126,7 +127,6 @@ class HotelierJobPostService extends AbstractServices {
 			}
 
 			const all = await jobSeeker.getJobSeekerLocation();
-			console.log({ all });
 			for (const seeker of all) {
 				const seekerLat = parseFloat(seeker.latitude);
 				const seekerLng = parseFloat(seeker.longitude);
@@ -137,7 +137,6 @@ class HotelierJobPostService extends AbstractServices {
 					seekerLat,
 					seekerLng
 				);
-
 				if (distance > 10) continue;
 
 				console.log(
@@ -343,10 +342,10 @@ class HotelierJobPostService extends AbstractServices {
 				);
 
 				for (const job of vacancy) {
-					await model.updateJobPostDetailsStatus(
-						Number(job.id),
-						JOB_POST_DETAILS_STATUS.Cancelled as unknown as IJobPostDetailsStatus
-					);
+					await model.updateJobPostDetailsStatus({
+						id: Number(job.id),
+						status: JOB_POST_DETAILS_STATUS.Cancelled as unknown as IJobPostDetailsStatus,
+					});
 				}
 
 				await jobApplicationModel.cancelApplication(

@@ -117,6 +117,7 @@ class App {
                         .select("location_id")
                         .where({ user_id: id })
                         .first();
+                    console.log({ getLocation });
                     if (getLocation) {
                         yield (0, database_1.db)("location")
                             .withSchema("dbo")

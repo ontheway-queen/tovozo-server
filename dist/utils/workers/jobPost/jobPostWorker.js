@@ -26,7 +26,10 @@ class JobPostWorker {
                 });
                 const jobs = yield jobPostModel.getAllJobsUsingJobPostId(id);
                 if (jobs.length > 0) {
-                    yield Promise.all(jobs.map((job) => jobPostModel.updateJobPostDetailsStatus(job.id, constants_1.JOB_POST_DETAILS_STATUS.Expired)));
+                    yield Promise.all(jobs.map((job) => jobPostModel.updateJobPostDetailsStatus({
+                        id: job.id,
+                        status: constants_1.JOB_POST_DETAILS_STATUS.Expired,
+                    })));
                 }
             }));
         });

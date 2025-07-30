@@ -25,12 +25,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_controller_1 = __importDefault(require("../../../abstract/abstract.controller"));
 const jobApplication_service_1 = __importDefault(require("../services/jobApplication.service"));
+const jobApplication_validator_1 = __importDefault(require("../utils/validator/jobApplication.validator"));
 class AdminJobApplicationController extends abstract_controller_1.default {
     constructor() {
         super();
         this.service = new jobApplication_service_1.default();
-        this.assignJobApplication = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
+        this.jobApplicationValidator = new jobApplication_validator_1.default();
+        this.assignJobApplication = this.asyncWrapper.wrap({ bodySchema: this.jobApplicationValidator.assignApplication }, (req, res) => __awaiter(this, void 0, void 0, function* () {
             const _a = yield this.service.assignJobApplication(req), { code } = _a, data = __rest(_a, ["code"]);
+            res.status(code).json(data);
+        }));
+        this.getAllAdminAssignedApplications = this.asyncWrapper.wrap({ querySchema: this.jobApplicationValidator.getApplicationQuery }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.getAllAdminAssignedApplications(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }

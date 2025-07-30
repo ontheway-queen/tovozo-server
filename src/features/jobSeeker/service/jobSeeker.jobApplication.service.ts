@@ -46,11 +46,11 @@ export class JobSeekerJobApplication extends AbstractServices {
 			}
 
 			const jobPostReport =
-				await cancellationLogModel.getSingleJobPostCancellationLog(
-					null,
-					CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST,
-					job_post_details_id
-				);
+				await cancellationLogModel.getSingleJobPostCancellationLog({
+					id: null,
+					report_type: CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST,
+					related_id: job_post_details_id,
+				});
 			if (
 				jobPostReport &&
 				jobPostReport.status === CANCELLATION_REPORT_STATUS.PENDING
@@ -189,11 +189,11 @@ export class JobSeekerJobApplication extends AbstractServices {
 
 			if (hoursDiff > 24) {
 				const data =
-					await applicationModel.updateMyJobApplicationStatus(
-						parseInt(id),
-						user_id,
-						JOB_APPLICATION_STATUS.CANCELLED
-					);
+					await applicationModel.updateMyJobApplicationStatus({
+						application_id: parseInt(id),
+						job_seeker_id: user_id,
+						status: JOB_APPLICATION_STATUS.CANCELLED,
+					});
 
 				if (!data) {
 					throw new CustomError(
@@ -202,10 +202,10 @@ export class JobSeekerJobApplication extends AbstractServices {
 					);
 				}
 
-				await jobPostModel.updateJobPostDetailsStatus(
-					data.job_post_details_id,
-					JOB_POST_DETAILS_STATUS.Pending as unknown as IJobPostDetailsStatus
-				);
+				await jobPostModel.updateJobPostDetailsStatus({
+					id: data.job_post_details_id,
+					status: JOB_POST_DETAILS_STATUS.Pending as unknown as IJobPostDetailsStatus,
+				});
 
 				return {
 					success: true,
@@ -228,7 +228,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 
 				const cancellationReportModel =
 					this.Model.cancellationLogModel(trx);
-
+				console.log({ body });
 				await cancellationReportModel.requestForCancellationLog(body);
 
 				return {

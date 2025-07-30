@@ -66,7 +66,16 @@ export default class JobTaskActivitiesModel extends Schema {
 			.first();
 	}
 
-	public async updateJobTaskActivity(id: number, payload: any) {
+	public async updateJobTaskActivity(
+		id: number,
+		payload: {
+			end_approved_at?: Date;
+			start_approved_at?: Date;
+			end_time?: Date;
+			start_time?: Date;
+			total_working_hours?: number;
+		}
+	) {
 		return await this.db("job_task_activities")
 			.withSchema(this.DBO_SCHEMA)
 			.where("id", id)

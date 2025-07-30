@@ -78,11 +78,11 @@ export default class JobTaskActivitiesService extends AbstractServices {
 				payload
 			);
 			console.log({ res });
-			await jobApplicationModel.updateMyJobApplicationStatus(
-				job_application_id,
-				user_id,
-				JOB_APPLICATION_STATUS.WaitingForApproval
-			);
+			await jobApplicationModel.updateMyJobApplicationStatus({
+				application_id: job_application_id,
+				job_seeker_id: user_id,
+				status: JOB_APPLICATION_STATUS.WaitingForApproval,
+			});
 			// await jobPostModel.updateJobPostDetailsStatus(
 			// 	myApplication.job_post_details_id,
 			// 	JOB_POST_DETAILS_STATUS.In_Progress

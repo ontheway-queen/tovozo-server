@@ -440,11 +440,13 @@ class JobPostModel extends Schema {
 			.where("id", id);
 	}
 
-	public async updateJobPostDetailsStatus(
-		id: number,
-		status: IJobPostDetailsStatus
-	) {
-		console.log({ id, status });
+	public async updateJobPostDetailsStatus({
+		id,
+		status,
+	}: {
+		id: number;
+		status: IJobPostDetailsStatus;
+	}) {
 		return await this.db("job_post_details")
 			.withSchema(this.DBO_SCHEMA)
 			.where("id", id)
@@ -466,6 +468,7 @@ class JobPostModel extends Schema {
 			.withSchema(this.DBO_SCHEMA)
 			.select(
 				"jpd.id",
+				"jpd.job_post_id",
 				"org.name as organization_name",
 				"org_p.file as organization_photo",
 				"j.title",
@@ -542,7 +545,6 @@ class JobPostModel extends Schema {
 	}
 
 	public async getSingleJobPostForAdmin(id: number): Promise<IHoiteleirJob> {
-		console.log({ id });
 		return await this.db("job_post as jp")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
@@ -672,9 +674,3 @@ class JobPostModel extends Schema {
 }
 
 export default JobPostModel;
-
-/* 
-27 - In Progress - Applied - Pending
-28 - In Progress - Applied - Pending
-25 - Expired
-*/

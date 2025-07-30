@@ -46,12 +46,15 @@ class CancellationLogService extends AbstractServices {
 
 		let data;
 		if (report_type === CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION) {
-			data = await model.getSingleJobApplicationCancellationLog(
+			data = await model.getSingleJobApplicationCancellationLog({
 				id,
-				report_type
-			);
+				report_type,
+			});
 		} else if (report_type === CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST) {
-			data = await model.getSingleJobPostCancellationLog(id, report_type);
+			data = await model.getSingleJobPostCancellationLog({
+				id,
+				report_type,
+			});
 		}
 
 		if (!data) {
@@ -83,19 +86,19 @@ class CancellationLogService extends AbstractServices {
 
 			let report;
 			if (report_type === CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST) {
-				report = await reportModel.getSingleJobPostCancellationLog(
-					Number(id),
-					report_type
-				);
+				report = await reportModel.getSingleJobPostCancellationLog({
+					id: Number(id),
+					report_type,
+				});
 				console.log({ report });
 			} else if (
 				report_type === CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION
 			) {
 				report =
-					await reportModel.getSingleJobApplicationCancellationLog(
-						Number(id),
-						report_type
-					);
+					await reportModel.getSingleJobApplicationCancellationLog({
+						id: Number(id),
+						report_type,
+					});
 			}
 
 			if (!report) {
@@ -131,10 +134,10 @@ class CancellationLogService extends AbstractServices {
 						Number(jobPost.job_post_id)
 					);
 
-					await jobPostModel.updateJobPostDetailsStatus(
-						Number(jobPost.id),
-						JOB_POST_DETAILS_STATUS.Cancelled
-					);
+					await jobPostModel.updateJobPostDetailsStatus({
+						id: Number(jobPost.id),
+						status: JOB_POST_DETAILS_STATUS.Cancelled,
+					});
 
 					await jobApplicationModel.cancelApplication(
 						Number(jobPost.job_post_id)
@@ -143,15 +146,15 @@ class CancellationLogService extends AbstractServices {
 					report_type === CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION
 				) {
 					const application =
-						await jobApplicationModel.updateMyJobApplicationStatus(
-							report.related_id,
-							report.reporter_id,
-							JOB_APPLICATION_STATUS.CANCELLED
-						);
-					await jobPostModel.updateJobPostDetailsStatus(
-						application.job_post_details_id,
-						JOB_POST_DETAILS_STATUS.Pending as unknown as IJobPostDetailsStatus
-					);
+						await jobApplicationModel.updateMyJobApplicationStatus({
+							application_id: report.related_id,
+							job_seeker_id: report.reporter_id,
+							status: JOB_APPLICATION_STATUS.CANCELLED,
+						});
+					await jobPostModel.updateJobPostDetailsStatus({
+						id: application.job_post_details_id,
+						status: JOB_POST_DETAILS_STATUS.Pending as unknown as IJobPostDetailsStatus,
+					});
 				}
 			} else {
 				await reportModel.updateCancellationLogStatus(Number(id), body);
