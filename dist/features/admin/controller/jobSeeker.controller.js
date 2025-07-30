@@ -56,6 +56,12 @@ class AdminJobSeekerController extends abstract_controller_1.default {
             const _a = yield this.service.deleteJobSeeker(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
+        this.getNearestJobSeekers = this.asyncWrapper.wrap({
+            querySchema: this.validator.latlonValidator,
+        }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.getNearestJobSeekers(req), { code } = _a, data = __rest(_a, ["code"]);
+            res.status(code).json(data);
+        }));
     }
 }
 exports.default = AdminJobSeekerController;

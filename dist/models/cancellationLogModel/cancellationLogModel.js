@@ -74,7 +74,7 @@ class CancellationLogModel extends schema_1.default {
         return __awaiter(this, arguments, void 0, function* ({ id, report_type, related_id, }) {
             return yield this.db("cancellation_logs as cr")
                 .withSchema(this.DBO_SCHEMA)
-                .select("cr.id", "cr.related_id as related_job_post_details", "cr.report_type", "cr.status", "u.name as reporter_name", this.db.raw(`json_build_object(
+                .select("cr.id", "u.name as reporter_name", "u.phone_number as reporter_phone_number", "cr.report_type", "cr.status", "cr.reason as cancellation_reason", "cr.reject_reason", "cr.related_id", "cr.related_id as related_job_post_details", this.db.raw(`json_build_object(
                     'start_time', jpd.start_time,
                     'end_time', jpd.end_time
                 ) as job_post_details`), this.db.raw(`json_build_object(
@@ -83,7 +83,7 @@ class CancellationLogModel extends schema_1.default {
                     'details', category.details,
                     'status', category.status,
                     'is_deleted', category.is_deleted
-                    ) as category`), "cr.created_at as reported_at")
+                    ) as job_post`), "cr.created_at as reported_at")
                 .leftJoin("user as u", "u.id", "cr.reporter_id")
                 .leftJoin("job_post_details as jpd", "cr.related_id", "jpd.id")
                 .leftJoin("job_post as jp", "jpd.job_post_id", "jp.id")
@@ -162,14 +162,14 @@ class CancellationLogModel extends schema_1.default {
                 .withSchema(this.DBO_SCHEMA)
                 .select("cr.id", "u.name as reporter_name", "u.phone_number as reporter_phone_number", "cr.report_type", "cr.status", "cr.reason as cancellation_reason", "cr.reject_reason", "cr.reporter_id", "cr.related_id", this.db.raw(`json_build_object(
 				    'id', jp.id,
-				    'title', jp.title,
-				    'details', jp.details,
-				    'requirements', jp.requirements
+				    'title', j.title,
+				    'details', j.details
 				) as job_post`))
                 .leftJoin("user as u", "u.id", "cr.reporter_id")
                 .leftJoin("job_applications as ja", "cr.related_id", "ja.id")
                 .leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
                 .leftJoin("job_post as jp", "jp.id", "jpd.job_post_id")
+                .leftJoin("jobs as j", "j.id", "jpd.job_id")
                 .where("cr.report_type", report_type)
                 .modify((qb) => {
                 if (id) {

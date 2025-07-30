@@ -186,6 +186,12 @@ class AdminJobSeekerValidator {
 			visa_copy: Joi.string().max(255).allow("").optional(),
 		}).optional(),
 	});
+
+	latlonValidator = Joi.object({
+		lat: Joi.string(),
+		lon: Joi.string(),
+		name: Joi.string().allow("").optional(),
+	});
 }
 
 export default AdminJobSeekerValidator;

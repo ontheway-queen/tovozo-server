@@ -144,8 +144,10 @@ class PaymentModel extends schema_1.default {
             return yield this.db
                 .withSchema(this.DBO_SCHEMA)
                 .from("payment as p")
-                .select("p.id", "p.payment_no", "p.application_id", "org.name as organization_name", "jp.id as job_post_id", "jp.title as job_title", "p.job_seeker_pay", "p.status", "p.paid_at", "p.trx_id")
+                .select("p.id", "p.payment_no", "p.application_id", "org.name as organization_name", "jp.id as job_post_id", "j.title as job_title", "p.job_seeker_pay", "p.status", "p.paid_at", "p.trx_id")
                 .leftJoin("job_applications as ja", "ja.id", "p.application_id")
+                .leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
+                .leftJoin("jobs as j", "j.id", "jpd.job_id")
                 .leftJoin("job_post as jp", "jp.id", "ja.job_post_id")
                 .joinRaw(`LEFT JOIN ?? as org ON org.id = jp.organization_id`, [
                 `${this.HOTELIER}.${this.TABLES.organization}`,
@@ -220,8 +222,10 @@ class PaymentModel extends schema_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("payment as p")
                 .withSchema(this.DBO_SCHEMA)
-                .select("p.id", "p.application_id", "jp.title as job_title", "job_seeker.id as job_seeker_id", "job_seeker.name as job_seeker_name", "org.id as paid_by_id", "org.name as paid_by", "p.total_amount", "p.job_seeker_pay", "p.platform_fee", "p.status", "p.payment_no", "p.trx_id", "p.paid_at")
+                .select("p.id", "p.application_id", "j.title as job_title", "job_seeker.id as job_seeker_id", "job_seeker.name as job_seeker_name", "org.id as paid_by_id", "org.name as paid_by", "p.total_amount", "p.job_seeker_pay", "p.platform_fee", "p.status", "p.payment_no", "p.trx_id", "p.paid_at")
                 .leftJoin("job_applications as ja", "ja.id", "p.application_id")
+                .leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
+                .leftJoin("jobs as j", "j.id", "jpd.job_id")
                 .leftJoin("job_post as jp", "jp.id", "ja.job_post_id")
                 .leftJoin("user as job_seeker", "job_seeker.id", "ja.job_seeker_id")
                 .joinRaw(`LEFT JOIN ?? AS org ON org.id = jp.organization_id`, [

@@ -54,6 +54,18 @@ class AdminJobSeekerController extends AbstractController {
 			res.status(code).json(data);
 		}
 	);
+
+	public getNearestJobSeekers = this.asyncWrapper.wrap(
+		{
+			querySchema: this.validator.latlonValidator,
+		},
+		async (req: Request, res: Response) => {
+			const { code, ...data } = await this.service.getNearestJobSeekers(
+				req
+			);
+			res.status(code).json(data);
+		}
+	);
 }
 
 export default AdminJobSeekerController;
