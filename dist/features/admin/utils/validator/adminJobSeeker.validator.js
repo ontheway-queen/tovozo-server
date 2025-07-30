@@ -163,6 +163,11 @@ class AdminJobSeekerValidator {
                 visa_copy: joi_1.default.string().max(255).allow("").optional(),
             }).optional(),
         });
+        this.latlonValidator = joi_1.default.object({
+            lat: joi_1.default.string(),
+            lon: joi_1.default.string(),
+            name: joi_1.default.string().allow("").optional(),
+        });
     }
 }
 exports.default = AdminJobSeekerValidator;

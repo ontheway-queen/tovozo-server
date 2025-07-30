@@ -104,10 +104,14 @@ class CancellationLogModel extends Schema {
 			.withSchema(this.DBO_SCHEMA)
 			.select(
 				"cr.id",
-				"cr.related_id as related_job_post_details",
+				"u.name as reporter_name",
+				"u.phone_number as reporter_phone_number",
 				"cr.report_type",
 				"cr.status",
-				"u.name as reporter_name",
+				"cr.reason as cancellation_reason",
+				"cr.reject_reason",
+				"cr.related_id",
+				"cr.related_id as related_job_post_details",
 				this.db.raw(`json_build_object(
                     'start_time', jpd.start_time,
                     'end_time', jpd.end_time
@@ -118,7 +122,7 @@ class CancellationLogModel extends Schema {
                     'details', category.details,
                     'status', category.status,
                     'is_deleted', category.is_deleted
-                    ) as category`),
+                    ) as job_post`),
 				"cr.created_at as reported_at"
 			)
 			.leftJoin("user as u", "u.id", "cr.reporter_id")
@@ -249,9 +253,8 @@ class CancellationLogModel extends Schema {
 				"cr.related_id",
 				this.db.raw(`json_build_object(
 				    'id', jp.id,
-				    'title', jp.title,
-				    'details', jp.details,
-				    'requirements', jp.requirements
+				    'title', j.title,
+				    'details', j.details
 				) as job_post`)
 			)
 			.leftJoin("user as u", "u.id", "cr.reporter_id")
@@ -262,6 +265,7 @@ class CancellationLogModel extends Schema {
 				"ja.job_post_details_id"
 			)
 			.leftJoin("job_post as jp", "jp.id", "jpd.job_post_id")
+			.leftJoin("jobs as j", "j.id", "jpd.job_id")
 			.where("cr.report_type", report_type)
 			.modify((qb) => {
 				if (id) {

@@ -19,6 +19,10 @@ class AdminJobSeekerRouter extends AbstractRouter {
 			);
 
 		this.router
+			.route("/nearest-job-seekers")
+			.get(this.controller.getNearestJobSeekers);
+
+		this.router
 			.route("/:id")
 			.get(this.controller.getSingleJobSeeker)
 			.patch(

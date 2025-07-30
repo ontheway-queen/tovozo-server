@@ -56,7 +56,7 @@ class JobPostModel extends schema_1.default {
                 if (city_id)
                     qb.andWhere("vwl.city_id", city_id);
                 if (title)
-                    qb.andWhereILike("jp.title", `%${title}%`);
+                    qb.andWhereILike("j.title", `%${title}%`);
             })
                 .andWhere("jpd.status", "Pending")
                 .orderBy("jp.created_time", "desc")
@@ -89,7 +89,7 @@ class JobPostModel extends schema_1.default {
                     if (city_id)
                         qb.andWhere("vwl.city_id", city_id);
                     if (title)
-                        qb.andWhereILike("jp.title", `%${title}%`);
+                        qb.andWhereILike("j.title", `%${title}%`);
                 })
                     .andWhere("jpd.status", "Pending");
                 if (user_id) {
@@ -169,7 +169,7 @@ class JobPostModel extends schema_1.default {
                 if (city_id)
                     qb.andWhere("js_vwl.city_id", city_id);
                 if (title)
-                    qb.andWhereILike("jp.title", `%${title}%`);
+                    qb.andWhereILike("j.title", `%${title}%`);
                 if (status)
                     qb.andWhere("jpd.status", status);
             })
@@ -204,7 +204,7 @@ class JobPostModel extends schema_1.default {
                     if (status)
                         qb.andWhere("jpd.status", status);
                     if (title)
-                        qb.andWhereILike("jp.title", `%${title}%`);
+                        qb.andWhereILike("j.title", `%${title}%`);
                     if (city_id)
                         qb.andWhere("js_vwl.city_id", city_id);
                 })
@@ -323,11 +323,12 @@ class JobPostModel extends schema_1.default {
             const { limit, skip, status, search, from_date, to_date } = params;
             const baseQuery = this.db("job_post as jp")
                 .withSchema(this.DBO_SCHEMA)
-                .select("jpd.id", "jpd.job_post_id", "org.name as organization_name", "org_p.file as organization_photo", "j.title", "jpd.status as job_post_details_status", "jp.created_time")
+                .select("jpd.id", "jpd.job_post_id", "org.name as organization_name", "org_p.file as organization_photo", "j.title", "jpd.status as job_post_details_status", "jp.created_time", "loc.latitude", "loc.longitude")
                 .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
                 `${this.HOTELIER}.${this.TABLES.organization}`,
             ])
                 .joinRaw(`LEFT JOIN ?? as org_p ON org_p.organization_id = org.id`, [`${this.HOTELIER}.${this.TABLES.organization_photos}`])
+                .leftJoin("location as loc", "loc.id", "org.location_id")
                 .leftJoin("job_post_details as jpd", "jp.id", "jpd.job_post_id")
                 .leftJoin("jobs as j", "jpd.job_id", "j.id")
                 .where(function () {

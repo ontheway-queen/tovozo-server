@@ -394,5 +394,34 @@ class AdminJobSeekerService extends abstract_service_1.default {
             }));
         });
     }
+    getNearestJobSeekers(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const jobSeeker = this.Model.jobSeekerModel();
+            const { lat, lon, name } = req.query;
+            const orgLat = parseFloat(lat);
+            const orgLng = parseFloat(lon);
+            const all = yield jobSeeker.getJobSeekerLocation({
+                name: name,
+            });
+            const nearbySeekers = [];
+            for (const seeker of all) {
+                const seekerLat = parseFloat(seeker.latitude);
+                const seekerLng = parseFloat(seeker.longitude);
+                const distance = lib_1.default.getDistanceFromLatLng(orgLat, orgLng, seekerLat, seekerLng);
+                console.log({ seeker });
+                if (distance <= 10) {
+                    nearbySeekers.push({
+                        id: seeker.user_id,
+                        name: seeker.name,
+                    });
+                }
+            }
+            return {
+                code: this.StatusCode.HTTP_OK,
+                message: this.ResMsg.HTTP_OK,
+                data: nearbySeekers,
+            };
+        });
+    }
 }
 exports.default = AdminJobSeekerService;

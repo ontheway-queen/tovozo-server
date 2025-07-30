@@ -92,7 +92,7 @@ class JobPostModel extends Schema {
 			.where((qb) => {
 				if (category_id) qb.andWhere("j.id", category_id);
 				if (city_id) qb.andWhere("vwl.city_id", city_id);
-				if (title) qb.andWhereILike("jp.title", `%${title}%`);
+				if (title) qb.andWhereILike("j.title", `%${title}%`);
 			})
 			.andWhere("jpd.status", "Pending")
 			.orderBy("jp.created_time", "desc")
@@ -134,7 +134,7 @@ class JobPostModel extends Schema {
 				.where((qb) => {
 					if (category_id) qb.andWhere("j.id", category_id);
 					if (city_id) qb.andWhere("vwl.city_id", city_id);
-					if (title) qb.andWhereILike("jp.title", `%${title}%`);
+					if (title) qb.andWhereILike("j.title", `%${title}%`);
 				})
 				.andWhere("jpd.status", "Pending");
 
@@ -271,7 +271,7 @@ class JobPostModel extends Schema {
 				if (user_id) qb.andWhere("u.id", user_id);
 				if (category_id) qb.andWhere("j.id", category_id);
 				if (city_id) qb.andWhere("js_vwl.city_id", city_id);
-				if (title) qb.andWhereILike("jp.title", `%${title}%`);
+				if (title) qb.andWhereILike("j.title", `%${title}%`);
 				if (status) qb.andWhere("jpd.status", status);
 			})
 			.orderByRaw(
@@ -304,7 +304,7 @@ class JobPostModel extends Schema {
 					if (user_id) qb.andWhere("u.id", user_id);
 					if (category_id) qb.andWhere("j.id", category_id);
 					if (status) qb.andWhere("jpd.status", status);
-					if (title) qb.andWhereILike("jp.title", `%${title}%`);
+					if (title) qb.andWhereILike("j.title", `%${title}%`);
 					if (city_id) qb.andWhere("js_vwl.city_id", city_id);
 				})
 				.first();
@@ -473,7 +473,9 @@ class JobPostModel extends Schema {
 				"org_p.file as organization_photo",
 				"j.title",
 				"jpd.status as job_post_details_status",
-				"jp.created_time"
+				"jp.created_time",
+				"loc.latitude",
+				"loc.longitude"
 			)
 			.joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
 				`${this.HOTELIER}.${this.TABLES.organization}`,
@@ -482,6 +484,7 @@ class JobPostModel extends Schema {
 				`LEFT JOIN ?? as org_p ON org_p.organization_id = org.id`,
 				[`${this.HOTELIER}.${this.TABLES.organization_photos}`]
 			)
+			.leftJoin("location as loc", "loc.id", "org.location_id")
 			.leftJoin("job_post_details as jpd", "jp.id", "jpd.job_post_id")
 			.leftJoin("jobs as j", "jpd.job_id", "j.id")
 			.where(function () {

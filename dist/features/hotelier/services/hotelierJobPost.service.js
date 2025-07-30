@@ -18,6 +18,7 @@ const constants_1 = require("../../../utils/miscellaneous/constants");
 const socket_1 = require("../../../app/socket");
 const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
 const commonModelTypes_1 = require("../../../utils/modelTypes/common/commonModelTypes");
+const lib_1 = __importDefault(require("../../../utils/lib/lib"));
 class HotelierJobPostService extends abstract_service_1.default {
     createJobPost(req) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -58,31 +59,17 @@ class HotelierJobPostService extends abstract_service_1.default {
                     if (new Date(detail.start_time) >= new Date(detail.end_time)) {
                         throw new customError_1.default("Job post start time cannot be greater than or equal to end time.", this.StatusCode.HTTP_BAD_REQUEST);
                     }
-                    console.log({ checkJob });
                     jobPostDetails.push(Object.assign(Object.assign({}, detail), { job_post_id: res[0].id, hourly_rate: checkJob.hourly_rate, job_seeker_pay: checkJob.job_seeker_pay, platform_fee: checkJob.platform_fee }));
                 }
-                const x = yield model.createJobPostDetails(jobPostDetails);
-                console.log({ x });
+                yield model.createJobPostDetails(jobPostDetails);
                 // Job Post Nearby
                 const orgLat = parseFloat(checkOrganization.latitude);
                 const orgLng = parseFloat(checkOrganization.longitude);
-                function getDistanceFromLatLng(hLat1, hLng1, lat2, lng2) {
-                    const toRad = (value) => (value * Math.PI) / 180;
-                    const R = 6371; // Earth's radius in km
-                    const dLat = toRad(lat2 - hLat1);
-                    const dLng = toRad(lng2 - hLng1);
-                    const a = Math.sin(dLat / 2) ** 2 +
-                        Math.cos(toRad(hLat1)) *
-                            Math.cos(toRad(lat2)) *
-                            Math.sin(dLng / 2) ** 2;
-                    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-                    return R * c;
-                }
-                const all = yield jobSeeker.getJobSeekerLocation();
+                const all = yield jobSeeker.getJobSeekerLocation({});
                 for (const seeker of all) {
                     const seekerLat = parseFloat(seeker.latitude);
                     const seekerLng = parseFloat(seeker.longitude);
-                    const distance = getDistanceFromLatLng(orgLat, orgLng, seekerLat, seekerLng);
+                    const distance = lib_1.default.getDistanceFromLatLng(orgLat, orgLng, seekerLat, seekerLng);
                     if (distance > 10)
                         continue;
                     console.log(`Job seeker ${seeker.user_id} is within ${distance.toFixed(2)} km`);
