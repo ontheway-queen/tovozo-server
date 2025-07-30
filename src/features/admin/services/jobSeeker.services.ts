@@ -554,6 +554,44 @@ class AdminJobSeekerService extends AbstractServices {
 			};
 		});
 	}
+
+	public async getNearestJobSeekers(req: Request) {
+		const jobSeeker = this.Model.jobSeekerModel();
+		const { lat, lon, name } = req.query;
+		const orgLat = parseFloat(lat as string);
+		const orgLng = parseFloat(lon as string);
+
+		const all = await jobSeeker.getJobSeekerLocation({
+			name: name as string,
+		});
+
+		const nearbySeekers: { id: number; name: string }[] = [];
+
+		for (const seeker of all) {
+			const seekerLat = parseFloat(seeker.latitude);
+			const seekerLng = parseFloat(seeker.longitude);
+
+			const distance = Lib.getDistanceFromLatLng(
+				orgLat,
+				orgLng,
+				seekerLat,
+				seekerLng
+			);
+			console.log({ seeker });
+			if (distance <= 10) {
+				nearbySeekers.push({
+					id: seeker.user_id,
+					name: seeker.name,
+				});
+			}
+		}
+
+		return {
+			code: this.StatusCode.HTTP_OK,
+			message: this.ResMsg.HTTP_OK,
+			data: nearbySeekers,
+		};
+	}
 }
 
 export default AdminJobSeekerService;

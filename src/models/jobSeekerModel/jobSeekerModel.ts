@@ -444,10 +444,17 @@ export default class JobSeekerModel extends Schema {
 			.first();
 	}
 
-	public async getJobSeekerLocation() {
+	public async getJobSeekerLocation(query: { name?: string }) {
+		const { name } = query;
 		return await this.db("job_seeker as js")
 			.withSchema(this.JOB_SEEKER)
-			.select("js.user_id", "js.location_id", "l.latitude", "l.longitude")
+			.select(
+				"js.user_id",
+				"u.name",
+				"js.location_id",
+				"l.latitude",
+				"l.longitude"
+			)
 			.joinRaw(`LEFT JOIN ?? as l ON l.id = js.location_id`, [
 				`${this.DBO_SCHEMA}.${this.TABLES.location}`,
 			])
@@ -455,6 +462,11 @@ export default class JobSeekerModel extends Schema {
 				`${this.DBO_SCHEMA}.${this.TABLES.user}`,
 			])
 			.whereNotNull("js.location_id")
-			.andWhere("u.type", USER_TYPE.JOB_SEEKER);
+			.andWhere("u.type", USER_TYPE.JOB_SEEKER)
+			.modify((qb) => {
+				if (name) {
+					qb.andWhereILike("u.name", `%${name}%`);
+				}
+			});
 	}
 }

@@ -20,6 +20,7 @@ import {
 	NotificationTypeEnum,
 	TypeEmitNotificationEnum,
 } from "../../../utils/modelTypes/common/commonModelTypes";
+import Lib from "../../../utils/lib/lib";
 
 class HotelierJobPostService extends AbstractServices {
 	public async createJobPost(req: Request) {
@@ -86,8 +87,6 @@ class HotelierJobPostService extends AbstractServices {
 					);
 				}
 
-				console.log({ checkJob });
-
 				jobPostDetails.push({
 					...detail,
 					job_post_id: res[0].id,
@@ -97,41 +96,18 @@ class HotelierJobPostService extends AbstractServices {
 				});
 			}
 
-			const x = await model.createJobPostDetails(jobPostDetails);
-			console.log({ x });
+			await model.createJobPostDetails(jobPostDetails);
 
 			// Job Post Nearby
 			const orgLat = parseFloat(checkOrganization.latitude as string);
 			const orgLng = parseFloat(checkOrganization.longitude as string);
-			function getDistanceFromLatLng(
-				hLat1: number,
-				hLng1: number,
-				lat2: number,
-				lng2: number
-			): number {
-				const toRad = (value: number) => (value * Math.PI) / 180;
-				const R = 6371; // Earth's radius in km
 
-				const dLat = toRad(lat2 - hLat1);
-				const dLng = toRad(lng2 - hLng1);
-
-				const a =
-					Math.sin(dLat / 2) ** 2 +
-					Math.cos(toRad(hLat1)) *
-						Math.cos(toRad(lat2)) *
-						Math.sin(dLng / 2) ** 2;
-
-				const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-				return R * c;
-			}
-
-			const all = await jobSeeker.getJobSeekerLocation();
+			const all = await jobSeeker.getJobSeekerLocation({});
 			for (const seeker of all) {
 				const seekerLat = parseFloat(seeker.latitude);
 				const seekerLng = parseFloat(seeker.longitude);
 
-				const distance = getDistanceFromLatLng(
+				const distance = Lib.getDistanceFromLatLng(
 					orgLat,
 					orgLng,
 					seekerLat,
