@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import { TDB } from "../../features/public/utils/types/publicCommon.types";
 import { USER_TYPE } from "../../utils/miscellaneous/constants";
 import Schema from "../../utils/miscellaneous/schema";
@@ -152,15 +153,21 @@ export default class StatisticsModel extends Schema {
 			.where("status", "Inactive")
 			.count("user_id as total");
 
-		const [lastMonthStats] = await this.db("payment")
+		// last 6 months payment data
+		const now = dayjs();
+		const sixMonthsAgo = now.subtract(5, "month").startOf("month").toDate();
+		const rows = await this.db("payment")
 			.withSchema(this.DBO_SCHEMA)
+			.select(
+				this.db.raw(`DATE_TRUNC('month', paid_at) AS month`),
+				this.db.raw(`SUM(total_amount)::float AS hotelier_paid`),
+				this.db.raw(`SUM(job_seeker_pay)::float AS job_seeker_get`),
+				this.db.raw(`SUM(platform_fee)::float AS admin_earned`)
+			)
 			.where("status", "Paid")
-			// .modify((qb) => dateFilter(qb, "paid_at"))
-			.sum({
-				hotelier_paid: "total_amount",
-				job_seeker_get: "job_seeker_pay",
-				admin_earned: "platform_fee",
-			});
+			.andWhere("paid_at", ">=", sixMonthsAgo)
+			.groupByRaw("1")
+			.orderByRaw("1 DESC");
 
 		return {
 			jobSeekers: {
@@ -190,11 +197,7 @@ export default class StatisticsModel extends Schema {
 				pending: Number(pendingReports.total),
 			},
 			latestApplications,
-			lastMonthFinancials: {
-				hotelier_paid: Number(lastMonthStats.hotelier_paid || 0),
-				job_seeker_get: Number(lastMonthStats.job_seeker_get || 0),
-				admin_earned: Number(lastMonthStats.admin_earned || 0),
-			},
+			rows,
 		};
 	}
 }

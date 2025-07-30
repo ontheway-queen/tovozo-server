@@ -35,7 +35,11 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     constants_1.JOB_POST_DETAILS_STATUS.Pending) {
                     throw new customError_1.default("This job post is no longer accepting applications.", this.StatusCode.HTTP_BAD_REQUEST);
                 }
-                const jobPostReport = yield cancellationLogModel.getSingleJobPostCancellationLog(null, constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST, job_post_details_id);
+                const jobPostReport = yield cancellationLogModel.getSingleJobPostCancellationLog({
+                    id: null,
+                    report_type: constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST,
+                    related_id: job_post_details_id,
+                });
                 if (jobPostReport &&
                     jobPostReport.status === constants_1.CANCELLATION_REPORT_STATUS.PENDING) {
                     throw new customError_1.default("A cancellation request is already pending for this job post.", this.StatusCode.HTTP_CONFLICT);
@@ -131,11 +135,18 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 const hoursDiff = (startTime.getTime() - currentTime.getTime()) /
                     (1000 * 60 * 60);
                 if (hoursDiff > 24) {
-                    const data = yield applicationModel.updateMyJobApplicationStatus(parseInt(id), user_id, constants_1.JOB_APPLICATION_STATUS.CANCELLED);
+                    const data = yield applicationModel.updateMyJobApplicationStatus({
+                        application_id: parseInt(id),
+                        job_seeker_id: user_id,
+                        status: constants_1.JOB_APPLICATION_STATUS.CANCELLED,
+                    });
                     if (!data) {
                         throw new customError_1.default("Application data with the requested id not found", this.StatusCode.HTTP_NOT_FOUND);
                     }
-                    yield jobPostModel.updateJobPostDetailsStatus(data.job_post_details_id, constants_1.JOB_POST_DETAILS_STATUS.Pending);
+                    yield jobPostModel.updateJobPostDetailsStatus({
+                        id: data.job_post_details_id,
+                        status: constants_1.JOB_POST_DETAILS_STATUS.Pending,
+                    });
                     return {
                         success: true,
                         message: this.ResMsg.HTTP_OK,
@@ -151,6 +162,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     body.reporter_id = user_id;
                     body.related_id = id;
                     const cancellationReportModel = this.Model.cancellationLogModel(trx);
+                    console.log({ body });
                     yield cancellationReportModel.requestForCancellationLog(body);
                     return {
                         success: true,

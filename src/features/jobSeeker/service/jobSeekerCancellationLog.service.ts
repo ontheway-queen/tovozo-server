@@ -32,12 +32,11 @@ export class JobSeekerCancellationLogServices extends AbstractServices {
 		const { id } = req.params;
 
 		const model = this.Model.cancellationLogModel();
-		const data = await model.getSingleJobApplicationCancellationLog(
-			Number(id),
-			CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION,
-			null,
-			user_id
-		);
+		const data = await model.getSingleJobApplicationCancellationLog({
+			id: Number(id),
+			report_type: CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION,
+			reporter_id: user_id,
+		});
 
 		if (!data) {
 			return {

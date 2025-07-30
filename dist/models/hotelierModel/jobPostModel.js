@@ -309,9 +309,8 @@ class JobPostModel extends schema_1.default {
                 .where("id", id);
         });
     }
-    updateJobPostDetailsStatus(id, status) {
-        return __awaiter(this, void 0, void 0, function* () {
-            console.log({ id, status });
+    updateJobPostDetailsStatus(_a) {
+        return __awaiter(this, arguments, void 0, function* ({ id, status, }) {
             return yield this.db("job_post_details")
                 .withSchema(this.DBO_SCHEMA)
                 .where("id", id)
@@ -324,7 +323,7 @@ class JobPostModel extends schema_1.default {
             const { limit, skip, status, search, from_date, to_date } = params;
             const baseQuery = this.db("job_post as jp")
                 .withSchema(this.DBO_SCHEMA)
-                .select("jpd.id", "org.name as organization_name", "org_p.file as organization_photo", "j.title", "jpd.status as job_post_details_status", "jp.created_time")
+                .select("jpd.id", "jpd.job_post_id", "org.name as organization_name", "org_p.file as organization_photo", "j.title", "jpd.status as job_post_details_status", "jp.created_time")
                 .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
                 `${this.HOTELIER}.${this.TABLES.organization}`,
             ])
@@ -384,7 +383,6 @@ class JobPostModel extends schema_1.default {
     }
     getSingleJobPostForAdmin(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log({ id });
             return yield this.db("job_post as jp")
                 .withSchema(this.DBO_SCHEMA)
                 .select("jpd.id", "jpd.job_post_id", "jpd.status as job_post_details_status", "jpd.start_time", "jpd.end_time", "jp.organization_id", "j.title", "j.hourly_rate", "j.job_seeker_pay", "j.platform_fee", "j.details as job_details", "org.name as organization_name", "org_p.file as organization_photo", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.city_name", "vwl.state_name", "vwl.country_name", "vwl.longitude", "vwl.latitude", this.db.raw(`(
@@ -465,8 +463,3 @@ class JobPostModel extends schema_1.default {
     }
 }
 exports.default = JobPostModel;
-/*
-27 - In Progress - Applied - Pending
-28 - In Progress - Applied - Pending
-25 - Expired
-*/

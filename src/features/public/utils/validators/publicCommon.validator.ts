@@ -3,6 +3,7 @@ import {
 	GENDERS,
 	REPORT_STATUS_ENUM,
 	REPORT_TYPE_ENUM,
+	USER_STATUS_ENUM,
 } from "../../../../utils/miscellaneous/constants";
 import { SEND_OTP_TYPES } from "./validatorConstant";
 export default class PublicCommonValidator {
@@ -201,7 +202,9 @@ export default class PublicCommonValidator {
 			// gender: Joi.string().valid("Male", "Female", "Other").required(),
 			nationality: Joi.number().integer().required(),
 			// work_permit: Joi.boolean().required(),
-			account_status: Joi.string().max(42).default("Pending"),
+			account_status: Joi.string()
+				.valid(...USER_STATUS_ENUM)
+				.default("Pending"),
 			// criminal_convictions: Joi.boolean().required(),
 		}).required(),
 		passport_copy: Joi.string().max(255).allow("").optional(),

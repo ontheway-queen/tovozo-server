@@ -70,8 +70,8 @@ class CancellationLogModel extends schema_1.default {
             return { data, total };
         });
     }
-    getSingleJobPostCancellationLog(id, report_type, related_id) {
-        return __awaiter(this, void 0, void 0, function* () {
+    getSingleJobPostCancellationLog(_a) {
+        return __awaiter(this, arguments, void 0, function* ({ id, report_type, related_id, }) {
             return yield this.db("cancellation_logs as cr")
                 .withSchema(this.DBO_SCHEMA)
                 .select("cr.id", "cr.related_id as related_job_post_details", "cr.report_type", "cr.status", "u.name as reporter_name", this.db.raw(`json_build_object(
@@ -156,8 +156,8 @@ class CancellationLogModel extends schema_1.default {
             return { data, total };
         });
     }
-    getSingleJobApplicationCancellationLog(id, report_type, related_id, reporter_id) {
-        return __awaiter(this, void 0, void 0, function* () {
+    getSingleJobApplicationCancellationLog(_a) {
+        return __awaiter(this, arguments, void 0, function* ({ id, report_type, related_id, reporter_id, }) {
             return yield this.db("cancellation_logs as cr")
                 .withSchema(this.DBO_SCHEMA)
                 .select("cr.id", "u.name as reporter_name", "u.phone_number as reporter_phone_number", "cr.report_type", "cr.status", "cr.reason as cancellation_reason", "cr.reject_reason", "cr.reporter_id", "cr.related_id", this.db.raw(`json_build_object(

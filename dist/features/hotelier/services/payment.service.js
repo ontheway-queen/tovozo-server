@@ -183,8 +183,15 @@ class PaymentService extends abstract_service_1.default {
                 yield paymentModel.createPaymentLedger(Object.assign(Object.assign({}, baseLedgerPayload), { user_id: paymentIntent.metadata.job_seeker_id, trx_type: constants_1.PAY_LEDGER_TRX_TYPE.IN, user_type: constants_1.USER_TYPE.JOB_SEEKER, amount: payment.job_seeker_pay, details: `Payment received for job "${paymentIntent.metadata.job_title}".` }));
                 yield paymentModel.createPaymentLedger(Object.assign(Object.assign({}, baseLedgerPayload), { trx_type: constants_1.PAY_LEDGER_TRX_TYPE.IN, user_type: constants_1.USER_TYPE.ADMIN, amount: payment.platform_fee, details: `Platform fee received from job "${paymentIntent.metadata.job_title}" completed by ${paymentIntent.metadata.job_seeker_name}` }));
                 yield paymentModel.createPaymentLedger(Object.assign(Object.assign({}, baseLedgerPayload), { user_id: user_id, trx_type: constants_1.PAY_LEDGER_TRX_TYPE.OUT, user_type: constants_1.USER_TYPE.HOTELIER, amount: payment.total_amount, details: `Payment sent for job "${paymentIntent.metadata.job_title}" to ${paymentIntent.metadata.job_seeker_name}.` }));
-                const updatedApplication = yield jobApplicationModel.updateMyJobApplicationStatus(payment.application_id, Number(paymentIntent.metadata.job_seeker_id), constants_1.JOB_APPLICATION_STATUS.COMPLETED);
-                yield jobPostModel.updateJobPostDetailsStatus(updatedApplication.job_post_details_id, constants_1.JOB_POST_DETAILS_STATUS.Completed);
+                const updatedApplication = yield jobApplicationModel.updateMyJobApplicationStatus({
+                    application_id: payment.application_id,
+                    job_seeker_id: Number(paymentIntent.metadata.job_seeker_id),
+                    status: constants_1.JOB_APPLICATION_STATUS.COMPLETED,
+                });
+                yield jobPostModel.updateJobPostDetailsStatus({
+                    id: updatedApplication.job_post_details_id,
+                    status: constants_1.JOB_POST_DETAILS_STATUS.Completed,
+                });
                 return {
                     success: true,
                     message: this.ResMsg.HTTP_OK,

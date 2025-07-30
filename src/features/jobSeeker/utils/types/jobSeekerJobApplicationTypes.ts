@@ -27,3 +27,20 @@ export interface IJobSeekerJobApplication {
 	category: IGetJobResponse;
 	job_task_activity: IJobTaskActivity;
 }
+
+export interface IAdminApplications {
+	job_application_id: number;
+	job_application_status: string;
+	created_at: string;
+	start_time: string;
+	end_time: string;
+	job_post_title: string;
+	organization_id: number;
+	organization_name: string;
+	organization_photo: string;
+	job_seeker_id: number;
+	job_seeker_name: string;
+	job_seeker_photo: any;
+	assigned_by_id: number;
+	assigned_by_name: string;
+}

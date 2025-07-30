@@ -12,6 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const dayjs_1 = __importDefault(require("dayjs"));
 const constants_1 = require("../../utils/miscellaneous/constants");
 const schema_1 = __importDefault(require("../../utils/miscellaneous/schema"));
 class StatisticsModel extends schema_1.default {
@@ -115,15 +116,16 @@ class StatisticsModel extends schema_1.default {
                 .withSchema(this.HOTELIER)
                 .where("status", "Inactive")
                 .count("user_id as total");
-            const [lastMonthStats] = yield this.db("payment")
+            // last 6 months payment data
+            const now = (0, dayjs_1.default)();
+            const sixMonthsAgo = now.subtract(5, "month").startOf("month").toDate();
+            const rows = yield this.db("payment")
                 .withSchema(this.DBO_SCHEMA)
+                .select(this.db.raw(`DATE_TRUNC('month', paid_at) AS month`), this.db.raw(`SUM(total_amount)::float AS hotelier_paid`), this.db.raw(`SUM(job_seeker_pay)::float AS job_seeker_get`), this.db.raw(`SUM(platform_fee)::float AS admin_earned`))
                 .where("status", "Paid")
-                // .modify((qb) => dateFilter(qb, "paid_at"))
-                .sum({
-                hotelier_paid: "total_amount",
-                job_seeker_get: "job_seeker_pay",
-                admin_earned: "platform_fee",
-            });
+                .andWhere("paid_at", ">=", sixMonthsAgo)
+                .groupByRaw("1")
+                .orderByRaw("1 DESC");
             return {
                 jobSeekers: {
                     total: Number(totalJobSeekers.total),
@@ -152,11 +154,7 @@ class StatisticsModel extends schema_1.default {
                     pending: Number(pendingReports.total),
                 },
                 latestApplications,
-                lastMonthFinancials: {
-                    hotelier_paid: Number(lastMonthStats.hotelier_paid || 0),
-                    job_seeker_get: Number(lastMonthStats.job_seeker_get || 0),
-                    admin_earned: Number(lastMonthStats.admin_earned || 0),
-                },
+                rows,
             };
         });
     }

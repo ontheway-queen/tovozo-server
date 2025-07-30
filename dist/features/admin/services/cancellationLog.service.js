@@ -39,10 +39,16 @@ class CancellationLogService extends abstract_service_1.default {
             const model = this.Model.cancellationLogModel();
             let data;
             if (report_type === constants_1.CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION) {
-                data = yield model.getSingleJobApplicationCancellationLog(id, report_type);
+                data = yield model.getSingleJobApplicationCancellationLog({
+                    id,
+                    report_type,
+                });
             }
             else if (report_type === constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST) {
-                data = yield model.getSingleJobPostCancellationLog(id, report_type);
+                data = yield model.getSingleJobPostCancellationLog({
+                    id,
+                    report_type,
+                });
             }
             if (!data) {
                 throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
@@ -68,12 +74,18 @@ class CancellationLogService extends abstract_service_1.default {
                 const jobApplicationModel = this.Model.jobApplicationModel(trx);
                 let report;
                 if (report_type === constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST) {
-                    report = yield reportModel.getSingleJobPostCancellationLog(Number(id), report_type);
+                    report = yield reportModel.getSingleJobPostCancellationLog({
+                        id: Number(id),
+                        report_type,
+                    });
                     console.log({ report });
                 }
                 else if (report_type === constants_1.CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION) {
                     report =
-                        yield reportModel.getSingleJobApplicationCancellationLog(Number(id), report_type);
+                        yield reportModel.getSingleJobApplicationCancellationLog({
+                            id: Number(id),
+                            report_type,
+                        });
                 }
                 if (!report) {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
@@ -94,12 +106,22 @@ class CancellationLogService extends abstract_service_1.default {
                         const jobPost = yield jobPostModel.getSingleJobPostForHotelier(report.related_job_post_details);
                         console.log({ jobPost });
                         yield jobPostModel.cancelJobPost(Number(jobPost.job_post_id));
-                        yield jobPostModel.updateJobPostDetailsStatus(Number(jobPost.id), constants_1.JOB_POST_DETAILS_STATUS.Cancelled);
+                        yield jobPostModel.updateJobPostDetailsStatus({
+                            id: Number(jobPost.id),
+                            status: constants_1.JOB_POST_DETAILS_STATUS.Cancelled,
+                        });
                         yield jobApplicationModel.cancelApplication(Number(jobPost.job_post_id));
                     }
                     else if (report_type === constants_1.CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION) {
-                        const application = yield jobApplicationModel.updateMyJobApplicationStatus(report.related_id, report.reporter_id, constants_1.JOB_APPLICATION_STATUS.CANCELLED);
-                        yield jobPostModel.updateJobPostDetailsStatus(application.job_post_details_id, constants_1.JOB_POST_DETAILS_STATUS.Pending);
+                        const application = yield jobApplicationModel.updateMyJobApplicationStatus({
+                            application_id: report.related_id,
+                            job_seeker_id: report.reporter_id,
+                            status: constants_1.JOB_APPLICATION_STATUS.CANCELLED,
+                        });
+                        yield jobPostModel.updateJobPostDetailsStatus({
+                            id: application.job_post_details_id,
+                            status: constants_1.JOB_POST_DETAILS_STATUS.Pending,
+                        });
                     }
                 }
                 else {

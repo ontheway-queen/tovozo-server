@@ -36,7 +36,10 @@ class HotelierCancellationLogService extends abstract_service_1.default {
         this.getCancellationLog = (req) => __awaiter(this, void 0, void 0, function* () {
             const { id } = req.params;
             const model = this.Model.cancellationLogModel();
-            const data = yield model.getSingleJobPostCancellationLog(Number(id), constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST);
+            const data = yield model.getSingleJobPostCancellationLog({
+                id: Number(id),
+                report_type: constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST,
+            });
             if (!data) {
                 throw new customError_1.default("Job post cancellation report not found", this.StatusCode.HTTP_NOT_FOUND);
             }
@@ -52,7 +55,10 @@ class HotelierCancellationLogService extends abstract_service_1.default {
                 const { id } = req.params;
                 const model = this.Model.cancellationLogModel(trx);
                 console.log({ id });
-                const jobPostReport = yield model.getSingleJobPostCancellationLog(Number(id), constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST);
+                const jobPostReport = yield model.getSingleJobPostCancellationLog({
+                    id: Number(id),
+                    report_type: constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST,
+                });
                 console.log({ jobPostReport });
                 if (!jobPostReport) {
                     throw new customError_1.default("Job post cancellation report not found", this.StatusCode.HTTP_NOT_FOUND);

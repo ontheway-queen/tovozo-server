@@ -56,7 +56,11 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                 console.log({ payload });
                 const res = yield jobTaskActivitiesModel.createJobTaskActivity(payload);
                 console.log({ res });
-                yield jobApplicationModel.updateMyJobApplicationStatus(job_application_id, user_id, constants_1.JOB_APPLICATION_STATUS.WaitingForApproval);
+                yield jobApplicationModel.updateMyJobApplicationStatus({
+                    application_id: job_application_id,
+                    job_seeker_id: user_id,
+                    status: constants_1.JOB_APPLICATION_STATUS.WaitingForApproval,
+                });
                 // await jobPostModel.updateJobPostDetailsStatus(
                 // 	myApplication.job_post_details_id,
                 // 	JOB_POST_DETAILS_STATUS.In_Progress

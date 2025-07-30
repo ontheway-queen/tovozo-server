@@ -12,7 +12,10 @@ class AdminJobApplicationRouter extends abstract_router_1.default {
         this.callRouter();
     }
     callRouter() {
-        this.router.route("/").post(this.controller.assignJobApplication);
+        this.router
+            .route("/")
+            .get(this.controller.getAllAdminAssignedApplications)
+            .post(this.controller.assignJobApplication);
     }
 }
 exports.default = AdminJobApplicationRouter;
