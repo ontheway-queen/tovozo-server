@@ -59,24 +59,24 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 				);
 			}
 
-			await jobApplicationModel.updateMyJobApplicationStatus(
-				taskActivity.job_application_id,
-				taskActivity.job_seeker_id,
-				JOB_APPLICATION_STATUS.ASSIGNED
-			);
+			await jobApplicationModel.updateMyJobApplicationStatus({
+				application_id: taskActivity.job_application_id,
+				job_seeker_id: taskActivity.job_seeker_id,
+				status: JOB_APPLICATION_STATUS.ASSIGNED,
+			});
 
 			const res = await jobTaskActivitiesModel.updateJobTaskActivity(
 				taskActivity.id,
 				{
 					start_time: new Date(),
-					start_approved_at: new Date().toISOString(),
+					start_approved_at: new Date(),
 				}
 			);
 
-			await jobPostModel.updateJobPostDetailsStatus(
-				application.job_post_details_id,
-				JOB_POST_DETAILS_STATUS.In_Progress as unknown as IJobPostDetailsStatus
-			);
+			await jobPostModel.updateJobPostDetailsStatus({
+				id: application.job_post_details_id,
+				status: JOB_POST_DETAILS_STATUS.In_Progress as unknown as IJobPostDetailsStatus,
+			});
 
 			await this.insertNotification(trx, TypeUser.JOB_SEEKER, {
 				user_id: taskActivity.job_seeker_id,
@@ -160,11 +160,11 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 				);
 			}
 
-			await jobApplicationModel.updateMyJobApplicationStatus(
-				taskActivity.job_application_id,
-				taskActivity.job_seeker_id,
-				JOB_APPLICATION_STATUS.IN_PROGRESS
-			);
+			await jobApplicationModel.updateMyJobApplicationStatus({
+				application_id: taskActivity.job_application_id,
+				job_seeker_id: taskActivity.job_seeker_id,
+				status: JOB_APPLICATION_STATUS.IN_PROGRESS,
+			});
 
 			await this.insertNotification(trx, TypeUser.JOB_SEEKER, {
 				user_id: taskActivity.job_seeker_id,
@@ -301,11 +301,11 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 				application.job_post_details_id
 			);
 
-			await jobApplicationModel.updateMyJobApplicationStatus(
-				taskActivity.job_application_id,
-				taskActivity.job_seeker_id,
-				JOB_APPLICATION_STATUS.ENDED
-			);
+			await jobApplicationModel.updateMyJobApplicationStatus({
+				application_id: taskActivity.job_application_id,
+				job_seeker_id: taskActivity.job_seeker_id,
+				status: JOB_APPLICATION_STATUS.ENDED,
+			});
 
 			const startTime = dayjs(taskActivity.start_time).valueOf();
 			const endTime = dayjs(new Date()).valueOf();
@@ -358,7 +358,6 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 				status: PAYMENT_STATUS.UNPAID,
 				job_seeker_pay: jobSeekerPay,
 				platform_fee: platformFee,
-				transaction_fee: transactionFee,
 				trx_fee: transactionFee,
 				payment_no: `TVZ-PAY-${paymentId}`,
 			};
@@ -373,10 +372,10 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 				}
 			);
 
-			await jobPostModel.updateJobPostDetailsStatus(
-				application.job_post_details_id,
-				JOB_POST_DETAILS_STATUS.WorkFinished as unknown as IJobPostDetailsStatus
-			);
+			await jobPostModel.updateJobPostDetailsStatus({
+				id: application.job_post_details_id,
+				status: JOB_POST_DETAILS_STATUS.WorkFinished as unknown as IJobPostDetailsStatus,
+			});
 
 			await this.insertNotification(trx, TypeUser.JOB_SEEKER, {
 				user_id: taskActivity.job_seeker_id,

@@ -91,11 +91,15 @@ class CancellationLogModel extends Schema {
 		return { data, total };
 	}
 
-	public async getSingleJobPostCancellationLog(
-		id: number | null,
-		report_type: ICancellationReportType,
-		related_id?: number
-	): Promise<ICancellationReportRes> {
+	public async getSingleJobPostCancellationLog({
+		id,
+		report_type,
+		related_id,
+	}: {
+		id: number | null;
+		report_type: ICancellationReportType;
+		related_id?: number;
+	}): Promise<ICancellationReportRes> {
 		return await this.db("cancellation_logs as cr")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
@@ -220,12 +224,17 @@ class CancellationLogModel extends Schema {
 		return { data, total };
 	}
 
-	public async getSingleJobApplicationCancellationLog(
-		id: number | null,
-		report_type: ICancellationReportType,
-		related_id?: number | null,
-		reporter_id?: number
-	): Promise<ICancellationReportRes> {
+	public async getSingleJobApplicationCancellationLog({
+		id,
+		report_type,
+		related_id,
+		reporter_id,
+	}: {
+		id?: number | null;
+		report_type: ICancellationReportType;
+		related_id?: number | null;
+		reporter_id?: number;
+	}): Promise<ICancellationReportRes> {
 		return await this.db("cancellation_logs as cr")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
@@ -268,7 +277,12 @@ class CancellationLogModel extends Schema {
 			.first();
 	}
 
-	public async requestForCancellationLog(payload: any) {
+	public async requestForCancellationLog(payload: {
+		report_type: string;
+		reason: string;
+		reporter_id: number;
+		related_id: number;
+	}) {
 		return await this.db("cancellation_logs")
 			.withSchema(this.DBO_SCHEMA)
 			.insert(payload, "id");

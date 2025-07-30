@@ -1,4 +1,7 @@
-import { IJobSeekerJobApplication } from "../../features/jobSeeker/utils/types/jobSeekerJobApplicationTypes";
+import {
+	IAdminApplications,
+	IJobSeekerJobApplication,
+} from "../../features/jobSeeker/utils/types/jobSeekerJobApplicationTypes";
 import { TDB } from "../../features/public/utils/types/publicCommon.types";
 import { JOB_APPLICATION_STATUS } from "../../utils/miscellaneous/constants";
 import Schema from "../../utils/miscellaneous/schema";
@@ -116,8 +119,9 @@ export default class JobApplicationModel extends Schema {
 		job_seeker_id,
 	}: {
 		job_application_id?: number | null;
-		job_seeker_id: number;
+		job_seeker_id?: number;
 	}): Promise<IJobSeekerJobApplication> {
+		console.log({ job_seeker_id });
 		return await this.db("job_applications as ja")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
@@ -199,14 +203,19 @@ export default class JobApplicationModel extends Schema {
 					qb.andWhere("ja.id", job_application_id);
 				}
 			})
+			.orderBy("ja.created_at", "desc")
 			.first();
 	}
 
-	public async updateMyJobApplicationStatus(
-		application_id: number,
-		job_seeker_id: number,
-		status: IJobApplicationStatus
-	) {
+	public async updateMyJobApplicationStatus({
+		application_id,
+		job_seeker_id,
+		status,
+	}: {
+		application_id: number;
+		job_seeker_id: number;
+		status: IJobApplicationStatus;
+	}) {
 		const [updated] = await this.db("job_applications")
 			.withSchema(this.DBO_SCHEMA)
 			.update({ status: status })
@@ -229,5 +238,121 @@ export default class JobApplicationModel extends Schema {
 				status: JOB_APPLICATION_STATUS.CANCELLED,
 				cancelled_at: new Date(),
 			});
+	}
+
+	// Get All Application for Admin
+	public async getAllAdminAssignedApplications(query: {
+		status?: string;
+		from_date?: string;
+		to_date?: string;
+		skip?: number;
+		limit?: number;
+		need_total?: boolean;
+		name?: string;
+	}) {
+		const {
+			status,
+			from_date,
+			to_date,
+			skip = 0,
+			limit = 100,
+			need_total = true,
+			name,
+		} = query;
+		console.log({ query });
+
+		const selectFields = [
+			"ja.id as job_application_id",
+			"ja.status as job_application_status",
+			"ja.created_at",
+			"jpd.start_time",
+			"jpd.end_time",
+			"j.title as job_post_title",
+			"org.user_id as organization_id",
+			"org.name as organization_name",
+			"org_p.file as organization_photo",
+			"js.user_id as job_seeker_id",
+			"jsu.name as job_seeker_name",
+			"jsu.photo as job_seeker_photo",
+			"au.id as assigned_by_id",
+			"au.name as assigned_by_name",
+		];
+
+		const data = await this.db("job_applications as ja")
+			.withSchema(this.DBO_SCHEMA)
+			.select(selectFields)
+			.leftJoin(
+				"job_post_details as jpd",
+				"ja.job_post_details_id",
+				"jpd.id"
+			)
+			.leftJoin("jobs as j", "jpd.job_id", "j.id")
+			.leftJoin("job_post as jp", "jpd.job_post_id", "jp.id")
+			.joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
+				`${this.HOTELIER}.${this.TABLES.organization}`,
+			])
+			.leftJoin(
+				"vw_location as vwl",
+				"vwl.location_id",
+				"org.location_id"
+			)
+			.leftJoin(
+				this.db.raw(`?? as org_p ON org_p.organization_id = org.id`, [
+					`${this.HOTELIER}.${this.TABLES.organization_photos}`,
+				])
+			)
+			.leftJoin(
+				this.db.raw(`?? as js ON js.user_id = ja.job_seeker_id`, [
+					`${this.JOB_SEEKER}.${this.TABLES.job_seeker}`,
+				])
+			)
+			.leftJoin("user as jsu", "jsu.id", "js.user_id")
+			.leftJoin("user as au", "au.id", "ja.created_by")
+			.whereNotNull("ja.created_by")
+			.modify((qb) => {
+				if (status) qb.where("ja.status", status);
+				if (from_date) qb.andWhere("ja.created_at", ">=", from_date);
+				if (to_date)
+					qb.andWhere(
+						"ja.created_at",
+						"<=",
+						`${to_date}T23:59:59.999Z`
+					);
+				if (name) qb.andWhereILike("j.title", `%${name}%`);
+			})
+			.orderBy("ja.created_at", "desc")
+			.limit(limit)
+			.offset(skip);
+
+		let total: number | undefined;
+		if (need_total) {
+			const totalQuery = await this.db("job_applications as ja")
+				.withSchema(this.DBO_SCHEMA)
+				.count("ja.id as total")
+				.leftJoin(
+					"job_post_details as jpd",
+					"ja.job_post_details_id",
+					"jpd.id"
+				)
+				.leftJoin("jobs as j", "jpd.job_id", "j.id")
+				.whereNotNull("ja.created_by")
+				.modify((qb) => {
+					if (status) qb.where("ja.status", status);
+					if (from_date)
+						qb.andWhere("ja.created_at", ">=", from_date);
+					if (to_date)
+						qb.andWhere(
+							"ja.created_at",
+							"<=",
+							`${to_date}T23:59:59.999Z`
+						);
+					if (name) qb.andWhereILike("j.title", `%${name}%`);
+				})
+				.first();
+
+			total = totalQuery?.total ? Number(totalQuery.total) : 0;
+		}
+
+		return { data, total };
 	}
 }

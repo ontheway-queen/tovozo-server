@@ -253,6 +253,7 @@ class AdminHotelierService extends AbstractServices {
 			}
 			const files = req.files as Express.MulterS3.File[];
 			const body = req.body;
+			console.log({ body });
 			const parsed = {
 				organization: Lib.safeParseJSON(body.organization) || {},
 				user: Lib.safeParseJSON(body.user) || {},
@@ -307,8 +308,7 @@ class AdminHotelierService extends AbstractServices {
 					phone_number: parsed.user.phone_number,
 					type: USER_TYPE.HOTELIER,
 				});
-
-				if (phoneExists) {
+				if (phoneExists.length > 0) {
 					throw new CustomError(
 						this.ResMsg.PHONE_NUMBER_ALREADY_EXISTS,
 						this.StatusCode.HTTP_BAD_REQUEST,

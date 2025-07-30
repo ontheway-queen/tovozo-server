@@ -19,10 +19,10 @@ export default class JobPostWorker {
 			if (jobs.length > 0) {
 				await Promise.all(
 					jobs.map((job) =>
-						jobPostModel.updateJobPostDetailsStatus(
-							job.id,
-							JOB_POST_DETAILS_STATUS.Expired
-						)
+						jobPostModel.updateJobPostDetailsStatus({
+							id: job.id,
+							status: JOB_POST_DETAILS_STATUS.Expired,
+						})
 					)
 				);
 			}

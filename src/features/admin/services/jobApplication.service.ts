@@ -5,6 +5,7 @@ import {
 	CANCELLATION_REPORT_STATUS,
 	CANCELLATION_REPORT_TYPE,
 	GENDER_TYPE,
+	JOB_APPLICATION_STATUS,
 	JOB_POST_DETAILS_STATUS,
 } from "../../../utils/miscellaneous/constants";
 import { ICreateJobApplicationPayload } from "../../../utils/modelTypes/jobApplication/jobApplicationModel.types";
@@ -23,6 +24,7 @@ export default class AdminJobApplicationService extends AbstractServices {
 			const jobPostModel = this.Model.jobPostModel(trx);
 			const cancellationReportModel =
 				this.Model.cancellationLogModel(trx);
+			const applicationModel = this.Model.jobApplicationModel(trx);
 
 			const jobPost = await jobPostModel.getSingleJobPostForJobSeeker(
 				job_post_details_id
@@ -42,11 +44,11 @@ export default class AdminJobApplicationService extends AbstractServices {
 			}
 
 			const jobPostReport =
-				await cancellationReportModel.getSingleJobPostCancellationLog(
-					null,
-					CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST,
-					job_post_details_id
-				);
+				await cancellationReportModel.getSingleJobPostCancellationLog({
+					id: null,
+					report_type: CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST,
+					related_id: job_post_details_id,
+				});
 			if (
 				jobPostReport &&
 				jobPostReport.status === CANCELLATION_REPORT_STATUS.PENDING
@@ -56,12 +58,31 @@ export default class AdminJobApplicationService extends AbstractServices {
 					this.StatusCode.HTTP_CONFLICT
 				);
 			}
-			console.log({ jobPost });
+
+			const application = await applicationModel.getMyJobApplication({
+				job_seeker_id: user_id,
+			});
+			console.log({ application });
+			if (
+				application &&
+				application.job_application_status !==
+					JOB_APPLICATION_STATUS.ENDED &&
+				(application.job_application_status !==
+					JOB_APPLICATION_STATUS.COMPLETED &&
+					application.job_application_status) !==
+					JOB_APPLICATION_STATUS.CANCELLED
+			) {
+				throw new CustomError(
+					"Bad Request: This job seeker already has an ongoing or incomplete application. You can only assign again after the current application is marked as completed or ended.",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
 
 			const res = await model.createJobApplication({
 				job_seeker_id: user_id,
 				job_post_id: job_post_id,
 				job_post_details_id,
+				created_by: admin_id,
 			} as ICreateJobApplicationPayload);
 
 			await model.markJobPostDetailAsApplied(Number(job_post_details_id));
@@ -75,6 +96,7 @@ export default class AdminJobApplicationService extends AbstractServices {
 					job_seeker_id: user_id,
 					job_post_id: job_post_id,
 					job_post_details_id,
+					created_by: admin_id,
 				}),
 			});
 
@@ -85,5 +107,26 @@ export default class AdminJobApplicationService extends AbstractServices {
 				data: res[0].id,
 			};
 		});
+	}
+
+	public async getAllAdminAssignedApplications(req: Request) {
+		const { limit, skip, status, from_date, to_date, name } = req.query;
+		const model = this.Model.jobApplicationModel();
+		const { total, ...data } = await model.getAllAdminAssignedApplications({
+			limit: Number(limit),
+			skip: Number(skip),
+			status: status as string,
+			from_date: from_date as string,
+			to_date: to_date as string,
+			name: name as string,
+		});
+
+		return {
+			success: true,
+			message: this.ResMsg.HTTP_OK,
+			code: this.StatusCode.HTTP_OK,
+			...data,
+			total,
+		};
 	}
 }

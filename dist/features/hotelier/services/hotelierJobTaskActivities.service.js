@@ -43,12 +43,19 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 if (!application) {
                     throw new customError_1.default(`Job application not found or does not belong to you.`, this.StatusCode.HTTP_NOT_FOUND);
                 }
-                yield jobApplicationModel.updateMyJobApplicationStatus(taskActivity.job_application_id, taskActivity.job_seeker_id, constants_1.JOB_APPLICATION_STATUS.ASSIGNED);
+                yield jobApplicationModel.updateMyJobApplicationStatus({
+                    application_id: taskActivity.job_application_id,
+                    job_seeker_id: taskActivity.job_seeker_id,
+                    status: constants_1.JOB_APPLICATION_STATUS.ASSIGNED,
+                });
                 const res = yield jobTaskActivitiesModel.updateJobTaskActivity(taskActivity.id, {
                     start_time: new Date(),
-                    start_approved_at: new Date().toISOString(),
+                    start_approved_at: new Date(),
                 });
-                yield jobPostModel.updateJobPostDetailsStatus(application.job_post_details_id, constants_1.JOB_POST_DETAILS_STATUS.In_Progress);
+                yield jobPostModel.updateJobPostDetailsStatus({
+                    id: application.job_post_details_id,
+                    status: constants_1.JOB_POST_DETAILS_STATUS.In_Progress,
+                });
                 yield this.insertNotification(trx, userModelTypes_1.TypeUser.JOB_SEEKER, {
                     user_id: taskActivity.job_seeker_id,
                     content: `You are assigned for the job. Please read the requirements carefully!`,
@@ -101,7 +108,11 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 if (!res.length) {
                     throw new customError_1.default("Failed to create job task list", this.StatusCode.HTTP_BAD_REQUEST);
                 }
-                yield jobApplicationModel.updateMyJobApplicationStatus(taskActivity.job_application_id, taskActivity.job_seeker_id, constants_1.JOB_APPLICATION_STATUS.IN_PROGRESS);
+                yield jobApplicationModel.updateMyJobApplicationStatus({
+                    application_id: taskActivity.job_application_id,
+                    job_seeker_id: taskActivity.job_seeker_id,
+                    status: constants_1.JOB_APPLICATION_STATUS.IN_PROGRESS,
+                });
                 yield this.insertNotification(trx, userModelTypes_1.TypeUser.JOB_SEEKER, {
                     user_id: taskActivity.job_seeker_id,
                     content: `New tasks have been assigned to you.`,
@@ -189,7 +200,11 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                     throw new customError_1.default(`Job application not found or does not belong to you.`, this.StatusCode.HTTP_NOT_FOUND);
                 }
                 const jobPost = yield jobPostModel.getSingleJobPostForAdmin(application.job_post_details_id);
-                yield jobApplicationModel.updateMyJobApplicationStatus(taskActivity.job_application_id, taskActivity.job_seeker_id, constants_1.JOB_APPLICATION_STATUS.ENDED);
+                yield jobApplicationModel.updateMyJobApplicationStatus({
+                    application_id: taskActivity.job_application_id,
+                    job_seeker_id: taskActivity.job_seeker_id,
+                    status: constants_1.JOB_APPLICATION_STATUS.ENDED,
+                });
                 const startTime = (0, dayjs_1.default)(taskActivity.start_time).valueOf();
                 const endTime = (0, dayjs_1.default)(new Date()).valueOf();
                 const totalMinutes = Math.floor((endTime - startTime) / (1000 * 60));
@@ -217,7 +232,6 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                     status: constants_1.PAYMENT_STATUS.UNPAID,
                     job_seeker_pay: jobSeekerPay,
                     platform_fee: platformFee,
-                    transaction_fee: transactionFee,
                     trx_fee: transactionFee,
                     payment_no: `TVZ-PAY-${paymentId}`,
                 };
@@ -226,7 +240,10 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                     end_approved_at: new Date(),
                     total_working_hours: totalWorkingHours,
                 });
-                yield jobPostModel.updateJobPostDetailsStatus(application.job_post_details_id, constants_1.JOB_POST_DETAILS_STATUS.WorkFinished);
+                yield jobPostModel.updateJobPostDetailsStatus({
+                    id: application.job_post_details_id,
+                    status: constants_1.JOB_POST_DETAILS_STATUS.WorkFinished,
+                });
                 yield this.insertNotification(trx, userModelTypes_1.TypeUser.JOB_SEEKER, {
                     user_id: taskActivity.job_seeker_id,
                     content: `Your task is under review. Please wait a few moments!`,

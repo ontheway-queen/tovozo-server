@@ -28,7 +28,7 @@ export class HotelierJobPostValidator {
 		status: Joi.string()
 			.valid(...JOB_POST_DETAILS_STATUS_ENUM)
 			.optional(),
-		name: Joi.string().optional(),
+		name: Joi.string().allow("").optional(),
 		title: Joi.string().optional(),
 		from_date: Joi.string().optional(),
 		to_date: Joi.string().optional(),

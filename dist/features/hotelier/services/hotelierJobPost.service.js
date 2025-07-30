@@ -61,7 +61,8 @@ class HotelierJobPostService extends abstract_service_1.default {
                     console.log({ checkJob });
                     jobPostDetails.push(Object.assign(Object.assign({}, detail), { job_post_id: res[0].id, hourly_rate: checkJob.hourly_rate, job_seeker_pay: checkJob.job_seeker_pay, platform_fee: checkJob.platform_fee }));
                 }
-                yield model.createJobPostDetails(jobPostDetails);
+                const x = yield model.createJobPostDetails(jobPostDetails);
+                console.log({ x });
                 // Job Post Nearby
                 const orgLat = parseFloat(checkOrganization.latitude);
                 const orgLng = parseFloat(checkOrganization.longitude);
@@ -78,7 +79,6 @@ class HotelierJobPostService extends abstract_service_1.default {
                     return R * c;
                 }
                 const all = yield jobSeeker.getJobSeekerLocation();
-                console.log({ all });
                 for (const seeker of all) {
                     const seekerLat = parseFloat(seeker.latitude);
                     const seekerLng = parseFloat(seeker.longitude);
@@ -219,7 +219,10 @@ class HotelierJobPostService extends abstract_service_1.default {
                     yield model.cancelJobPost(Number(jobPost.job_post_id));
                     const vacancy = yield model.getAllJobsUsingJobPostId(Number(jobPost.job_post_id));
                     for (const job of vacancy) {
-                        yield model.updateJobPostDetailsStatus(Number(job.id), constants_1.JOB_POST_DETAILS_STATUS.Cancelled);
+                        yield model.updateJobPostDetailsStatus({
+                            id: Number(job.id),
+                            status: constants_1.JOB_POST_DETAILS_STATUS.Cancelled,
+                        });
                     }
                     yield jobApplicationModel.cancelApplication(jobPost.job_post_id);
                     return {

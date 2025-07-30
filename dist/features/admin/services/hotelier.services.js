@@ -197,6 +197,7 @@ class AdminHotelierService extends abstract_service_1.default {
                 }
                 const files = req.files;
                 const body = req.body;
+                console.log({ body });
                 const parsed = {
                     organization: lib_1.default.safeParseJSON(body.organization) || {},
                     user: lib_1.default.safeParseJSON(body.user) || {},
@@ -236,7 +237,7 @@ class AdminHotelierService extends abstract_service_1.default {
                         phone_number: parsed.user.phone_number,
                         type: constants_1.USER_TYPE.HOTELIER,
                     });
-                    if (phoneExists) {
+                    if (phoneExists.length > 0) {
                         throw new customError_1.default(this.ResMsg.PHONE_NUMBER_ALREADY_EXISTS, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
                     }
                 }

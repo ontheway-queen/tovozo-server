@@ -279,15 +279,15 @@ export default class PaymentService extends AbstractServices {
 			});
 
 			const updatedApplication =
-				await jobApplicationModel.updateMyJobApplicationStatus(
-					payment.application_id,
-					Number(paymentIntent.metadata.job_seeker_id),
-					JOB_APPLICATION_STATUS.COMPLETED
-				);
-			await jobPostModel.updateJobPostDetailsStatus(
-				updatedApplication.job_post_details_id,
-				JOB_POST_DETAILS_STATUS.Completed
-			);
+				await jobApplicationModel.updateMyJobApplicationStatus({
+					application_id: payment.application_id,
+					job_seeker_id: Number(paymentIntent.metadata.job_seeker_id),
+					status: JOB_APPLICATION_STATUS.COMPLETED,
+				});
+			await jobPostModel.updateJobPostDetailsStatus({
+				id: updatedApplication.job_post_details_id,
+				status: JOB_POST_DETAILS_STATUS.Completed,
+			});
 			return {
 				success: true,
 				message: this.ResMsg.HTTP_OK,
