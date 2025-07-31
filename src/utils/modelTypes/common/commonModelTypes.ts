@@ -162,6 +162,9 @@ export enum NotificationTypeEnum {
 
 export interface INotificationPayload {
 	user_id: number;
+	sender_id?: number;
+	sender_type: string;
+	title: string;
 	content: string;
 	type: `${NotificationTypeEnum}`;
 	related_id: number;

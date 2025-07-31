@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import AbstractController from "../../../abstract/abstract.controller";
 import JobSeekerProfileService from "../service/jobSeekeerProfile.service";
-import Lib from "../../../utils/lib/lib";
 import CustomError from "../../../utils/lib/customError";
 import JobSeekerProfileUpdate from "../utils/validator/profile.validator";
 

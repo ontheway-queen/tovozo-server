@@ -84,6 +84,7 @@ DROP TYPE if EXISTS dbo.notification;
 CREATE TABLE IF NOT EXISTS dbo.notification (
     id SERIAL PRIMARY KEY,
     user_id INT NOT NULL REFERENCES dbo."user"(id),
+    title CHARACTER VARCHAR(255),
     content TEXT NOT NULL,
     type dbo.notification_type NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -113,7 +113,9 @@ class JobSeekerAuthService extends abstract_service_1.default {
                 };
                 yield this.insertNotification(trx, userModelTypes_1.TypeUser.ADMIN, {
                     user_id: jobSeekerId,
-                    content: `New job seeker "${userInput.name}" has registered and is awaiting verification.`,
+                    sender_type: constants_1.USER_TYPE.ADMIN,
+                    title: this.NotificationMsg.NEW_JOB_SEEKER_REGISTRATION.title,
+                    content: this.NotificationMsg.NEW_JOB_SEEKER_REGISTRATION.content(userInput.name),
                     related_id: jobSeekerId,
                     type: commonModelTypes_1.NotificationTypeEnum.JOB_SEEKER_VERIFICATION,
                 });

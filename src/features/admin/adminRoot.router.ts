@@ -11,6 +11,7 @@ import AdminProfileRouter from "./router/profile.router";
 import AdminReportRouter from "./router/report.router";
 import AdminPaymentRouter from "./router/adminPayment.router";
 import AdminStatsRouter from "./router/adminStats.router";
+import AdminNotificationRouter from "./router/adminNotificationRouter";
 
 export default class AdminRootRouter {
 	public Router = Router();
@@ -26,6 +27,7 @@ export default class AdminRootRouter {
 	private adminChatRouter = new AdminChatRouter();
 	private paymentRouter = new AdminPaymentRouter();
 	private adminStatsRouter = new AdminStatsRouter();
+	private notificationRouter = new AdminNotificationRouter();
 
 	constructor() {
 		this.callRouter();
@@ -70,5 +72,8 @@ export default class AdminRootRouter {
 
 		// statistics
 		this.Router.use("/statistics", this.adminStatsRouter.router);
+
+		// Notification
+		this.Router.use("/notification", this.notificationRouter.router);
 	}
 }

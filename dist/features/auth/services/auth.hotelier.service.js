@@ -120,7 +120,9 @@ class HotelierAuthService extends abstract_service_1.default {
                 };
                 yield this.insertNotification(trx, userModelTypes_1.TypeUser.ADMIN, {
                     user_id: userId,
-                    content: `New hotelier "${user.name}" has registered and is awaiting verification.`,
+                    sender_type: constants_1.USER_TYPE.ADMIN,
+                    title: this.NotificationMsg.NEW_HOTELIER_REGISTRATION.title,
+                    content: this.NotificationMsg.NEW_HOTELIER_REGISTRATION.content(user.name),
                     related_id: userId,
                     type: commonModelTypes_1.NotificationTypeEnum.HOTELIER_VERIFICATION,
                 });

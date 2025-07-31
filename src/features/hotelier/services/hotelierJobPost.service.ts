@@ -4,7 +4,6 @@ import CustomError from "../../../utils/lib/customError";
 import {
 	CANCELLATION_REPORT_TYPE,
 	JOB_POST_DETAILS_STATUS,
-	JOB_POST_STATUS,
 	USER_TYPE,
 } from "../../../utils/miscellaneous/constants";
 import {
@@ -55,19 +54,6 @@ class HotelierJobPostService extends AbstractServices {
 					this.StatusCode.HTTP_BAD_REQUEST
 				);
 			}
-			const expireTime = new Date(res[0].expire_time).getTime();
-			const now = Date.now();
-			const delay = Math.max(expireTime - now, 0);
-			const queue = this.getQueue("expire-job-post");
-			await queue.add(
-				"expire-job-post",
-				{ id: res[0].id },
-				{
-					delay,
-					removeOnComplete: true,
-					removeOnFail: false,
-				}
-			);
 
 			const jobPostDetails: IJobPostDetailsPayload[] = [];
 
@@ -86,6 +72,21 @@ class HotelierJobPostService extends AbstractServices {
 						this.StatusCode.HTTP_BAD_REQUEST
 					);
 				}
+				const expireTime = new Date(detail.start_time).getTime();
+				const now = Date.now();
+				const delay = Math.max(expireTime - now, 0);
+				const jobPostDetailsQueue = this.getQueue(
+					"expire-job-post-details"
+				);
+				await jobPostDetailsQueue.add(
+					"expire-job-post-details",
+					{ id: res[0].id },
+					{
+						delay,
+						removeOnComplete: true,
+						removeOnFail: false,
+					}
+				);
 
 				jobPostDetails.push({
 					...detail,
@@ -124,7 +125,10 @@ class HotelierJobPostService extends AbstractServices {
 				// 1. Insert into DB
 				await this.insertNotification(trx, TypeUser.JOB_SEEKER, {
 					user_id: seeker.user_id,
-					content: `A new job post is available near you!`,
+					sender_id: user_id,
+					sender_type: USER_TYPE.HOTELIER,
+					title: this.NotificationMsg.NEW_JOB_POST_NEARBY.title,
+					content: this.NotificationMsg.NEW_JOB_POST_NEARBY.content,
 					related_id: res[0].id,
 					type: NotificationTypeEnum.JOB_TASK,
 				});
@@ -134,8 +138,10 @@ class HotelierJobPostService extends AbstractServices {
 					TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION,
 					{
 						user_id: seeker.user_id,
-						content: `A new job post is available near you!`,
-						related_id: res[0].id,
+						photo: checkOrganization.photo,
+						title: this.NotificationMsg.NEW_JOB_POST_NEARBY.title,
+						content:
+							this.NotificationMsg.NEW_JOB_POST_NEARBY.content,
 						type: NotificationTypeEnum.JOB_TASK,
 						read_status: false,
 						created_at: new Date().toISOString(),
@@ -313,9 +319,9 @@ class HotelierJobPostService extends AbstractServices {
 			if (hoursDiff > 24) {
 				await model.cancelJobPost(Number(jobPost.job_post_id));
 
-				const vacancy = await model.getAllJobsUsingJobPostId(
-					Number(jobPost.job_post_id)
-				);
+				const vacancy = await model.getAllJobsUsingJobPostId({
+					id: Number(jobPost.job_post_id),
+				});
 
 				for (const job of vacancy) {
 					await model.updateJobPostDetailsStatus({

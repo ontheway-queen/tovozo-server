@@ -113,7 +113,9 @@ class AdminJobSeekerService extends abstract_service_1.default {
                 };
                 yield this.insertNotification(trx, userModelTypes_1.TypeUser.ADMIN, {
                     user_id: jobSeekerId,
-                    content: `Hi ${userInput.name}, your account has been created successfully`,
+                    sender_type: constants_1.USER_TYPE.ADMIN,
+                    title: this.NotificationMsg.JOB_SEEKER_ACCOUNT_CREATED.title,
+                    content: this.NotificationMsg.JOB_SEEKER_ACCOUNT_CREATED.content(userInput.name),
                     related_id: jobSeekerId,
                     type: commonModelTypes_1.NotificationTypeEnum.JOB_SEEKER_VERIFICATION,
                 });
@@ -343,12 +345,6 @@ class AdminJobSeekerService extends abstract_service_1.default {
                         emailSub: "Job Seeker Account Activation Successful – You Can Now Log In",
                         emailBody: (0, registrationVerificationCompletedTemplate_1.registrationVerificationCompletedTemplate)(existingUser.name, "Trabill OTA B2B://login"),
                     });
-                    // await this.insertNotification(trx, TypeUser.JOB_SEEKER, {
-                    //   user_id: id,
-                    //   content: `Your account has been updated to ${parsed.jobSeeker.account_status}`,
-                    //   related_id: id,
-                    //   type: "JOB_SEEKER_VERIFICATION",
-                    // });
                 }
                 yield this.insertAdminAudit(trx, {
                     details: `Job seeker (${existingUser.name} - ${id}) profile has been updated.`,

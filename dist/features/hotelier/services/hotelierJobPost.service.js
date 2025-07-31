@@ -41,15 +41,6 @@ class HotelierJobPostService extends abstract_service_1.default {
                 if (!res.length) {
                     throw new customError_1.default(this.ResMsg.HTTP_BAD_REQUEST, this.StatusCode.HTTP_BAD_REQUEST);
                 }
-                const expireTime = new Date(res[0].expire_time).getTime();
-                const now = Date.now();
-                const delay = Math.max(expireTime - now, 0);
-                const queue = this.getQueue("expire-job-post");
-                yield queue.add("expire-job-post", { id: res[0].id }, {
-                    delay,
-                    removeOnComplete: true,
-                    removeOnFail: false,
-                });
                 const jobPostDetails = [];
                 for (const detail of body.job_post_details) {
                     const checkJob = yield jobModel.getSingleJob(detail.job_id);
@@ -59,6 +50,15 @@ class HotelierJobPostService extends abstract_service_1.default {
                     if (new Date(detail.start_time) >= new Date(detail.end_time)) {
                         throw new customError_1.default("Job post start time cannot be greater than or equal to end time.", this.StatusCode.HTTP_BAD_REQUEST);
                     }
+                    const expireTime = new Date(detail.start_time).getTime();
+                    const now = Date.now();
+                    const delay = Math.max(expireTime - now, 0);
+                    const jobPostDetailsQueue = this.getQueue("expire-job-post-details");
+                    yield jobPostDetailsQueue.add("expire-job-post-details", { id: res[0].id }, {
+                        delay,
+                        removeOnComplete: true,
+                        removeOnFail: false,
+                    });
                     jobPostDetails.push(Object.assign(Object.assign({}, detail), { job_post_id: res[0].id, hourly_rate: checkJob.hourly_rate, job_seeker_pay: checkJob.job_seeker_pay, platform_fee: checkJob.platform_fee }));
                 }
                 yield model.createJobPostDetails(jobPostDetails);
@@ -76,15 +76,19 @@ class HotelierJobPostService extends abstract_service_1.default {
                     // 1. Insert into DB
                     yield this.insertNotification(trx, userModelTypes_1.TypeUser.JOB_SEEKER, {
                         user_id: seeker.user_id,
-                        content: `A new job post is available near you!`,
+                        sender_id: user_id,
+                        sender_type: constants_1.USER_TYPE.HOTELIER,
+                        title: this.NotificationMsg.NEW_JOB_POST_NEARBY.title,
+                        content: this.NotificationMsg.NEW_JOB_POST_NEARBY.content,
                         related_id: res[0].id,
                         type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                     });
                     // 2. Emit via socket
                     socket_1.io.to(String(seeker.user_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION, {
                         user_id: seeker.user_id,
-                        content: `A new job post is available near you!`,
-                        related_id: res[0].id,
+                        photo: checkOrganization.photo,
+                        title: this.NotificationMsg.NEW_JOB_POST_NEARBY.title,
+                        content: this.NotificationMsg.NEW_JOB_POST_NEARBY.content,
                         type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                         read_status: false,
                         created_at: new Date().toISOString(),
@@ -204,7 +208,9 @@ class HotelierJobPostService extends abstract_service_1.default {
                     (1000 * 60 * 60);
                 if (hoursDiff > 24) {
                     yield model.cancelJobPost(Number(jobPost.job_post_id));
-                    const vacancy = yield model.getAllJobsUsingJobPostId(Number(jobPost.job_post_id));
+                    const vacancy = yield model.getAllJobsUsingJobPostId({
+                        id: Number(jobPost.job_post_id),
+                    });
                     for (const job of vacancy) {
                         yield model.updateJobPostDetailsStatus({
                             id: Number(job.id),

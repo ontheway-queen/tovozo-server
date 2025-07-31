@@ -242,6 +242,9 @@ export default class CommonModel extends Schema {
 			.select(
 				"n.id",
 				"n.user_id",
+				"n.sender_id",
+				"n.sender_type",
+				"n.title",
 				"n.content",
 				"n.created_at",
 				"n.related_id",
@@ -252,9 +255,18 @@ export default class CommonModel extends Schema {
           WHEN ns.user_id IS NOT NULL THEN true
           ELSE false
         END AS is_read
-      `)
+      `),
+				this.db.raw(`
+          CASE 
+            WHEN n.sender_type = 'HOTELIER' THEN sender.photo
+            WHEN n.sender_type = 'JOB_SEEKER' THEN sender.photo
+            WHEN n.sender_type = 'ADMIN' THEN NULL
+            ELSE NULL
+          END AS photo
+        `)
 			)
 			.leftJoin("user as u", "u.id", "n.user_id")
+			.leftJoin("user as sender", "sender.id", "n.sender_id")
 			.leftJoin(`${this.TABLES.notification_seen} as ns`, function () {
 				this.on("ns.notification_id", "n.id").andOn(
 					"ns.user_id",
