@@ -10,6 +10,7 @@ import {
 	JobSeekerFixedCharge,
 	PAYMENT_STATUS,
 	PlatformFee,
+	USER_TYPE,
 } from "../../../utils/miscellaneous/constants";
 import {
 	NotificationTypeEnum,
@@ -26,6 +27,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 
 	public approveJobTaskActivity = async (req: Request) => {
 		const id = req.params.id;
+		const { user_id } = req.hotelier;
 		return await this.db.transaction(async (trx) => {
 			const jobPostModel = this.Model.jobPostModel(trx);
 			const jobApplicationModel = this.Model.jobApplicationModel(trx);
@@ -80,7 +82,13 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 
 			await this.insertNotification(trx, TypeUser.JOB_SEEKER, {
 				user_id: taskActivity.job_seeker_id,
-				content: `You are assigned for the job. Please read the requirements carefully!`,
+				sender_id: user_id,
+				sender_type: USER_TYPE.HOTELIER,
+				title: this.NotificationMsg.JOB_ASSIGNED.title,
+				content: this.NotificationMsg.JOB_ASSIGNED.content({
+					id: application.job_post_details_id,
+					jobTitle: application.job_post_title,
+				}),
 				related_id: res[0].id,
 				type: NotificationTypeEnum.JOB_TASK,
 			});
@@ -89,7 +97,11 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 				TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION,
 				{
 					user_id: taskActivity.job_seeker_id,
-					content: `You are assigned for the job. Please read the requirements carefully!`,
+					title: this.NotificationMsg.JOB_ASSIGNED.title,
+					content: this.NotificationMsg.JOB_ASSIGNED.content({
+						id: application.job_post_details_id,
+						jobTitle: application.job_post_title,
+					}),
 					related_id: res[0].id,
 					type: NotificationTypeEnum.JOB_TASK,
 					read_status: false,
@@ -106,6 +118,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 	};
 
 	public createJobTaskList = async (req: Request) => {
+		const { user_id } = req.hotelier;
 		const body = req.body as {
 			job_task_activity_id: number;
 			tasks: { message: string }[];
@@ -166,21 +179,25 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 				status: JOB_APPLICATION_STATUS.IN_PROGRESS,
 			});
 
-			await this.insertNotification(trx, TypeUser.JOB_SEEKER, {
-				user_id: taskActivity.job_seeker_id,
-				content: `New tasks have been assigned to you.`,
-				related_id: taskActivity.job_application_id,
-				type: NotificationTypeEnum.JOB_TASK,
-			});
-
 			const allMessages = taskList
 				.map((task, index) => `${index + 1}. ${task.message}`)
 				.join("\n");
+
+			await this.insertNotification(trx, TypeUser.JOB_SEEKER, {
+				user_id: taskActivity.job_seeker_id,
+				sender_id: user_id,
+				sender_type: USER_TYPE.HOTELIER,
+				title: this.NotificationMsg.NEW_TASKS_ASSIGNED.title,
+				content: allMessages,
+				related_id: taskActivity.job_application_id,
+				type: NotificationTypeEnum.JOB_TASK,
+			});
 
 			io.to(String(taskActivity.job_seeker_id)).emit(
 				TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION,
 				{
 					user_id: taskActivity.job_seeker_id,
+					title: this.NotificationMsg.NEW_TASKS_ASSIGNED.title,
 					content: allMessages,
 					related_id: res[0].id,
 					type: NotificationTypeEnum.JOB_TASK,
@@ -263,6 +280,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 
 	public approveEndJobTaskActivity = async (req: Request) => {
 		const id = req.params.id;
+		const { user_id } = req.hotelier;
 		return await this.db.transaction(async (trx) => {
 			const paymentModel = this.Model.paymnentModel(trx);
 			const jobPostModel = this.Model.jobPostModel(trx);
@@ -379,7 +397,12 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 
 			await this.insertNotification(trx, TypeUser.JOB_SEEKER, {
 				user_id: taskActivity.job_seeker_id,
-				content: `Your task is under review. Please wait a few moments!`,
+				sender_id: user_id,
+				sender_type: USER_TYPE.HOTELIER,
+				title: this.NotificationMsg.TASK_UNDER_REVIEW.title,
+				content: this.NotificationMsg.TASK_UNDER_REVIEW.content(
+					application.job_post_details_id
+				),
 				related_id: res[0].id,
 				type: NotificationTypeEnum.JOB_TASK,
 			});
@@ -388,7 +411,10 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 				TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION,
 				{
 					user_id: taskActivity.job_seeker_id,
-					content: `Your task is under review. Please wait a few moments!`,
+					title: this.NotificationMsg.TASK_UNDER_REVIEW.title,
+					content: this.NotificationMsg.TASK_UNDER_REVIEW.content(
+						application.job_post_details_id
+					),
 					related_id: res[0].id,
 					type: NotificationTypeEnum.JOB_TASK,
 					read_status: false,

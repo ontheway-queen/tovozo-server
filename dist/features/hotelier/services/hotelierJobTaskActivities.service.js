@@ -24,6 +24,7 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
         super();
         this.approveJobTaskActivity = (req) => __awaiter(this, void 0, void 0, function* () {
             const id = req.params.id;
+            const { user_id } = req.hotelier;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const jobPostModel = this.Model.jobPostModel(trx);
                 const jobApplicationModel = this.Model.jobApplicationModel(trx);
@@ -58,13 +59,23 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 });
                 yield this.insertNotification(trx, userModelTypes_1.TypeUser.JOB_SEEKER, {
                     user_id: taskActivity.job_seeker_id,
-                    content: `You are assigned for the job. Please read the requirements carefully!`,
+                    sender_id: user_id,
+                    sender_type: constants_1.USER_TYPE.HOTELIER,
+                    title: this.NotificationMsg.JOB_ASSIGNED.title,
+                    content: this.NotificationMsg.JOB_ASSIGNED.content({
+                        id: application.job_post_details_id,
+                        jobTitle: application.job_post_title,
+                    }),
                     related_id: res[0].id,
                     type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                 });
                 socket_1.io.to(String(taskActivity.job_seeker_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION, {
                     user_id: taskActivity.job_seeker_id,
-                    content: `You are assigned for the job. Please read the requirements carefully!`,
+                    title: this.NotificationMsg.JOB_ASSIGNED.title,
+                    content: this.NotificationMsg.JOB_ASSIGNED.content({
+                        id: application.job_post_details_id,
+                        jobTitle: application.job_post_title,
+                    }),
                     related_id: res[0].id,
                     type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                     read_status: false,
@@ -78,6 +89,7 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
             }));
         });
         this.createJobTaskList = (req) => __awaiter(this, void 0, void 0, function* () {
+            const { user_id } = req.hotelier;
             const body = req.body;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const jobApplicationModel = this.Model.jobApplicationModel(trx);
@@ -113,17 +125,21 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                     job_seeker_id: taskActivity.job_seeker_id,
                     status: constants_1.JOB_APPLICATION_STATUS.IN_PROGRESS,
                 });
-                yield this.insertNotification(trx, userModelTypes_1.TypeUser.JOB_SEEKER, {
-                    user_id: taskActivity.job_seeker_id,
-                    content: `New tasks have been assigned to you.`,
-                    related_id: taskActivity.job_application_id,
-                    type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
-                });
                 const allMessages = taskList
                     .map((task, index) => `${index + 1}. ${task.message}`)
                     .join("\n");
+                yield this.insertNotification(trx, userModelTypes_1.TypeUser.JOB_SEEKER, {
+                    user_id: taskActivity.job_seeker_id,
+                    sender_id: user_id,
+                    sender_type: constants_1.USER_TYPE.HOTELIER,
+                    title: this.NotificationMsg.NEW_TASKS_ASSIGNED.title,
+                    content: allMessages,
+                    related_id: taskActivity.job_application_id,
+                    type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
+                });
                 socket_1.io.to(String(taskActivity.job_seeker_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION, {
                     user_id: taskActivity.job_seeker_id,
+                    title: this.NotificationMsg.NEW_TASKS_ASSIGNED.title,
                     content: allMessages,
                     related_id: res[0].id,
                     type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
@@ -180,6 +196,7 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
         });
         this.approveEndJobTaskActivity = (req) => __awaiter(this, void 0, void 0, function* () {
             const id = req.params.id;
+            const { user_id } = req.hotelier;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const paymentModel = this.Model.paymnentModel(trx);
                 const jobPostModel = this.Model.jobPostModel(trx);
@@ -246,13 +263,17 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 });
                 yield this.insertNotification(trx, userModelTypes_1.TypeUser.JOB_SEEKER, {
                     user_id: taskActivity.job_seeker_id,
-                    content: `Your task is under review. Please wait a few moments!`,
+                    sender_id: user_id,
+                    sender_type: constants_1.USER_TYPE.HOTELIER,
+                    title: this.NotificationMsg.TASK_UNDER_REVIEW.title,
+                    content: this.NotificationMsg.TASK_UNDER_REVIEW.content(application.job_post_details_id),
                     related_id: res[0].id,
                     type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                 });
                 socket_1.io.to(String(taskActivity.job_seeker_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION, {
                     user_id: taskActivity.job_seeker_id,
-                    content: `Your task is under review. Please wait a few moments!`,
+                    title: this.NotificationMsg.TASK_UNDER_REVIEW.title,
+                    content: this.NotificationMsg.TASK_UNDER_REVIEW.content(application.job_post_details_id),
                     related_id: res[0].id,
                     type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                     read_status: false,

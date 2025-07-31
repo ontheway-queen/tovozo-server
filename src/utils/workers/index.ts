@@ -1,81 +1,43 @@
-// JobPostExpireWorker.ts - manages the worker side only
 import { Worker } from "bullmq";
 import Redis from "ioredis";
-import JobPostWorker from "./jobPost/jobPostWorker";
-
-// export class JobPostExpireWorker {
-// 	private worker: Worker | null = null;
-// 	private jobWorker = new JobPostWorker();
-// 	private redisUrl: string;
-
-// 	constructor(redisUrl = "redis://localhost") {
-// 		this.redisUrl = redisUrl;
-// 	}
-
-// 	start() {
-// 		if (this.worker) return;
-
-// 		const connection = new Redis(this.redisUrl);
-
-// 		this.worker = new Worker(
-// 			"expire-job-post",
-// 			async (job) => await this.jobWorker.expireJobPost(job),
-// 			{ connection }
-// 		);
-
-// 		this.worker.on("completed", (job) => {
-// 			console.log(`✅ Job expired: ${job.id}`);
-// 		});
-
-// 		this.worker.on("failed", (job, err) => {
-// 			console.error(`❌ Job failed: ${job?.id}`, err);
-// 		});
-
-// 		console.log("Expire job worker started");
-// 	}
-
-// 	async stop() {
-// 		if (!this.worker) return;
-// 		await this.worker.close();
-// 		this.worker = null;
-// 	}
-// }
+import JobPostWorker from "./job/jobPostWorker";
 
 export default class Workers {
-	private worker: Worker | null = null;
-	private jobWorker = new JobPostWorker();
-	private redisUrl: string;
-
 	constructor(redisUrl = "redis://localhost") {
 		this.redisUrl = redisUrl;
+		this.connection = new Redis(this.redisUrl, {
+			maxRetriesPerRequest: null,
+		});
 		this.callWorkers();
 	}
 
+	private worker: Worker | null = null;
+	private redisUrl: string;
+	private connection: Redis;
+	private jobPostWorker = new JobPostWorker();
+
 	private callWorkers() {
-		this.ExpireJob();
+		this.ExpireJobPostDetails();
 	}
 
-	public ExpireJob() {
+	public ExpireJobPostDetails() {
 		if (this.worker) return;
 
-		const connection = new Redis(this.redisUrl, {
-			maxRetriesPerRequest: null,
-		});
-
 		this.worker = new Worker(
-			"expire-job-post",
-			async (job) => await this.jobWorker.expireJobPost(job),
-			{ connection }
+			"expire-job-post-details",
+			async (job) => await this.jobPostWorker.expireJobPostDetails(job),
+			{ connection: this.connection }
 		);
 
 		this.worker.on("completed", (job) => {
-			console.log(`✅ Job expired: ${job.id}`);
+			console.log(`✅ Job post details expired: ${job.id}`);
 		});
 
 		this.worker.on("failed", (job, err) => {
-			console.error(`❌ Job failed: ${job?.id}`, err);
+			console.error(
+				`❌ Job post details expired failed: ${job?.id}`,
+				err
+			);
 		});
-
-		console.log("Expire job worker started");
 	}
 }

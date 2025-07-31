@@ -242,7 +242,6 @@ class PublicCommonValidator {
                 .optional(),
         });
         this.getNotificationValidator = joi_1.default.object({
-            user_id: joi_1.default.number().integer().positive().required(),
             limit: joi_1.default.number().integer().optional(),
             skip: joi_1.default.number().integer().optional(),
         });

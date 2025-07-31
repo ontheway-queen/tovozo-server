@@ -15,6 +15,7 @@ import {
 import { TypeUser } from "../utils/modelTypes/user/userModelTypes";
 import { QueueManager } from "../utils/queue/queue";
 import { Queue } from "bullmq";
+import NotificationMessage from "../utils/miscellaneous/notificationMessage";
 
 abstract class AbstractServices {
 	protected db = db;
@@ -24,7 +25,8 @@ abstract class AbstractServices {
 	protected StatusCode = StatusCode;
 	protected Model = new Models();
 
-	private queueManager = QueueManager.getInstance();
+	protected queueManager = QueueManager.getInstance();
+	protected NotificationMsg = NotificationMessage;
 
 	protected async insertAdminAudit(
 		trx: Knex.Transaction,
@@ -41,7 +43,13 @@ abstract class AbstractServices {
 		userType: `${TypeUser}`,
 		payload: INotificationPayload
 	) {
-		if (!payload.content || !payload.type || !payload.related_id) return;
+		if (
+			!payload.content ||
+			!payload.title ||
+			!payload.type ||
+			!payload.related_id
+		)
+			return;
 
 		const commonModel = this.Model.commonModel(trx);
 		const notificationPayload: INotificationPayload[] = [];
@@ -102,6 +110,9 @@ abstract class AbstractServices {
 		for (const user of users) {
 			notificationPayload.push({
 				user_id: user.user_id,
+				sender_id: payload.sender_id,
+				sender_type: payload.sender_type,
+				title: payload.title,
 				content: payload.content,
 				related_id: payload.related_id,
 				type: payload.type,
@@ -119,6 +130,9 @@ abstract class AbstractServices {
 				this.socketService.emitNotification({
 					user_id,
 					socketId,
+					sender_id: payload.sender_id,
+					sender_type: payload.sender_type,
+					title: payload.title,
 					content: payload.content,
 					related_id: payload.related_id,
 					type: payload.type,

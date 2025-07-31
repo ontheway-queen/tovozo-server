@@ -188,13 +188,21 @@ class CommonModel extends schema_1.default {
             const { limit = 100, skip = 0, id, user_id, need_total = true, } = params;
             const data = yield this.db(`${this.TABLES.notification} as n`)
                 .withSchema(this.DBO_SCHEMA)
-                .select("n.id", "n.user_id", "n.content", "n.created_at", "n.related_id", "n.type", "u.type as user_type", this.db.raw(`
+                .select("n.id", "n.user_id", "n.sender_id", "n.sender_type", "n.title", "n.content", "n.created_at", "n.related_id", "n.type", "u.type as user_type", this.db.raw(`
         CASE
           WHEN ns.user_id IS NOT NULL THEN true
           ELSE false
         END AS is_read
-      `))
+      `), this.db.raw(`
+          CASE 
+            WHEN n.sender_type = 'HOTELIER' THEN sender.photo
+            WHEN n.sender_type = 'JOB_SEEKER' THEN sender.photo
+            WHEN n.sender_type = 'ADMIN' THEN NULL
+            ELSE NULL
+          END AS photo
+        `))
                 .leftJoin("user as u", "u.id", "n.user_id")
+                .leftJoin("user as sender", "sender.id", "n.sender_id")
                 .leftJoin(`${this.TABLES.notification_seen} as ns`, function () {
                 this.on("ns.notification_id", "n.id").andOn("ns.user_id", database_1.db.raw("?", [user_id]));
             })

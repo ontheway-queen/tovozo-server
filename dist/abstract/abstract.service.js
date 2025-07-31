@@ -22,6 +22,7 @@ const statusCode_1 = __importDefault(require("../utils/miscellaneous/statusCode"
 const commonModelTypes_1 = require("../utils/modelTypes/common/commonModelTypes");
 const userModelTypes_1 = require("../utils/modelTypes/user/userModelTypes");
 const queue_1 = require("../utils/queue/queue");
+const notificationMessage_1 = __importDefault(require("../utils/miscellaneous/notificationMessage"));
 class AbstractServices {
     constructor() {
         this.db = database_1.db;
@@ -31,6 +32,7 @@ class AbstractServices {
         this.StatusCode = statusCode_1.default;
         this.Model = new rootModel_1.default();
         this.queueManager = queue_1.QueueManager.getInstance();
+        this.NotificationMsg = notificationMessage_1.default;
     }
     insertAdminAudit(trx, payload) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -41,7 +43,10 @@ class AbstractServices {
     // Insert notification
     insertNotification(trx, userType, payload) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (!payload.content || !payload.type || !payload.related_id)
+            if (!payload.content ||
+                !payload.title ||
+                !payload.type ||
+                !payload.related_id)
                 return;
             const commonModel = this.Model.commonModel(trx);
             const notificationPayload = [];
@@ -90,6 +95,9 @@ class AbstractServices {
             for (const user of users) {
                 notificationPayload.push({
                     user_id: user.user_id,
+                    sender_id: payload.sender_id,
+                    sender_type: payload.sender_type,
+                    title: payload.title,
                     content: payload.content,
                     related_id: payload.related_id,
                     type: payload.type,
@@ -106,6 +114,9 @@ class AbstractServices {
                     this.socketService.emitNotification({
                         user_id,
                         socketId,
+                        sender_id: payload.sender_id,
+                        sender_type: payload.sender_type,
+                        title: payload.title,
                         content: payload.content,
                         related_id: payload.related_id,
                         type: payload.type,

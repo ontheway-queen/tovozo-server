@@ -51,12 +51,18 @@ export default class OrganizationModel extends Schema {
 				"org.is_deleted",
 				"org.is_2fa_on",
 				"org.location_id",
+				"org_photo.file as photo",
 				"l.longitude",
 				"l.latitude"
 			)
 			.joinRaw(`LEFT JOIN ?? as l ON l.id = org.location_id`, [
 				`${this.DBO_SCHEMA}.${this.TABLES.location}`,
 			])
+			.leftJoin(
+				`organization_photos as org_photo`,
+				"org_photo.organization_id",
+				"org.id"
+			)
 			.where((qb) => {
 				if (where.id) qb.andWhere("org.id", where.id);
 				if (where.user_id) qb.andWhere("org.user_id", where.user_id);
