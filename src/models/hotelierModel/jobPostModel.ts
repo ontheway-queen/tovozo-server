@@ -668,11 +668,22 @@ class JobPostModel extends Schema {
 	}
 
 	// Get all Job post using job post id
-	public async getAllJobsUsingJobPostId(id: number) {
+	public async getAllJobsUsingJobPostId({
+		id,
+		status,
+	}: {
+		id: number;
+		status?: string;
+	}) {
 		return await this.db("job_post_details")
 			.withSchema(this.DBO_SCHEMA)
 			.select("id")
-			.where("job_post_id", id);
+			.where("job_post_id", id)
+			.andWhere((qb) => {
+				if (status) {
+					qb.andWhere("status", status);
+				}
+			});
 	}
 }
 

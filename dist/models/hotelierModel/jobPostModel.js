@@ -454,12 +454,17 @@ class JobPostModel extends schema_1.default {
         });
     }
     // Get all Job post using job post id
-    getAllJobsUsingJobPostId(id) {
-        return __awaiter(this, void 0, void 0, function* () {
+    getAllJobsUsingJobPostId(_a) {
+        return __awaiter(this, arguments, void 0, function* ({ id, status, }) {
             return yield this.db("job_post_details")
                 .withSchema(this.DBO_SCHEMA)
                 .select("id")
-                .where("job_post_id", id);
+                .where("job_post_id", id)
+                .andWhere((qb) => {
+                if (status) {
+                    qb.andWhere("status", status);
+                }
+            });
         });
     }
 }

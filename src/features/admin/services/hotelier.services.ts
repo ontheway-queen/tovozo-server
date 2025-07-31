@@ -431,13 +431,6 @@ class AdminHotelierService extends AbstractServices {
 						"Trabill OTA B2B://login"
 					),
 				});
-
-				// await this.insertNotification(trx, TypeUser.HOTELIER, {
-				//   user_id: id,
-				//   content: `Your account has been updated to ${parsed.hotelier.status}`,
-				//   related_id: id,
-				//   type: "HOTELIER_VERIFICATION",
-				// });
 			}
 			if (Object.keys(parsed.organization_address).length > 0) {
 				if (parsed.organization_address.city_id) {

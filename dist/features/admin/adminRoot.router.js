@@ -16,6 +16,7 @@ const profile_router_1 = __importDefault(require("./router/profile.router"));
 const report_router_1 = __importDefault(require("./router/report.router"));
 const adminPayment_router_1 = __importDefault(require("./router/adminPayment.router"));
 const adminStats_router_1 = __importDefault(require("./router/adminStats.router"));
+const adminNotificationRouter_1 = __importDefault(require("./router/adminNotificationRouter"));
 class AdminRootRouter {
     constructor() {
         this.Router = (0, express_1.Router)();
@@ -31,6 +32,7 @@ class AdminRootRouter {
         this.adminChatRouter = new adminChatRouter_1.default();
         this.paymentRouter = new adminPayment_router_1.default();
         this.adminStatsRouter = new adminStats_router_1.default();
+        this.notificationRouter = new adminNotificationRouter_1.default();
         this.callRouter();
     }
     callRouter() {
@@ -58,6 +60,8 @@ class AdminRootRouter {
         this.Router.use("/payments", this.paymentRouter.router);
         // statistics
         this.Router.use("/statistics", this.adminStatsRouter.router);
+        // Notification
+        this.Router.use("/notification", this.notificationRouter.router);
     }
 }
 exports.default = AdminRootRouter;

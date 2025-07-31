@@ -148,7 +148,12 @@ class AdminJobSeekerService extends AbstractServices {
 
 			await this.insertNotification(trx, TypeUser.ADMIN, {
 				user_id: jobSeekerId,
-				content: `Hi ${userInput.name}, your account has been created successfully`,
+				sender_type: USER_TYPE.ADMIN,
+				title: this.NotificationMsg.JOB_SEEKER_ACCOUNT_CREATED.title,
+				content:
+					this.NotificationMsg.JOB_SEEKER_ACCOUNT_CREATED.content(
+						userInput.name
+					),
 				related_id: jobSeekerId,
 				type: NotificationTypeEnum.JOB_SEEKER_VERIFICATION,
 			});
@@ -503,13 +508,6 @@ class AdminJobSeekerService extends AbstractServices {
 						"Trabill OTA B2B://login"
 					),
 				});
-
-				// await this.insertNotification(trx, TypeUser.JOB_SEEKER, {
-				//   user_id: id,
-				//   content: `Your account has been updated to ${parsed.jobSeeker.account_status}`,
-				//   related_id: id,
-				//   type: "JOB_SEEKER_VERIFICATION",
-				// });
 			}
 
 			await this.insertAdminAudit(trx, {

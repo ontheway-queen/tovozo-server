@@ -67,13 +67,23 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                 // );
                 yield this.insertNotification(trx, userModelTypes_1.TypeUser.HOTELIER, {
                     user_id: myApplication.hotelier_id,
-                    content: `The job ${job_post_details_id} is waiting for your approval.`,
+                    sender_id: user_id,
+                    sender_type: constants_1.USER_TYPE.JOB_SEEKER,
+                    title: this.NotificationMsg.WAITING_FOR_APPROVAL.title,
+                    content: this.NotificationMsg.WAITING_FOR_APPROVAL.content({
+                        id: myApplication.job_post_details_id,
+                        jobTitle: myApplication.job_post_title,
+                    }),
                     related_id: res[0].id,
                     type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                 });
                 socket_1.io.to(String(myApplication.hotelier_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION, {
                     user_id: myApplication.hotelier_id,
-                    content: `The job ${job_post_details_id} is waiting for your approval.`,
+                    title: this.NotificationMsg.WAITING_FOR_APPROVAL.title,
+                    content: this.NotificationMsg.WAITING_FOR_APPROVAL.content({
+                        id: myApplication.job_post_details_id,
+                        jobTitle: myApplication.job_post_title,
+                    }),
                     related_id: res[0].id,
                     type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                     read_status: false,
@@ -87,6 +97,7 @@ class JobTaskActivitiesService extends abstract_service_1.default {
             }));
         });
         this.toggleTaskCompletionStatus = (req) => __awaiter(this, void 0, void 0, function* () {
+            const { user_id } = req.jobSeeker;
             const id = Number(req.params.id);
             const is_completed = req.query.is_completed;
             const isCompleted = is_completed === "1" ? true : false;
@@ -109,20 +120,19 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                     id,
                     message: taskList[0].message,
                 });
-                console.log({ res });
                 yield this.insertNotification(trx, userModelTypes_1.TypeUser.HOTELIER, {
                     user_id: taskList[0].hotelier_id,
-                    content: `The task ${res[0].id} is ${taskList[0].is_completed
-                        ? "completed."
-                        : "remain incomplete."}`,
+                    sender_id: user_id,
+                    sender_type: constants_1.USER_TYPE.JOB_SEEKER,
+                    title: this.NotificationMsg.TASK_STATUS.title(taskList[0].is_completed),
+                    content: this.NotificationMsg.TASK_STATUS.content(taskList[0].id, taskList[0].is_completed),
                     related_id: taskList[0].id,
                     type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                 });
                 socket_1.io.to(String(taskList[0].hotelier_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION, {
                     user_id: taskList[0].hotelier_id,
-                    content: `The task ${res[0].id} is ${taskList[0].is_completed
-                        ? "completed."
-                        : "remain incomplete."}`,
+                    title: this.NotificationMsg.TASK_STATUS.title(taskList[0].is_completed),
+                    content: this.NotificationMsg.TASK_STATUS.content(taskList[0].id, taskList[0].is_completed),
                     related_id: taskList[0].id,
                     type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                     read_status: false,
@@ -137,6 +147,7 @@ class JobTaskActivitiesService extends abstract_service_1.default {
         });
         this.endJobTaskActivities = (req) => __awaiter(this, void 0, void 0, function* () {
             const id = req.params.id;
+            const { user_id } = req.jobSeeker;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const jobApplicationModel = this.Model.jobApplicationModel(trx);
                 const jobTaskActivitiesModel = this.Model.jobTaskActivitiesModel(trx);
@@ -176,13 +187,23 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                 });
                 yield this.insertNotification(trx, userModelTypes_1.TypeUser.HOTELIER, {
                     user_id: myApplication.hotelier_id,
-                    content: `All job task submitted for job ${taskActivity.job_post_details_id}`,
+                    sender_id: user_id,
+                    sender_type: constants_1.USER_TYPE.JOB_SEEKER,
+                    title: this.NotificationMsg.JOB_ASSIGNED.title,
+                    content: this.NotificationMsg.JOB_ASSIGNED.content({
+                        id: taskActivity.job_post_details_id,
+                        jobTitle: myApplication.job_post_title,
+                    }),
                     related_id: res[0].id,
                     type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                 });
                 socket_1.io.to(String(myApplication.hotelier_id)).emit("end-job", {
                     user_id: myApplication.hotelier_id,
-                    content: `All job task submitted for job ${taskActivity.job_post_details_id}`,
+                    title: this.NotificationMsg.JOB_ASSIGNED.title,
+                    content: this.NotificationMsg.JOB_ASSIGNED.content({
+                        id: taskActivity.job_post_details_id,
+                        jobTitle: myApplication.job_post_title,
+                    }),
                     related_id: res[0].id,
                     type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                     read_status: false,

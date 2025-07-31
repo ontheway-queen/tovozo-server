@@ -39,22 +39,6 @@ class PublicController extends abstract_controller_1.default {
             const _a = yield this.services.matchEmailOtpService(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
-        this.getAllNotification = this.asyncWrapper.wrap({ querySchema: this.commonValidator.getNotificationValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.services.getAllNotification(req), { code } = _a, data = __rest(_a, ["code"]);
-            res.status(code).json(data);
-        }));
-        this.deleteNotification = this.asyncWrapper.wrap({
-            querySchema: this.commonValidator.mutationNotificationValidator,
-        }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.services.deleteNotification(req), { code } = _a, data = __rest(_a, ["code"]);
-            res.status(code).json(data);
-        }));
-        this.readNotification = this.asyncWrapper.wrap({
-            querySchema: this.commonValidator.mutationNotificationValidator,
-        }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.services.readNotification(req), { code } = _a, data = __rest(_a, ["code"]);
-            res.status(code).json(data);
-        }));
         //get all country
         this.getAllCountry = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
             const _a = yield this.services.getAllCountry(req), { code } = _a, data = __rest(_a, ["code"]);

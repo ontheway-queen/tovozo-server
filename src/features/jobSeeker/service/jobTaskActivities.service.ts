@@ -90,7 +90,13 @@ export default class JobTaskActivitiesService extends AbstractServices {
 
 			await this.insertNotification(trx, TypeUser.HOTELIER, {
 				user_id: myApplication.hotelier_id,
-				content: `The job ${job_post_details_id} is waiting for your approval.`,
+				sender_id: user_id,
+				sender_type: USER_TYPE.JOB_SEEKER,
+				title: this.NotificationMsg.WAITING_FOR_APPROVAL.title,
+				content: this.NotificationMsg.WAITING_FOR_APPROVAL.content({
+					id: myApplication.job_post_details_id,
+					jobTitle: myApplication.job_post_title,
+				}),
 				related_id: res[0].id,
 				type: NotificationTypeEnum.JOB_TASK,
 			});
@@ -99,7 +105,11 @@ export default class JobTaskActivitiesService extends AbstractServices {
 				TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION,
 				{
 					user_id: myApplication.hotelier_id,
-					content: `The job ${job_post_details_id} is waiting for your approval.`,
+					title: this.NotificationMsg.WAITING_FOR_APPROVAL.title,
+					content: this.NotificationMsg.WAITING_FOR_APPROVAL.content({
+						id: myApplication.job_post_details_id,
+						jobTitle: myApplication.job_post_title,
+					}),
 					related_id: res[0].id,
 					type: NotificationTypeEnum.JOB_TASK,
 					read_status: false,
@@ -116,6 +126,7 @@ export default class JobTaskActivitiesService extends AbstractServices {
 	};
 
 	public toggleTaskCompletionStatus = async (req: Request) => {
+		const { user_id } = req.jobSeeker;
 		const id = Number(req.params.id);
 		const is_completed = req.query.is_completed;
 		const isCompleted = is_completed === "1" ? true : false;
@@ -150,14 +161,18 @@ export default class JobTaskActivitiesService extends AbstractServices {
 				id,
 				message: taskList[0].message,
 			});
-			console.log({ res });
+
 			await this.insertNotification(trx, TypeUser.HOTELIER, {
 				user_id: taskList[0].hotelier_id,
-				content: `The task ${res[0].id} is ${
+				sender_id: user_id,
+				sender_type: USER_TYPE.JOB_SEEKER,
+				title: this.NotificationMsg.TASK_STATUS.title(
 					taskList[0].is_completed
-						? "completed."
-						: "remain incomplete."
-				}`,
+				),
+				content: this.NotificationMsg.TASK_STATUS.content(
+					taskList[0].id,
+					taskList[0].is_completed
+				),
 				related_id: taskList[0].id,
 				type: NotificationTypeEnum.JOB_TASK,
 			});
@@ -166,11 +181,13 @@ export default class JobTaskActivitiesService extends AbstractServices {
 				TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION,
 				{
 					user_id: taskList[0].hotelier_id,
-					content: `The task ${res[0].id} is ${
+					title: this.NotificationMsg.TASK_STATUS.title(
 						taskList[0].is_completed
-							? "completed."
-							: "remain incomplete."
-					}`,
+					),
+					content: this.NotificationMsg.TASK_STATUS.content(
+						taskList[0].id,
+						taskList[0].is_completed
+					),
 					related_id: taskList[0].id,
 					type: NotificationTypeEnum.JOB_TASK,
 					read_status: false,
@@ -188,6 +205,7 @@ export default class JobTaskActivitiesService extends AbstractServices {
 
 	public endJobTaskActivities = async (req: Request) => {
 		const id = req.params.id;
+		const { user_id } = req.jobSeeker;
 
 		return await this.db.transaction(async (trx) => {
 			const jobApplicationModel = this.Model.jobApplicationModel(trx);
@@ -260,14 +278,24 @@ export default class JobTaskActivitiesService extends AbstractServices {
 
 			await this.insertNotification(trx, TypeUser.HOTELIER, {
 				user_id: myApplication.hotelier_id,
-				content: `All job task submitted for job ${taskActivity.job_post_details_id}`,
+				sender_id: user_id,
+				sender_type: USER_TYPE.JOB_SEEKER,
+				title: this.NotificationMsg.JOB_ASSIGNED.title,
+				content: this.NotificationMsg.JOB_ASSIGNED.content({
+					id: taskActivity.job_post_details_id,
+					jobTitle: myApplication.job_post_title,
+				}),
 				related_id: res[0].id,
 				type: NotificationTypeEnum.JOB_TASK,
 			});
 
 			io.to(String(myApplication.hotelier_id)).emit("end-job", {
 				user_id: myApplication.hotelier_id,
-				content: `All job task submitted for job ${taskActivity.job_post_details_id}`,
+				title: this.NotificationMsg.JOB_ASSIGNED.title,
+				content: this.NotificationMsg.JOB_ASSIGNED.content({
+					id: taskActivity.job_post_details_id,
+					jobTitle: myApplication.job_post_title,
+				}),
 				related_id: res[0].id,
 				type: NotificationTypeEnum.JOB_TASK,
 				read_status: false,
