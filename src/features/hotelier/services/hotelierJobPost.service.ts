@@ -72,6 +72,7 @@ class HotelierJobPostService extends AbstractServices {
 						this.StatusCode.HTTP_BAD_REQUEST
 					);
 				}
+
 				const expireTime = new Date(detail.start_time).getTime();
 				const now = Date.now();
 				const delay = Math.max(expireTime - now, 0);
