@@ -36,4 +36,5 @@ export interface ICheckUserData {
 	is_deleted: boolean;
 	location_id?: number;
 	stripe_acc_id?: string | null;
+	device_id: string | null;
 }

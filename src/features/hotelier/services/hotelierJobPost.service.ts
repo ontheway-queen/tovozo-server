@@ -13,7 +13,7 @@ import {
 	IJobPostPayload,
 } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
 import { IHoiteleirJob } from "../utils/types/hotelierJobPostTypes";
-import { io } from "../../../app/socket";
+import { getAllOnlineSocketIds, io } from "../../../app/socket";
 import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
 import {
 	NotificationTypeEnum,
@@ -29,6 +29,7 @@ class HotelierJobPostService extends AbstractServices {
 			job_post_details: IJobPostDetailsPayload[];
 		};
 		return await this.db.transaction(async (trx) => {
+			const userModel = this.Model.UserModel(trx);
 			const jobSeeker = this.Model.jobSeekerModel(trx);
 			const model = this.Model.jobPostModel(trx);
 			const organizationModel = this.Model.organizationModel(trx);
@@ -105,6 +106,16 @@ class HotelierJobPostService extends AbstractServices {
 
 			const all = await jobSeeker.getJobSeekerLocation({});
 			for (const seeker of all) {
+				const isSeekerExists = await userModel.checkUser({
+					id: seeker.user_id,
+				});
+				if (isSeekerExists && isSeekerExists.length < 1) {
+					throw new CustomError(
+						"Job Seeker not found!",
+						this.StatusCode.HTTP_NOT_FOUND
+					);
+				}
+
 				const seekerLat = parseFloat(seeker.latitude);
 				const seekerLng = parseFloat(seeker.longitude);
 
@@ -122,7 +133,6 @@ class HotelierJobPostService extends AbstractServices {
 					)} km`
 				);
 
-				// 1. Insert into DB
 				await this.insertNotification(trx, TypeUser.JOB_SEEKER, {
 					user_id: seeker.user_id,
 					sender_id: user_id,
@@ -133,20 +143,39 @@ class HotelierJobPostService extends AbstractServices {
 					type: NotificationTypeEnum.JOB_TASK,
 				});
 
-				// 2. Emit via socket
-				io.to(String(seeker.user_id)).emit(
-					TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION,
-					{
-						user_id: seeker.user_id,
-						photo: checkOrganization.photo,
-						title: this.NotificationMsg.NEW_JOB_POST_NEARBY.title,
-						content:
-							this.NotificationMsg.NEW_JOB_POST_NEARBY.content,
-						type: NotificationTypeEnum.JOB_TASK,
-						read_status: false,
-						created_at: new Date().toISOString(),
+				const isJobSeekerOnline = await getAllOnlineSocketIds({
+					user_id: seeker.user_id,
+					type: seeker.type,
+				});
+
+				if (isJobSeekerOnline && isJobSeekerOnline.length > 0) {
+					io.to(String(seeker.user_id)).emit(
+						TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION,
+						{
+							user_id: seeker.user_id,
+							photo: checkOrganization.photo,
+							title: this.NotificationMsg.NEW_JOB_POST_NEARBY
+								.title,
+							content:
+								this.NotificationMsg.NEW_JOB_POST_NEARBY
+									.content,
+							type: NotificationTypeEnum.JOB_TASK,
+							read_status: false,
+							created_at: new Date().toISOString(),
+						}
+					);
+				} else {
+					if (isSeekerExists[0].device_id) {
+						await Lib.sendNotificationToMobile({
+							to: isSeekerExists[0].device_id as string,
+							notificationTitle:
+								this.NotificationMsg.NEW_JOB_POST_NEARBY.title,
+							notificationBody:
+								this.NotificationMsg.NEW_JOB_POST_NEARBY
+									.content,
+						});
 					}
-				);
+				}
 			}
 
 			return {

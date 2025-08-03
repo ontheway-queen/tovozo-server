@@ -25,6 +25,7 @@ class HotelierJobPostService extends abstract_service_1.default {
             const { user_id } = req.hotelier;
             const body = req.body;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const userModel = this.Model.UserModel(trx);
                 const jobSeeker = this.Model.jobSeekerModel(trx);
                 const model = this.Model.jobPostModel(trx);
                 const organizationModel = this.Model.organizationModel(trx);
@@ -67,13 +68,18 @@ class HotelierJobPostService extends abstract_service_1.default {
                 const orgLng = parseFloat(checkOrganization.longitude);
                 const all = yield jobSeeker.getJobSeekerLocation({});
                 for (const seeker of all) {
+                    const isSeekerExists = yield userModel.checkUser({
+                        id: seeker.user_id,
+                    });
+                    if (isSeekerExists && isSeekerExists.length < 1) {
+                        throw new customError_1.default("Job Seeker not found!", this.StatusCode.HTTP_NOT_FOUND);
+                    }
                     const seekerLat = parseFloat(seeker.latitude);
                     const seekerLng = parseFloat(seeker.longitude);
                     const distance = lib_1.default.getDistanceFromLatLng(orgLat, orgLng, seekerLat, seekerLng);
                     if (distance > 10)
                         continue;
                     console.log(`Job seeker ${seeker.user_id} is within ${distance.toFixed(2)} km`);
-                    // 1. Insert into DB
                     yield this.insertNotification(trx, userModelTypes_1.TypeUser.JOB_SEEKER, {
                         user_id: seeker.user_id,
                         sender_id: user_id,
@@ -83,16 +89,33 @@ class HotelierJobPostService extends abstract_service_1.default {
                         related_id: res[0].id,
                         type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                     });
-                    // 2. Emit via socket
-                    socket_1.io.to(String(seeker.user_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION, {
+                    const isJobSeekerOnline = yield (0, socket_1.getAllOnlineSocketIds)({
                         user_id: seeker.user_id,
-                        photo: checkOrganization.photo,
-                        title: this.NotificationMsg.NEW_JOB_POST_NEARBY.title,
-                        content: this.NotificationMsg.NEW_JOB_POST_NEARBY.content,
-                        type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
-                        read_status: false,
-                        created_at: new Date().toISOString(),
+                        type: seeker.type,
                     });
+                    if (isJobSeekerOnline && isJobSeekerOnline.length > 0) {
+                        socket_1.io.to(String(seeker.user_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION, {
+                            user_id: seeker.user_id,
+                            photo: checkOrganization.photo,
+                            title: this.NotificationMsg.NEW_JOB_POST_NEARBY
+                                .title,
+                            content: this.NotificationMsg.NEW_JOB_POST_NEARBY
+                                .content,
+                            type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
+                            read_status: false,
+                            created_at: new Date().toISOString(),
+                        });
+                    }
+                    else {
+                        if (isSeekerExists[0].device_id) {
+                            yield lib_1.default.sendNotificationToMobile({
+                                to: isSeekerExists[0].device_id,
+                                notificationTitle: this.NotificationMsg.NEW_JOB_POST_NEARBY.title,
+                                notificationBody: this.NotificationMsg.NEW_JOB_POST_NEARBY
+                                    .content,
+                            });
+                        }
+                    }
                 }
                 return {
                     success: true,

@@ -1,4 +1,37 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -19,6 +52,8 @@ const nodemailer_1 = __importDefault(require("nodemailer"));
 const path_1 = __importDefault(require("path"));
 const config_1 = __importDefault(require("../../app/config"));
 const commonModel_1 = __importDefault(require("../../models/commonModel/commonModel"));
+const admin = __importStar(require("firebase-admin"));
+const serviceAccount = require("../../../tovozo-af573-c696b1e30dfc.json");
 class Lib {
     // send email by nodemailer
     static sendEmailDefault(_a) {
@@ -192,6 +227,34 @@ class Lib {
                 Math.sin(dLng / 2) ** 2;
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c;
+    }
+    static sendNotificationToMobile(params) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!admin.apps.length) {
+                admin.initializeApp({
+                    credential: admin.credential.cert(serviceAccount),
+                });
+            }
+            const { to, notificationTitle, notificationBody, data } = params;
+            const message = {
+                token: to ||
+                    "dEKGB0UyRPq99zBtC1vT5-:APA91bFzQIMgnI0YqirV-uU3qDZLlELTf32JAIiiyunOE33tsCf48eijz3m8tGL723RJY9IlHsXtr66xIIJV-1pfGlHiZJtxUljC7adSVSv_2jZ2HbKSVHA", // FCM device token
+                notification: {
+                    title: notificationTitle,
+                    body: notificationBody,
+                },
+                data: data || {},
+            };
+            try {
+                const response = yield admin.messaging().send(message);
+                console.log("Notification sent:", response);
+                return response;
+            }
+            catch (error) {
+                console.error("Error sending notification:", error);
+                throw error;
+            }
+        });
     }
 }
 exports.default = Lib;

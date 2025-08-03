@@ -19,6 +19,7 @@ const customError_1 = __importDefault(require("../../../utils/lib/customError"))
 const constants_1 = require("../../../utils/miscellaneous/constants");
 const commonModelTypes_1 = require("../../../utils/modelTypes/common/commonModelTypes");
 const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
+const lib_1 = __importDefault(require("../../../utils/lib/lib"));
 class HotelierJobTaskActivitiesService extends abstract_service_1.default {
     constructor() {
         super();
@@ -26,13 +27,13 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
             const id = req.params.id;
             const { user_id } = req.hotelier;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const userModel = this.Model.UserModel(trx);
                 const jobPostModel = this.Model.jobPostModel(trx);
                 const jobApplicationModel = this.Model.jobApplicationModel(trx);
                 const jobTaskActivitiesModel = this.Model.jobTaskActivitiesModel(trx);
                 const taskActivity = yield jobTaskActivitiesModel.getSingleTaskActivity({
                     id: Number(id),
                 });
-                console.log({ taskActivity });
                 if (taskActivity.application_status !==
                     constants_1.JOB_APPLICATION_STATUS.WaitingForApproval) {
                     throw new customError_1.default(`You cannot perform this action because the job application is not awaiting approval.`, this.StatusCode.HTTP_FORBIDDEN);
@@ -57,6 +58,12 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                     id: application.job_post_details_id,
                     status: constants_1.JOB_POST_DETAILS_STATUS.In_Progress,
                 });
+                const isJobSeekerExists = yield userModel.checkUser({
+                    id: taskActivity.job_seeker_id,
+                });
+                if (isJobSeekerExists && isJobSeekerExists.length < 1) {
+                    throw new customError_1.default("Job Seeker not found!", this.StatusCode.HTTP_NOT_FOUND);
+                }
                 yield this.insertNotification(trx, userModelTypes_1.TypeUser.JOB_SEEKER, {
                     user_id: taskActivity.job_seeker_id,
                     sender_id: user_id,
@@ -69,18 +76,36 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                     related_id: res[0].id,
                     type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                 });
-                socket_1.io.to(String(taskActivity.job_seeker_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION, {
+                const isJobSeekerOnline = yield (0, socket_1.getAllOnlineSocketIds)({
                     user_id: taskActivity.job_seeker_id,
-                    title: this.NotificationMsg.JOB_ASSIGNED.title,
-                    content: this.NotificationMsg.JOB_ASSIGNED.content({
-                        id: application.job_post_details_id,
-                        jobTitle: application.job_post_title,
-                    }),
-                    related_id: res[0].id,
-                    type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
-                    read_status: false,
-                    created_at: new Date().toISOString(),
+                    type: userModelTypes_1.TypeUser.JOB_SEEKER,
                 });
+                if (isJobSeekerOnline && isJobSeekerOnline.length > 0) {
+                    socket_1.io.to(String(taskActivity.job_seeker_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION, {
+                        user_id: taskActivity.job_seeker_id,
+                        title: this.NotificationMsg.JOB_ASSIGNED.title,
+                        content: this.NotificationMsg.JOB_ASSIGNED.content({
+                            id: application.job_post_details_id,
+                            jobTitle: application.job_post_title,
+                        }),
+                        related_id: res[0].id,
+                        type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
+                        read_status: false,
+                        created_at: new Date().toISOString(),
+                    });
+                }
+                else {
+                    if (isJobSeekerExists[0].device_id) {
+                        yield lib_1.default.sendNotificationToMobile({
+                            to: isJobSeekerExists[0].device_id,
+                            notificationTitle: this.NotificationMsg.JOB_ASSIGNED.title,
+                            notificationBody: this.NotificationMsg.JOB_ASSIGNED.content({
+                                id: application.job_post_details_id,
+                                jobTitle: application.job_post_title,
+                            }),
+                        });
+                    }
+                }
                 return {
                     success: true,
                     message: this.ResMsg.HTTP_OK,
@@ -92,6 +117,7 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
             const { user_id } = req.hotelier;
             const body = req.body;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const userModel = this.Model.UserModel(trx);
                 const jobApplicationModel = this.Model.jobApplicationModel(trx);
                 const jobTaskActivitiesModel = this.Model.jobTaskActivitiesModel(trx);
                 const jobTaskListModel = this.Model.jobTaskListModel(trx);
@@ -125,6 +151,12 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                     job_seeker_id: taskActivity.job_seeker_id,
                     status: constants_1.JOB_APPLICATION_STATUS.IN_PROGRESS,
                 });
+                const isJobSeekerExists = yield userModel.checkUser({
+                    id: taskActivity.job_seeker_id,
+                });
+                if (isJobSeekerExists && isJobSeekerExists.length < 1) {
+                    throw new customError_1.default("Job Seeker not found!", this.StatusCode.HTTP_NOT_FOUND);
+                }
                 const allMessages = taskList
                     .map((task, index) => `${index + 1}. ${task.message}`)
                     .join("\n");
@@ -137,15 +169,30 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                     related_id: taskActivity.job_application_id,
                     type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                 });
-                socket_1.io.to(String(taskActivity.job_seeker_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION, {
+                const isJobSeekerOnline = yield (0, socket_1.getAllOnlineSocketIds)({
                     user_id: taskActivity.job_seeker_id,
-                    title: this.NotificationMsg.NEW_TASKS_ASSIGNED.title,
-                    content: allMessages,
-                    related_id: res[0].id,
-                    type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
-                    read_status: false,
-                    created_at: new Date().toISOString(),
+                    type: userModelTypes_1.TypeUser.JOB_SEEKER,
                 });
+                if (isJobSeekerOnline && isJobSeekerOnline.length > 0) {
+                    socket_1.io.to(String(taskActivity.job_seeker_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION, {
+                        user_id: taskActivity.job_seeker_id,
+                        title: this.NotificationMsg.NEW_TASKS_ASSIGNED.title,
+                        content: allMessages,
+                        related_id: res[0].id,
+                        type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
+                        read_status: false,
+                        created_at: new Date().toISOString(),
+                    });
+                }
+                else {
+                    if (isJobSeekerExists[0].device_id) {
+                        yield lib_1.default.sendNotificationToMobile({
+                            to: isJobSeekerExists[0].device_id,
+                            notificationTitle: this.NotificationMsg.NEW_TASKS_ASSIGNED.title,
+                            notificationBody: allMessages,
+                        });
+                    }
+                }
                 return {
                     success: true,
                     message: this.ResMsg.HTTP_OK,
@@ -198,6 +245,7 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
             const id = req.params.id;
             const { user_id } = req.hotelier;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const userModel = this.Model.UserModel(trx);
                 const paymentModel = this.Model.paymnentModel(trx);
                 const jobPostModel = this.Model.jobPostModel(trx);
                 const jobApplicationModel = this.Model.jobApplicationModel(trx);
@@ -261,6 +309,12 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                     id: application.job_post_details_id,
                     status: constants_1.JOB_POST_DETAILS_STATUS.WorkFinished,
                 });
+                const isJobSeekerExists = yield userModel.checkUser({
+                    id: taskActivity.job_seeker_id,
+                });
+                if (isJobSeekerExists && isJobSeekerExists.length < 1) {
+                    throw new customError_1.default("Job Seeker not found!", this.StatusCode.HTTP_NOT_FOUND);
+                }
                 yield this.insertNotification(trx, userModelTypes_1.TypeUser.JOB_SEEKER, {
                     user_id: taskActivity.job_seeker_id,
                     sender_id: user_id,
@@ -270,15 +324,30 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                     related_id: res[0].id,
                     type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                 });
-                socket_1.io.to(String(taskActivity.job_seeker_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION, {
+                const isJobSeekerOnline = yield (0, socket_1.getAllOnlineSocketIds)({
                     user_id: taskActivity.job_seeker_id,
-                    title: this.NotificationMsg.TASK_UNDER_REVIEW.title,
-                    content: this.NotificationMsg.TASK_UNDER_REVIEW.content(application.job_post_details_id),
-                    related_id: res[0].id,
-                    type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
-                    read_status: false,
-                    created_at: new Date().toISOString(),
+                    type: userModelTypes_1.TypeUser.JOB_SEEKER,
                 });
+                if (isJobSeekerOnline && isJobSeekerOnline.length > 0) {
+                    socket_1.io.to(String(taskActivity.job_seeker_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION, {
+                        user_id: taskActivity.job_seeker_id,
+                        title: this.NotificationMsg.TASK_UNDER_REVIEW.title,
+                        content: this.NotificationMsg.TASK_UNDER_REVIEW.content(application.job_post_details_id),
+                        related_id: res[0].id,
+                        type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
+                        read_status: false,
+                        created_at: new Date().toISOString(),
+                    });
+                }
+                else {
+                    if (isJobSeekerExists[0].device_id) {
+                        yield lib_1.default.sendNotificationToMobile({
+                            to: isJobSeekerExists[0].device_id,
+                            notificationTitle: this.NotificationMsg.TASK_UNDER_REVIEW.title,
+                            notificationBody: this.NotificationMsg.TASK_UNDER_REVIEW.content(application.job_post_details_id),
+                        });
+                    }
+                }
                 return {
                     success: true,
                     message: this.ResMsg.HTTP_OK,
