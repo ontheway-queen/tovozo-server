@@ -27,6 +27,7 @@ const getConfig = () => {
         STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
         STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
         BASE_URL: process.env.BASE_URL,
+        PRIVATE_KEY: process.env.PRIVATE_KEY,
     };
 };
 const getSanitzedConfig = (config) => {

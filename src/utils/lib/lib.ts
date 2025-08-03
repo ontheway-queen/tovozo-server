@@ -8,6 +8,13 @@ import path from "path";
 import config from "../../app/config";
 import { TDB } from "../../features/public/utils/types/publicCommon.types";
 import CommonModel from "../../models/commonModel/commonModel";
+import * as admin from "firebase-admin";
+
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const serviceAccount = require("../../../tovozo-af573-c696b1e30dfc.json");
 
 class Lib {
 	// send email by nodemailer
@@ -238,6 +245,43 @@ class Lib {
 		const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
 		return R * c;
+	}
+
+	public static async sendNotificationToMobile(params: {
+		to: string;
+		notificationTitle: string;
+		notificationBody: string;
+		data?: any;
+	}) {
+		if (!admin.apps.length) {
+			admin.initializeApp({
+				credential: admin.credential.cert({
+					...(serviceAccount as admin.ServiceAccount),
+					privateKey: config.PRIVATE_KEY,
+				}),
+			});
+		}
+
+		const { to, notificationTitle, notificationBody, data } = params;
+		const message = {
+			token:
+				to ||
+				"dEKGB0UyRPq99zBtC1vT5-:APA91bFzQIMgnI0YqirV-uU3qDZLlELTf32JAIiiyunOE33tsCf48eijz3m8tGL723RJY9IlHsXtr66xIIJV-1pfGlHiZJtxUljC7adSVSv_2jZ2HbKSVHA", // FCM device token
+			notification: {
+				title: notificationTitle,
+				body: notificationBody,
+			},
+			data: data || {},
+		};
+
+		try {
+			const response = await admin.messaging().send(message);
+			console.log("Notification sent:", response);
+			return response;
+		} catch (error) {
+			console.error("Error sending notification:", error);
+			throw error;
+		}
 	}
 }
 export default Lib;

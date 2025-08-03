@@ -25,6 +25,7 @@ import {
 	IJobSeekerUserBody,
 } from "../utils/types/jobSeekerAuth.types";
 import { sendEmailOtpTemplate } from "../../../utils/templates/sendEmailOtpTemplate";
+import { io } from "../../../app/socket";
 
 class JobSeekerAuthService extends AbstractServices {
 	//registration service

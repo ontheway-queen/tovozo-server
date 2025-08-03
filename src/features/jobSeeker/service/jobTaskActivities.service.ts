@@ -14,6 +14,7 @@ import {
 	NotificationTypeEnum,
 	TypeEmitNotificationEnum,
 } from "../../../utils/modelTypes/common/commonModelTypes";
+import Lib from "../../../utils/lib/lib";
 
 export default class JobTaskActivitiesService extends AbstractServices {
 	constructor() {
@@ -24,9 +25,21 @@ export default class JobTaskActivitiesService extends AbstractServices {
 		const { user_id } = req.jobSeeker;
 		const { job_application_id, job_post_details_id } = req.body;
 		return await this.db.transaction(async (trx) => {
+			const userModel = this.Model.UserModel(trx);
 			const jobApplicationModel = this.Model.jobApplicationModel(trx);
 			const jobTaskActivitiesModel =
 				this.Model.jobTaskActivitiesModel(trx);
+
+			const jobSeeker = await userModel.checkUser({
+				id: user_id,
+				type: TypeUser.JOB_SEEKER,
+			});
+			if (jobSeeker && jobSeeker.length < 1) {
+				throw new CustomError(
+					"Job seeker not found!",
+					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
 
 			const myApplication = await jobApplicationModel.getMyJobApplication(
 				{
@@ -73,20 +86,25 @@ export default class JobTaskActivitiesService extends AbstractServices {
 				job_application_id,
 				job_post_details_id,
 			};
-			console.log({ payload });
 			const res = await jobTaskActivitiesModel.createJobTaskActivity(
 				payload
 			);
-			console.log({ res });
+
 			await jobApplicationModel.updateMyJobApplicationStatus({
 				application_id: job_application_id,
 				job_seeker_id: user_id,
 				status: JOB_APPLICATION_STATUS.WaitingForApproval,
 			});
-			// await jobPostModel.updateJobPostDetailsStatus(
-			// 	myApplication.job_post_details_id,
-			// 	JOB_POST_DETAILS_STATUS.In_Progress
-			// );
+
+			const isHotelierExists = await userModel.checkUser({
+				id: myApplication.hotelier_id,
+			});
+			if (isHotelierExists && isHotelierExists.length < 1) {
+				throw new CustomError(
+					"Organization not found!",
+					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
 
 			await this.insertNotification(trx, TypeUser.HOTELIER, {
 				user_id: myApplication.hotelier_id,
@@ -101,21 +119,46 @@ export default class JobTaskActivitiesService extends AbstractServices {
 				type: NotificationTypeEnum.JOB_TASK,
 			});
 
-			io.to(String(myApplication.hotelier_id)).emit(
-				TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION,
-				{
-					user_id: myApplication.hotelier_id,
-					title: this.NotificationMsg.WAITING_FOR_APPROVAL.title,
-					content: this.NotificationMsg.WAITING_FOR_APPROVAL.content({
-						id: myApplication.job_post_details_id,
-						jobTitle: myApplication.job_post_title,
-					}),
-					related_id: res[0].id,
-					type: NotificationTypeEnum.JOB_TASK,
-					read_status: false,
-					created_at: new Date().toISOString(),
+			const isHotelierOnline = await getAllOnlineSocketIds({
+				user_id: myApplication.hotelier_id,
+				type: TypeUser.HOTELIER,
+			});
+
+			if (isHotelierOnline && isHotelierOnline.length > 0) {
+				io.to(String(myApplication.hotelier_id)).emit(
+					TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION,
+					{
+						user_id: myApplication.hotelier_id,
+						photo: jobSeeker[0].photo,
+						title: this.NotificationMsg.WAITING_FOR_APPROVAL.title,
+						content:
+							this.NotificationMsg.WAITING_FOR_APPROVAL.content({
+								id: myApplication.job_post_details_id,
+								jobTitle: myApplication.job_post_title,
+							}),
+						related_id: res[0].id,
+						type: NotificationTypeEnum.JOB_TASK,
+						read_status: false,
+						created_at: new Date().toISOString(),
+					}
+				);
+			} else {
+				if (isHotelierExists[0].device_id) {
+					await Lib.sendNotificationToMobile({
+						to: isHotelierExists[0].device_id as string,
+						notificationTitle:
+							this.NotificationMsg.WAITING_FOR_APPROVAL.title,
+						notificationBody:
+							this.NotificationMsg.WAITING_FOR_APPROVAL.content({
+								id: myApplication.job_post_details_id,
+								jobTitle: myApplication.job_post_title,
+							}),
+						data: {
+							photo: jobSeeker[0].photo,
+						},
+					});
 				}
-			);
+			}
 
 			return {
 				success: true,
@@ -132,10 +175,21 @@ export default class JobTaskActivitiesService extends AbstractServices {
 		const isCompleted = is_completed === "1" ? true : false;
 
 		return await this.db.transaction(async (trx) => {
+			const userModel = this.Model.UserModel(trx);
 			const jobTaskListModel = this.Model.jobTaskListModel(trx);
 
+			const jobSeeker = await userModel.checkUser({
+				id: user_id,
+				type: TypeUser.JOB_SEEKER,
+			});
+			if (jobSeeker && jobSeeker.length < 1) {
+				throw new CustomError(
+					"Job seeker not found!",
+					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
+
 			const taskList = await jobTaskListModel.getJobTaskList({ id });
-			console.log({ taskList });
 			if (!taskList.length) {
 				throw new CustomError(
 					"Job task not found. Please create task to proceed.",
@@ -155,12 +209,17 @@ export default class JobTaskActivitiesService extends AbstractServices {
 				completed_at: isCompleted ? new Date().toISOString() : null,
 			};
 
-			const res = await jobTaskListModel.updateJobTaskList(id, payload);
+			await jobTaskListModel.updateJobTaskList(id, payload);
 
-			io.emit("update:job-task-list", {
-				id,
-				message: taskList[0].message,
+			const isHotelierExists = await userModel.checkUser({
+				id: taskList[0].hotelier_id,
 			});
+			if (isHotelierExists && isHotelierExists.length < 1) {
+				throw new CustomError(
+					"Organization not found!",
+					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
 
 			await this.insertNotification(trx, TypeUser.HOTELIER, {
 				user_id: taskList[0].hotelier_id,
@@ -177,23 +236,49 @@ export default class JobTaskActivitiesService extends AbstractServices {
 				type: NotificationTypeEnum.JOB_TASK,
 			});
 
-			io.to(String(taskList[0].hotelier_id)).emit(
-				TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION,
-				{
-					user_id: taskList[0].hotelier_id,
-					title: this.NotificationMsg.TASK_STATUS.title(
-						taskList[0].is_completed
-					),
-					content: this.NotificationMsg.TASK_STATUS.content(
-						taskList[0].id,
-						taskList[0].is_completed
-					),
-					related_id: taskList[0].id,
-					type: NotificationTypeEnum.JOB_TASK,
-					read_status: false,
-					created_at: new Date().toISOString(),
+			const isHotelierOnline = await getAllOnlineSocketIds({
+				user_id: taskList[0].hotelier_id,
+				type: TypeUser.HOTELIER,
+			});
+
+			if (isHotelierOnline && isHotelierOnline.length > 0) {
+				io.to(String(taskList[0].hotelier_id)).emit(
+					TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION,
+					{
+						user_id: taskList[0].hotelier_id,
+						photo: jobSeeker[0].photo,
+						title: this.NotificationMsg.TASK_STATUS.title(
+							taskList[0].is_completed
+						),
+						content: this.NotificationMsg.TASK_STATUS.content(
+							taskList[0].id,
+							taskList[0].is_completed
+						),
+						related_id: taskList[0].id,
+						type: NotificationTypeEnum.JOB_TASK,
+						read_status: false,
+						created_at: new Date().toISOString(),
+					}
+				);
+			} else {
+				if (isHotelierExists[0].device_id) {
+					await Lib.sendNotificationToMobile({
+						to: isHotelierExists[0].device_id as string,
+						notificationTitle:
+							this.NotificationMsg.TASK_STATUS.title(
+								taskList[0].is_completed
+							),
+						notificationBody:
+							this.NotificationMsg.TASK_STATUS.content(
+								taskList[0].id,
+								taskList[0].is_completed
+							),
+						data: {
+							photo: jobSeeker[0].photo,
+						},
+					});
 				}
-			);
+			}
 
 			return {
 				success: true,
@@ -208,11 +293,19 @@ export default class JobTaskActivitiesService extends AbstractServices {
 		const { user_id } = req.jobSeeker;
 
 		return await this.db.transaction(async (trx) => {
+			const userModel = this.Model.UserModel(trx);
 			const jobApplicationModel = this.Model.jobApplicationModel(trx);
 			const jobTaskActivitiesModel =
 				this.Model.jobTaskActivitiesModel(trx);
-			const jobPostModel = this.Model.jobPostModel(trx);
 			const jobTaskListModel = this.Model.jobTaskListModel(trx);
+
+			const jobSeeker = await userModel.checkUser({ id: user_id });
+			if (!jobSeeker) {
+				throw new CustomError(
+					"Job Seeker not found!",
+					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
 
 			const taskActivity =
 				await jobTaskActivitiesModel.getSingleTaskActivity({
@@ -247,7 +340,6 @@ export default class JobTaskActivitiesService extends AbstractServices {
 			const incompleteTasks = taskList.filter(
 				(task) => !task.is_completed
 			);
-			console.log({ incompleteTasks });
 			if (incompleteTasks.length > 0) {
 				throw new CustomError(
 					"There are incomplete tasks that must be finished before proceeding.",
@@ -261,7 +353,6 @@ export default class JobTaskActivitiesService extends AbstractServices {
 					job_seeker_id: taskActivity.job_seeker_id,
 				}
 			);
-			console.log({ myApplication });
 			if (!myApplication) {
 				throw new CustomError(
 					`Job application not found or does not belong to you.`,
@@ -276,6 +367,16 @@ export default class JobTaskActivitiesService extends AbstractServices {
 				}
 			);
 
+			const isHotelierExists = await userModel.checkUser({
+				id: myApplication.hotelier_id,
+			});
+			if (isHotelierExists && isHotelierExists.length < 1) {
+				throw new CustomError(
+					"Organization not found!",
+					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
+
 			await this.insertNotification(trx, TypeUser.HOTELIER, {
 				user_id: myApplication.hotelier_id,
 				sender_id: user_id,
@@ -289,18 +390,42 @@ export default class JobTaskActivitiesService extends AbstractServices {
 				type: NotificationTypeEnum.JOB_TASK,
 			});
 
-			io.to(String(myApplication.hotelier_id)).emit("end-job", {
+			const isHotelierOnline = await getAllOnlineSocketIds({
 				user_id: myApplication.hotelier_id,
-				title: this.NotificationMsg.JOB_ASSIGNED.title,
-				content: this.NotificationMsg.JOB_ASSIGNED.content({
-					id: taskActivity.job_post_details_id,
-					jobTitle: myApplication.job_post_title,
-				}),
-				related_id: res[0].id,
-				type: NotificationTypeEnum.JOB_TASK,
-				read_status: false,
-				created_at: new Date().toISOString(),
+				type: TypeUser.HOTELIER,
 			});
+
+			if (isHotelierOnline && isHotelierOnline.length > 0) {
+				io.to(String(myApplication.hotelier_id)).emit("end-job", {
+					user_id: myApplication.hotelier_id,
+					photo: jobSeeker[0].photo,
+					title: this.NotificationMsg.JOB_ASSIGNED.title,
+					content: this.NotificationMsg.JOB_ASSIGNED.content({
+						id: taskActivity.job_post_details_id,
+						jobTitle: myApplication.job_post_title,
+					}),
+					related_id: res[0].id,
+					type: NotificationTypeEnum.JOB_TASK,
+					read_status: false,
+					created_at: new Date().toISOString(),
+				});
+			} else {
+				if (isHotelierExists[0].device_id) {
+					await Lib.sendNotificationToMobile({
+						to: isHotelierExists[0].device_id as string,
+						notificationTitle:
+							this.NotificationMsg.JOB_ASSIGNED.title,
+						notificationBody:
+							this.NotificationMsg.JOB_ASSIGNED.content({
+								id: taskActivity.job_post_details_id,
+								jobTitle: myApplication.job_post_title,
+							}),
+						data: {
+							photo: jobSeeker[0].photo,
+						},
+					});
+				}
+			}
 
 			return {
 				success: true,

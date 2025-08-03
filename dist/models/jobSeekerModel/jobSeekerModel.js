@@ -328,7 +328,7 @@ class JobSeekerModel extends schema_1.default {
             const { name } = query;
             return yield this.db("job_seeker as js")
                 .withSchema(this.JOB_SEEKER)
-                .select("js.user_id", "u.name", "js.location_id", "l.latitude", "l.longitude")
+                .select("js.user_id", "u.type", "u.name", "u.device_id", "js.location_id", "l.latitude", "l.longitude")
                 .joinRaw(`LEFT JOIN ?? as l ON l.id = js.location_id`, [
                 `${this.DBO_SCHEMA}.${this.TABLES.location}`,
             ])

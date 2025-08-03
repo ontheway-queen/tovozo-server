@@ -18,11 +18,10 @@ export default class Workers {
 
 	private callWorkers() {
 		this.ExpireJobPostDetails();
+		this.jobStartReminder();
 	}
 
 	public ExpireJobPostDetails() {
-		if (this.worker) return;
-
 		this.worker = new Worker(
 			"expire-job-post-details",
 			async (job) => await this.jobPostWorker.expireJobPostDetails(job),
@@ -36,6 +35,27 @@ export default class Workers {
 		this.worker.on("failed", (job, err) => {
 			console.error(
 				`❌ Job post details expired failed: ${job?.id}`,
+				err
+			);
+		});
+	}
+
+	public jobStartReminder() {
+		this.worker = new Worker(
+			"jobStartReminder",
+			async (job) => await this.jobPostWorker.jobStartReminder(job),
+			{ connection: this.connection }
+		);
+
+		this.worker.on("completed", (job) => {
+			console.log(
+				`✅ Job start reminder sent successfully for jobPostDetail ID: ${job.data.id}`
+			);
+		});
+
+		this.worker.on("failed", (job, err) => {
+			console.error(
+				`❌ Failed to send job start reminder for jobPostDetail ID: ${job?.data?.id}`,
 				err
 			);
 		});

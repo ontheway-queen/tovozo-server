@@ -113,6 +113,7 @@ class App {
 			}
 
 			socket.on("disconnect", async (event) => {
+				console.log({ lastLocation });
 				console.log(socket.id, "-", id, "-", type, " disconnected...");
 				await removeOnlineUser(id, socket.id);
 				if (

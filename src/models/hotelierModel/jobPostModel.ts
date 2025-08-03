@@ -45,7 +45,7 @@ class JobPostModel extends Schema {
 	): Promise<IJobSeekerJobList> {
 		const {
 			user_id,
-			title,
+			search,
 			category_id,
 			city_id,
 			limit,
@@ -92,7 +92,13 @@ class JobPostModel extends Schema {
 			.where((qb) => {
 				if (category_id) qb.andWhere("j.id", category_id);
 				if (city_id) qb.andWhere("vwl.city_id", city_id);
-				if (title) qb.andWhereILike("j.title", `%${title}%`);
+				if (search) {
+					qb.andWhere((subQb) => {
+						subQb
+							.whereILike("j.title", `%${search}%`)
+							.orWhereILike("org.name", `%${search}%`);
+					});
+				}
 			})
 			.andWhere("jpd.status", "Pending")
 			.orderBy("jp.created_time", "desc")
@@ -134,7 +140,13 @@ class JobPostModel extends Schema {
 				.where((qb) => {
 					if (category_id) qb.andWhere("j.id", category_id);
 					if (city_id) qb.andWhere("vwl.city_id", city_id);
-					if (title) qb.andWhereILike("j.title", `%${title}%`);
+					if (search) {
+						qb.andWhere((subQb) => {
+							subQb
+								.whereILike("j.title", `%${search}%`)
+								.orWhereILike("org.name", `%${search}%`);
+						});
+					}
 				})
 				.andWhere("jpd.status", "Pending");
 
@@ -175,6 +187,7 @@ class JobPostModel extends Schema {
 				"j.details as job_details",
 				"j.job_seeker_pay",
 				"jp.created_time",
+				"u.id as hotelier_id",
 				"org.name as organization_name",
 				"org_p.file as organization_photo",
 				"vwl.location_address",
@@ -226,6 +239,7 @@ class JobPostModel extends Schema {
 				"jpd.status as job_post_details_status",
 				"jpd.start_time",
 				"jpd.end_time",
+				"u.id as hotelier_id",
 				"jp.organization_id",
 				"j.title",
 				"j.hourly_rate",

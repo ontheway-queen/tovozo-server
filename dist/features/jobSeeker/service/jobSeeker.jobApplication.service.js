@@ -18,15 +18,28 @@ const cancellationLogModel_1 = __importDefault(require("../../../models/cancella
 const jobPostModel_1 = __importDefault(require("../../../models/hotelierModel/jobPostModel"));
 const customError_1 = __importDefault(require("../../../utils/lib/customError"));
 const constants_1 = require("../../../utils/miscellaneous/constants");
+const userModel_1 = __importDefault(require("../../../models/userModel/userModel"));
+const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
+const commonModelTypes_1 = require("../../../utils/modelTypes/common/commonModelTypes");
+const socket_1 = require("../../../app/socket");
+const lib_1 = __importDefault(require("../../../utils/lib/lib"));
 class JobSeekerJobApplication extends abstract_service_1.default {
     constructor() {
         super();
         this.createJobApplication = (req) => __awaiter(this, void 0, void 0, function* () {
             const { job_post_details_id } = req.body;
-            const { user_id, gender } = req.jobSeeker;
+            const { user_id } = req.jobSeeker;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const userModel = new userModel_1.default(trx);
                 const jobPostModel = new jobPostModel_1.default(trx);
                 const cancellationLogModel = new cancellationLogModel_1.default(trx);
+                const jobSeeker = yield userModel.checkUser({
+                    id: user_id,
+                    type: userModelTypes_1.TypeUser.JOB_SEEKER,
+                });
+                if (jobSeeker && jobSeeker.length < 1) {
+                    throw new customError_1.default("Job seeker not found!", this.StatusCode.HTTP_NOT_FOUND);
+                }
                 const jobPost = yield jobPostModel.getSingleJobPostForJobSeeker(job_post_details_id);
                 if (!jobPost) {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
@@ -62,6 +75,81 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 };
                 yield model.createJobApplication(payload);
                 yield model.markJobPostDetailAsApplied(Number(job_post_details_id));
+                const hotelier = yield userModel.checkUser({
+                    id: jobPost.hotelier_id,
+                    type: userModelTypes_1.TypeUser.HOTELIER,
+                });
+                if (hotelier && hotelier.length < 1) {
+                    throw new customError_1.default("Organization not found!", this.StatusCode.HTTP_NOT_FOUND);
+                }
+                const startTime = new Date(jobPost.start_time);
+                const reminderTime = new Date(startTime.getTime() - 2 * 60 * 60 * 1000);
+                const jobStartReminderQueue = this.getQueue("jobStartReminder");
+                yield jobStartReminderQueue.add("jobStartReminder", {
+                    id: jobPost.id,
+                    hotelier_id: jobPost.hotelier_id,
+                    job_seeker_id: user_id,
+                    photo: hotelier[0].photo,
+                    title: this.NotificationMsg.JOB_START_REMINDER.title,
+                    content: this.NotificationMsg.JOB_START_REMINDER.content({
+                        jobTitle: jobPost.job_title,
+                        startTime: new Date(jobPost.start_time),
+                    }),
+                    type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
+                    related_id: jobPost.id,
+                    job_seeker_device_id: jobSeeker[0].device_id,
+                }, {
+                    delay: reminderTime.getTime() - Date.now(),
+                    removeOnComplete: true,
+                    removeOnFail: false,
+                });
+                yield this.insertNotification(trx, userModelTypes_1.TypeUser.HOTELIER, {
+                    user_id: jobPost.hotelier_id,
+                    sender_id: user_id,
+                    sender_type: userModelTypes_1.TypeUser.JOB_SEEKER,
+                    title: this.NotificationMsg.JOB_APPLICATION_RECEIVED.title,
+                    content: this.NotificationMsg.JOB_APPLICATION_RECEIVED.content({
+                        jobTitle: jobPost.job_title,
+                        jobPostId: jobPost.id,
+                    }),
+                    type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
+                    related_id: jobPost.id,
+                });
+                const isHotelierOnline = yield (0, socket_1.getAllOnlineSocketIds)({
+                    user_id: jobPost.hotelier_id,
+                    type: userModelTypes_1.TypeUser.HOTELIER,
+                });
+                if (isHotelierOnline && isHotelierOnline.length > 0) {
+                    socket_1.io.to(String(jobPost.hotelier_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION, {
+                        user_id,
+                        photo: jobSeeker[0].photo,
+                        title: this.NotificationMsg.JOB_APPLICATION_RECEIVED
+                            .title,
+                        content: this.NotificationMsg.JOB_APPLICATION_RECEIVED.content({
+                            jobTitle: jobPost.job_title,
+                            jobPostId: jobPost.id,
+                        }),
+                        related_id: jobPost.id,
+                        type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
+                        read_status: false,
+                        created_at: new Date().toISOString(),
+                    });
+                }
+                else {
+                    if (hotelier[0].device_id) {
+                        yield lib_1.default.sendNotificationToMobile({
+                            to: hotelier[0].device_id,
+                            notificationTitle: this.NotificationMsg.JOB_APPLICATION_RECEIVED.title,
+                            notificationBody: this.NotificationMsg.JOB_APPLICATION_RECEIVED.content({
+                                jobTitle: jobPost.job_title,
+                                jobPostId: jobPost.id,
+                            }),
+                            data: {
+                                photo: jobSeeker[0].photo,
+                            },
+                        });
+                    }
+                }
                 return {
                     success: true,
                     message: this.ResMsg.HTTP_OK,
