@@ -36,6 +36,17 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 			const jobTaskActivitiesModel =
 				this.Model.jobTaskActivitiesModel(trx);
 
+			const hotelier = await userModel.checkUser({
+				id: user_id,
+				type: TypeUser.HOTELIER,
+			});
+			if (hotelier && hotelier.length < 1) {
+				throw new CustomError(
+					"Organization not found!",
+					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
+
 			const taskActivity =
 				await jobTaskActivitiesModel.getSingleTaskActivity({
 					id: Number(id),
@@ -114,6 +125,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 					TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION,
 					{
 						user_id: taskActivity.job_seeker_id,
+						photo: hotelier[0].photo,
 						title: this.NotificationMsg.JOB_ASSIGNED.title,
 						content: this.NotificationMsg.JOB_ASSIGNED.content({
 							id: application.job_post_details_id,
@@ -136,6 +148,9 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 								id: application.job_post_details_id,
 								jobTitle: application.job_post_title,
 							}),
+						data: {
+							photo: hotelier[0].photo,
+						},
 					});
 				}
 			}
@@ -161,7 +176,17 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 			const jobTaskActivitiesModel =
 				this.Model.jobTaskActivitiesModel(trx);
 			const jobTaskListModel = this.Model.jobTaskListModel(trx);
-			const { user_id } = req.hotelier;
+
+			const hotelier = await userModel.checkUser({
+				id: user_id,
+				type: TypeUser.HOTELIER,
+			});
+			if (hotelier && hotelier.length < 1) {
+				throw new CustomError(
+					"Organization nor found!",
+					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
 
 			// Validate task activity
 			const taskActivity =
@@ -245,6 +270,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 					TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION,
 					{
 						user_id: taskActivity.job_seeker_id,
+						photo: hotelier[0].photo,
 						title: this.NotificationMsg.NEW_TASKS_ASSIGNED.title,
 						content: allMessages,
 						related_id: res[0].id,
@@ -260,6 +286,9 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 						notificationTitle:
 							this.NotificationMsg.NEW_TASKS_ASSIGNED.title,
 						notificationBody: allMessages,
+						data: {
+							photo: hotelier[0].photo,
+						},
 					});
 				}
 			}
@@ -346,6 +375,17 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 			const jobApplicationModel = this.Model.jobApplicationModel(trx);
 			const jobTaskActivitiesModel =
 				this.Model.jobTaskActivitiesModel(trx);
+
+			const hotelier = await userModel.checkUser({
+				id: user_id,
+				type: TypeUser.HOTELIER,
+			});
+			if (hotelier && hotelier.length < 1) {
+				throw new CustomError(
+					"Organization nor found!",
+					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
 
 			const taskActivity =
 				await jobTaskActivitiesModel.getSingleTaskActivity({
@@ -486,6 +526,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 					TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION,
 					{
 						user_id: taskActivity.job_seeker_id,
+						photo: hotelier[0].photo,
 						title: this.NotificationMsg.TASK_UNDER_REVIEW.title,
 						content: this.NotificationMsg.TASK_UNDER_REVIEW.content(
 							application.job_post_details_id
@@ -506,6 +547,9 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 							this.NotificationMsg.TASK_UNDER_REVIEW.content(
 								application.job_post_details_id
 							),
+						data: {
+							photo: hotelier[0].photo,
+						},
 					});
 				}
 			}

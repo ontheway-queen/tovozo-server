@@ -173,6 +173,9 @@ class HotelierJobPostService extends AbstractServices {
 							notificationBody:
 								this.NotificationMsg.NEW_JOB_POST_NEARBY
 									.content,
+							data: {
+								photo: checkOrganization.photo,
+							},
 						});
 					}
 				}

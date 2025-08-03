@@ -57,6 +57,36 @@ class NotificationMessage {
 		content: (name: string) =>
 			`Job seeker "${name}" has successfully created an account and is ready for verification.`,
 	};
+
+	static readonly JOB_APPLICATION_RECEIVED = {
+		title: "New Job Application Received",
+		content: ({
+			jobTitle,
+			jobPostId,
+		}: {
+			jobTitle?: string;
+			jobPostId?: number;
+		}) =>
+			`A job seeker has applied for your job post "${jobTitle}" (ID: #${jobPostId}). Please review the application details.`,
+	};
+
+	static readonly JOB_START_REMINDER = {
+		title: "Your Job Starts Soon",
+		content: ({
+			jobTitle,
+			startTime,
+		}: {
+			jobTitle: string;
+			startTime: Date;
+		}) =>
+			`Reminder: Your job "${jobTitle}" is starting at ${startTime.toLocaleTimeString(
+				[],
+				{
+					hour: "2-digit",
+					minute: "2-digit",
+				}
+			)}. Please be prepared and arrive on time.`,
+	};
 }
 
 export default NotificationMessage;

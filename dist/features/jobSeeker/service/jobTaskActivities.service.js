@@ -29,6 +29,13 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                 const userModel = this.Model.UserModel(trx);
                 const jobApplicationModel = this.Model.jobApplicationModel(trx);
                 const jobTaskActivitiesModel = this.Model.jobTaskActivitiesModel(trx);
+                const jobSeeker = yield userModel.checkUser({
+                    id: user_id,
+                    type: userModelTypes_1.TypeUser.JOB_SEEKER,
+                });
+                if (jobSeeker && jobSeeker.length < 1) {
+                    throw new customError_1.default("Job seeker not found!", this.StatusCode.HTTP_NOT_FOUND);
+                }
                 const myApplication = yield jobApplicationModel.getMyJobApplication({
                     job_application_id,
                     job_seeker_id: user_id,
@@ -86,6 +93,7 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                 if (isHotelierOnline && isHotelierOnline.length > 0) {
                     socket_1.io.to(String(myApplication.hotelier_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION, {
                         user_id: myApplication.hotelier_id,
+                        photo: jobSeeker[0].photo,
                         title: this.NotificationMsg.WAITING_FOR_APPROVAL.title,
                         content: this.NotificationMsg.WAITING_FOR_APPROVAL.content({
                             id: myApplication.job_post_details_id,
@@ -106,6 +114,9 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                                 id: myApplication.job_post_details_id,
                                 jobTitle: myApplication.job_post_title,
                             }),
+                            data: {
+                                photo: jobSeeker[0].photo,
+                            },
                         });
                     }
                 }
@@ -124,6 +135,13 @@ class JobTaskActivitiesService extends abstract_service_1.default {
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const userModel = this.Model.UserModel(trx);
                 const jobTaskListModel = this.Model.jobTaskListModel(trx);
+                const jobSeeker = yield userModel.checkUser({
+                    id: user_id,
+                    type: userModelTypes_1.TypeUser.JOB_SEEKER,
+                });
+                if (jobSeeker && jobSeeker.length < 1) {
+                    throw new customError_1.default("Job seeker not found!", this.StatusCode.HTTP_NOT_FOUND);
+                }
                 const taskList = yield jobTaskListModel.getJobTaskList({ id });
                 if (!taskList.length) {
                     throw new customError_1.default("Job task not found. Please create task to proceed.", this.StatusCode.HTTP_NOT_FOUND);
@@ -158,6 +176,7 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                 if (isHotelierOnline && isHotelierOnline.length > 0) {
                     socket_1.io.to(String(taskList[0].hotelier_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION, {
                         user_id: taskList[0].hotelier_id,
+                        photo: jobSeeker[0].photo,
                         title: this.NotificationMsg.TASK_STATUS.title(taskList[0].is_completed),
                         content: this.NotificationMsg.TASK_STATUS.content(taskList[0].id, taskList[0].is_completed),
                         related_id: taskList[0].id,
@@ -172,6 +191,9 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                             to: isHotelierExists[0].device_id,
                             notificationTitle: this.NotificationMsg.TASK_STATUS.title(taskList[0].is_completed),
                             notificationBody: this.NotificationMsg.TASK_STATUS.content(taskList[0].id, taskList[0].is_completed),
+                            data: {
+                                photo: jobSeeker[0].photo,
+                            },
                         });
                     }
                 }
@@ -249,6 +271,7 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                 if (isHotelierOnline && isHotelierOnline.length > 0) {
                     socket_1.io.to(String(myApplication.hotelier_id)).emit("end-job", {
                         user_id: myApplication.hotelier_id,
+                        photo: jobSeeker[0].photo,
                         title: this.NotificationMsg.JOB_ASSIGNED.title,
                         content: this.NotificationMsg.JOB_ASSIGNED.content({
                             id: taskActivity.job_post_details_id,
@@ -269,6 +292,9 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                                 id: taskActivity.job_post_details_id,
                                 jobTitle: myApplication.job_post_title,
                             }),
+                            data: {
+                                photo: jobSeeker[0].photo,
+                            },
                         });
                     }
                 }

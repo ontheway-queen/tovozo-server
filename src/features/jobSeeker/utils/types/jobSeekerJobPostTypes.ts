@@ -7,7 +7,7 @@ export interface IJobSeekerJob {
 	start_time: string;
 	end_time: string;
 	organization_id: number;
-	title: string;
+	job_title: string;
 	job_category: string;
 	hourly_rate: string;
 	created_time: string;
@@ -22,6 +22,7 @@ export interface IJobSeekerJob {
 	country_name: string;
 	latitude: number;
 	longitude: number;
+	hotelier_id: number;
 }
 
 export interface IJobSeekerJobList {

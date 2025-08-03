@@ -53,6 +53,8 @@ const path_1 = __importDefault(require("path"));
 const config_1 = __importDefault(require("../../app/config"));
 const commonModel_1 = __importDefault(require("../../models/commonModel/commonModel"));
 const admin = __importStar(require("firebase-admin"));
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
 const serviceAccount = require("../../../tovozo-af573-c696b1e30dfc.json");
 class Lib {
     // send email by nodemailer
@@ -232,7 +234,7 @@ class Lib {
         return __awaiter(this, void 0, void 0, function* () {
             if (!admin.apps.length) {
                 admin.initializeApp({
-                    credential: admin.credential.cert(serviceAccount),
+                    credential: admin.credential.cert(Object.assign(Object.assign({}, serviceAccount), { privateKey: config_1.default.PRIVATE_KEY })),
                 });
             }
             const { to, notificationTitle, notificationBody, data } = params;

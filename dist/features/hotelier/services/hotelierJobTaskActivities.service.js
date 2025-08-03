@@ -31,6 +31,13 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 const jobPostModel = this.Model.jobPostModel(trx);
                 const jobApplicationModel = this.Model.jobApplicationModel(trx);
                 const jobTaskActivitiesModel = this.Model.jobTaskActivitiesModel(trx);
+                const hotelier = yield userModel.checkUser({
+                    id: user_id,
+                    type: userModelTypes_1.TypeUser.HOTELIER,
+                });
+                if (hotelier && hotelier.length < 1) {
+                    throw new customError_1.default("Organization not found!", this.StatusCode.HTTP_NOT_FOUND);
+                }
                 const taskActivity = yield jobTaskActivitiesModel.getSingleTaskActivity({
                     id: Number(id),
                 });
@@ -83,6 +90,7 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 if (isJobSeekerOnline && isJobSeekerOnline.length > 0) {
                     socket_1.io.to(String(taskActivity.job_seeker_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION, {
                         user_id: taskActivity.job_seeker_id,
+                        photo: hotelier[0].photo,
                         title: this.NotificationMsg.JOB_ASSIGNED.title,
                         content: this.NotificationMsg.JOB_ASSIGNED.content({
                             id: application.job_post_details_id,
@@ -103,6 +111,9 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                                 id: application.job_post_details_id,
                                 jobTitle: application.job_post_title,
                             }),
+                            data: {
+                                photo: hotelier[0].photo,
+                            },
                         });
                     }
                 }
@@ -121,7 +132,13 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 const jobApplicationModel = this.Model.jobApplicationModel(trx);
                 const jobTaskActivitiesModel = this.Model.jobTaskActivitiesModel(trx);
                 const jobTaskListModel = this.Model.jobTaskListModel(trx);
-                const { user_id } = req.hotelier;
+                const hotelier = yield userModel.checkUser({
+                    id: user_id,
+                    type: userModelTypes_1.TypeUser.HOTELIER,
+                });
+                if (hotelier && hotelier.length < 1) {
+                    throw new customError_1.default("Organization nor found!", this.StatusCode.HTTP_NOT_FOUND);
+                }
                 // Validate task activity
                 const taskActivity = yield jobTaskActivitiesModel.getSingleTaskActivity({
                     id: body.job_task_activity_id,
@@ -176,6 +193,7 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 if (isJobSeekerOnline && isJobSeekerOnline.length > 0) {
                     socket_1.io.to(String(taskActivity.job_seeker_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION, {
                         user_id: taskActivity.job_seeker_id,
+                        photo: hotelier[0].photo,
                         title: this.NotificationMsg.NEW_TASKS_ASSIGNED.title,
                         content: allMessages,
                         related_id: res[0].id,
@@ -190,6 +208,9 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                             to: isJobSeekerExists[0].device_id,
                             notificationTitle: this.NotificationMsg.NEW_TASKS_ASSIGNED.title,
                             notificationBody: allMessages,
+                            data: {
+                                photo: hotelier[0].photo,
+                            },
                         });
                     }
                 }
@@ -250,6 +271,13 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 const jobPostModel = this.Model.jobPostModel(trx);
                 const jobApplicationModel = this.Model.jobApplicationModel(trx);
                 const jobTaskActivitiesModel = this.Model.jobTaskActivitiesModel(trx);
+                const hotelier = yield userModel.checkUser({
+                    id: user_id,
+                    type: userModelTypes_1.TypeUser.HOTELIER,
+                });
+                if (hotelier && hotelier.length < 1) {
+                    throw new customError_1.default("Organization nor found!", this.StatusCode.HTTP_NOT_FOUND);
+                }
                 const taskActivity = yield jobTaskActivitiesModel.getSingleTaskActivity({
                     id: Number(id),
                 });
@@ -331,6 +359,7 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 if (isJobSeekerOnline && isJobSeekerOnline.length > 0) {
                     socket_1.io.to(String(taskActivity.job_seeker_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION, {
                         user_id: taskActivity.job_seeker_id,
+                        photo: hotelier[0].photo,
                         title: this.NotificationMsg.TASK_UNDER_REVIEW.title,
                         content: this.NotificationMsg.TASK_UNDER_REVIEW.content(application.job_post_details_id),
                         related_id: res[0].id,
@@ -345,6 +374,9 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                             to: isJobSeekerExists[0].device_id,
                             notificationTitle: this.NotificationMsg.TASK_UNDER_REVIEW.title,
                             notificationBody: this.NotificationMsg.TASK_UNDER_REVIEW.content(application.job_post_details_id),
+                            data: {
+                                photo: hotelier[0].photo,
+                            },
                         });
                     }
                 }

@@ -23,6 +23,7 @@ interface ENV {
 	STRIPE_SECRET_KEY: string | undefined;
 	STRIPE_PUBLISHABLE_KEY: string | undefined;
 	BASE_URL: string | undefined;
+	PRIVATE_KEY: string | undefined;
 }
 
 // Config types
@@ -44,6 +45,7 @@ interface Config {
 	STRIPE_SECRET_KEY: string;
 	STRIPE_PUBLISHABLE_KEY: string;
 	BASE_URL: string;
+	PRIVATE_KEY: string;
 }
 
 // Loading process.env as  ENV interface
@@ -66,6 +68,7 @@ const getConfig = (): ENV => {
 		STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
 		STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
 		BASE_URL: process.env.BASE_URL,
+		PRIVATE_KEY: process.env.PRIVATE_KEY,
 	};
 };
 

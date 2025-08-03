@@ -10,6 +10,10 @@ import { TDB } from "../../features/public/utils/types/publicCommon.types";
 import CommonModel from "../../models/commonModel/commonModel";
 import * as admin from "firebase-admin";
 
+import dotenv from "dotenv";
+
+dotenv.config();
+
 const serviceAccount = require("../../../tovozo-af573-c696b1e30dfc.json");
 
 class Lib {
@@ -251,9 +255,10 @@ class Lib {
 	}) {
 		if (!admin.apps.length) {
 			admin.initializeApp({
-				credential: admin.credential.cert(
-					serviceAccount as admin.ServiceAccount
-				),
+				credential: admin.credential.cert({
+					...(serviceAccount as admin.ServiceAccount),
+					privateKey: config.PRIVATE_KEY,
+				}),
 			});
 		}
 

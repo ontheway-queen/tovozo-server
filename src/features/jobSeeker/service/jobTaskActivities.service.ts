@@ -30,6 +30,17 @@ export default class JobTaskActivitiesService extends AbstractServices {
 			const jobTaskActivitiesModel =
 				this.Model.jobTaskActivitiesModel(trx);
 
+			const jobSeeker = await userModel.checkUser({
+				id: user_id,
+				type: TypeUser.JOB_SEEKER,
+			});
+			if (jobSeeker && jobSeeker.length < 1) {
+				throw new CustomError(
+					"Job seeker not found!",
+					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
+
 			const myApplication = await jobApplicationModel.getMyJobApplication(
 				{
 					job_application_id,
@@ -118,6 +129,7 @@ export default class JobTaskActivitiesService extends AbstractServices {
 					TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION,
 					{
 						user_id: myApplication.hotelier_id,
+						photo: jobSeeker[0].photo,
 						title: this.NotificationMsg.WAITING_FOR_APPROVAL.title,
 						content:
 							this.NotificationMsg.WAITING_FOR_APPROVAL.content({
@@ -141,6 +153,9 @@ export default class JobTaskActivitiesService extends AbstractServices {
 								id: myApplication.job_post_details_id,
 								jobTitle: myApplication.job_post_title,
 							}),
+						data: {
+							photo: jobSeeker[0].photo,
+						},
 					});
 				}
 			}
@@ -162,6 +177,17 @@ export default class JobTaskActivitiesService extends AbstractServices {
 		return await this.db.transaction(async (trx) => {
 			const userModel = this.Model.UserModel(trx);
 			const jobTaskListModel = this.Model.jobTaskListModel(trx);
+
+			const jobSeeker = await userModel.checkUser({
+				id: user_id,
+				type: TypeUser.JOB_SEEKER,
+			});
+			if (jobSeeker && jobSeeker.length < 1) {
+				throw new CustomError(
+					"Job seeker not found!",
+					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
 
 			const taskList = await jobTaskListModel.getJobTaskList({ id });
 			if (!taskList.length) {
@@ -220,6 +246,7 @@ export default class JobTaskActivitiesService extends AbstractServices {
 					TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION,
 					{
 						user_id: taskList[0].hotelier_id,
+						photo: jobSeeker[0].photo,
 						title: this.NotificationMsg.TASK_STATUS.title(
 							taskList[0].is_completed
 						),
@@ -246,6 +273,9 @@ export default class JobTaskActivitiesService extends AbstractServices {
 								taskList[0].id,
 								taskList[0].is_completed
 							),
+						data: {
+							photo: jobSeeker[0].photo,
+						},
 					});
 				}
 			}
@@ -368,6 +398,7 @@ export default class JobTaskActivitiesService extends AbstractServices {
 			if (isHotelierOnline && isHotelierOnline.length > 0) {
 				io.to(String(myApplication.hotelier_id)).emit("end-job", {
 					user_id: myApplication.hotelier_id,
+					photo: jobSeeker[0].photo,
 					title: this.NotificationMsg.JOB_ASSIGNED.title,
 					content: this.NotificationMsg.JOB_ASSIGNED.content({
 						id: taskActivity.job_post_details_id,
@@ -389,6 +420,9 @@ export default class JobTaskActivitiesService extends AbstractServices {
 								id: taskActivity.job_post_details_id,
 								jobTitle: myApplication.job_post_title,
 							}),
+						data: {
+							photo: jobSeeker[0].photo,
+						},
 					});
 				}
 			}
