@@ -106,6 +106,7 @@ class App {
                 socket.join(String(id));
             }
             socket.on("disconnect", (event) => __awaiter(this, void 0, void 0, function* () {
+                console.log({ lastLocation });
                 console.log(socket.id, "-", id, "-", type, " disconnected...");
                 yield (0, socket_1.removeOnlineUser)(id, socket.id);
                 if (type === userModelTypes_1.TypeUser.JOB_SEEKER &&

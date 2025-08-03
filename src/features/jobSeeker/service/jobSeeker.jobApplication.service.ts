@@ -12,6 +12,14 @@ import {
 } from "../../../utils/miscellaneous/constants";
 import { IJobPostDetailsStatus } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
 import { ICreateJobApplicationPayload } from "../../../utils/modelTypes/jobApplication/jobApplicationModel.types";
+import UserModel from "../../../models/userModel/userModel";
+import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
+import {
+	NotificationTypeEnum,
+	TypeEmitNotificationEnum,
+} from "../../../utils/modelTypes/common/commonModelTypes";
+import { getAllOnlineSocketIds, io } from "../../../app/socket";
+import Lib from "../../../utils/lib/lib";
 
 export class JobSeekerJobApplication extends AbstractServices {
 	constructor() {
@@ -20,11 +28,23 @@ export class JobSeekerJobApplication extends AbstractServices {
 
 	public createJobApplication = async (req: Request) => {
 		const { job_post_details_id } = req.body;
-		const { user_id, gender } = req.jobSeeker;
+		const { user_id } = req.jobSeeker;
 
 		return await this.db.transaction(async (trx) => {
+			const userModel = new UserModel(trx);
 			const jobPostModel = new JobPostModel(trx);
 			const cancellationLogModel = new CancellationLogModel(trx);
+
+			const jobSeeker = await userModel.checkUser({
+				id: user_id,
+				type: TypeUser.JOB_SEEKER,
+			});
+			if (jobSeeker && jobSeeker.length < 1) {
+				throw new CustomError(
+					"Job seeker not found!",
+					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
 
 			const jobPost = await jobPostModel.getSingleJobPostForJobSeeker(
 				job_post_details_id
@@ -90,6 +110,103 @@ export class JobSeekerJobApplication extends AbstractServices {
 			);
 
 			await model.markJobPostDetailAsApplied(Number(job_post_details_id));
+
+			const hotelier = await userModel.checkUser({
+				id: jobPost.hotelier_id,
+				type: TypeUser.HOTELIER,
+			});
+			if (hotelier && hotelier.length < 1) {
+				throw new CustomError(
+					"Organization not found!",
+					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
+
+			const startTime = new Date(jobPost.start_time);
+			const reminderTime = new Date(
+				startTime.getTime() - 2 * 60 * 60 * 1000
+			);
+			const jobStartReminderQueue = this.getQueue("jobStartReminder");
+			await jobStartReminderQueue.add(
+				"jobStartReminder",
+				{
+					id: jobPost.id,
+					hotelier_id: jobPost.hotelier_id,
+					job_seeker_id: user_id,
+					photo: hotelier[0].photo,
+					title: this.NotificationMsg.JOB_START_REMINDER.title,
+					content: this.NotificationMsg.JOB_START_REMINDER.content({
+						jobTitle: jobPost.job_title,
+						startTime: new Date(jobPost.start_time),
+					}),
+					type: NotificationTypeEnum.JOB_TASK,
+					related_id: jobPost.id,
+					job_seeker_device_id: jobSeeker[0].device_id,
+				},
+				{
+					delay: reminderTime.getTime() - Date.now(),
+					removeOnComplete: true,
+					removeOnFail: false,
+				}
+			);
+			await this.insertNotification(trx, TypeUser.HOTELIER, {
+				user_id: jobPost.hotelier_id,
+				sender_id: user_id,
+				sender_type: TypeUser.JOB_SEEKER,
+				title: this.NotificationMsg.JOB_APPLICATION_RECEIVED.title,
+				content: this.NotificationMsg.JOB_APPLICATION_RECEIVED.content({
+					jobTitle: jobPost.job_title,
+					jobPostId: jobPost.id,
+				}),
+				type: NotificationTypeEnum.JOB_TASK,
+				related_id: jobPost.id,
+			});
+
+			const isHotelierOnline = await getAllOnlineSocketIds({
+				user_id: jobPost.hotelier_id,
+				type: TypeUser.HOTELIER,
+			});
+			if (isHotelierOnline && isHotelierOnline.length > 0) {
+				io.to(String(jobPost.hotelier_id)).emit(
+					TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION,
+					{
+						user_id,
+						photo: jobSeeker[0].photo,
+						title: this.NotificationMsg.JOB_APPLICATION_RECEIVED
+							.title,
+						content:
+							this.NotificationMsg.JOB_APPLICATION_RECEIVED.content(
+								{
+									jobTitle: jobPost.job_title,
+									jobPostId: jobPost.id,
+								}
+							),
+						related_id: jobPost.id,
+						type: NotificationTypeEnum.JOB_TASK,
+						read_status: false,
+						created_at: new Date().toISOString(),
+					}
+				);
+			} else {
+				if (hotelier[0].device_id) {
+					await Lib.sendNotificationToMobile({
+						to: hotelier[0].device_id,
+						notificationTitle:
+							this.NotificationMsg.JOB_APPLICATION_RECEIVED.title,
+						notificationBody:
+							this.NotificationMsg.JOB_APPLICATION_RECEIVED.content(
+								{
+									jobTitle: jobPost.job_title,
+									jobPostId: jobPost.id,
+								}
+							),
+						data: {
+							photo: jobSeeker[0].photo,
+						},
+					});
+				}
+			}
+
 			return {
 				success: true,
 				message: this.ResMsg.HTTP_OK,

@@ -20,8 +20,19 @@ class JobSeekerServices extends abstract_service_1.default {
         super();
         this.getJobPostListForJobSeeker = (req) => __awaiter(this, void 0, void 0, function* () {
             const { user_id } = req.jobSeeker;
+            const { category_id, limit, skip, city_id, from_date, to_date, name } = req.query;
             const model = this.Model.jobPostModel();
-            const { data, total } = yield model.getJobPostListForJobSeeker(Object.assign(Object.assign({}, req), { user_id, category_id: req.query.category_id, limit: req.query.limit, skip: req.query.skip, status: constants_1.JOB_POST_DETAILS_STATUS.Pending, city_id: req.query.city_id, from_date: req.query.from_date, to_date: req.query.to_date }));
+            const { data, total } = yield model.getJobPostListForJobSeeker({
+                user_id,
+                category_id,
+                limit,
+                skip,
+                status: constants_1.JOB_POST_DETAILS_STATUS.Pending,
+                city_id,
+                from_date,
+                to_date,
+                search: name,
+            });
             return {
                 success: true,
                 message: this.ResMsg.HTTP_OK,

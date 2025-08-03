@@ -36,7 +36,7 @@ class JobPostModel extends schema_1.default {
     // for jobseeker
     getJobPostListForJobSeeker(params) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { user_id, title, category_id, city_id, limit, skip, need_total = true, } = params;
+            const { user_id, search, category_id, city_id, limit, skip, need_total = true, } = params;
             const DBO_SCHEMA = this.DBO_SCHEMA;
             const baseQuery = this.db("job_post as jp")
                 .withSchema(DBO_SCHEMA)
@@ -55,8 +55,13 @@ class JobPostModel extends schema_1.default {
                     qb.andWhere("j.id", category_id);
                 if (city_id)
                     qb.andWhere("vwl.city_id", city_id);
-                if (title)
-                    qb.andWhereILike("j.title", `%${title}%`);
+                if (search) {
+                    qb.andWhere((subQb) => {
+                        subQb
+                            .whereILike("j.title", `%${search}%`)
+                            .orWhereILike("org.name", `%${search}%`);
+                    });
+                }
             })
                 .andWhere("jpd.status", "Pending")
                 .orderBy("jp.created_time", "desc")
@@ -88,8 +93,13 @@ class JobPostModel extends schema_1.default {
                         qb.andWhere("j.id", category_id);
                     if (city_id)
                         qb.andWhere("vwl.city_id", city_id);
-                    if (title)
-                        qb.andWhereILike("j.title", `%${title}%`);
+                    if (search) {
+                        qb.andWhere((subQb) => {
+                            subQb
+                                .whereILike("j.title", `%${search}%`)
+                                .orWhereILike("org.name", `%${search}%`);
+                        });
+                    }
                 })
                     .andWhere("jpd.status", "Pending");
                 if (user_id) {
@@ -115,7 +125,7 @@ class JobPostModel extends schema_1.default {
             console.log(`object`, id);
             return yield this.db("job_post as jp")
                 .withSchema(this.DBO_SCHEMA)
-                .select("jpd.id", "jp.id as job_post_id", "jpd.start_time", "jpd.end_time", "jpd.status", "jp.organization_id", "j.title as job_title", "j.details as job_details", "j.job_seeker_pay", "jp.created_time", "org.name as organization_name", "org_p.file as organization_photo", "vwl.location_address", "vwl.city_name", "vwl.longitude", "vwl.latitude")
+                .select("jpd.id", "jp.id as job_post_id", "jpd.start_time", "jpd.end_time", "jpd.status", "jp.organization_id", "j.title as job_title", "j.details as job_details", "j.job_seeker_pay", "jp.created_time", "u.id as hotelier_id", "org.name as organization_name", "org_p.file as organization_photo", "vwl.location_address", "vwl.city_name", "vwl.longitude", "vwl.latitude")
                 .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
                 `${this.HOTELIER}.${this.TABLES.organization}`,
             ])
@@ -136,7 +146,7 @@ class JobPostModel extends schema_1.default {
             const { organization_id, user_id, title, category_id, city_id, status, limit, skip, need_total = true, } = params;
             const data = yield this.db("job_post as jp")
                 .withSchema(this.DBO_SCHEMA)
-                .select("jpd.id", "jpd.status as job_post_details_status", "jpd.start_time", "jpd.end_time", "jp.organization_id", "j.title", "j.hourly_rate", "jp.created_time", this.db.raw(`COUNT(*) OVER (PARTITION BY jpd.job_post_id) AS vacancy`), this.db.raw(`
+                .select("jpd.id", "jpd.status as job_post_details_status", "jpd.start_time", "jpd.end_time", "u.id as hotelier_id", "jp.organization_id", "j.title", "j.hourly_rate", "jp.created_time", this.db.raw(`COUNT(*) OVER (PARTITION BY jpd.job_post_id) AS vacancy`), this.db.raw(`
 				CASE
 					WHEN ja.job_seeker_id IS NULL AND js.name IS NULL AND js_vwl.longitude IS NULL AND js_vwl.latitude IS NULL THEN NULL
 					ELSE json_build_object(

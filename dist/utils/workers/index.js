@@ -27,16 +27,25 @@ class Workers {
     }
     callWorkers() {
         this.ExpireJobPostDetails();
+        this.jobStartReminder();
     }
     ExpireJobPostDetails() {
-        if (this.worker)
-            return;
         this.worker = new bullmq_1.Worker("expire-job-post-details", (job) => __awaiter(this, void 0, void 0, function* () { return yield this.jobPostWorker.expireJobPostDetails(job); }), { connection: this.connection });
         this.worker.on("completed", (job) => {
             console.log(`✅ Job post details expired: ${job.id}`);
         });
         this.worker.on("failed", (job, err) => {
             console.error(`❌ Job post details expired failed: ${job === null || job === void 0 ? void 0 : job.id}`, err);
+        });
+    }
+    jobStartReminder() {
+        this.worker = new bullmq_1.Worker("jobStartReminder", (job) => __awaiter(this, void 0, void 0, function* () { return yield this.jobPostWorker.jobStartReminder(job); }), { connection: this.connection });
+        this.worker.on("completed", (job) => {
+            console.log(`✅ Job start reminder sent successfully for jobPostDetail ID: ${job.data.id}`);
+        });
+        this.worker.on("failed", (job, err) => {
+            var _a;
+            console.error(`❌ Failed to send job start reminder for jobPostDetail ID: ${(_a = job === null || job === void 0 ? void 0 : job.data) === null || _a === void 0 ? void 0 : _a.id}`, err);
         });
     }
 }

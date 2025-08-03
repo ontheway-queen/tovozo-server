@@ -445,13 +445,25 @@ export default class JobSeekerModel extends Schema {
 			.first();
 	}
 
-	public async getJobSeekerLocation(query: { name?: string }) {
+	public async getJobSeekerLocation(query: { name?: string }): Promise<
+		{
+			user_id: number;
+			type: "ADMIN" | "HOTELIER" | "JOB_SEEKER";
+			name: string;
+			device_id: string;
+			location_id: number;
+			latitude: string;
+			longitude: string;
+		}[]
+	> {
 		const { name } = query;
 		return await this.db("job_seeker as js")
 			.withSchema(this.JOB_SEEKER)
 			.select(
 				"js.user_id",
+				"u.type",
 				"u.name",
+				"u.device_id",
 				"js.location_id",
 				"l.latitude",
 				"l.longitude"

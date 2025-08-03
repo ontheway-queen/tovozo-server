@@ -10,17 +10,19 @@ export class JobSeekerServices extends AbstractServices {
 
 	public getJobPostListForJobSeeker = async (req: Request) => {
 		const { user_id } = req.jobSeeker;
+		const { category_id, limit, skip, city_id, from_date, to_date, name } =
+			req.query;
 		const model = this.Model.jobPostModel();
 		const { data, total } = await model.getJobPostListForJobSeeker({
-			...req,
 			user_id,
-			category_id: req.query.category_id,
-			limit: req.query.limit,
-			skip: req.query.skip,
+			category_id,
+			limit,
+			skip,
 			status: JOB_POST_DETAILS_STATUS.Pending,
-			city_id: req.query.city_id,
-			from_date: req.query.from_date,
-			to_date: req.query.to_date,
+			city_id,
+			from_date,
+			to_date,
+			search: name,
 		} as IGetJobPostListParams);
 		return {
 			success: true,

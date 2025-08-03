@@ -44,6 +44,7 @@ export interface IHoiteleirJob {
 	vacancy: string;
 	job_seeker_details: JobSeekerDetails;
 	job_task_activities: IJobTaskActivity;
+	hotelier_id?: number;
 }
 
 export interface IHoiteleirJobList {
