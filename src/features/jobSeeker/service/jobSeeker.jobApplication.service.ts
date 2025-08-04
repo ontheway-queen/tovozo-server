@@ -158,7 +158,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 					jobTitle: jobPost.job_title,
 					jobPostId: jobPost.id,
 				}),
-				type: NotificationTypeEnum.JOB_TASK,
+				type: NotificationTypeEnum.APPLICATION_UPDATE,
 				related_id: jobPost.id,
 			});
 
@@ -182,7 +182,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 								}
 							),
 						related_id: jobPost.id,
-						type: NotificationTypeEnum.JOB_TASK,
+						type: NotificationTypeEnum.APPLICATION_UPDATE,
 						read_status: false,
 						created_at: new Date().toISOString(),
 					}

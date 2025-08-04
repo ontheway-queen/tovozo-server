@@ -247,7 +247,6 @@ class PublicCommonValidator {
             skip: joi_1.default.number().integer().optional(),
         });
         this.mutationNotificationValidator = joi_1.default.object({
-            user_id: joi_1.default.number().integer().positive().required(),
             id: joi_1.default.number().integer().positive().optional(),
         });
         // get single item with id validator

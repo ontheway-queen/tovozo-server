@@ -61,6 +61,7 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                 const payload = {
                     job_application_id,
                     job_post_details_id,
+                    start_time: new Date(),
                 };
                 const res = yield jobTaskActivitiesModel.createJobTaskActivity(payload);
                 yield jobApplicationModel.updateMyJobApplicationStatus({

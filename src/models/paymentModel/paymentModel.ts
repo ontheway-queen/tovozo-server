@@ -52,6 +52,7 @@ export default class PaymentModel extends Schema {
 				"p.payment_no",
 				"p.application_id",
 				"p.total_amount",
+				"p.trx_fee",
 				"job_seeker.id as job_seeker_id",
 				"job_seeker.name as job_seeker_name",
 				"j.title as job_title",
@@ -74,7 +75,8 @@ export default class PaymentModel extends Schema {
 		`
 			)
 			.leftJoin("user as job_seeker", "job_seeker.id", "ja.job_seeker_id")
-			.whereRaw("org.user_id = ?", [hotelier_id]);
+			.whereRaw("org.user_id = ?", [hotelier_id])
+			.orderBy("p.created_at", "desc");
 
 		if (search) {
 			baseQuery.andWhere("j.title", "ilike", `%${search}%`);
@@ -86,6 +88,7 @@ export default class PaymentModel extends Schema {
 		const countQuery = baseQuery
 			.clone()
 			.clearSelect()
+			.clearOrder()
 			.count<{ count: string }>("p.id as count")
 			.first();
 

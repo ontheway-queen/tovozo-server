@@ -1,6 +1,7 @@
 export interface IJobTaskActivityPayload {
 	job_application_id: number;
 	job_post_details_id: number;
+	start_time: Date;
 }
 
 export interface IJobTaskActivity {

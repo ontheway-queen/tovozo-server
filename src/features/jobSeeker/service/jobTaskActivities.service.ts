@@ -85,6 +85,7 @@ export default class JobTaskActivitiesService extends AbstractServices {
 			const payload = {
 				job_application_id,
 				job_post_details_id,
+				start_time: new Date(),
 			};
 			const res = await jobTaskActivitiesModel.createJobTaskActivity(
 				payload

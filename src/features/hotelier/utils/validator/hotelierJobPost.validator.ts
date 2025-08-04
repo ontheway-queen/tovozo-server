@@ -8,18 +8,69 @@ import {
 export class HotelierJobPostValidator {
 	public createJobPostSchema = Joi.object({
 		job_post: Joi.object({
-			expire_time: Joi.string().isoDate().optional(),
+			expire_time: Joi.string()
+				.isoDate()
+				.required()
+				.custom((value, helpers) => {
+					const expireDate = new Date(value);
+					if (expireDate <= new Date()) {
+						return helpers.error("expire_time.invalid");
+					}
+					return value;
+				})
+				.messages({
+					"expire_time.invalid":
+						"Expire time must be a future date and time.",
+					"string.isoDate": "Expire time must be a valid ISO date.",
+					"any.required": "Expire time is required.",
+				}),
 		}).required(),
 		job_post_details: Joi.array()
 			.items(
 				Joi.object({
-					job_id: Joi.number().required(),
-					start_time: Joi.string().isoDate().required(),
-					end_time: Joi.string().isoDate().required(),
+					job_id: Joi.number().required().messages({
+						"number.base": "Job ID must be a number.",
+						"any.required": "Job ID is required.",
+					}),
+					start_time: Joi.string()
+						.isoDate()
+						.required()
+						.custom((value, helpers) => {
+							const startTime = new Date(value);
+							const nowPlus24h = new Date(
+								Date.now() + 24 * 60 * 60 * 1000
+							);
+							if (startTime < nowPlus24h) {
+								return helpers.error("start_time.invalid");
+							}
+							return value;
+						})
+						.messages({
+							"string.isoDate":
+								"Start time must be a valid ISO date.",
+							"any.required": "Start time is required.",
+							"start_time.invalid":
+								"Start time must be at least 24 hours from now.",
+						}),
+					end_time: Joi.string().isoDate().required().messages({
+						"string.isoDate": "End time must be a valid ISO date.",
+						"any.required": "End time is required.",
+					}),
 				})
 			)
 			.min(1)
 			.required(),
+	}).custom((obj, helpers) => {
+		const expireTime = new Date(obj.job_post.expire_time);
+		for (const detail of obj.job_post_details) {
+			const startTime = new Date(detail.start_time);
+			if (startTime <= expireTime) {
+				return helpers.error("any.invalid", {
+					message: "start_time must be after expire_time",
+				});
+			}
+		}
+		return obj;
 	});
 
 	public getJobPostSchema = Joi.object({
