@@ -486,5 +486,122 @@ class JobPostModel extends schema_1.default {
             });
         });
     }
+    // Check Save Job
+    checkSaveJob(payload) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { job_seeker_id, job_post_details_id } = payload;
+            return yield this.db("saved_job_post_details")
+                .withSchema("dbo")
+                .select("id")
+                .modify((qb) => {
+                qb.where("job_post_details_id", job_post_details_id);
+                if (job_seeker_id) {
+                    qb.andWhere("job_seeker_id", job_seeker_id);
+                }
+            })
+                .first();
+        });
+    }
+    // Saved Job post details for job seeker
+    saveJobPostDetailsForJobSeeker(payload) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("saved_job_post_details")
+                .withSchema(this.DBO_SCHEMA)
+                .insert(payload);
+        });
+    }
+    // Get saved job list for a job seeker
+    getSavedJobsList(params) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { job_seeker_id, search, category_id, city_id, limit = 20, skip = 0, need_total = true, } = params;
+            const DBO_SCHEMA = this.DBO_SCHEMA;
+            const baseQuery = this.db("saved_job_post_details as saved")
+                .withSchema(DBO_SCHEMA)
+                .select("jp.id", "jpd.id as job_post_detail_id", "jpd.start_time", "jpd.end_time", "jpd.status as job_post_details_status", "jp.organization_id", "j.title as job_title", "j.details as job_details", "j.job_seeker_pay", "jp.created_time", "org.name as organization_name", "org_p.file as organization_photo", "vwl.location_address", "vwl.city_name", "vwl.longitude", "vwl.latitude")
+                .join("job_post_details as jpd", "jpd.id", "saved.job_post_details_id")
+                .join("job_post as jp", "jp.id", "jpd.job_post_id")
+                .join("jobs as j", "j.id", "jpd.job_id")
+                .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
+                `${this.HOTELIER}.${this.TABLES.organization}`,
+            ])
+                .leftJoin("vw_location as vwl", "vwl.location_id", "org.location_id")
+                .leftJoin(this.db.raw(`?? as org_p ON org_p.organization_id = org.id`, [
+                `${this.HOTELIER}.${this.TABLES.organization_photos}`,
+            ]))
+                .where("saved.job_seeker_id", job_seeker_id)
+                .andWhere("jpd.status", "Pending")
+                .modify((qb) => {
+                if (search) {
+                    qb.andWhere((subQb) => {
+                        subQb
+                            .whereILike("j.title", `%${search}%`)
+                            .orWhereILike("org.name", `%${search}%`);
+                    });
+                }
+                if (category_id) {
+                    qb.andWhere("j.id", category_id);
+                }
+                if (city_id) {
+                    qb.andWhere("vwl.city_id", city_id);
+                }
+            })
+                .orderBy("saved.created_at", "desc")
+                .limit(limit)
+                .offset(skip);
+            const data = yield baseQuery;
+            let total = 0;
+            if (need_total) {
+                const totalQuery = this.db("saved_job_post_details as saved")
+                    .withSchema(DBO_SCHEMA)
+                    .countDistinct("saved.job_post_details_id as total")
+                    .join("job_post_details as jpd", "jpd.id", "saved.job_post_details_id")
+                    .join("job_post as jp", "jp.id", "jpd.job_post_id")
+                    .join("jobs as j", "j.id", "jpd.job_id")
+                    .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
+                    `${this.HOTELIER}.${this.TABLES.organization}`,
+                ])
+                    .leftJoin("vw_location as vwl", "vwl.location_id", "org.location_id")
+                    .where("saved.job_seeker_id", job_seeker_id)
+                    .andWhere("jpd.status", "Pending")
+                    .modify((qb) => {
+                    if (search) {
+                        qb.andWhere((subQb) => {
+                            subQb
+                                .whereILike("j.title", `%${search}%`)
+                                .orWhereILike("org.name", `%${search}%`);
+                        });
+                    }
+                    if (category_id) {
+                        qb.andWhere("j.id", category_id);
+                    }
+                    if (city_id) {
+                        qb.andWhere("vwl.city_id", city_id);
+                    }
+                });
+                const totalResult = yield totalQuery.first();
+                total = (totalResult === null || totalResult === void 0 ? void 0 : totalResult.total) ? Number(totalResult.total) : 0;
+            }
+            return {
+                total,
+                data,
+            };
+        });
+    }
+    // Delete Saved Jobs
+    deleteSavedJob(payload) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { job_seeker_id, job_post_details_id } = payload;
+            return yield this.db("saved_job_post_details")
+                .withSchema("dbo")
+                .select("id")
+                .modify((qb) => {
+                qb.where("job_post_details_id", job_post_details_id);
+                if (job_seeker_id) {
+                    qb.andWhere("job_seeker_id", job_seeker_id);
+                }
+            })
+                .del();
+        });
+    }
 }
 exports.default = JobPostModel;

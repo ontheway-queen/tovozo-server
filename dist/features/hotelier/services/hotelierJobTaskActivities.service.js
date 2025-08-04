@@ -112,6 +112,7 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                             }),
                             data: {
                                 photo: hotelier[0].photo,
+                                related_id: res[0].id,
                             },
                         });
                     }
@@ -195,7 +196,7 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                         photo: hotelier[0].photo,
                         title: this.NotificationMsg.NEW_TASKS_ASSIGNED.title,
                         content: allMessages,
-                        related_id: res[0].id,
+                        related_id: taskActivity.job_application_id,
                         type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                         read_status: false,
                         created_at: new Date().toISOString(),
@@ -209,6 +210,7 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                             notificationBody: allMessages,
                             data: {
                                 photo: hotelier[0].photo,
+                                related_id: taskActivity.job_application_id,
                             },
                         });
                     }
@@ -378,6 +380,7 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                             notificationTitle: this.NotificationMsg.TASK_UNDER_REVIEW.title,
                             notificationBody: this.NotificationMsg.TASK_UNDER_REVIEW.content(application.job_post_details_id),
                             data: {
+                                related_id: res[0].id,
                                 photo: hotelier[0].photo,
                             },
                         });

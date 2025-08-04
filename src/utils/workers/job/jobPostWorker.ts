@@ -94,6 +94,7 @@ export default class JobPostWorker {
 							notificationBody: content,
 							data: {
 								photo,
+								related_id,
 							},
 						});
 					}
