@@ -71,8 +71,17 @@ abstract class AbstractServices {
 
 			case TypeUser.JOB_SEEKER: {
 				if (
-					payload.type === NotificationTypeEnum.JOB_TASK &&
-					payload.user_id
+					payload.user_id &&
+					(payload.type === NotificationTypeEnum.JOB_TASK ||
+						payload.type ===
+							NotificationTypeEnum.APPLICATION_UPDATE ||
+						payload.type === NotificationTypeEnum.CANCELLATION ||
+						payload.type === NotificationTypeEnum.JOB_MATCH ||
+						payload.type === NotificationTypeEnum.JOB_POST ||
+						payload.type === NotificationTypeEnum.PAYMENT ||
+						payload.type === NotificationTypeEnum.SECURITY_ALERT ||
+						payload.type === NotificationTypeEnum.REMINDER ||
+						payload.type === NotificationTypeEnum.SYSTEM_UPDATE)
 				) {
 					users = [{ user_id: payload.user_id }];
 				} else {
@@ -86,8 +95,17 @@ abstract class AbstractServices {
 
 			case TypeUser.HOTELIER: {
 				if (
-					payload.type === NotificationTypeEnum.JOB_TASK &&
-					payload.user_id
+					payload.user_id &&
+					(payload.type === NotificationTypeEnum.JOB_TASK ||
+						payload.type ===
+							NotificationTypeEnum.APPLICATION_UPDATE ||
+						payload.type === NotificationTypeEnum.CANCELLATION ||
+						payload.type === NotificationTypeEnum.JOB_MATCH ||
+						payload.type === NotificationTypeEnum.JOB_POST ||
+						payload.type === NotificationTypeEnum.PAYMENT ||
+						payload.type === NotificationTypeEnum.SECURITY_ALERT ||
+						payload.type === NotificationTypeEnum.REMINDER ||
+						payload.type === NotificationTypeEnum.SYSTEM_UPDATE)
 				) {
 					users = [{ user_id: payload.user_id }];
 				} else {

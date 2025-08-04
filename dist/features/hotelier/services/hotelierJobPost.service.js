@@ -63,7 +63,7 @@ class HotelierJobPostService extends abstract_service_1.default {
                     });
                     jobPostDetails.push(Object.assign(Object.assign({}, detail), { job_post_id: res[0].id, hourly_rate: checkJob.hourly_rate, job_seeker_pay: checkJob.job_seeker_pay, platform_fee: checkJob.platform_fee }));
                 }
-                yield model.createJobPostDetails(jobPostDetails);
+                const jobpostDetailsId = yield model.createJobPostDetails(jobPostDetails);
                 // Job Post Nearby
                 const orgLat = parseFloat(checkOrganization.latitude);
                 const orgLng = parseFloat(checkOrganization.longitude);
@@ -87,8 +87,8 @@ class HotelierJobPostService extends abstract_service_1.default {
                         sender_type: constants_1.USER_TYPE.HOTELIER,
                         title: this.NotificationMsg.NEW_JOB_POST_NEARBY.title,
                         content: this.NotificationMsg.NEW_JOB_POST_NEARBY.content,
-                        related_id: res[0].id,
-                        type: commonModelTypes_1.NotificationTypeEnum.JOB_POST,
+                        related_id: jobpostDetailsId[0].id,
+                        type: commonModelTypes_1.NotificationTypeEnum.JOB_MATCH,
                     });
                     const isJobSeekerOnline = yield (0, socket_1.getAllOnlineSocketIds)({
                         user_id: seeker.user_id,
@@ -96,13 +96,14 @@ class HotelierJobPostService extends abstract_service_1.default {
                     });
                     if (isJobSeekerOnline && isJobSeekerOnline.length > 0) {
                         socket_1.io.to(String(seeker.user_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION, {
+                            related_id: jobpostDetailsId[0].id,
                             user_id: seeker.user_id,
                             photo: checkOrganization.photo,
                             title: this.NotificationMsg.NEW_JOB_POST_NEARBY
                                 .title,
                             content: this.NotificationMsg.NEW_JOB_POST_NEARBY
                                 .content,
-                            type: commonModelTypes_1.NotificationTypeEnum.JOB_POST,
+                            type: commonModelTypes_1.NotificationTypeEnum.JOB_MATCH,
                             read_status: false,
                             created_at: new Date().toISOString(),
                         });
@@ -115,6 +116,7 @@ class HotelierJobPostService extends abstract_service_1.default {
                                 notificationBody: this.NotificationMsg.NEW_JOB_POST_NEARBY
                                     .content,
                                 data: {
+                                    related_id: jobpostDetailsId[0].id,
                                     photo: checkOrganization.photo,
                                 },
                             });

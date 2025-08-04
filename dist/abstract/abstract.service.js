@@ -62,8 +62,17 @@ class AbstractServices {
                     break;
                 }
                 case userModelTypes_1.TypeUser.JOB_SEEKER: {
-                    if (payload.type === commonModelTypes_1.NotificationTypeEnum.JOB_TASK &&
-                        payload.user_id) {
+                    if (payload.user_id &&
+                        (payload.type === commonModelTypes_1.NotificationTypeEnum.JOB_TASK ||
+                            payload.type ===
+                                commonModelTypes_1.NotificationTypeEnum.APPLICATION_UPDATE ||
+                            payload.type === commonModelTypes_1.NotificationTypeEnum.CANCELLATION ||
+                            payload.type === commonModelTypes_1.NotificationTypeEnum.JOB_MATCH ||
+                            payload.type === commonModelTypes_1.NotificationTypeEnum.JOB_POST ||
+                            payload.type === commonModelTypes_1.NotificationTypeEnum.PAYMENT ||
+                            payload.type === commonModelTypes_1.NotificationTypeEnum.SECURITY_ALERT ||
+                            payload.type === commonModelTypes_1.NotificationTypeEnum.REMINDER ||
+                            payload.type === commonModelTypes_1.NotificationTypeEnum.SYSTEM_UPDATE)) {
                         users = [{ user_id: payload.user_id }];
                     }
                     else {
@@ -75,8 +84,17 @@ class AbstractServices {
                     break;
                 }
                 case userModelTypes_1.TypeUser.HOTELIER: {
-                    if (payload.type === commonModelTypes_1.NotificationTypeEnum.JOB_TASK &&
-                        payload.user_id) {
+                    if (payload.user_id &&
+                        (payload.type === commonModelTypes_1.NotificationTypeEnum.JOB_TASK ||
+                            payload.type ===
+                                commonModelTypes_1.NotificationTypeEnum.APPLICATION_UPDATE ||
+                            payload.type === commonModelTypes_1.NotificationTypeEnum.CANCELLATION ||
+                            payload.type === commonModelTypes_1.NotificationTypeEnum.JOB_MATCH ||
+                            payload.type === commonModelTypes_1.NotificationTypeEnum.JOB_POST ||
+                            payload.type === commonModelTypes_1.NotificationTypeEnum.PAYMENT ||
+                            payload.type === commonModelTypes_1.NotificationTypeEnum.SECURITY_ALERT ||
+                            payload.type === commonModelTypes_1.NotificationTypeEnum.REMINDER ||
+                            payload.type === commonModelTypes_1.NotificationTypeEnum.SYSTEM_UPDATE)) {
                         users = [{ user_id: payload.user_id }];
                     }
                     else {

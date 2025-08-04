@@ -111,6 +111,13 @@ export class JobSeekerJobApplication extends AbstractServices {
 
 			await model.markJobPostDetailAsApplied(Number(job_post_details_id));
 
+			const isSaveJobExists = await jobPostModel.checkSaveJob({
+				job_post_details_id,
+			});
+			if (isSaveJobExists) {
+				await jobPostModel.deleteSavedJob({ job_post_details_id });
+			}
+
 			const hotelier = await userModel.checkUser({
 				id: jobPost.hotelier_id,
 				type: TypeUser.HOTELIER,
@@ -202,6 +209,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 							),
 						data: {
 							photo: jobSeeker[0].photo,
+							related_id: jobPost.id,
 						},
 					});
 				}
