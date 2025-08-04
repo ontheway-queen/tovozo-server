@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.JobSeekerServices = void 0;
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
 const constants_1 = require("../../../utils/miscellaneous/constants");
+const customError_1 = __importDefault(require("../../../utils/lib/customError"));
 class JobSeekerServices extends abstract_service_1.default {
     constructor() {
         super();
@@ -50,6 +51,60 @@ class JobSeekerServices extends abstract_service_1.default {
                 message: this.ResMsg.HTTP_OK,
                 code: this.StatusCode.HTTP_OK,
                 data,
+            };
+        });
+        this.saveJobPostDetailsForJobSeeker = (req) => __awaiter(this, void 0, void 0, function* () {
+            const model = this.Model.jobPostModel();
+            const { user_id } = req.jobSeeker;
+            const id = Number(req.params.id);
+            const isSaveJobExists = yield model.checkSaveJob({
+                job_seeker_id: user_id,
+                job_post_details_id: id,
+            });
+            if (isSaveJobExists) {
+                throw new customError_1.default("You’ve already saved this job.", this.StatusCode.HTTP_CONFLICT);
+            }
+            yield model.saveJobPostDetailsForJobSeeker({
+                job_seeker_id: user_id,
+                job_post_details_id: id,
+            });
+            return {
+                success: true,
+                message: this.ResMsg.HTTP_OK,
+                code: this.StatusCode.HTTP_OK,
+            };
+        });
+        this.getSavedJobsList = (req) => __awaiter(this, void 0, void 0, function* () {
+            const model = this.Model.jobPostModel();
+            const { user_id } = req.jobSeeker;
+            const { skip = 0, limit = 10, need_total = true } = req.query;
+            const result = yield model.getSavedJobsList({
+                job_seeker_id: user_id,
+                skip: Number(skip),
+                limit: Number(limit),
+                need_total: need_total === "true" || need_total === true,
+            });
+            return Object.assign({ success: true, message: this.ResMsg.HTTP_OK, code: this.StatusCode.HTTP_OK }, result);
+        });
+        this.deleteSavedJob = (req) => __awaiter(this, void 0, void 0, function* () {
+            const model = this.Model.jobPostModel();
+            const { user_id } = req.jobSeeker;
+            const id = Number(req.params.id);
+            const isSaveJobExists = yield model.checkSaveJob({
+                job_seeker_id: user_id,
+                job_post_details_id: id,
+            });
+            if (!isSaveJobExists) {
+                throw new customError_1.default("This job is not in your saved list.", this.StatusCode.HTTP_CONFLICT);
+            }
+            yield model.deleteSavedJob({
+                job_seeker_id: user_id,
+                job_post_details_id: id,
+            });
+            return {
+                success: true,
+                message: this.ResMsg.HTTP_OK,
+                code: this.StatusCode.HTTP_OK,
             };
         });
     }

@@ -16,14 +16,16 @@ class HotelierJobPostValidator {
                     .custom((value, helpers) => {
                     const expireDate = new Date(value);
                     if (expireDate <= new Date()) {
-                        return helpers.error("expire_time.invalid");
+                        return helpers.error("any.custom", {
+                            message: "Expire time must be a future date and time.",
+                        });
                     }
                     return value;
                 })
                     .messages({
-                    "expire_time.invalid": "Expire time must be a future date and time.",
                     "string.isoDate": "Expire time must be a valid ISO date.",
                     "any.required": "Expire time is required.",
+                    "any.custom": "{{#message}}",
                 }),
             }).required(),
             job_post_details: joi_1.default.array()
@@ -39,14 +41,16 @@ class HotelierJobPostValidator {
                     const startTime = new Date(value);
                     const nowPlus24h = new Date(Date.now() + 24 * 60 * 60 * 1000);
                     if (startTime < nowPlus24h) {
-                        return helpers.error("start_time.invalid");
+                        return helpers.error("any.custom", {
+                            message: "Start time must be at least 24 hours from now.",
+                        });
                     }
                     return value;
                 })
                     .messages({
                     "string.isoDate": "Start time must be a valid ISO date.",
                     "any.required": "Start time is required.",
-                    "start_time.invalid": "Start time must be at least 24 hours from now.",
+                    "any.custom": "{{#message}}",
                 }),
                 end_time: joi_1.default.string().isoDate().required().messages({
                     "string.isoDate": "End time must be a valid ISO date.",
@@ -55,17 +59,21 @@ class HotelierJobPostValidator {
             }))
                 .min(1)
                 .required(),
-        }).custom((obj, helpers) => {
+        })
+            .custom((obj, helpers) => {
             const expireTime = new Date(obj.job_post.expire_time);
             for (const detail of obj.job_post_details) {
                 const startTime = new Date(detail.start_time);
-                if (startTime <= expireTime) {
-                    return helpers.error("any.invalid", {
-                        message: "start_time must be after expire_time",
+                if (startTime < expireTime) {
+                    return helpers.error("any.custom", {
+                        message: "Start time must be after expire time.",
                     });
                 }
             }
             return obj;
+        })
+            .messages({
+            "any.custom": "{{#message}}",
         });
         this.getJobPostSchema = joi_1.default.object({
             limit: joi_1.default.number().integer().optional(),

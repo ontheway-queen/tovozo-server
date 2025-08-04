@@ -117,6 +117,7 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                             }),
                             data: {
                                 photo: jobSeeker[0].photo,
+                                related_id: res[0].id,
                             },
                         });
                     }
@@ -194,6 +195,7 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                             notificationBody: this.NotificationMsg.TASK_STATUS.content(taskList[0].id, taskList[0].is_completed),
                             data: {
                                 photo: jobSeeker[0].photo,
+                                related_id: taskList[0].id,
                             },
                         });
                     }
@@ -295,6 +297,7 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                             }),
                             data: {
                                 photo: jobSeeker[0].photo,
+                                related_id: res[0].id,
                             },
                         });
                     }

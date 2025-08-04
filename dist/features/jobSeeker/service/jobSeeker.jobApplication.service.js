@@ -75,6 +75,12 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 };
                 yield model.createJobApplication(payload);
                 yield model.markJobPostDetailAsApplied(Number(job_post_details_id));
+                const isSaveJobExists = yield jobPostModel.checkSaveJob({
+                    job_post_details_id,
+                });
+                if (isSaveJobExists) {
+                    yield jobPostModel.deleteSavedJob({ job_post_details_id });
+                }
                 const hotelier = yield userModel.checkUser({
                     id: jobPost.hotelier_id,
                     type: userModelTypes_1.TypeUser.HOTELIER,
@@ -146,6 +152,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                             }),
                             data: {
                                 photo: jobSeeker[0].photo,
+                                related_id: jobPost.id,
                             },
                         });
                     }

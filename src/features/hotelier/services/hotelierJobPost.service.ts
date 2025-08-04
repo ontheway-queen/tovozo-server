@@ -99,7 +99,9 @@ class HotelierJobPostService extends AbstractServices {
 				});
 			}
 
-			await model.createJobPostDetails(jobPostDetails);
+			const jobpostDetailsId = await model.createJobPostDetails(
+				jobPostDetails
+			);
 
 			// Job Post Nearby
 			const orgLat = parseFloat(checkOrganization.latitude as string);
@@ -137,8 +139,8 @@ class HotelierJobPostService extends AbstractServices {
 					sender_type: USER_TYPE.HOTELIER,
 					title: this.NotificationMsg.NEW_JOB_POST_NEARBY.title,
 					content: this.NotificationMsg.NEW_JOB_POST_NEARBY.content,
-					related_id: res[0].id,
-					type: NotificationTypeEnum.JOB_POST,
+					related_id: jobpostDetailsId[0].id,
+					type: NotificationTypeEnum.JOB_MATCH,
 				});
 
 				const isJobSeekerOnline = await getAllOnlineSocketIds({
@@ -150,6 +152,7 @@ class HotelierJobPostService extends AbstractServices {
 					io.to(String(seeker.user_id)).emit(
 						TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION,
 						{
+							related_id: jobpostDetailsId[0].id,
 							user_id: seeker.user_id,
 							photo: checkOrganization.photo,
 							title: this.NotificationMsg.NEW_JOB_POST_NEARBY
@@ -157,7 +160,7 @@ class HotelierJobPostService extends AbstractServices {
 							content:
 								this.NotificationMsg.NEW_JOB_POST_NEARBY
 									.content,
-							type: NotificationTypeEnum.JOB_POST,
+							type: NotificationTypeEnum.JOB_MATCH,
 							read_status: false,
 							created_at: new Date().toISOString(),
 						}
@@ -172,6 +175,7 @@ class HotelierJobPostService extends AbstractServices {
 								this.NotificationMsg.NEW_JOB_POST_NEARBY
 									.content,
 							data: {
+								related_id: jobpostDetailsId[0].id,
 								photo: checkOrganization.photo,
 							},
 						});

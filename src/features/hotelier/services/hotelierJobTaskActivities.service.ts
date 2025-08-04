@@ -149,6 +149,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 							}),
 						data: {
 							photo: hotelier[0].photo,
+							related_id: res[0].id,
 						},
 					});
 				}
@@ -272,7 +273,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 						photo: hotelier[0].photo,
 						title: this.NotificationMsg.NEW_TASKS_ASSIGNED.title,
 						content: allMessages,
-						related_id: res[0].id,
+						related_id: taskActivity.job_application_id,
 						type: NotificationTypeEnum.JOB_TASK,
 						read_status: false,
 						created_at: new Date().toISOString(),
@@ -287,6 +288,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 						notificationBody: allMessages,
 						data: {
 							photo: hotelier[0].photo,
+							related_id: taskActivity.job_application_id,
 						},
 					});
 				}
@@ -549,6 +551,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 								application.job_post_details_id
 							),
 						data: {
+							related_id: res[0].id,
 							photo: hotelier[0].photo,
 						},
 					});

@@ -156,6 +156,7 @@ export default class JobTaskActivitiesService extends AbstractServices {
 							}),
 						data: {
 							photo: jobSeeker[0].photo,
+							related_id: res[0].id,
 						},
 					});
 				}
@@ -276,6 +277,7 @@ export default class JobTaskActivitiesService extends AbstractServices {
 							),
 						data: {
 							photo: jobSeeker[0].photo,
+							related_id: taskList[0].id,
 						},
 					});
 				}
@@ -423,6 +425,7 @@ export default class JobTaskActivitiesService extends AbstractServices {
 							}),
 						data: {
 							photo: jobSeeker[0].photo,
+							related_id: res[0].id,
 						},
 					});
 				}
