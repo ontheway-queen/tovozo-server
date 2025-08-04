@@ -129,6 +129,11 @@ class App {
                             .where({ id: getLocation === null || getLocation === void 0 ? void 0 : getLocation.location_id });
                     }
                     console.log({ getLocation });
+                    const isJobSeekerOnline = yield (0, socket_1.getAllOnlineSocketIds)({
+                        user_id: id,
+                        type: type,
+                    });
+                    console.log({ isJobSeekerOnline });
                 }
                 socket.disconnect();
             }));

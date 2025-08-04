@@ -8,7 +8,13 @@ import { origin, USER_TYPE } from "../utils/miscellaneous/constants";
 import { TypeUser } from "../utils/modelTypes/user/userModelTypes";
 import { db } from "./database";
 import RootRouter from "./router";
-import { SocketServer, addOnlineUser, io, removeOnlineUser } from "./socket";
+import {
+	SocketServer,
+	addOnlineUser,
+	getAllOnlineSocketIds,
+	io,
+	removeOnlineUser,
+} from "./socket";
 import Workers from "../utils/workers";
 
 class App {
@@ -139,6 +145,11 @@ class App {
 					}
 
 					console.log({ getLocation });
+					const isJobSeekerOnline = await getAllOnlineSocketIds({
+						user_id: id,
+						type: type,
+					});
+					console.log({ isJobSeekerOnline });
 				}
 				socket.disconnect();
 			});
