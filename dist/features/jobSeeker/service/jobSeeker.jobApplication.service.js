@@ -112,7 +112,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                         jobTitle: jobPost.job_title,
                         jobPostId: jobPost.id,
                     }),
-                    type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
+                    type: commonModelTypes_1.NotificationTypeEnum.APPLICATION_UPDATE,
                     related_id: jobPost.id,
                 });
                 const isHotelierOnline = yield (0, socket_1.getAllOnlineSocketIds)({
@@ -130,7 +130,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                             jobPostId: jobPost.id,
                         }),
                         related_id: jobPost.id,
-                        type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
+                        type: commonModelTypes_1.NotificationTypeEnum.APPLICATION_UPDATE,
                         read_status: false,
                         created_at: new Date().toISOString(),
                     });

@@ -17,8 +17,8 @@ class AdminNotificationService extends AbstractServices {
 	}
 
 	public async deleteNotification(req: Request) {
-		const { user_id, id } = req.query as unknown as {
-			user_id: number;
+		const { user_id } = req.hotelier;
+		const { id } = req.query as unknown as {
 			id?: number;
 		};
 
@@ -85,8 +85,8 @@ class AdminNotificationService extends AbstractServices {
 	}
 
 	public async readNotification(req: Request) {
-		const { user_id, id } = req.query as unknown as {
-			user_id: number;
+		const { user_id } = req.hotelier;
+		const { id } = req.query as unknown as {
 			id?: number;
 		};
 		return await this.db.transaction(async (trx) => {

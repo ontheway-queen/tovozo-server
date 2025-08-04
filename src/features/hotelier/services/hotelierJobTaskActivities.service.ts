@@ -82,7 +82,6 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 			const res = await jobTaskActivitiesModel.updateJobTaskActivity(
 				taskActivity.id,
 				{
-					start_time: new Date(),
 					start_approved_at: new Date(),
 				}
 			);
@@ -367,6 +366,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 
 	public approveEndJobTaskActivity = async (req: Request) => {
 		const id = req.params.id;
+		console.log({ id });
 		const { user_id } = req.hotelier;
 		return await this.db.transaction(async (trx) => {
 			const userModel = this.Model.UserModel(trx);
@@ -391,7 +391,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 				await jobTaskActivitiesModel.getSingleTaskActivity({
 					id: Number(id),
 				});
-
+			console.log({ taskActivity });
 			if (
 				taskActivity.application_status !==
 				JOB_APPLICATION_STATUS.IN_PROGRESS
@@ -401,7 +401,6 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 					this.StatusCode.HTTP_FORBIDDEN
 				);
 			}
-
 			const application = await jobApplicationModel.getMyJobApplication({
 				job_application_id: taskActivity.job_application_id,
 				job_seeker_id: taskActivity.job_seeker_id,
@@ -445,20 +444,19 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 			const jobSeekerPayRate = Number(jobPost.job_seeker_pay);
 			const platformFeeRate = Number(jobPost.platform_fee);
 
+			// Transaction fee (e.g., 2.9% + 0.30)
+			const feePercentage = 0.029;
+			const fixedFee = 0.3;
+
 			const baseAmount = Number(
 				(totalWorkingHours * hourlyRate).toFixed(2)
 			);
 
-			// Transaction fee (e.g., 2.9% + 0.30)
-			const feePercentage = 0.029;
-			const fixedFee = 0.3;
-			const transactionFee = Number(
-				(baseAmount * feePercentage + fixedFee).toFixed(2)
-			);
-
-			// Total amount includes transaction fee
 			const totalAmount = Number(
-				(baseAmount + transactionFee).toFixed(2)
+				((baseAmount + fixedFee) / (1 - feePercentage)).toFixed(2)
+			);
+			const transactionFee = Number(
+				(totalAmount - baseAmount).toFixed(2)
 			);
 
 			const jobSeekerPay = Number(
@@ -469,6 +467,9 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 				(totalWorkingHours * platformFeeRate).toFixed(2)
 			);
 
+			console.log({ platformFee });
+			console.log({ transactionFee });
+			console.log({ totalAmount });
 			const paymentPayload = {
 				application_id: application.job_application_id,
 				total_amount: totalAmount,

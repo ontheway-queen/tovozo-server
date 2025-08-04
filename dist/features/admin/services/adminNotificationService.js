@@ -26,7 +26,8 @@ class AdminNotificationService extends abstract_service_1.default {
     }
     deleteNotification(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { user_id, id } = req.query;
+            const { user_id } = req.hotelier;
+            const { id } = req.query;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const model = this.Model.commonModel(trx);
                 const getMyNotification = yield model.getNotification({
@@ -85,7 +86,8 @@ class AdminNotificationService extends abstract_service_1.default {
     }
     readNotification(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { user_id, id } = req.query;
+            const { user_id } = req.hotelier;
+            const { id } = req.query;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const model = this.Model.commonModel(trx);
                 const getMyNotification = yield model.getNotification({

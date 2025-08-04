@@ -66,23 +66,26 @@ class PaymentService extends abstract_service_1.default {
                 const { job_title, job_seeker_id, job_seeker_name, stripe_acc_id } = req.body;
                 const id = Number(req.params.id);
                 const { user_id } = req.hotelier;
+                console.log({ id });
                 if (!id) {
                     throw new customError_1.default("Id not found", this.StatusCode.HTTP_NOT_FOUND);
                 }
                 const paymentModel = this.Model.paymnentModel();
                 const payment = yield paymentModel.getSinglePayment(id);
+                console.log({ payment });
                 if (!payment) {
                     throw new customError_1.default("Payment record not found", this.StatusCode.HTTP_NOT_FOUND, "ERROR");
                 }
                 if (payment.status === constants_1.PAYMENT_STATUS.PAID) {
                     throw new customError_1.default("The payment is already paid", this.StatusCode.HTTP_CONFLICT);
                 }
-                const loginLink = yield stripe_1.stripe.accounts.createLoginLink("acct_1RnAa4FSzTsJiGrd");
-                console.log("Login Link:", loginLink.url);
-                // const account = await stripe.accounts.retrieve(
-                // 	"acct_1Rmu4JFbg6WrkTSf"
+                // const loginLink = await stripe.accounts.createLoginLink(
+                // 	"acct_1RsFUAED98rhPWLe"
                 // );
-                // console.log(account?.settings?.payouts?.schedule);
+                // console.log("Login Link:", loginLink.url);
+                const total_amount = Number(payment.total_amount);
+                const jobSeekerPay = Number(payment.job_seeker_pay);
+                const applicationFeeAmount = total_amount - jobSeekerPay;
                 const session = yield stripe_1.stripe.checkout.sessions.create({
                     payment_method_types: ["card"],
                     mode: "payment",
@@ -93,13 +96,13 @@ class PaymentService extends abstract_service_1.default {
                                 product_data: {
                                     name: `Payment for ${job_title} by ${job_seeker_name}`,
                                 },
-                                unit_amount: Math.round(payment.total_amount * 100),
+                                unit_amount: Math.round(total_amount * 100),
                             },
                             quantity: 1,
                         },
                     ],
                     payment_intent_data: {
-                        application_fee_amount: Math.round(payment.platform_fee * 100),
+                        application_fee_amount: Math.round(applicationFeeAmount * 100),
                         transfer_data: {
                             destination: stripe_acc_id,
                         },
@@ -114,7 +117,6 @@ class PaymentService extends abstract_service_1.default {
                     success_url: `${config_1.default.BASE_URL}/hotelier/payment/verify-checkout-session?session_id={CHECKOUT_SESSION_ID}`,
                     cancel_url: `${config_1.default.BASE_URL}/hotelier/payment/cancelled`,
                 });
-                console.log({ session });
                 return {
                     success: true,
                     message: this.ResMsg.HTTP_OK,

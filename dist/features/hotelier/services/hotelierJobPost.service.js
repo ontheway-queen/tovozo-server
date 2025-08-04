@@ -54,6 +54,7 @@ class HotelierJobPostService extends abstract_service_1.default {
                     const expireTime = new Date(detail.start_time).getTime();
                     const now = Date.now();
                     const delay = Math.max(expireTime - now, 0);
+                    console.log({ delay });
                     const jobPostDetailsQueue = this.getQueue("expire-job-post-details");
                     yield jobPostDetailsQueue.add("expire-job-post-details", { id: res[0].id }, {
                         delay,
@@ -72,7 +73,7 @@ class HotelierJobPostService extends abstract_service_1.default {
                         id: seeker.user_id,
                     });
                     if (isSeekerExists && isSeekerExists.length < 1) {
-                        throw new customError_1.default("Job Seeker not found!", this.StatusCode.HTTP_NOT_FOUND);
+                        continue;
                     }
                     const seekerLat = parseFloat(seeker.latitude);
                     const seekerLng = parseFloat(seeker.longitude);
@@ -87,7 +88,7 @@ class HotelierJobPostService extends abstract_service_1.default {
                         title: this.NotificationMsg.NEW_JOB_POST_NEARBY.title,
                         content: this.NotificationMsg.NEW_JOB_POST_NEARBY.content,
                         related_id: res[0].id,
-                        type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
+                        type: commonModelTypes_1.NotificationTypeEnum.JOB_POST,
                     });
                     const isJobSeekerOnline = yield (0, socket_1.getAllOnlineSocketIds)({
                         user_id: seeker.user_id,
@@ -101,7 +102,7 @@ class HotelierJobPostService extends abstract_service_1.default {
                                 .title,
                             content: this.NotificationMsg.NEW_JOB_POST_NEARBY
                                 .content,
-                            type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
+                            type: commonModelTypes_1.NotificationTypeEnum.JOB_POST,
                             read_status: false,
                             created_at: new Date().toISOString(),
                         });

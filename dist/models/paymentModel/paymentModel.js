@@ -42,7 +42,7 @@ class PaymentModel extends schema_1.default {
             const { hotelier_id, skip = 0, limit = 10, search = "" } = params;
             const baseQuery = this.db("payment as p")
                 .withSchema(this.DBO_SCHEMA)
-                .select("p.id", "p.payment_no", "p.application_id", "p.total_amount", "job_seeker.id as job_seeker_id", "job_seeker.name as job_seeker_name", "j.title as job_title", "p.payment_type", "p.status", "p.paid_at", "p.trx_id")
+                .select("p.id", "p.payment_no", "p.application_id", "p.total_amount", "p.trx_fee", "job_seeker.id as job_seeker_id", "job_seeker.name as job_seeker_name", "j.title as job_title", "p.payment_type", "p.status", "p.paid_at", "p.trx_id")
                 .leftJoin("job_applications as ja", "ja.id", "p.application_id")
                 .leftJoin("job_post as jp", "jp.id", "ja.job_post_id")
                 .leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
@@ -51,7 +51,8 @@ class PaymentModel extends schema_1.default {
 			LEFT JOIN hotelier.organization AS org ON org.id = jp.organization_id
 		`)
                 .leftJoin("user as job_seeker", "job_seeker.id", "ja.job_seeker_id")
-                .whereRaw("org.user_id = ?", [hotelier_id]);
+                .whereRaw("org.user_id = ?", [hotelier_id])
+                .orderBy("p.created_at", "desc");
             if (search) {
                 baseQuery.andWhere("j.title", "ilike", `%${search}%`);
             }
@@ -61,6 +62,7 @@ class PaymentModel extends schema_1.default {
             const countQuery = baseQuery
                 .clone()
                 .clearSelect()
+                .clearOrder()
                 .count("p.id as count")
                 .first();
             const dataQuery = baseQuery.offset(skip).limit(limit);

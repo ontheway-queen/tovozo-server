@@ -9,8 +9,6 @@ export default class JobSeekerStripeService extends AbstractServices {
 		super();
 	}
 
-	// Add Strie Payout Account For Job Seeker
-	// This is used to onboard the job seeker to Stripe Connect
 	public async addStripePayoutAccount(req: Request) {
 		return await this.db.transaction(async (trx) => {
 			const { user_id } = req.jobSeeker;
@@ -33,6 +31,10 @@ export default class JobSeekerStripeService extends AbstractServices {
 				);
 			}
 
+			const fullName = user[0].name.trim().split(" ");
+			const first_name = fullName[0];
+			const last_name = fullName.slice(1).join(" ");
+
 			const account = await stripe.accounts.create({
 				type: "express",
 				country,
@@ -42,19 +44,18 @@ export default class JobSeekerStripeService extends AbstractServices {
 					card_payments: { requested: true },
 					transfers: { requested: true },
 				},
+				individual: {
+					first_name,
+					last_name,
+				},
 			});
-
+			console.log({ account });
 			const accountLink = await stripe.accountLinks.create({
 				account: account.id,
 				refresh_url: `${config.BASE_URL}/job-seeker/stripe/onboard/refresh`,
 				return_url: `${config.BASE_URL}/job-seeker/stripe/onboard/complete?stripe_acc_id=${account.id}`,
 				type: "account_onboarding",
 			});
-
-			// await this.Model.UserModel().addStripePayoutAccount({
-			// 	user_id,
-			// 	stripe_acc_id: account.id,
-			// });
 
 			return {
 				success: true,
