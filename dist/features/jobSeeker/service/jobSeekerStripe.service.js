@@ -20,8 +20,6 @@ class JobSeekerStripeService extends abstract_service_1.default {
     constructor() {
         super();
     }
-    // Add Strie Payout Account For Job Seeker
-    // This is used to onboard the job seeker to Stripe Connect
     addStripePayoutAccount(req) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
@@ -36,6 +34,9 @@ class JobSeekerStripeService extends abstract_service_1.default {
                 if (user[0].stripe_acc_id) {
                     throw new customError_1.default("Stripe account already exists for this user", this.StatusCode.HTTP_BAD_REQUEST);
                 }
+                const fullName = user[0].name.trim().split(" ");
+                const first_name = fullName[0];
+                const last_name = fullName.slice(1).join(" ");
                 const account = yield stripe_1.stripe.accounts.create({
                     type: "express",
                     country,
@@ -45,17 +46,18 @@ class JobSeekerStripeService extends abstract_service_1.default {
                         card_payments: { requested: true },
                         transfers: { requested: true },
                     },
+                    individual: {
+                        first_name,
+                        last_name,
+                    },
                 });
+                console.log({ account });
                 const accountLink = yield stripe_1.stripe.accountLinks.create({
                     account: account.id,
                     refresh_url: `${config_1.default.BASE_URL}/job-seeker/stripe/onboard/refresh`,
                     return_url: `${config_1.default.BASE_URL}/job-seeker/stripe/onboard/complete?stripe_acc_id=${account.id}`,
                     type: "account_onboarding",
                 });
-                // await this.Model.UserModel().addStripePayoutAccount({
-                // 	user_id,
-                // 	stripe_acc_id: account.id,
-                // });
                 return {
                     success: true,
                     code: this.StatusCode.HTTP_OK,

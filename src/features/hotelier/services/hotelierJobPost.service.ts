@@ -77,6 +77,7 @@ class HotelierJobPostService extends AbstractServices {
 				const expireTime = new Date(detail.start_time).getTime();
 				const now = Date.now();
 				const delay = Math.max(expireTime - now, 0);
+				console.log({ delay });
 				const jobPostDetailsQueue = this.getQueue(
 					"expire-job-post-details"
 				);
@@ -111,10 +112,7 @@ class HotelierJobPostService extends AbstractServices {
 					id: seeker.user_id,
 				});
 				if (isSeekerExists && isSeekerExists.length < 1) {
-					throw new CustomError(
-						"Job Seeker not found!",
-						this.StatusCode.HTTP_NOT_FOUND
-					);
+					continue;
 				}
 
 				const seekerLat = parseFloat(seeker.latitude);
@@ -141,7 +139,7 @@ class HotelierJobPostService extends AbstractServices {
 					title: this.NotificationMsg.NEW_JOB_POST_NEARBY.title,
 					content: this.NotificationMsg.NEW_JOB_POST_NEARBY.content,
 					related_id: res[0].id,
-					type: NotificationTypeEnum.JOB_TASK,
+					type: NotificationTypeEnum.JOB_POST,
 				});
 
 				const isJobSeekerOnline = await getAllOnlineSocketIds({
@@ -160,7 +158,7 @@ class HotelierJobPostService extends AbstractServices {
 							content:
 								this.NotificationMsg.NEW_JOB_POST_NEARBY
 									.content,
-							type: NotificationTypeEnum.JOB_TASK,
+							type: NotificationTypeEnum.JOB_POST,
 							read_status: false,
 							created_at: new Date().toISOString(),
 						}

@@ -74,7 +74,7 @@ export default class PaymentService extends AbstractServices {
 				req.body;
 			const id = Number(req.params.id);
 			const { user_id } = req.hotelier;
-
+			console.log({ id });
 			if (!id) {
 				throw new CustomError(
 					"Id not found",
@@ -84,6 +84,7 @@ export default class PaymentService extends AbstractServices {
 
 			const paymentModel = this.Model.paymnentModel();
 			const payment = await paymentModel.getSinglePayment(id);
+			console.log({ payment });
 			if (!payment) {
 				throw new CustomError(
 					"Payment record not found",
@@ -97,16 +98,15 @@ export default class PaymentService extends AbstractServices {
 					this.StatusCode.HTTP_CONFLICT
 				);
 			}
-
-			const loginLink = await stripe.accounts.createLoginLink(
-				"acct_1RnAa4FSzTsJiGrd"
-			);
-			console.log("Login Link:", loginLink.url);
-
-			// const account = await stripe.accounts.retrieve(
-			// 	"acct_1Rmu4JFbg6WrkTSf"
+			// const loginLink = await stripe.accounts.createLoginLink(
+			// 	"acct_1RsFUAED98rhPWLe"
 			// );
-			// console.log(account?.settings?.payouts?.schedule);
+			// console.log("Login Link:", loginLink.url);
+
+			const total_amount = Number(payment.total_amount);
+			const jobSeekerPay = Number(payment.job_seeker_pay);
+
+			const applicationFeeAmount = total_amount - jobSeekerPay;
 
 			const session = await stripe.checkout.sessions.create({
 				payment_method_types: ["card"],
@@ -118,14 +118,14 @@ export default class PaymentService extends AbstractServices {
 							product_data: {
 								name: `Payment for ${job_title} by ${job_seeker_name}`,
 							},
-							unit_amount: Math.round(payment.total_amount * 100),
+							unit_amount: Math.round(total_amount * 100),
 						},
 						quantity: 1,
 					},
 				],
 				payment_intent_data: {
 					application_fee_amount: Math.round(
-						payment.platform_fee * 100
+						applicationFeeAmount * 100
 					),
 					transfer_data: {
 						destination: stripe_acc_id,
@@ -141,8 +141,6 @@ export default class PaymentService extends AbstractServices {
 				success_url: `${config.BASE_URL}/hotelier/payment/verify-checkout-session?session_id={CHECKOUT_SESSION_ID}`,
 				cancel_url: `${config.BASE_URL}/hotelier/payment/cancelled`,
 			});
-
-			console.log({ session });
 
 			return {
 				success: true,

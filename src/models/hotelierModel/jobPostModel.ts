@@ -44,6 +44,8 @@ class JobPostModel extends Schema {
 		params: IGetJobPostListParams
 	): Promise<IJobSeekerJobList> {
 		const {
+			from_date,
+			to_date,
 			user_id,
 			search,
 			category_id,
@@ -99,6 +101,8 @@ class JobPostModel extends Schema {
 							.orWhereILike("org.name", `%${search}%`);
 					});
 				}
+				if (from_date) qb.andWhere("jpd.start_time", ">=", from_date);
+				if (to_date) qb.andWhere("jpd.start_time", "<=", to_date);
 			})
 			.andWhere("jpd.status", "Pending")
 			.orderBy("jp.created_time", "desc")
@@ -147,6 +151,9 @@ class JobPostModel extends Schema {
 								.orWhereILike("org.name", `%${search}%`);
 						});
 					}
+					if (from_date)
+						qb.andWhere("jpd.start_time", ">=", from_date);
+					if (to_date) qb.andWhere("jpd.start_time", "<=", to_date);
 				})
 				.andWhere("jpd.status", "Pending");
 
@@ -288,15 +295,16 @@ class JobPostModel extends Schema {
 				if (title) qb.andWhereILike("j.title", `%${title}%`);
 				if (status) qb.andWhere("jpd.status", status);
 			})
+			.whereNot("jpd.status", "Expired")
 			.orderByRaw(
 				`
-          CASE
-            WHEN jpd.start_time <= NOW() AND jpd.end_time >= NOW() THEN 0  
-            WHEN jpd.start_time > NOW() THEN 1                       
-            WHEN jpd.end_time < NOW() THEN 2                         
-          END,
-          start_time ASC
-        `
+        CASE
+          WHEN DATE(jpd.start_time) = CURRENT_DATE AND jpd.end_time >= NOW() THEN 0 
+          WHEN jpd.start_time > NOW() THEN 1                                        
+          ELSE 2                                                                    
+        END,
+        jpd.start_time ASC
+      `
 			)
 			.limit(limit || 100)
 			.offset(skip || 0);

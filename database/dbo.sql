@@ -440,3 +440,12 @@ CREATE TABLE IF NOT EXISTS dbo.chat_messages (
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS dbo.save_jobs(
+  id SERIAL PRIMARY KEY,
+  job_post_details_id INTEGER NOT NULL REFERENCES dbo.job_post_details(id),
+  job_seeker_id INTEGER NOT NULL REFERENCES dbo.user(id),
+  created_at TIMESTAMP DEFAULT NOW(),
+  CONSTRAINT unique_saved_job
+   UNIQUE (job_post_details_id, job_seeker_id)
+)
