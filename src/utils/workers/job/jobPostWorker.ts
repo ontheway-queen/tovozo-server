@@ -7,11 +7,7 @@ import {
 	JOB_POST_DETAILS_STATUS,
 	JOB_POST_STATUS,
 } from "../../miscellaneous/constants";
-import NotificationMessage from "../../miscellaneous/notificationMessage";
-import {
-	NotificationTypeEnum,
-	TypeEmitNotificationEnum,
-} from "../../modelTypes/common/commonModelTypes";
+import { TypeEmitNotificationEnum } from "../../modelTypes/common/commonModelTypes";
 import { TypeUser } from "../../modelTypes/user/userModelTypes";
 
 export default class JobPostWorker {
@@ -92,10 +88,10 @@ export default class JobPostWorker {
 							to: job_seeker_device_id,
 							notificationTitle: title,
 							notificationBody: content,
-							data: {
+							data: JSON.stringify({
 								photo,
 								related_id,
-							},
+							}),
 						});
 					}
 				}

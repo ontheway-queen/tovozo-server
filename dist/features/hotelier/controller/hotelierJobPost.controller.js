@@ -31,7 +31,10 @@ class HotelierJobPostController extends abstract_controller_1.default {
         super();
         this.service = new hotelierJobPost_service_1.default();
         this.validator = new hotelierJobPost_validator_1.HotelierJobPostValidator();
-        this.createJobPost = this.asyncWrapper.wrap({ bodySchema: this.validator.createJobPostSchema }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+        this.createJobPost = this.asyncWrapper.wrap(
+        //! Need to un comment later
+        // { bodySchema: this.validator.createJobPostSchema },
+        null, (req, res) => __awaiter(this, void 0, void 0, function* () {
             const _a = yield this.service.createJobPost(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));

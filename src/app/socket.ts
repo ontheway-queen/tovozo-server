@@ -28,6 +28,7 @@ export async function removeOnlineUser(userId: number, socketId: string) {
 	await client.sRem(`socket:user:${userId}`, socketId);
 
 	const remaining = await client.sCard(`socket:user:${userId}`);
+	console.log({ remaining });
 	if (remaining === 0) {
 		await client.del(`socket:user:${userId}`);
 		await client.del(`socket:user-type:${userId}`);

@@ -24,7 +24,7 @@ class NotificationMessage {
 			completed ? "Task Completed" : "Task Incomplete",
 		content: (taskId: number, completed: boolean) =>
 			`The task #${taskId} has been ${
-				completed ? "completed" : "marked as incomplete"
+				completed ? "marked as incomplete" : "completed"
 			}.`,
 	};
 
@@ -86,6 +86,12 @@ class NotificationMessage {
 					minute: "2-digit",
 				}
 			)}. Please be prepared and arrive on time.`,
+	};
+
+	static readonly TASK_SUBMITTED_FOR_FINAL_APPROVAL = {
+		title: "Task Submitted for Your Approval",
+		content: ({ id, jobTitle }: { id?: number; jobTitle?: string }) =>
+			`The task for "${jobTitle}" (ID: #${id}) has been submitted by the job seeker. Please review and approve it to proceed with payment.`,
 	};
 }
 

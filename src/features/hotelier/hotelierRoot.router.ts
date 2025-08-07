@@ -1,5 +1,6 @@
 import AbstractRouter from "../../abstract/abstract.router";
 import HotelierCancellationLogRouter from "./router/hotelierCancellationLog.router";
+import { HotelierChatRouter } from "./router/hotelierChat.router";
 import HotelierJobPostRouter from "./router/hotelierJobPost.router";
 import HotelierJobTaskActivitiesRouter from "./router/hotelierJobTaskActivities.router";
 import HotelierNotificationRouter from "./router/hotelierNotification.router";
@@ -37,5 +38,7 @@ export default class HotelierRootRouter extends AbstractRouter {
 			"/notification",
 			new HotelierNotificationRouter().router
 		);
+
+		this.router.use("/chat", new HotelierChatRouter().router);
 	}
 }

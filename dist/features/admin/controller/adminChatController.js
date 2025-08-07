@@ -23,27 +23,24 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const joi_1 = __importDefault(require("joi"));
 const abstract_controller_1 = __importDefault(require("../../../abstract/abstract.controller"));
 const adminChatService_1 = __importDefault(require("../services/adminChatService"));
+const adminChat_validator_1 = __importDefault(require("../utils/validator/adminChat.validator"));
 class AdminChatController extends abstract_controller_1.default {
     constructor() {
         super();
         this.services = new adminChatService_1.default();
-        this.createChatSession = this.asyncWrapper.wrap({ bodySchema: joi_1.default.object().unknown(true) }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.services.createChatSession(req), { code } = _a, data = __rest(_a, ["code"]);
+        this.validator = new adminChat_validator_1.default();
+        this.getChatSessions = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.services.getChatSessions(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
-        this.getChatSession = this.asyncWrapper.wrap({ querySchema: joi_1.default.object().unknown(true) }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.services.getChatSession(req), { code } = _a, data = __rest(_a, ["code"]);
+        this.getMessages = this.asyncWrapper.wrap({ querySchema: this.validator.getMessagesValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.services.getMessages(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
-        this.getChatMessages = this.asyncWrapper.wrap({ querySchema: joi_1.default.object().unknown(true) }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.services.getChatMessages(req), { code } = _a, data = __rest(_a, ["code"]);
-            res.status(code).json(data);
-        }));
-        this.createChatMessage = this.asyncWrapper.wrap({ bodySchema: joi_1.default.object().unknown(true) }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.services.createChatMessage(req), { code } = _a, data = __rest(_a, ["code"]);
+        this.sendMessage = this.asyncWrapper.wrap({ bodySchema: this.validator.sendMessageValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.services.sendMessage(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }

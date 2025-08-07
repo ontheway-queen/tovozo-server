@@ -83,10 +83,10 @@ class JobPostWorker {
                                 to: job_seeker_device_id,
                                 notificationTitle: title,
                                 notificationBody: content,
-                                data: {
+                                data: JSON.stringify({
                                     photo,
                                     related_id,
-                                },
+                                }),
                             });
                         }
                     }

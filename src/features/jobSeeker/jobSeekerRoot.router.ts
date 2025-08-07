@@ -1,5 +1,6 @@
 import AbstractRouter from "../../abstract/abstract.router";
 import { JobSeekerCancellationApplicationLogsRouter } from "./router/jobSeekerCancellationLog.router";
+import { JobSeekerChatRouter } from "./router/jobSeekerChat.router";
 import { JobSeekerJobApplicationRouter } from "./router/jobSeekerJobApplication.router";
 import { JobSeekerJobsRouter } from "./router/jobSeekerJobs.router";
 import JobTaskActivityRouter from "./router/jobSeekerJobTaskActivity.router";
@@ -51,5 +52,7 @@ export default class JobSeekerRootRouter extends AbstractRouter {
 			"/notification",
 			new jobSeekerNotificationRouter().router
 		);
+
+		this.router.use("/chat", new JobSeekerChatRouter().router);
 	}
 }

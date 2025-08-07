@@ -147,10 +147,10 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 								id: application.job_post_details_id,
 								jobTitle: application.job_post_title,
 							}),
-						data: {
+						data: JSON.stringify({
 							photo: hotelier[0].photo,
 							related_id: res[0].id,
-						},
+						}),
 					});
 				}
 			}
@@ -286,10 +286,10 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 						notificationTitle:
 							this.NotificationMsg.NEW_TASKS_ASSIGNED.title,
 						notificationBody: allMessages,
-						data: {
+						data: JSON.stringify({
 							photo: hotelier[0].photo,
 							related_id: taskActivity.job_application_id,
-						},
+						}),
 					});
 				}
 			}
@@ -550,10 +550,10 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 							this.NotificationMsg.TASK_UNDER_REVIEW.content(
 								application.job_post_details_id
 							),
-						data: {
+						data: JSON.stringify({
 							related_id: res[0].id,
 							photo: hotelier[0].photo,
-						},
+						}),
 					});
 				}
 			}

@@ -44,10 +44,16 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 if (!jobPost) {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
                 }
-                if (jobPost.status !==
-                    constants_1.JOB_POST_DETAILS_STATUS.Pending) {
-                    throw new customError_1.default("This job post is no longer accepting applications.", this.StatusCode.HTTP_BAD_REQUEST);
-                }
+                //! Need to uncomment later.
+                // if (
+                // 	jobPost.status !==
+                // 	(JOB_POST_DETAILS_STATUS.Pending as unknown as IJobPostDetailsStatus)
+                // ) {
+                // 	throw new CustomError(
+                // 		"This job post is no longer accepting applications.",
+                //		this.StatusCode.HTTP_BAD_REQUEST
+                // 	);
+                // }
                 const jobPostReport = yield cancellationLogModel.getSingleJobPostCancellationLog({
                     id: null,
                     report_type: constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST,
@@ -61,13 +67,19 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 const existPendingApplication = yield model.getMyJobApplication({
                     job_seeker_id: user_id,
                 });
-                if (existPendingApplication &&
-                    (existPendingApplication.job_application_status ===
-                        constants_1.JOB_APPLICATION_STATUS.PENDING ||
-                        existPendingApplication.job_application_status ===
-                            constants_1.JOB_APPLICATION_STATUS.IN_PROGRESS)) {
-                    throw new customError_1.default("Hold on! You need to complete your current job before moving on to the next.", this.StatusCode.HTTP_BAD_REQUEST);
-                }
+                //! Need to uncomment later.
+                // if (
+                // 	existPendingApplication &&
+                // 	(existPendingApplication.job_application_status ===
+                // 		JOB_APPLICATION_STATUS.PENDING ||
+                // 		existPendingApplication.job_application_status ===
+                // 			JOB_APPLICATION_STATUS.IN_PROGRESS)
+                // ) {
+                // 	throw new CustomError(
+                // 		"Hold on! You need to complete your current job before moving on to the next.",
+                // 		this.StatusCode.HTTP_BAD_REQUEST
+                // 	);
+                // }
                 const payload = {
                     job_post_details_id: Number(job_post_details_id),
                     job_seeker_id: user_id,
@@ -89,6 +101,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     throw new customError_1.default("Organization not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }
                 const startTime = new Date(jobPost.start_time);
+                // Job start reminder queue start from here
                 const reminderTime = new Date(startTime.getTime() - 2 * 60 * 60 * 1000);
                 const jobStartReminderQueue = this.getQueue("jobStartReminder");
                 yield jobStartReminderQueue.add("jobStartReminder", {
@@ -109,6 +122,22 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     removeOnComplete: true,
                     removeOnFail: false,
                 });
+                // Job start reminder queue end from here
+                // Chat Session Create Message queue start from here
+                const oneHourBeforeStart = new Date(startTime.getTime() - 60 * 60 * 1000);
+                const chatSessionDelay = oneHourBeforeStart.getTime() - Date.now();
+                const safeDelay = chatSessionDelay > 0 ? chatSessionDelay : 0;
+                const chatSessionQueue = this.getQueue("chatSessionCreator");
+                yield chatSessionQueue.add("chatSessionCreator", {
+                    hotelier_id: jobPost.hotelier_id,
+                    job_seeker_id: user_id,
+                    job_post_id: jobPost.job_post_id,
+                }, {
+                    delay: safeDelay,
+                    removeOnComplete: true,
+                    removeOnFail: false,
+                });
+                // Chat Session Create Message queue start from here
                 yield this.insertNotification(trx, userModelTypes_1.TypeUser.HOTELIER, {
                     user_id: jobPost.hotelier_id,
                     sender_id: user_id,
@@ -150,10 +179,10 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                                 jobTitle: jobPost.job_title,
                                 jobPostId: jobPost.id,
                             }),
-                            data: {
+                            data: JSON.stringify({
                                 photo: jobSeeker[0].photo,
                                 related_id: jobPost.id,
-                            },
+                            }),
                         });
                     }
                 }

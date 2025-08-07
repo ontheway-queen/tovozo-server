@@ -13,201 +13,135 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const schema_1 = __importDefault(require("../../utils/miscellaneous/schema"));
+const userModelTypes_1 = require("../../utils/modelTypes/user/userModelTypes");
 class ChatModel extends schema_1.default {
     constructor(db) {
         super();
         this.db = db;
     }
-    createChatSession(payload) {
+    // ------------------------------------------------------------------------------------------------
+    getReceiverId(_a) {
+        return __awaiter(this, arguments, void 0, function* ({ chat_session_id, sender_id, }) {
+            return yield this.db("chat_session_participants")
+                .withSchema(this.DBO_SCHEMA)
+                .select("user_id")
+                .where("chat_session_id", chat_session_id)
+                .andWhereNot("user_id", sender_id)
+                .first();
+        });
+    }
+    checkSessionForJobSeekerAndHotelier(payload) {
         return __awaiter(this, void 0, void 0, function* () {
+            const { hotelier_id, job_seeker_id } = payload;
+            return yield this.db("chat_session_participants as csp")
+                .withSchema(this.DBO_SCHEMA)
+                .join("chat_sessions as cs", "cs.id", "csp.chat_session_id")
+                .whereIn("csp.user_id", [hotelier_id, job_seeker_id])
+                .groupBy("cs.id")
+                .havingRaw("COUNT(*) = 2")
+                .select("cs.id")
+                .first();
+        });
+    }
+    createChatSession(_a) {
+        return __awaiter(this, arguments, void 0, function* ({ last_message, }) {
             return yield this.db("chat_sessions")
                 .withSchema(this.DBO_SCHEMA)
-                .insert(payload, "id");
+                .insert({ last_message }, "id");
         });
     }
-    getChatSession(_a) {
-        return __awaiter(this, arguments, void 0, function* ({ user1_id, user2_id, id, }) {
+    updateChatSession(_a) {
+        return __awaiter(this, arguments, void 0, function* ({ last_message, session_id, }) {
             return yield this.db("chat_sessions")
                 .withSchema(this.DBO_SCHEMA)
-                .select("*")
-                .modify((qb) => {
-                if (id) {
-                    qb.where("id", id);
-                    if (user1_id && user2_id) {
-                        qb.andWhere((subQb) => {
-                            subQb
-                                .where({ user1_id, user2_id })
-                                .orWhere({ user1_id: user2_id, user2_id: user1_id });
-                        });
-                    }
-                }
-                else if (user1_id && user2_id) {
-                    qb.where((subQb) => {
-                        subQb
-                            .where({ user1_id, user2_id })
-                            .orWhere({ user1_id: user2_id, user2_id: user1_id });
-                    });
-                }
-            })
-                .first();
+                .where({ id: session_id })
+                .update({ last_message, last_message_at: new Date() }, "id");
         });
     }
-    getChatSessionList(_a) {
-        return __awaiter(this, arguments, void 0, function* ({ user_id, enable_chat, limit, skip, }) {
-            const data = yield this.db("chat_sessions as cs")
-                .withSchema(this.DBO_SCHEMA)
-                .select("cs.id", "cs.user1_id", "cs.user2_id", "cs.last_message", "cs.last_message_at", "cs.enable_chat", this.db.raw(`
-        CASE
-          WHEN cs.user1_id = ? THEN u2.id
-          ELSE u1.id
-        END AS user_id
-      `, [user_id]), this.db.raw(`
-        CASE
-          WHEN cs.user1_id = ? THEN u2.name
-          ELSE u1.name
-        END AS user_name
-      `, [user_id]), this.db.raw(`
-        CASE
-          WHEN cs.user1_id = ? THEN u2.photo
-          ELSE u1.photo
-        END AS user_photo
-      `, [user_id]), this.db.raw(`
-        CASE
-          WHEN cs.user1_id = ? THEN u2.type
-          ELSE u1.type
-        END AS user_type
-      `, [user_id]))
-                .join("user as u1", "u1.id", "cs.user1_id")
-                .join("user as u2", "u2.id", "cs.user2_id")
-                .where((qb) => {
-                if (user_id) {
-                    qb.where("cs.user1_id", user_id);
-                    qb.orWhere("cs.user2_id", user_id);
-                }
-                if (enable_chat) {
-                    qb.andWhere("cs.enable_chat", enable_chat);
-                }
-            })
-                .limit(limit || 100)
-                .offset(skip || 0);
-            const total = yield this.db("chat_sessions as cs")
-                .withSchema(this.DBO_SCHEMA)
-                .count("cs.id as total")
-                .where((qb) => {
-                if (user_id) {
-                    qb.where("cs.user1_id", user_id);
-                    qb.orWhere("cs.user2_id", user_id);
-                }
-                if (enable_chat) {
-                    qb.andWhere("cs.enable_chat", enable_chat);
-                }
-            })
-                .first();
-            return {
-                data,
-                total: total === null || total === void 0 ? void 0 : total.total,
-            };
-        });
-    }
-    getChatSessionListForAdmin(_a) {
-        return __awaiter(this, arguments, void 0, function* ({ user_id, enable_chat, limit, skip, }) {
-            const data = yield this.db("chat_sessions as cs")
-                .withSchema(this.DBO_SCHEMA)
-                .select("cs.id", "cs.user1_id", "cs.user2_id", "cs.last_message", "cs.last_message_at", "cs.enable_chat", this.db.raw(`
-        CASE
-          WHEN cs.user1_id != ? THEN u2.id
-          ELSE u1.id
-        END AS user_id
-      `, [user_id]), this.db.raw(`
-        CASE
-          WHEN cs.user1_id != ? THEN u2.name
-          ELSE u1.name
-        END AS user_name
-      `, [user_id]), this.db.raw(`
-        CASE
-          WHEN cs.user1_id != ? THEN u2.photo
-          ELSE u1.photo
-        END AS user_photo
-      `, [user_id]), this.db.raw(`
-        CASE
-          WHEN cs.user1_id != ? THEN u2.type
-          ELSE u1.type
-        END AS user_type
-      `, [user_id]))
-                .join("user as u1", "u1.id", "cs.user1_id")
-                .join("user as u2", "u2.id", "cs.user2_id")
-                .where((qb) => {
-                if (user_id) {
-                    qb.where("cs.user1_id", user_id);
-                    qb.orWhere("cs.user2_id", user_id);
-                }
-                if (enable_chat) {
-                    qb.andWhere("cs.enable_chat", enable_chat);
-                }
-            })
-                .limit(limit || 100)
-                .offset(skip || 0);
-            const total = yield this.db("chat_sessions as cs")
-                .withSchema(this.DBO_SCHEMA)
-                .count("cs.id as total")
-                .where((qb) => {
-                if (user_id) {
-                    qb.where("cs.user1_id", user_id);
-                    qb.orWhere("cs.user2_id", user_id);
-                }
-                if (enable_chat) {
-                    qb.andWhere("cs.enable_chat", enable_chat);
-                }
-            })
-                .first();
-            return {
-                data,
-                total: total === null || total === void 0 ? void 0 : total.total,
-            };
-        });
-    }
-    updateChatSession(payload, where) {
+    createChatSessionParticipants(participants) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db("chat_sessions")
+            return yield this.db("chat_session_participants")
                 .withSchema(this.DBO_SCHEMA)
-                .update(payload)
-                .where({ id: where.id });
+                .insert(participants);
         });
     }
-    createChatMessage(payload) {
+    getChatSessions(query) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { user_id, name } = query;
+            const baseQuery = this.db
+                .withSchema(this.DBO_SCHEMA)
+                .select("cs.id as session_id", "cs.last_message", "cs.last_message_at", "other_participant.id as participant_user_id", "other_participant.name as participant_name", "other_participant.email as participant_email", "other_participant.photo as participant_image", "other_participant.type as participant_type")
+                .from("chat_sessions as cs")
+                .join("chat_session_participants as csp", "cs.id", "csp.chat_session_id")
+                .join(this.db.raw(`
+				(
+					SELECT
+						csp2.chat_session_id,
+						u.id,
+						u.name,
+            u.email,
+						u.photo,
+						csp2.type
+					FROM "dbo"."chat_session_participants" csp2
+					LEFT JOIN "dbo"."user" u ON u.id = csp2.user_id
+					WHERE (csp2.user_id IS NULL OR csp2.user_id != ?)
+					  AND u.type IS DISTINCT FROM 'ADMIN'
+				) as other_participant
+			`, [user_id]), "cs.id", "other_participant.chat_session_id")
+                .where("csp.user_id", user_id)
+                .orderBy("cs.last_message_at", "desc");
+            if (name !== "undefined") {
+                console.log({ name });
+                console.log(1);
+                baseQuery.whereILike("other_participant.name", `%${name}%`);
+            }
+            return yield baseQuery;
+        });
+    }
+    sendMessage(payload) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("chat_messages")
                 .withSchema(this.DBO_SCHEMA)
-                .insert(payload, "id");
+                .insert(payload, ["id", "message", "created_at"]);
         });
     }
-    getChatMessages(_a) {
-        return __awaiter(this, arguments, void 0, function* ({ chat_session_id, user_id, limit, skip, }) {
-            return yield this.db("chat_messages as cm")
+    getMessages(query) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { user_id, chat_session_id, limit = 100, skip = 0 } = query;
+            const messages = yield this.db("chat_messages as cm")
                 .withSchema(this.DBO_SCHEMA)
-                .select("cm.*", this.db.raw(`
-        CASE
-          WHEN cm.sender_id != ? THEN u1.name
-          ELSE u2.name
-        END AS user_name
-      `, [user_id]), this.db.raw(`
-        CASE
-          WHEN cm.sender_id != ? THEN u1.photo
-          ELSE u2.photo
-        END AS user_photo
-      `, [user_id]), this.db.raw(`
-        CASE
-          WHEN cm.sender_id != ? THEN u1.type
-          ELSE u2.type
-        END AS user_type
-      `, [user_id]))
-                .leftJoin("user as u1", "u1.id", "cm.sender_id")
-                .leftJoin("user as u2", "u2.id", "cm.receiver_id")
+                .select("cm.id", "cm.chat_session_id", "cm.sender_id", "u.name as sender_name", "u.type as sender_type", "u.photo", "cm.message", "cm.created_at")
+                .join("user as u", "u.id", "cm.sender_id")
+                .join("chat_session_participants as csp", "csp.chat_session_id", "cm.chat_session_id")
                 .where("cm.chat_session_id", chat_session_id)
-                .andWhere("cm.sender_id", user_id)
-                .orderBy("cm.created_at", "desc")
-                .limit(limit || 50)
-                .offset(skip || 0);
+                .andWhere("csp.user_id", user_id)
+                .orderBy("cm.created_at", "asc")
+                .limit(limit)
+                .offset(skip);
+            return messages;
+        });
+    }
+    // check session for admin
+    checkSupportSession(user_id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("chat_sessions as cs")
+                .withSchema(this.DBO_SCHEMA)
+                .join("chat_session_participants as csp1", "cs.id", "csp1.chat_session_id")
+                .join("chat_session_participants as csp2", "cs.id", "csp2.chat_session_id")
+                .where("csp1.user_id", user_id) // job seeker
+                .andWhere("csp1.type", userModelTypes_1.TypeUser.JOB_SEEKER)
+                .andWhere("csp2.type", userModelTypes_1.TypeUser.ADMIN) // at least one admin joined
+                .select("cs.id")
+                .first();
+        });
+    }
+    getSessionParticipants(session_id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("chat_session_participants as csp")
+                .withSchema(this.DBO_SCHEMA)
+                .select("*")
+                .where("csp.chat_session_id", session_id);
+            // .first();
         });
     }
 }

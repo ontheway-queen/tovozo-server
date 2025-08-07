@@ -307,7 +307,7 @@ class AdminHotelierService extends abstract_service_1.default {
                     yield lib_1.default.sendEmailDefault({
                         email: existingUser.email,
                         emailSub: "Hotelier Account Activation Successful – You Can Now Log In",
-                        emailBody: (0, registrationVerificationCompletedTemplate_1.registrationVerificationCompletedTemplate)(existingUser.name, "Trabill OTA B2B://login"),
+                        emailBody: (0, registrationVerificationCompletedTemplate_1.registrationVerificationCompletedTemplate)(existingUser.name, "tovozo://login"),
                     });
                 }
                 if (Object.keys(parsed.organization_address).length > 0) {

@@ -1,6 +1,7 @@
 import { Worker } from "bullmq";
 import Redis from "ioredis";
 import JobPostWorker from "./job/jobPostWorker";
+import ChatWorker from "./chat/chatWorker";
 
 export default class Workers {
 	constructor(redisUrl = "redis://localhost") {
@@ -15,10 +16,12 @@ export default class Workers {
 	private redisUrl: string;
 	private connection: Redis;
 	private jobPostWorker = new JobPostWorker();
+	private chatWorker = new ChatWorker();
 
 	private callWorkers() {
 		this.ExpireJobPostDetails();
 		this.jobStartReminder();
+		this.chatSessionCreator();
 	}
 
 	public ExpireJobPostDetails() {
@@ -58,6 +61,24 @@ export default class Workers {
 				`❌ Failed to send job start reminder for jobPostDetail ID: ${job?.data?.id}`,
 				err
 			);
+		});
+	}
+
+	public chatSessionCreator() {
+		this.worker = new Worker(
+			"chatSessionCreator",
+			async (job) => await this.chatWorker.createChatSession(job),
+			{ connection: this.connection }
+		);
+
+		this.worker.on("completed", (job) => {
+			console.log(
+				`✅ Chat session created successfully for jobseeker and hotelier.`
+			);
+		});
+
+		this.worker.on("failed", (job, err) => {
+			console.error(`❌ Failed to create chat session.`, err);
 		});
 	}
 }

@@ -28,7 +28,7 @@ class AdminAuthService extends AbstractServices {
 					table_name: USER_AUTHENTICATION_VIEW.ADMIN,
 					email,
 				});
-
+			console.log(1);
 			if (!checkUser) {
 				return {
 					success: false,
@@ -36,6 +36,7 @@ class AdminAuthService extends AbstractServices {
 					message: this.ResMsg.WRONG_CREDENTIALS,
 				};
 			}
+			console.log(2);
 
 			const { password_hash: hashPass, ...rest } = checkUser;
 			const checkPass = await Lib.compareHashValue(password, hashPass);

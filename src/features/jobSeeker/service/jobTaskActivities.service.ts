@@ -111,12 +111,16 @@ export default class JobTaskActivitiesService extends AbstractServices {
 				user_id: myApplication.hotelier_id,
 				sender_id: user_id,
 				sender_type: USER_TYPE.JOB_SEEKER,
-				title: this.NotificationMsg.WAITING_FOR_APPROVAL.title,
-				content: this.NotificationMsg.WAITING_FOR_APPROVAL.content({
-					id: myApplication.job_post_details_id,
-					jobTitle: myApplication.job_post_title,
-				}),
-				related_id: res[0].id,
+				title: this.NotificationMsg.TASK_SUBMITTED_FOR_FINAL_APPROVAL
+					.title,
+				content:
+					this.NotificationMsg.TASK_SUBMITTED_FOR_FINAL_APPROVAL.content(
+						{
+							id: myApplication.job_post_details_id,
+							jobTitle: myApplication.job_post_title,
+						}
+					),
+				related_id: job_post_details_id,
 				type: NotificationTypeEnum.JOB_TASK,
 			});
 
@@ -137,7 +141,7 @@ export default class JobTaskActivitiesService extends AbstractServices {
 								id: myApplication.job_post_details_id,
 								jobTitle: myApplication.job_post_title,
 							}),
-						related_id: res[0].id,
+						related_id: job_post_details_id,
 						type: NotificationTypeEnum.JOB_TASK,
 						read_status: false,
 						created_at: new Date().toISOString(),
@@ -154,10 +158,10 @@ export default class JobTaskActivitiesService extends AbstractServices {
 								id: myApplication.job_post_details_id,
 								jobTitle: myApplication.job_post_title,
 							}),
-						data: {
+						data: JSON.stringify({
 							photo: jobSeeker[0].photo,
-							related_id: res[0].id,
-						},
+							related_id: job_post_details_id,
+						}),
 					});
 				}
 			}
@@ -275,10 +279,10 @@ export default class JobTaskActivitiesService extends AbstractServices {
 								taskList[0].id,
 								taskList[0].is_completed
 							),
-						data: {
+						data: JSON.stringify({
 							photo: jobSeeker[0].photo,
 							related_id: taskList[0].id,
-						},
+						}),
 					});
 				}
 			}
@@ -384,8 +388,8 @@ export default class JobTaskActivitiesService extends AbstractServices {
 				user_id: myApplication.hotelier_id,
 				sender_id: user_id,
 				sender_type: USER_TYPE.JOB_SEEKER,
-				title: this.NotificationMsg.JOB_ASSIGNED.title,
-				content: this.NotificationMsg.JOB_ASSIGNED.content({
+				title: this.NotificationMsg.WAITING_FOR_APPROVAL.title,
+				content: this.NotificationMsg.WAITING_FOR_APPROVAL.content({
 					id: taskActivity.job_post_details_id,
 					jobTitle: myApplication.job_post_title,
 				}),
@@ -399,34 +403,38 @@ export default class JobTaskActivitiesService extends AbstractServices {
 			});
 
 			if (isHotelierOnline && isHotelierOnline.length > 0) {
-				io.to(String(myApplication.hotelier_id)).emit("end-job", {
-					user_id: myApplication.hotelier_id,
-					photo: jobSeeker[0].photo,
-					title: this.NotificationMsg.JOB_ASSIGNED.title,
-					content: this.NotificationMsg.JOB_ASSIGNED.content({
-						id: taskActivity.job_post_details_id,
-						jobTitle: myApplication.job_post_title,
-					}),
-					related_id: res[0].id,
-					type: NotificationTypeEnum.JOB_TASK,
-					read_status: false,
-					created_at: new Date().toISOString(),
-				});
+				io.to(String(myApplication.hotelier_id)).emit(
+					TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION,
+					{
+						user_id: myApplication.hotelier_id,
+						photo: jobSeeker[0].photo,
+						title: this.NotificationMsg.WAITING_FOR_APPROVAL.title,
+						content:
+							this.NotificationMsg.WAITING_FOR_APPROVAL.content({
+								id: taskActivity.job_post_details_id,
+								jobTitle: myApplication.job_post_title,
+							}),
+						related_id: res[0].id,
+						type: NotificationTypeEnum.JOB_TASK,
+						read_status: false,
+						created_at: new Date().toISOString(),
+					}
+				);
 			} else {
 				if (isHotelierExists[0].device_id) {
 					await Lib.sendNotificationToMobile({
 						to: isHotelierExists[0].device_id as string,
 						notificationTitle:
-							this.NotificationMsg.JOB_ASSIGNED.title,
+							this.NotificationMsg.WAITING_FOR_APPROVAL.title,
 						notificationBody:
-							this.NotificationMsg.JOB_ASSIGNED.content({
+							this.NotificationMsg.WAITING_FOR_APPROVAL.content({
 								id: taskActivity.job_post_details_id,
 								jobTitle: myApplication.job_post_title,
 							}),
-						data: {
+						data: JSON.stringify({
 							photo: jobSeeker[0].photo,
 							related_id: res[0].id,
-						},
+						}),
 					});
 				}
 			}

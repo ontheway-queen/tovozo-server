@@ -11,7 +11,9 @@ export default class HotelierJobPostController extends AbstractController {
 	}
 
 	public createJobPost = this.asyncWrapper.wrap(
-		{ bodySchema: this.validator.createJobPostSchema },
+		//! Need to un comment later
+		// { bodySchema: this.validator.createJobPostSchema },
+		null,
 		async (req: Request, res: Response) => {
 			const { code, ...data } = await this.service.createJobPost(req);
 			res.status(code).json(data);

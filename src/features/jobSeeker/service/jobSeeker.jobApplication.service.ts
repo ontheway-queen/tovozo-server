@@ -55,15 +55,16 @@ export class JobSeekerJobApplication extends AbstractServices {
 					this.StatusCode.HTTP_NOT_FOUND
 				);
 			}
-			if (
-				jobPost.status !==
-				(JOB_POST_DETAILS_STATUS.Pending as unknown as IJobPostDetailsStatus)
-			) {
-				throw new CustomError(
-					"This job post is no longer accepting applications.",
-					this.StatusCode.HTTP_BAD_REQUEST
-				);
-			}
+			//! Need to uncomment later.
+			// if (
+			// 	jobPost.status !==
+			// 	(JOB_POST_DETAILS_STATUS.Pending as unknown as IJobPostDetailsStatus)
+			// ) {
+			// 	throw new CustomError(
+			// 		"This job post is no longer accepting applications.",
+			//		this.StatusCode.HTTP_BAD_REQUEST
+			// 	);
+			// }
 
 			const jobPostReport =
 				await cancellationLogModel.getSingleJobPostCancellationLog({
@@ -87,18 +88,19 @@ export class JobSeekerJobApplication extends AbstractServices {
 				job_seeker_id: user_id,
 			});
 
-			if (
-				existPendingApplication &&
-				(existPendingApplication.job_application_status ===
-					JOB_APPLICATION_STATUS.PENDING ||
-					existPendingApplication.job_application_status ===
-						JOB_APPLICATION_STATUS.IN_PROGRESS)
-			) {
-				throw new CustomError(
-					"Hold on! You need to complete your current job before moving on to the next.",
-					this.StatusCode.HTTP_BAD_REQUEST
-				);
-			}
+			//! Need to uncomment later.
+			// if (
+			// 	existPendingApplication &&
+			// 	(existPendingApplication.job_application_status ===
+			// 		JOB_APPLICATION_STATUS.PENDING ||
+			// 		existPendingApplication.job_application_status ===
+			// 			JOB_APPLICATION_STATUS.IN_PROGRESS)
+			// ) {
+			// 	throw new CustomError(
+			// 		"Hold on! You need to complete your current job before moving on to the next.",
+			// 		this.StatusCode.HTTP_BAD_REQUEST
+			// 	);
+			// }
 
 			const payload = {
 				job_post_details_id: Number(job_post_details_id),
@@ -130,6 +132,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 			}
 
 			const startTime = new Date(jobPost.start_time);
+			// Job start reminder queue start from here
 			const reminderTime = new Date(
 				startTime.getTime() - 2 * 60 * 60 * 1000
 			);
@@ -156,6 +159,32 @@ export class JobSeekerJobApplication extends AbstractServices {
 					removeOnFail: false,
 				}
 			);
+			// Job start reminder queue end from here
+
+			// Chat Session Create Message queue start from here
+			const oneHourBeforeStart = new Date(
+				startTime.getTime() - 60 * 60 * 1000
+			);
+			const chatSessionDelay = oneHourBeforeStart.getTime() - Date.now();
+			const safeDelay = chatSessionDelay > 0 ? chatSessionDelay : 0;
+
+			const chatSessionQueue = this.getQueue("chatSessionCreator");
+			await chatSessionQueue.add(
+				"chatSessionCreator",
+				{
+					hotelier_id: jobPost.hotelier_id,
+					job_seeker_id: user_id,
+					job_post_id: jobPost.job_post_id,
+				},
+				{
+					delay: safeDelay,
+					removeOnComplete: true,
+					removeOnFail: false,
+				}
+			);
+
+			// Chat Session Create Message queue start from here
+
 			await this.insertNotification(trx, TypeUser.HOTELIER, {
 				user_id: jobPost.hotelier_id,
 				sender_id: user_id,
@@ -207,10 +236,10 @@ export class JobSeekerJobApplication extends AbstractServices {
 									jobPostId: jobPost.id,
 								}
 							),
-						data: {
+						data: JSON.stringify({
 							photo: jobSeeker[0].photo,
 							related_id: jobPost.id,
-						},
+						}),
 					});
 				}
 			}

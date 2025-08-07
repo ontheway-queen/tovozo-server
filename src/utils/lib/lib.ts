@@ -251,7 +251,7 @@ class Lib {
 		to: string;
 		notificationTitle: string;
 		notificationBody: string;
-		data?: any;
+		data?: string;
 	}) {
 		if (!admin.apps.length) {
 			admin.initializeApp({
@@ -264,12 +264,12 @@ class Lib {
 
 		const { to, notificationTitle, notificationBody, data } = params;
 		const message = {
-			token: "cOuIxydAQpKIzx_GzrKepT:APA91bHLcbQOd2ybavt3QLg6mmM7ymgGgD40GxVuxAIyHPLvMq8D1VngmQXIPE_3q08PjVN5h-M_G_bVNDNxLEvW9uEjGIFcVZeceqr869m5xIuOejShyOg", // FCM device token
+			token: to,
 			notification: {
 				title: notificationTitle,
 				body: notificationBody,
 			},
-			// data: data || {},
+			data: data ? { payload: data } : undefined,
 		};
 
 		try {

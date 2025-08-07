@@ -13,9 +13,14 @@ class HotelierProfileRouter extends abstract_router_1.default {
     }
     callRouter() {
         // get profile
-        this.router.route("/").get(this.controller.getProfile);
+        this.router
+            .route("/")
+            .get(this.controller.getProfile)
+            .patch(this.uploader.cloudUploadRaw(this.fileFolders.HOTELIER_FILES), this.controller.updateHotelier);
         // change password
-        this.router.route("/change-password").post(this.controller.changePassword);
+        this.router
+            .route("/change-password")
+            .post(this.controller.changePassword);
     }
 }
 exports.default = HotelierProfileRouter;
