@@ -343,7 +343,7 @@ class AdminJobSeekerService extends abstract_service_1.default {
                     yield lib_1.default.sendEmailDefault({
                         email: existingUser.email,
                         emailSub: "Job Seeker Account Activation Successful – You Can Now Log In",
-                        emailBody: (0, registrationVerificationCompletedTemplate_1.registrationVerificationCompletedTemplate)(existingUser.name, "Trabill OTA B2B://login"),
+                        emailBody: (0, registrationVerificationCompletedTemplate_1.registrationVerificationCompletedTemplate)(existingUser.name, "tovozo://login"),
                     });
                 }
                 yield this.insertAdminAudit(trx, {

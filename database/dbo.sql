@@ -421,20 +421,24 @@ CREATE TABLE IF NOT EXISTS dbo.payment_ledger (
 
 CREATE TABLE IF NOT EXISTS dbo.chat_sessions (
     id SERIAL PRIMARY KEY,
-    user1_id INTEGER NOT NULL REFERENCES dbo."user"(id),
-    user2_id INTEGER NOT NULL REFERENCES dbo."user"(id),
     last_message TEXT,
     last_message_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    enable_chat BOOLEAN DEFAULT TRUE,
-    UNIQUE(user1_id, user2_id)
+    enable_chat BOOLEAN DEFAULT TRUE
 );
 
+CREATE TABLE IF NOT EXISTS dbo.chat_session_participants (
+    id SERIAL PRIMARY KEY,
+    chat_session_id INTEGER NOT NULL REFERENCES dbo.chat_sessions(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES dbo."user"(id) ON DELETE CASCADE,
+    type dbo.user_type NOT NULL,
+    joined_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(chat_session_id, user_id)
+);
 
 CREATE TABLE IF NOT EXISTS dbo.chat_messages (
     id SERIAL PRIMARY KEY,
-    chat_session_id INTEGER NOT NULL REFERENCES dbo.chat_sessions(id),
-    sender_id INTEGER NOT NULL REFERENCES dbo."user"(id),
-    receiver_id INTEGER NOT NULL REFERENCES dbo."user"(id),
+    chat_session_id INTEGER NOT NULL REFERENCES dbo.chat_sessions(id) ON DELETE CASCADE,
+    sender_id INTEGER NOT NULL REFERENCES dbo."user"(id) ON DELETE CASCADE,
     message TEXT NOT NULL,
     file TEXT,
     is_read BOOLEAN DEFAULT FALSE,

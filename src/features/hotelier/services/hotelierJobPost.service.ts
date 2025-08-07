@@ -148,7 +148,7 @@ class HotelierJobPostService extends AbstractServices {
 					user_id: seeker.user_id,
 					type: seeker.type,
 				});
-
+				console.log({ isJobSeekerOnline });
 				if (isJobSeekerOnline && isJobSeekerOnline.length > 0) {
 					io.to(String(seeker.user_id)).emit(
 						TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION,
@@ -168,18 +168,21 @@ class HotelierJobPostService extends AbstractServices {
 					);
 				} else {
 					if (isSeekerExists[0].device_id) {
-						await Lib.sendNotificationToMobile({
-							to: isSeekerExists[0].device_id as string,
-							notificationTitle:
-								this.NotificationMsg.NEW_JOB_POST_NEARBY.title,
-							notificationBody:
-								this.NotificationMsg.NEW_JOB_POST_NEARBY
-									.content,
-							data: {
-								related_id: jobpostDetailsId[0].id,
-								photo: checkOrganization.photo,
-							},
-						});
+						const sendPushNotification =
+							await Lib.sendNotificationToMobile({
+								to: isSeekerExists[0].device_id as string,
+								notificationTitle:
+									this.NotificationMsg.NEW_JOB_POST_NEARBY
+										.title,
+								notificationBody:
+									this.NotificationMsg.NEW_JOB_POST_NEARBY
+										.content,
+								data: JSON.stringify({
+									related_id: jobpostDetailsId[0].id,
+									photo: checkOrganization.photo,
+								}),
+							});
+						console.log({ sendPushNotification });
 					}
 				}
 			}
