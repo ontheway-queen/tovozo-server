@@ -38,6 +38,7 @@ function removeOnlineUser(userId, socketId) {
     return __awaiter(this, void 0, void 0, function* () {
         yield redis_1.client.sRem(`socket:user:${userId}`, socketId);
         const remaining = yield redis_1.client.sCard(`socket:user:${userId}`);
+        console.log({ remaining });
         if (remaining === 0) {
             yield redis_1.client.del(`socket:user:${userId}`);
             yield redis_1.client.del(`socket:user-type:${userId}`);

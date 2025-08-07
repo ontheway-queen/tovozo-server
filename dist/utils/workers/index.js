@@ -15,10 +15,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const bullmq_1 = require("bullmq");
 const ioredis_1 = __importDefault(require("ioredis"));
 const jobPostWorker_1 = __importDefault(require("./job/jobPostWorker"));
+const chatWorker_1 = __importDefault(require("./chat/chatWorker"));
 class Workers {
     constructor(redisUrl = "redis://localhost") {
         this.worker = null;
         this.jobPostWorker = new jobPostWorker_1.default();
+        this.chatWorker = new chatWorker_1.default();
         this.redisUrl = redisUrl;
         this.connection = new ioredis_1.default(this.redisUrl, {
             maxRetriesPerRequest: null,
@@ -28,6 +30,7 @@ class Workers {
     callWorkers() {
         this.ExpireJobPostDetails();
         this.jobStartReminder();
+        this.chatSessionCreator();
     }
     ExpireJobPostDetails() {
         this.worker = new bullmq_1.Worker("expire-job-post-details", (job) => __awaiter(this, void 0, void 0, function* () { return yield this.jobPostWorker.expireJobPostDetails(job); }), { connection: this.connection });
@@ -46,6 +49,15 @@ class Workers {
         this.worker.on("failed", (job, err) => {
             var _a;
             console.error(`❌ Failed to send job start reminder for jobPostDetail ID: ${(_a = job === null || job === void 0 ? void 0 : job.data) === null || _a === void 0 ? void 0 : _a.id}`, err);
+        });
+    }
+    chatSessionCreator() {
+        this.worker = new bullmq_1.Worker("chatSessionCreator", (job) => __awaiter(this, void 0, void 0, function* () { return yield this.chatWorker.createChatSession(job); }), { connection: this.connection });
+        this.worker.on("completed", (job) => {
+            console.log(`✅ Chat session created successfully for jobseeker and hotelier.`);
+        });
+        this.worker.on("failed", (job, err) => {
+            console.error(`❌ Failed to create chat session.`, err);
         });
     }
 }

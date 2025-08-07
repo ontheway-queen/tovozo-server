@@ -25,10 +25,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_controller_1 = __importDefault(require("../../../abstract/abstract.controller"));
 const profile_service_1 = __importDefault(require("../services/profile.service"));
+const hotelierProfile_validator_1 = __importDefault(require("../utils/validator/hotelierProfile.validator"));
 class HotelierProfileController extends abstract_controller_1.default {
     constructor() {
         super();
         this.profileService = new profile_service_1.default();
+        this.hotelierProfileValidator = new hotelierProfile_validator_1.default();
         // get profile
         this.getProfile = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
             const _a = yield this.profileService.getProfile(req), { code } = _a, data = __rest(_a, ["code"]);
@@ -37,6 +39,11 @@ class HotelierProfileController extends abstract_controller_1.default {
         //change password
         this.changePassword = this.asyncWrapper.wrap({ bodySchema: this.commonValidator.changePassInputValidation }, (req, res) => __awaiter(this, void 0, void 0, function* () {
             const _a = yield this.profileService.changePassword(req), { code } = _a, data = __rest(_a, ["code"]);
+            res.status(code).json(data);
+        }));
+        this.updateHotelier = this.asyncWrapper.wrap({ bodySchema: this.hotelierProfileValidator.updateProfile }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            console.log({ data: req.body });
+            const _a = yield this.profileService.updateHotelier(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }

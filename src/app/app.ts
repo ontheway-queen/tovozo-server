@@ -8,7 +8,13 @@ import { origin, USER_TYPE } from "../utils/miscellaneous/constants";
 import { TypeUser } from "../utils/modelTypes/user/userModelTypes";
 import { db } from "./database";
 import RootRouter from "./router";
-import { SocketServer, addOnlineUser, io, removeOnlineUser } from "./socket";
+import {
+	SocketServer,
+	addOnlineUser,
+	getAllOnlineSocketIds,
+	io,
+	removeOnlineUser,
+} from "./socket";
 import Workers from "../utils/workers";
 
 class App {
@@ -69,19 +75,30 @@ class App {
 
 		io.on("connection", async (socket) => {
 			const { id, type } = socket.handshake.auth;
-			console.log({ id, type });
+			socket.join(String(id));
 
 			if (id && type) {
 				addOnlineUser(id, socket.id, type);
+				const sessions = await db("chat_session_participants")
+					.withSchema("dbo")
+					.select("chat_session_id")
+					.where("user_id", id);
+
+				for (const session of sessions) {
+					const roomName = `chat:${session.chat_session_id}`;
+					socket.join(roomName);
+					console.log(`👻 User ${id} joined room ${roomName}`);
+				}
 			}
+
 			console.log("Socket Connected");
+
 			let lastLocation: {
 				latitude?: number;
 				longitude?: number;
 			} = {};
-			if (type === TypeUser.JOB_SEEKER) {
-				socket.join(String(id));
 
+			if (type === TypeUser.JOB_SEEKER) {
 				socket.on("send-location", (data) => {
 					console.log("send-location", data);
 					io.to(`watch:jobseeker:${id}`).emit(
@@ -96,24 +113,9 @@ class App {
 				socket.on("hotelier:watch", ({ jobSeekerId }) => {
 					socket.join(`watch:jobseeker:${jobSeekerId}`);
 				});
-
-				socket.on("hotelier:location-start", ({ jobSeekerId }) => {
-					socket
-						.to(jobSeekerId)
-						.emit(`jobseeker:location-start-${jobSeekerId}`);
-				});
-
-				socket.on("hotelier:location-stop", ({ jobSeekerId }) => {
-					socket
-						.to(jobSeekerId)
-						.emit(`jobseeker:location-stop-${jobSeekerId}`);
-				});
-
-				socket.join(String(id));
 			}
 
 			socket.on("disconnect", async (event) => {
-				console.log({ lastLocation });
 				console.log(socket.id, "-", id, "-", type, " disconnected...");
 				await removeOnlineUser(id, socket.id);
 				if (
@@ -121,13 +123,11 @@ class App {
 					lastLocation.latitude &&
 					lastLocation.longitude
 				) {
-					console.log({ lastLocation });
 					const getLocation = await db("job_seeker")
 						.withSchema("jobseeker")
 						.select("location_id")
 						.where({ user_id: id })
 						.first();
-					console.log({ getLocation });
 					if (getLocation) {
 						await db("location")
 							.withSchema("dbo")
@@ -137,8 +137,6 @@ class App {
 							})
 							.where({ id: getLocation?.location_id });
 					}
-
-					console.log({ getLocation });
 				}
 				socket.disconnect();
 			});

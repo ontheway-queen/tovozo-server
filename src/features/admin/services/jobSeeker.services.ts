@@ -505,7 +505,7 @@ class AdminJobSeekerService extends AbstractServices {
 						"Job Seeker Account Activation Successful – You Can Now Log In",
 					emailBody: registrationVerificationCompletedTemplate(
 						existingUser.name,
-						"Trabill OTA B2B://login"
+						"tovozo://login"
 					),
 				});
 			}

@@ -13,11 +13,18 @@ class AdminChatRouter extends abstract_router_1.default {
     }
     callRouter() {
         this.router
-            .route("/session")
-            .post(this.controller.createChatSession)
-            .get(this.controller.getChatSession);
-        this.router.route("/message").post(this.controller.createChatMessage);
-        this.router.route("/message/:id").get(this.controller.getChatMessages);
+            .route("/chat-sessions")
+            .get(this.controller.getChatSessions);
+        this.router
+            .route("/messages")
+            .get(this.controller.getMessages)
+            .post(this.controller.sendMessage);
+        // this.router
+        //   .route("/session")
+        //   .post(this.controller.createChatSession)
+        //   .get(this.controller.getChatSession);
+        // this.router.route("/message").post(this.controller.createChatMessage);
+        // this.router.route("/message/:id").get(this.controller.getChatMessages);
     }
 }
 exports.default = AdminChatRouter;

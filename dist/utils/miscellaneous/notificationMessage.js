@@ -18,7 +18,7 @@ NotificationMessage.WAITING_FOR_APPROVAL = {
 };
 NotificationMessage.TASK_STATUS = {
     title: (completed) => completed ? "Task Completed" : "Task Incomplete",
-    content: (taskId, completed) => `The task #${taskId} has been ${completed ? "completed" : "marked as incomplete"}.`,
+    content: (taskId, completed) => `The task #${taskId} has been ${completed ? "marked as incomplete" : "completed"}.`,
 };
 NotificationMessage.TASK_UNDER_REVIEW = {
     title: "Task Under Review",
@@ -50,5 +50,9 @@ NotificationMessage.JOB_START_REMINDER = {
         hour: "2-digit",
         minute: "2-digit",
     })}. Please be prepared and arrive on time.`,
+};
+NotificationMessage.TASK_SUBMITTED_FOR_FINAL_APPROVAL = {
+    title: "Task Submitted for Your Approval",
+    content: ({ id, jobTitle }) => `The task for "${jobTitle}" (ID: #${id}) has been submitted by the job seeker. Please review and approve it to proceed with payment.`,
 };
 exports.default = NotificationMessage;

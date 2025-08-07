@@ -79,12 +79,13 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                     user_id: myApplication.hotelier_id,
                     sender_id: user_id,
                     sender_type: constants_1.USER_TYPE.JOB_SEEKER,
-                    title: this.NotificationMsg.WAITING_FOR_APPROVAL.title,
-                    content: this.NotificationMsg.WAITING_FOR_APPROVAL.content({
+                    title: this.NotificationMsg.TASK_SUBMITTED_FOR_FINAL_APPROVAL
+                        .title,
+                    content: this.NotificationMsg.TASK_SUBMITTED_FOR_FINAL_APPROVAL.content({
                         id: myApplication.job_post_details_id,
                         jobTitle: myApplication.job_post_title,
                     }),
-                    related_id: res[0].id,
+                    related_id: job_post_details_id,
                     type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                 });
                 const isHotelierOnline = yield (0, socket_1.getAllOnlineSocketIds)({
@@ -100,7 +101,7 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                             id: myApplication.job_post_details_id,
                             jobTitle: myApplication.job_post_title,
                         }),
-                        related_id: res[0].id,
+                        related_id: job_post_details_id,
                         type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                         read_status: false,
                         created_at: new Date().toISOString(),
@@ -115,10 +116,10 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                                 id: myApplication.job_post_details_id,
                                 jobTitle: myApplication.job_post_title,
                             }),
-                            data: {
+                            data: JSON.stringify({
                                 photo: jobSeeker[0].photo,
-                                related_id: res[0].id,
-                            },
+                                related_id: job_post_details_id,
+                            }),
                         });
                     }
                 }
@@ -193,10 +194,10 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                             to: isHotelierExists[0].device_id,
                             notificationTitle: this.NotificationMsg.TASK_STATUS.title(taskList[0].is_completed),
                             notificationBody: this.NotificationMsg.TASK_STATUS.content(taskList[0].id, taskList[0].is_completed),
-                            data: {
+                            data: JSON.stringify({
                                 photo: jobSeeker[0].photo,
                                 related_id: taskList[0].id,
-                            },
+                            }),
                         });
                     }
                 }
@@ -259,8 +260,8 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                     user_id: myApplication.hotelier_id,
                     sender_id: user_id,
                     sender_type: constants_1.USER_TYPE.JOB_SEEKER,
-                    title: this.NotificationMsg.JOB_ASSIGNED.title,
-                    content: this.NotificationMsg.JOB_ASSIGNED.content({
+                    title: this.NotificationMsg.WAITING_FOR_APPROVAL.title,
+                    content: this.NotificationMsg.WAITING_FOR_APPROVAL.content({
                         id: taskActivity.job_post_details_id,
                         jobTitle: myApplication.job_post_title,
                     }),
@@ -272,11 +273,11 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                     type: userModelTypes_1.TypeUser.HOTELIER,
                 });
                 if (isHotelierOnline && isHotelierOnline.length > 0) {
-                    socket_1.io.to(String(myApplication.hotelier_id)).emit("end-job", {
+                    socket_1.io.to(String(myApplication.hotelier_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION, {
                         user_id: myApplication.hotelier_id,
                         photo: jobSeeker[0].photo,
-                        title: this.NotificationMsg.JOB_ASSIGNED.title,
-                        content: this.NotificationMsg.JOB_ASSIGNED.content({
+                        title: this.NotificationMsg.WAITING_FOR_APPROVAL.title,
+                        content: this.NotificationMsg.WAITING_FOR_APPROVAL.content({
                             id: taskActivity.job_post_details_id,
                             jobTitle: myApplication.job_post_title,
                         }),
@@ -290,15 +291,15 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                     if (isHotelierExists[0].device_id) {
                         yield lib_1.default.sendNotificationToMobile({
                             to: isHotelierExists[0].device_id,
-                            notificationTitle: this.NotificationMsg.JOB_ASSIGNED.title,
-                            notificationBody: this.NotificationMsg.JOB_ASSIGNED.content({
+                            notificationTitle: this.NotificationMsg.WAITING_FOR_APPROVAL.title,
+                            notificationBody: this.NotificationMsg.WAITING_FOR_APPROVAL.content({
                                 id: taskActivity.job_post_details_id,
                                 jobTitle: myApplication.job_post_title,
                             }),
-                            data: {
+                            data: JSON.stringify({
                                 photo: jobSeeker[0].photo,
                                 related_id: res[0].id,
-                            },
+                            }),
                         });
                     }
                 }

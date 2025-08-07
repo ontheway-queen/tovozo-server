@@ -41,6 +41,7 @@ class AdminAuthService extends abstract_service_1.default {
                     table_name: constants_1.USER_AUTHENTICATION_VIEW.ADMIN,
                     email,
                 });
+                console.log(1);
                 if (!checkUser) {
                     return {
                         success: false,
@@ -48,6 +49,7 @@ class AdminAuthService extends abstract_service_1.default {
                         message: this.ResMsg.WRONG_CREDENTIALS,
                     };
                 }
+                console.log(2);
                 const { password_hash: hashPass } = checkUser, rest = __rest(checkUser, ["password_hash"]);
                 const checkPass = yield lib_1.default.compareHashValue(password, hashPass);
                 if (!checkPass) {

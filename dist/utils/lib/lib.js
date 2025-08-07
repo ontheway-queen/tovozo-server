@@ -239,13 +239,12 @@ class Lib {
             }
             const { to, notificationTitle, notificationBody, data } = params;
             const message = {
-                token: to ||
-                    "dEKGB0UyRPq99zBtC1vT5-:APA91bFzQIMgnI0YqirV-uU3qDZLlELTf32JAIiiyunOE33tsCf48eijz3m8tGL723RJY9IlHsXtr66xIIJV-1pfGlHiZJtxUljC7adSVSv_2jZ2HbKSVHA", // FCM device token
+                token: to,
                 notification: {
                     title: notificationTitle,
                     body: notificationBody,
                 },
-                data: data || {},
+                data: data ? { payload: data } : undefined,
             };
             try {
                 const response = yield admin.messaging().send(message);
