@@ -50,6 +50,17 @@ export class JobSeekerChatService extends AbstractServices {
 
 		return await this.db.transaction(async (trx) => {
 			const chatModel = this.Model.chatModel(trx);
+
+			const isSessionExists = await chatModel.getChatSessionById(
+				chat_session_id
+			);
+			if (isSessionExists && !isSessionExists.enable_chat) {
+				throw new CustomError(
+					"This chat session is closed and no longer accepts new messages.",
+					this.StatusCode.HTTP_FORBIDDEN
+				);
+			}
+
 			const messagePayload = {
 				sender_id: user_id,
 				message,
@@ -59,8 +70,11 @@ export class JobSeekerChatService extends AbstractServices {
 			const newMessage = await chatModel.sendMessage(messagePayload);
 
 			await chatModel.updateChatSession({
-				last_message: message,
 				session_id: chat_session_id,
+				payload: {
+					last_message: message,
+					last_message_at: new Date(),
+				},
 			});
 
 			io.to(`chat:${chat_session_id}`).emit("chat:receive", {
@@ -105,11 +119,10 @@ export class JobSeekerChatService extends AbstractServices {
 				chat_session_id
 			);
 			console.log({ existingParticipants });
-			console.log({ existingParticipants });
 			const existingAdminIds = new Set(
 				existingParticipants
-					.filter((p) => p.type === TypeUser.ADMIN)
-					.map((p) => p.user_id)
+					.filter((p: any) => p.type === TypeUser.ADMIN)
+					.map((p: any) => p.user_id)
 			);
 
 			const admins = await userModel.checkUser({ type: TypeUser.ADMIN });

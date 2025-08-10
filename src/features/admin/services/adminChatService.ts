@@ -223,8 +223,10 @@ class AdminChatService extends AbstractServices {
 			const newMessage = await chatModel.sendMessage(messagePayload);
 
 			await chatModel.updateChatSession({
-				last_message: message,
 				session_id: chat_session_id,
+				payload: {
+					last_message: message,
+				},
 			});
 
 			io.to(`chat:${chat_session_id}`).emit("chat:receive", {

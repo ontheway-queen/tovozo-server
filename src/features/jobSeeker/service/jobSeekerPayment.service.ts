@@ -19,26 +19,6 @@ export default class JobSeekerPaymentService extends AbstractServices {
 			skip: Number(skip),
 			status: status as string,
 		});
-		const session = await stripe.checkout.sessions.create({
-			payment_method_types: ["card"],
-			mode: "payment",
-			line_items: [
-				{
-					price_data: {
-						currency: "usd",
-						product_data: {
-							name: "Test Product",
-						},
-						unit_amount: 1000000, // in cents => $10,000
-					},
-					quantity: 1,
-				},
-			],
-			success_url: `http://localhost:5000/success`,
-			cancel_url: `http://localhost:5000/cancel`,
-		});
-
-		console.log({ url: session.url });
 
 		return {
 			success: true,

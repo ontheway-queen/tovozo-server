@@ -13,7 +13,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
-const stripe_1 = require("../../../utils/miscellaneous/stripe");
 class JobSeekerPaymentService extends abstract_service_1.default {
     constructor() {
         super();
@@ -30,25 +29,6 @@ class JobSeekerPaymentService extends abstract_service_1.default {
                 skip: Number(skip),
                 status: status,
             });
-            const session = yield stripe_1.stripe.checkout.sessions.create({
-                payment_method_types: ["card"],
-                mode: "payment",
-                line_items: [
-                    {
-                        price_data: {
-                            currency: "usd",
-                            product_data: {
-                                name: "Test Product",
-                            },
-                            unit_amount: 1000000, // in cents => $10,000
-                        },
-                        quantity: 1,
-                    },
-                ],
-                success_url: `http://localhost:5000/success`,
-                cancel_url: `http://localhost:5000/cancel`,
-            });
-            console.log({ url: session.url });
             return {
                 success: true,
                 message: this.ResMsg.HTTP_OK,

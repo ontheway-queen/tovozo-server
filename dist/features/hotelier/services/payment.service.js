@@ -142,6 +142,7 @@ class PaymentService extends abstract_service_1.default {
                 if (!sessionId) {
                     throw new customError_1.default("Session ID is required", this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
                 }
+                const chatModel = this.Model.chatModel(trx);
                 const organizationModel = this.Model.organizationModel(trx);
                 const paymentModel = this.Model.paymnentModel(trx);
                 const jobApplicationModel = this.Model.jobApplicationModel(trx);
@@ -194,6 +195,18 @@ class PaymentService extends abstract_service_1.default {
                     id: updatedApplication.job_post_details_id,
                     status: constants_1.JOB_POST_DETAILS_STATUS.Completed,
                 });
+                const chatSession = yield chatModel.getChatSessionBetweenUsers({
+                    hotelier_id: user_id,
+                    job_seeker_id: Number(paymentIntent.metadata.job_seeker_id),
+                });
+                if (chatSession) {
+                    yield chatModel.updateChatSession({
+                        session_id: chatSession[0].id,
+                        payload: {
+                            enable_chat: false,
+                        },
+                    });
+                }
                 return {
                     success: true,
                     message: this.ResMsg.HTTP_OK,
