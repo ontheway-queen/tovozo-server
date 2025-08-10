@@ -29,7 +29,7 @@ class ChatModel extends Schema {
 	public async checkSessionForJobSeekerAndHotelier(payload: {
 		hotelier_id: number;
 		job_seeker_id: number;
-	}) {
+	}): Promise<{ id: number }> {
 		const { hotelier_id, job_seeker_id } = payload;
 		return await this.db("chat_session_participants as csp")
 			.withSchema(this.DBO_SCHEMA)
@@ -52,16 +52,21 @@ class ChatModel extends Schema {
 	}
 
 	public async updateChatSession({
-		last_message,
 		session_id,
+		payload,
 	}: {
-		last_message?: string;
 		session_id: number;
+		payload: {
+			last_message?: string;
+			last_message_at?: Date;
+			enable_chat?: boolean;
+		};
 	}) {
+		const { last_message, last_message_at, enable_chat } = payload;
 		return await this.db("chat_sessions")
 			.withSchema(this.DBO_SCHEMA)
 			.where({ id: session_id })
-			.update({ last_message, last_message_at: new Date() }, "id");
+			.update({ last_message, last_message_at, enable_chat }, "id");
 	}
 
 	public async createChatSessionParticipants(
@@ -94,7 +99,7 @@ class ChatModel extends Schema {
 	> {
 		const { user_id, name } = query;
 
-		const baseQuery = this.db
+		const baseQuery = this.db("chat_sessions as cs")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
 				"cs.id as session_id",
@@ -106,7 +111,6 @@ class ChatModel extends Schema {
 				"other_participant.photo as participant_image",
 				"other_participant.type as participant_type"
 			)
-			.from("chat_sessions as cs")
 			.join(
 				"chat_session_participants as csp",
 				"cs.id",
@@ -144,6 +148,52 @@ class ChatModel extends Schema {
 		}
 
 		return await baseQuery;
+	}
+
+	public async getChatSessionById(id: number): Promise<{
+		id: number;
+		last_message: string;
+		last_message_at: Date;
+		enable_chat: boolean;
+	}> {
+		return await this.db("chat_sessions as cs")
+			.withSchema(this.DBO_SCHEMA)
+			.select("*")
+			.where("cs.id", id)
+			.andWhere("cs.enable_chat", true)
+			.first();
+	}
+
+	// Get session between hotelier and job seeker
+	public async getChatSessionBetweenUsers({
+		hotelier_id,
+		job_seeker_id,
+	}: {
+		hotelier_id: number;
+		job_seeker_id: number;
+	}) {
+		return await this.db("chat_sessions as cs")
+			.withSchema(this.DBO_SCHEMA)
+			.join(
+				"chat_session_participants as p1",
+				"p1.chat_session_id",
+				"cs.id"
+			)
+			.join(
+				"chat_session_participants as p2",
+				"p2.chat_session_id",
+				"cs.id"
+			)
+			.where("p1.user_id", hotelier_id)
+			.where("p2.user_id", job_seeker_id)
+			.select(
+				"cs.id",
+				"cs.last_message",
+				"cs.last_message_at",
+				"cs.enable_chat"
+			)
+			.orderBy("cs.last_message_at", "desc")
+			.first();
 	}
 
 	public async sendMessage(payload: {
@@ -192,7 +242,9 @@ class ChatModel extends Schema {
 				"csp.chat_session_id",
 				"cm.chat_session_id"
 			)
+			.join("chat_sessions as cs", "csp.chat_session_id", "cs.id")
 			.where("cm.chat_session_id", chat_session_id)
+			.andWhere("cs.enable_chat", true)
 			.andWhere("csp.user_id", user_id)
 			.orderBy("cm.created_at", "asc")
 			.limit(limit)

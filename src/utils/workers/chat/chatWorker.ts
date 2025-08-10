@@ -20,6 +20,15 @@ export default class ChatWorker {
 				});
 			if (existingSession) {
 				console.log("Chat session already exists.");
+				await chatModel.updateChatSession({
+					session_id: existingSession.id,
+					payload: {
+						last_message:
+							"Welcome back! You can continue your conversation here.",
+						last_message_at: new Date(),
+						enable_chat: true,
+					},
+				});
 				return;
 			}
 			const [session] = await chatModel.createChatSession({

@@ -24,6 +24,8 @@ const SocketServer = (app) => {
     const server = http_1.default.createServer(app);
     exports.io = new socket_io_1.Server(server, {
         cors: { origin: constants_1.origin },
+        pingInterval: 25000, // 25 seconds
+        pingTimeout: 60000, // 60 seconds
     });
     return server;
 };

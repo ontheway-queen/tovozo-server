@@ -64,12 +64,10 @@ class HotelierChatService extends abstract_service_1.default {
                 };
                 const newMessage = yield chatModel.sendMessage(messagePayload);
                 yield chatModel.updateChatSession({
-                    last_message: message,
                     session_id: chat_session_id,
-                });
-                yield chatModel.updateChatSession({
-                    last_message: message,
-                    session_id: chat_session_id,
+                    payload: {
+                        last_message: message,
+                    },
                 });
                 socket_1.io.to(`chat:${chat_session_id}`).emit("chat:receive", {
                     id: newMessage[0].id,
@@ -120,7 +118,7 @@ class HotelierChatService extends abstract_service_1.default {
                     success: true,
                     message: this.ResMsg.HTTP_OK,
                     code: this.StatusCode.HTTP_OK,
-                    data: chat_session_id,
+                    data: { chat_session_id },
                 };
             }
             const newSession = yield chatModel.createChatSession({});
@@ -147,7 +145,7 @@ class HotelierChatService extends abstract_service_1.default {
                 success: true,
                 message: this.ResMsg.HTTP_OK,
                 code: this.StatusCode.HTTP_OK,
-                data: chat_session_id,
+                data: { chat_session_id },
             };
         });
     }

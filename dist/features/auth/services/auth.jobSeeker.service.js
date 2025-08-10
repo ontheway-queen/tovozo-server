@@ -43,6 +43,38 @@ class JobSeekerAuthService extends abstract_service_1.default {
                 const jobSeekerInput = parseInput("job_seeker");
                 const jobSeekerInfoInput = parseInput("job_seeker_info");
                 const validFileFields = ["visa_copy", "id_copy", "photo"];
+                // files.forEach(({ fieldname, filename }) => {
+                // 	if (!validFileFields.includes(fieldname)) {
+                // 		throw new CustomError(
+                // 			this.ResMsg.UNKNOWN_FILE_FIELD,
+                // 			this.StatusCode.HTTP_BAD_REQUEST,
+                // 			"ERROR"
+                // 		);
+                // 	}
+                // 	if (fieldname === "photo") {
+                // 		userInput.photo = filename;
+                // 	} else {
+                // 		if (jobSeekerInput.nationality === BRITISH_ID) {
+                // 			console.log({ fieldname });
+                // 			if (fieldname !== "id_copy") {
+                // 				throw new CustomError(
+                // 					"id_copy required for British Nationality",
+                // 					this.StatusCode.HTTP_BAD_REQUEST
+                // 				);
+                // 			}
+                // 		} else {
+                // 			if (fieldname !== "visa_copy") {
+                // 				throw new CustomError(
+                // 					"visa_copy required for British Nationality",
+                // 					this.StatusCode.HTTP_BAD_REQUEST
+                // 				);
+                // 			}
+                // 		}
+                // 		jobSeekerInfoInput[fieldname] = filename;
+                // 	}
+                // });
+                let hasIdCopy = false;
+                let hasVisaCopy = false;
                 files.forEach(({ fieldname, filename }) => {
                     if (!validFileFields.includes(fieldname)) {
                         throw new customError_1.default(this.ResMsg.UNKNOWN_FILE_FIELD, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
@@ -51,19 +83,23 @@ class JobSeekerAuthService extends abstract_service_1.default {
                         userInput.photo = filename;
                     }
                     else {
-                        if (jobSeekerInput.nationality === constants_1.BRITISH_ID) {
-                            if (fieldname !== "id_copy") {
-                                throw new customError_1.default("id_copy required for British Nationality", this.StatusCode.HTTP_BAD_REQUEST);
-                            }
+                        if (fieldname === "id_copy") {
+                            hasIdCopy = true;
                         }
-                        else {
-                            if (fieldname !== "visa_copy") {
-                                throw new customError_1.default("visa_copy required for British Nationality", this.StatusCode.HTTP_BAD_REQUEST);
-                            }
+                        if (fieldname === "visa_copy") {
+                            hasVisaCopy = true;
                         }
-                        jobSeekerInfoInput[fieldname] = filename;
+                        jobSeekerInfoInput[fieldname] =
+                            filename;
                     }
                 });
+                // After the loop, validate required fields:
+                if (jobSeekerInput.nationality === constants_1.BRITISH_ID && !hasIdCopy) {
+                    throw new customError_1.default("id_copy required for British Nationality", this.StatusCode.HTTP_BAD_REQUEST);
+                }
+                if (jobSeekerInput.nationality !== constants_1.BRITISH_ID && !hasVisaCopy) {
+                    throw new customError_1.default("visa_copy required for non-British Nationality", this.StatusCode.HTTP_BAD_REQUEST);
+                }
                 const { email, phone_number, password } = userInput, restUserData = __rest(userInput, ["email", "phone_number", "password"]);
                 const userModel = this.Model.UserModel(trx);
                 const jobSeekerModel = this.Model.jobSeekerModel(trx);

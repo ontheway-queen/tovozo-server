@@ -61,6 +61,10 @@ class JobSeekerChatService extends abstract_service_1.default {
             const { message, chat_session_id } = req.body;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const chatModel = this.Model.chatModel(trx);
+                const isSessionExists = yield chatModel.getChatSessionById(chat_session_id);
+                if (isSessionExists && !isSessionExists.enable_chat) {
+                    throw new customError_1.default("This chat session is closed and no longer accepts new messages.", this.StatusCode.HTTP_FORBIDDEN);
+                }
                 const messagePayload = {
                     sender_id: user_id,
                     message,
@@ -68,8 +72,11 @@ class JobSeekerChatService extends abstract_service_1.default {
                 };
                 const newMessage = yield chatModel.sendMessage(messagePayload);
                 yield chatModel.updateChatSession({
-                    last_message: message,
                     session_id: chat_session_id,
+                    payload: {
+                        last_message: message,
+                        last_message_at: new Date(),
+                    },
                 });
                 socket_1.io.to(`chat:${chat_session_id}`).emit("chat:receive", {
                     id: newMessage[0].id,
@@ -104,7 +111,6 @@ class JobSeekerChatService extends abstract_service_1.default {
                 const chat_session_id = chatSession.id;
                 console.log({ chat_session_id });
                 const existingParticipants = yield chatModel.getSessionParticipants(chat_session_id);
-                console.log({ existingParticipants });
                 console.log({ existingParticipants });
                 const existingAdminIds = new Set(existingParticipants
                     .filter((p) => p.type === userModelTypes_1.TypeUser.ADMIN)
