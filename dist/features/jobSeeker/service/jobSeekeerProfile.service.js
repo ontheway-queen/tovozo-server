@@ -52,6 +52,7 @@ class JobSeekerProfileService extends abstract_service_1.default {
             return this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const files = req.files || [];
                 const { user_id } = req.jobSeeker;
+                console.log("xyz");
                 const parsed = {
                     user: lib_1.default.safeParseJSON(req.body.user) || {},
                     jobSeeker: lib_1.default.safeParseJSON(req.body.job_seeker) || {},

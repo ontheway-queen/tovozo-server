@@ -15,6 +15,14 @@ import {
 	IPaymentUpdate,
 } from "../../../utils/modelTypes/payment/paymentModelTypes";
 import config from "../../../app/config";
+import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
+import {
+	NotificationTypeEnum,
+	TypeEmitNotificationEnum,
+} from "../../../utils/modelTypes/common/commonModelTypes";
+import { getAllOnlineSocketIds, io } from "../../../app/socket";
+import UserModel from "../../../models/userModel/userModel";
+import Lib from "../../../utils/lib/lib";
 
 export default class PaymentService extends AbstractServices {
 	constructor() {
@@ -160,10 +168,10 @@ export default class PaymentService extends AbstractServices {
 	}
 
 	public async verifyCheckoutSession(req: Request) {
+		const { user_id } = req.hotelier;
 		return await this.db.transaction(async (trx) => {
 			const sessionId = req.query.session_id as string;
 			const { user_id } = req.hotelier;
-
 			if (!user_id) {
 				throw new CustomError(
 					"Hotelier ID is required",
@@ -196,7 +204,6 @@ export default class PaymentService extends AbstractServices {
 					"ERROR"
 				);
 			}
-
 			const session = await stripe.checkout.sessions.retrieve(sessionId);
 			if (!session || session.payment_status !== "paid") {
 				throw new CustomError(
@@ -206,7 +213,6 @@ export default class PaymentService extends AbstractServices {
 				);
 			}
 			const paymentIntentId = session.payment_intent as string;
-
 			const paymentIntent = await stripe.paymentIntents.retrieve(
 				paymentIntentId,
 				{
@@ -230,6 +236,17 @@ export default class PaymentService extends AbstractServices {
 				);
 			}
 
+			const jobseeker = await this.Model.UserModel().checkUser({
+				id: Number(paymentIntent.metadata.job_seeker_id),
+			});
+			console.log({ jobseeker });
+			if (jobseeker && jobseeker.length < 1) {
+				throw new CustomError(
+					"User not found",
+					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
+
 			const paymentPayload = {
 				payment_type: PAYMENT_TYPE.ONLINE_PAYMENT,
 				status: PAYMENT_STATUS.PAID,
@@ -237,12 +254,10 @@ export default class PaymentService extends AbstractServices {
 				paid_at: new Date(),
 				paid_by: organization.id,
 			};
-
 			await paymentModel.updatePayment(
 				Number(paymentIntent.metadata.id),
 				paymentPayload as unknown as IPaymentUpdate
 			);
-
 			const baseLedgerPayload = {
 				payment_id: payment.id,
 				voucher_no: payment.payment_no,
@@ -250,7 +265,6 @@ export default class PaymentService extends AbstractServices {
 				created_at: new Date(),
 				updated_at: new Date(),
 			};
-
 			await paymentModel.createPaymentLedger({
 				...baseLedgerPayload,
 				user_id: paymentIntent.metadata.job_seeker_id,
@@ -259,7 +273,6 @@ export default class PaymentService extends AbstractServices {
 				amount: payment.job_seeker_pay,
 				details: `Payment received for job "${paymentIntent.metadata.job_title}".`,
 			});
-
 			await paymentModel.createPaymentLedger({
 				...baseLedgerPayload,
 				trx_type: PAY_LEDGER_TRX_TYPE.IN,
@@ -267,7 +280,6 @@ export default class PaymentService extends AbstractServices {
 				amount: payment.platform_fee,
 				details: `Platform fee received from job "${paymentIntent.metadata.job_title}" completed by ${paymentIntent.metadata.job_seeker_name}`,
 			});
-
 			await paymentModel.createPaymentLedger({
 				...baseLedgerPayload,
 				user_id: user_id,
@@ -276,7 +288,6 @@ export default class PaymentService extends AbstractServices {
 				amount: payment.total_amount,
 				details: `Payment sent for job "${paymentIntent.metadata.job_title}" to ${paymentIntent.metadata.job_seeker_name}.`,
 			});
-
 			const updatedApplication =
 				await jobApplicationModel.updateMyJobApplicationStatus({
 					application_id: payment.application_id,
@@ -287,7 +298,6 @@ export default class PaymentService extends AbstractServices {
 				id: updatedApplication.job_post_details_id,
 				status: JOB_POST_DETAILS_STATUS.Completed,
 			});
-
 			const chatSession = await chatModel.getChatSessionBetweenUsers({
 				hotelier_id: user_id,
 				job_seeker_id: Number(paymentIntent.metadata.job_seeker_id),
@@ -295,11 +305,71 @@ export default class PaymentService extends AbstractServices {
 
 			if (chatSession) {
 				await chatModel.updateChatSession({
-					session_id: chatSession[0].id,
+					session_id: chatSession.id,
 					payload: {
 						enable_chat: false,
 					},
 				});
+			}
+			console.log({ payment });
+			await this.insertNotification(trx, TypeUser.JOB_SEEKER, {
+				user_id: Number(paymentIntent.metadata.job_seeker_id),
+				sender_id: user_id,
+				sender_type: USER_TYPE.HOTELIER,
+				title: this.NotificationMsg.PAYMENT_RECEIVED.title,
+				content: this.NotificationMsg.PAYMENT_RECEIVED.content({
+					jobTitle: paymentIntent.metadata.job_title,
+					amount: Number(payment.job_seeker_pay),
+				}),
+				related_id: payment.id,
+				type: NotificationTypeEnum.PAYMENT,
+			});
+
+			await this.insertNotification(trx, TypeUser.ADMIN, {
+				user_id: Number(paymentIntent.metadata.job_seeker_id),
+				sender_type: USER_TYPE.HOTELIER,
+				title: this.NotificationMsg.PAYMENT_RECEIVED.title,
+				content: this.NotificationMsg.PAYMENT_RECEIVED.content({
+					jobTitle: paymentIntent.metadata.job_title,
+					amount: Number(payment.platform_fee),
+				}),
+				related_id: payment.id,
+				type: NotificationTypeEnum.PAYMENT,
+			});
+
+			const isJobSeekerOnline = await getAllOnlineSocketIds({
+				user_id: Number(paymentIntent.metadata.job_seeker_id),
+				type: TypeUser.JOB_SEEKER,
+			});
+			if (isJobSeekerOnline && isJobSeekerOnline.length > 0) {
+				io.to(paymentIntent.metadata.job_seeker_id).emit(
+					TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION,
+					{
+						user_id: Number(paymentIntent.metadata.job_seeker_id),
+						sender_id: user_id,
+						sender_type: USER_TYPE.HOTELIER,
+						title: this.NotificationMsg.PAYMENT_RECEIVED.title,
+						content: this.NotificationMsg.PAYMENT_RECEIVED.content({
+							jobTitle: paymentIntent.metadata.job_title,
+							amount: Number(payment.job_seeker_pay),
+						}),
+						related_id: payment.id,
+						type: NotificationTypeEnum.PAYMENT,
+					}
+				);
+			} else {
+				if (jobseeker[0].device_id) {
+					await Lib.sendNotificationToMobile({
+						to: jobseeker[0].device_id,
+						notificationTitle:
+							this.NotificationMsg.PAYMENT_RECEIVED.title,
+						notificationBody:
+							this.NotificationMsg.PAYMENT_RECEIVED.content({
+								jobTitle: paymentIntent.metadata.job_title,
+								amount: Number(payment.job_seeker_pay),
+							}),
+					});
+				}
 			}
 
 			return {

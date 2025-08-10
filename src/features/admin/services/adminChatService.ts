@@ -181,7 +181,7 @@ class AdminChatService extends AbstractServices {
 		const chatModel = this.Model.chatModel();
 		const data = await chatModel.getChatSessions({
 			user_id,
-			name: String(name),
+			name: name as string,
 		});
 		console.log({ dataA: data });
 		return {
@@ -195,10 +195,15 @@ class AdminChatService extends AbstractServices {
 	public async getMessages(req: Request) {
 		const { user_id } = req.admin;
 		const session_id = Number(req.query.session_id);
+		const limit = Number(req.query.limit);
+		const skip = Number(req.query.skip);
+
 		const chatModel = this.Model.chatModel();
 		const data = await chatModel.getMessages({
 			user_id,
 			chat_session_id: session_id,
+			limit,
+			skip,
 		});
 		return {
 			success: true,
@@ -211,7 +216,7 @@ class AdminChatService extends AbstractServices {
 	public async sendMessage(req: Request) {
 		const { user_id } = req.admin;
 		const { message, chat_session_id } = req.body;
-		console.log({ dataA: req.body });
+
 		return await this.db.transaction(async (trx) => {
 			const chatModel = this.Model.chatModel(trx);
 			const messagePayload = {

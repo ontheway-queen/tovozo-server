@@ -42,7 +42,12 @@ class JobSeekerAuthService extends abstract_service_1.default {
                 const userInput = parseInput("user");
                 const jobSeekerInput = parseInput("job_seeker");
                 const jobSeekerInfoInput = parseInput("job_seeker_info");
-                const validFileFields = ["visa_copy", "id_copy", "photo"];
+                const validFileFields = [
+                    "visa_copy",
+                    "id_copy",
+                    "photo",
+                    "passport_copy",
+                ];
                 // files.forEach(({ fieldname, filename }) => {
                 // 	if (!validFileFields.includes(fieldname)) {
                 // 		throw new CustomError(

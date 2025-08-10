@@ -401,9 +401,25 @@ export default class PaymentModel extends Schema {
 			.insert(payload, "id");
 	}
 
-	public async getSinglePayment(id: number) {
+	public async getSinglePayment(id: number): Promise<{
+		id: number;
+		application_id: number;
+		job_seeker_pay: number;
+		platform_fee: number;
+		total_amount: number;
+		payment_type: string;
+		status: string;
+		trx_id: string;
+		created_at: Date;
+		paid_by: number;
+		paid_at: Date;
+		is_deleted: boolean;
+		payment_no: string;
+		trx_fee: number;
+	}> {
 		return await this.db("payment")
 			.withSchema(this.DBO_SCHEMA)
+			.select("*")
 			.where({ id })
 			.first();
 	}

@@ -69,7 +69,7 @@ class ChatModel extends schema_1.default {
     getChatSessions(query) {
         return __awaiter(this, void 0, void 0, function* () {
             const { user_id, name } = query;
-            const baseQuery = this.db("chat_sessions as cs")
+            return yield this.db("chat_sessions as cs")
                 .withSchema(this.DBO_SCHEMA)
                 .select("cs.id as session_id", "cs.last_message", "cs.last_message_at", "other_participant.id as participant_user_id", "other_participant.name as participant_name", "other_participant.email as participant_email", "other_participant.photo as participant_image", "other_participant.type as participant_type")
                 .join("chat_session_participants as csp", "cs.id", "csp.chat_session_id")
@@ -88,14 +88,13 @@ class ChatModel extends schema_1.default {
 					  AND u.type IS DISTINCT FROM 'ADMIN'
 				) as other_participant
 			`, [user_id]), "cs.id", "other_participant.chat_session_id")
-                .where("csp.user_id", user_id)
+                .where((qb) => {
+                qb.andWhere("csp.user_id", user_id);
+                if (name) {
+                    qb.andWhereILike("other_participant.name", `%${name}%`);
+                }
+            })
                 .orderBy("cs.last_message_at", "desc");
-            if (name !== "undefined") {
-                console.log({ name });
-                console.log(1);
-                baseQuery.whereILike("other_participant.name", `%${name}%`);
-            }
-            return yield baseQuery;
         });
     }
     getChatSessionById(id) {
@@ -132,7 +131,7 @@ class ChatModel extends schema_1.default {
     getMessages(query) {
         return __awaiter(this, void 0, void 0, function* () {
             const { user_id, chat_session_id, limit = 100, skip = 0 } = query;
-            const messages = yield this.db("chat_messages as cm")
+            return yield this.db("chat_messages as cm")
                 .withSchema(this.DBO_SCHEMA)
                 .select("cm.id", "cm.chat_session_id", "cm.sender_id", "u.name as sender_name", "u.type as sender_type", "u.photo", "cm.message", "cm.created_at")
                 .join("user as u", "u.id", "cm.sender_id")
@@ -144,7 +143,6 @@ class ChatModel extends schema_1.default {
                 .orderBy("cm.created_at", "asc")
                 .limit(limit)
                 .offset(skip);
-            return messages;
         });
     }
     // check session for admin

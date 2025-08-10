@@ -17,7 +17,6 @@ const constants_1 = require("../../../utils/miscellaneous/constants");
 class AdminNotificationService extends abstract_service_1.default {
     getAllNotification(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log({ req });
             const user_id = req.admin.user_id;
             const model = this.Model.commonModel();
             const data = yield model.getNotification(Object.assign(Object.assign({}, req.query), { user_id }));
@@ -26,7 +25,7 @@ class AdminNotificationService extends abstract_service_1.default {
     }
     deleteNotification(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { user_id } = req.hotelier;
+            const { user_id } = req.admin;
             const { id } = req.query;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const model = this.Model.commonModel(trx);
@@ -86,7 +85,7 @@ class AdminNotificationService extends abstract_service_1.default {
     }
     readNotification(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { user_id } = req.hotelier;
+            const { user_id } = req.admin;
             const { id } = req.query;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const model = this.Model.commonModel(trx);

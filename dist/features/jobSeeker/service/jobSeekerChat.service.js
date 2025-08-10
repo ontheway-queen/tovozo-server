@@ -28,7 +28,7 @@ class JobSeekerChatService extends abstract_service_1.default {
             const chatModel = this.Model.chatModel();
             const data = yield chatModel.getChatSessions({
                 user_id,
-                name: String(name),
+                name: name,
             });
             return {
                 success: true,
@@ -42,10 +42,14 @@ class JobSeekerChatService extends abstract_service_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             const { user_id } = req.jobSeeker;
             const session_id = Number(req.query.session_id);
+            const limit = Number(req.query.limit);
+            const skip = Number(req.query.skip);
             const chatModel = this.Model.chatModel();
             const data = yield chatModel.getMessages({
                 user_id,
                 chat_session_id: session_id,
+                limit,
+                skip,
             });
             return {
                 success: true,

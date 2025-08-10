@@ -93,6 +93,18 @@ class NotificationMessage {
 		content: ({ id, jobTitle }: { id?: number; jobTitle?: string }) =>
 			`The task for "${jobTitle}" (ID: #${id}) has been submitted by the job seeker. Please review and approve it to proceed with payment.`,
 	};
+
+	static readonly PAYMENT_RECEIVED = {
+		title: "Payment Received",
+		content: ({
+			jobTitle,
+			amount,
+		}: {
+			jobTitle?: string;
+			amount?: number;
+		}) =>
+			`You have received a payment of $${amount} for the job "${jobTitle}". The amount will be available in your bank account very soon.`,
+	};
 }
 
 export default NotificationMessage;

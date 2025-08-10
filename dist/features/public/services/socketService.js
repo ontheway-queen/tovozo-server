@@ -14,10 +14,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const socket_1 = require("../../../app/socket");
 class SocketService {
     emitNotification(data) {
-        const { emitType, read_status = false, created_at = new Date().toISOString(), socketId } = data, restData = __rest(data, ["emitType", "read_status", "created_at", "socketId"]);
+        const { emitType, user_id, read_status = false, created_at = new Date().toISOString(), socketId } = data, restData = __rest(data, ["emitType", "user_id", "read_status", "created_at", "socketId"]);
         const payload = Object.assign(Object.assign({}, restData), { read_status,
             created_at });
-        socket_1.io.to(socketId).emit(emitType, payload);
+        socket_1.io.to(String(user_id)).emit(emitType, payload);
     }
 }
 exports.default = SocketService;

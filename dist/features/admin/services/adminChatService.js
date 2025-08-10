@@ -168,7 +168,7 @@ class AdminChatService extends abstract_service_1.default {
             const chatModel = this.Model.chatModel();
             const data = yield chatModel.getChatSessions({
                 user_id,
-                name: String(name),
+                name: name,
             });
             console.log({ dataA: data });
             return {
@@ -183,10 +183,14 @@ class AdminChatService extends abstract_service_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             const { user_id } = req.admin;
             const session_id = Number(req.query.session_id);
+            const limit = Number(req.query.limit);
+            const skip = Number(req.query.skip);
             const chatModel = this.Model.chatModel();
             const data = yield chatModel.getMessages({
                 user_id,
                 chat_session_id: session_id,
+                limit,
+                skip,
             });
             return {
                 success: true,
@@ -200,7 +204,6 @@ class AdminChatService extends abstract_service_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             const { user_id } = req.admin;
             const { message, chat_session_id } = req.body;
-            console.log({ dataA: req.body });
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const chatModel = this.Model.chatModel(trx);
                 const messagePayload = {
