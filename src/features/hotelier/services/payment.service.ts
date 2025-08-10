@@ -180,6 +180,7 @@ export default class PaymentService extends AbstractServices {
 				);
 			}
 
+			const chatModel = this.Model.chatModel(trx);
 			const organizationModel = this.Model.organizationModel(trx);
 			const paymentModel = this.Model.paymnentModel(trx);
 			const jobApplicationModel = this.Model.jobApplicationModel(trx);
@@ -286,6 +287,21 @@ export default class PaymentService extends AbstractServices {
 				id: updatedApplication.job_post_details_id,
 				status: JOB_POST_DETAILS_STATUS.Completed,
 			});
+
+			const chatSession = await chatModel.getChatSessionBetweenUsers({
+				hotelier_id: user_id,
+				job_seeker_id: Number(paymentIntent.metadata.job_seeker_id),
+			});
+
+			if (chatSession) {
+				await chatModel.updateChatSession({
+					session_id: chatSession[0].id,
+					payload: {
+						enable_chat: false,
+					},
+				});
+			}
+
 			return {
 				success: true,
 				message: this.ResMsg.HTTP_OK,

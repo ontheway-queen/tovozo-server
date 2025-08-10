@@ -45,6 +45,40 @@ class JobSeekerAuthService extends AbstractServices {
 			) as IJobSeekerInfoBody;
 
 			const validFileFields = ["visa_copy", "id_copy", "photo"];
+			// files.forEach(({ fieldname, filename }) => {
+			// 	if (!validFileFields.includes(fieldname)) {
+			// 		throw new CustomError(
+			// 			this.ResMsg.UNKNOWN_FILE_FIELD,
+			// 			this.StatusCode.HTTP_BAD_REQUEST,
+			// 			"ERROR"
+			// 		);
+			// 	}
+
+			// 	if (fieldname === "photo") {
+			// 		userInput.photo = filename;
+			// 	} else {
+			// 		if (jobSeekerInput.nationality === BRITISH_ID) {
+			// 			console.log({ fieldname });
+			// 			if (fieldname !== "id_copy") {
+			// 				throw new CustomError(
+			// 					"id_copy required for British Nationality",
+			// 					this.StatusCode.HTTP_BAD_REQUEST
+			// 				);
+			// 			}
+			// 		} else {
+			// 			if (fieldname !== "visa_copy") {
+			// 				throw new CustomError(
+			// 					"visa_copy required for British Nationality",
+			// 					this.StatusCode.HTTP_BAD_REQUEST
+			// 				);
+			// 			}
+			// 		}
+			// 		jobSeekerInfoInput[fieldname] = filename;
+			// 	}
+			// });
+
+			let hasIdCopy = false;
+			let hasVisaCopy = false;
 
 			files.forEach(({ fieldname, filename }) => {
 				if (!validFileFields.includes(fieldname)) {
@@ -58,24 +92,31 @@ class JobSeekerAuthService extends AbstractServices {
 				if (fieldname === "photo") {
 					userInput.photo = filename;
 				} else {
-					if (jobSeekerInput.nationality === BRITISH_ID) {
-						if (fieldname !== "id_copy") {
-							throw new CustomError(
-								"id_copy required for British Nationality",
-								this.StatusCode.HTTP_BAD_REQUEST
-							);
-						}
-					} else {
-						if (fieldname !== "visa_copy") {
-							throw new CustomError(
-								"visa_copy required for British Nationality",
-								this.StatusCode.HTTP_BAD_REQUEST
-							);
-						}
+					if (fieldname === "id_copy") {
+						hasIdCopy = true;
 					}
-					jobSeekerInfoInput[fieldname] = filename;
+					if (fieldname === "visa_copy") {
+						hasVisaCopy = true;
+					}
+					jobSeekerInfoInput[fieldname as keyof IJobSeekerInfoBody] =
+						filename;
 				}
 			});
+
+			// After the loop, validate required fields:
+			if (jobSeekerInput.nationality === BRITISH_ID && !hasIdCopy) {
+				throw new CustomError(
+					"id_copy required for British Nationality",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
+
+			if (jobSeekerInput.nationality !== BRITISH_ID && !hasVisaCopy) {
+				throw new CustomError(
+					"visa_copy required for non-British Nationality",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
 
 			const { email, phone_number, password, ...restUserData } =
 				userInput;

@@ -54,13 +54,10 @@ export class HotelierChatService extends AbstractServices {
 			const newMessage = await chatModel.sendMessage(messagePayload);
 
 			await chatModel.updateChatSession({
-				last_message: message,
 				session_id: chat_session_id,
-			});
-
-			await chatModel.updateChatSession({
-				last_message: message,
-				session_id: chat_session_id,
+				payload: {
+					last_message: message,
+				},
 			});
 
 			io.to(`chat:${chat_session_id}`).emit("chat:receive", {
@@ -131,7 +128,7 @@ export class HotelierChatService extends AbstractServices {
 				success: true,
 				message: this.ResMsg.HTTP_OK,
 				code: this.StatusCode.HTTP_OK,
-				data: chat_session_id,
+				data: { chat_session_id },
 			};
 		}
 
@@ -164,7 +161,7 @@ export class HotelierChatService extends AbstractServices {
 			success: true,
 			message: this.ResMsg.HTTP_OK,
 			code: this.StatusCode.HTTP_OK,
-			data: chat_session_id,
+			data: { chat_session_id },
 		};
 	}
 }

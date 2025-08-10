@@ -51,11 +51,12 @@ class ChatModel extends schema_1.default {
         });
     }
     updateChatSession(_a) {
-        return __awaiter(this, arguments, void 0, function* ({ last_message, session_id, }) {
+        return __awaiter(this, arguments, void 0, function* ({ session_id, payload, }) {
+            const { last_message, last_message_at, enable_chat } = payload;
             return yield this.db("chat_sessions")
                 .withSchema(this.DBO_SCHEMA)
                 .where({ id: session_id })
-                .update({ last_message, last_message_at: new Date() }, "id");
+                .update({ last_message, last_message_at, enable_chat }, "id");
         });
     }
     createChatSessionParticipants(participants) {
@@ -68,10 +69,9 @@ class ChatModel extends schema_1.default {
     getChatSessions(query) {
         return __awaiter(this, void 0, void 0, function* () {
             const { user_id, name } = query;
-            const baseQuery = this.db
+            const baseQuery = this.db("chat_sessions as cs")
                 .withSchema(this.DBO_SCHEMA)
                 .select("cs.id as session_id", "cs.last_message", "cs.last_message_at", "other_participant.id as participant_user_id", "other_participant.name as participant_name", "other_participant.email as participant_email", "other_participant.photo as participant_image", "other_participant.type as participant_type")
-                .from("chat_sessions as cs")
                 .join("chat_session_participants as csp", "cs.id", "csp.chat_session_id")
                 .join(this.db.raw(`
 				(
@@ -98,6 +98,30 @@ class ChatModel extends schema_1.default {
             return yield baseQuery;
         });
     }
+    getChatSessionById(id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("chat_sessions as cs")
+                .withSchema(this.DBO_SCHEMA)
+                .select("*")
+                .where("cs.id", id)
+                .andWhere("cs.enable_chat", true)
+                .first();
+        });
+    }
+    // Get session between hotelier and job seeker
+    getChatSessionBetweenUsers(_a) {
+        return __awaiter(this, arguments, void 0, function* ({ hotelier_id, job_seeker_id, }) {
+            return yield this.db("chat_sessions as cs")
+                .withSchema(this.DBO_SCHEMA)
+                .join("chat_session_participants as p1", "p1.chat_session_id", "cs.id")
+                .join("chat_session_participants as p2", "p2.chat_session_id", "cs.id")
+                .where("p1.user_id", hotelier_id)
+                .where("p2.user_id", job_seeker_id)
+                .select("cs.id", "cs.last_message", "cs.last_message_at", "cs.enable_chat")
+                .orderBy("cs.last_message_at", "desc")
+                .first();
+        });
+    }
     sendMessage(payload) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("chat_messages")
@@ -113,7 +137,9 @@ class ChatModel extends schema_1.default {
                 .select("cm.id", "cm.chat_session_id", "cm.sender_id", "u.name as sender_name", "u.type as sender_type", "u.photo", "cm.message", "cm.created_at")
                 .join("user as u", "u.id", "cm.sender_id")
                 .join("chat_session_participants as csp", "csp.chat_session_id", "cm.chat_session_id")
+                .join("chat_sessions as cs", "csp.chat_session_id", "cs.id")
                 .where("cm.chat_session_id", chat_session_id)
+                .andWhere("cs.enable_chat", true)
                 .andWhere("csp.user_id", user_id)
                 .orderBy("cm.created_at", "asc")
                 .limit(limit)

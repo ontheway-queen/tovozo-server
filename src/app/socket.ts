@@ -10,6 +10,8 @@ export const SocketServer = (app: Application) => {
 	const server = http.createServer(app);
 	io = new Server(server, {
 		cors: { origin: origin },
+		pingInterval: 25000, // 25 seconds
+		pingTimeout: 60000, // 60 seconds
 	});
 
 	return server;
