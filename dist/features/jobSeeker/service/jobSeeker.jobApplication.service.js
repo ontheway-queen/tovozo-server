@@ -45,15 +45,10 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
                 }
                 //! Need to uncomment later.
-                // if (
-                // 	jobPost.status !==
-                // 	(JOB_POST_DETAILS_STATUS.Pending as unknown as IJobPostDetailsStatus)
-                // ) {
-                // 	throw new CustomError(
-                // 		"This job post is no longer accepting applications.",
-                //		this.StatusCode.HTTP_BAD_REQUEST
-                // 	);
-                // }
+                if (jobPost.status !==
+                    constants_1.JOB_POST_DETAILS_STATUS.Pending) {
+                    throw new customError_1.default("This job post is no longer accepting applications.", this.StatusCode.HTTP_BAD_REQUEST);
+                }
                 const jobPostReport = yield cancellationLogModel.getSingleJobPostCancellationLog({
                     id: null,
                     report_type: constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST,
@@ -68,18 +63,13 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     job_seeker_id: user_id,
                 });
                 //! Need to uncomment later.
-                // if (
-                // 	existPendingApplication &&
-                // 	(existPendingApplication.job_application_status ===
-                // 		JOB_APPLICATION_STATUS.PENDING ||
-                // 		existPendingApplication.job_application_status ===
-                // 			JOB_APPLICATION_STATUS.IN_PROGRESS)
-                // ) {
-                // 	throw new CustomError(
-                // 		"Hold on! You need to complete your current job before moving on to the next.",
-                // 		this.StatusCode.HTTP_BAD_REQUEST
-                // 	);
-                // }
+                if (existPendingApplication &&
+                    (existPendingApplication.job_application_status ===
+                        constants_1.JOB_APPLICATION_STATUS.PENDING ||
+                        existPendingApplication.job_application_status ===
+                            constants_1.JOB_APPLICATION_STATUS.IN_PROGRESS)) {
+                    throw new customError_1.default("Hold on! You need to complete your current job before moving on to the next.", this.StatusCode.HTTP_BAD_REQUEST);
+                }
                 const payload = {
                     job_post_details_id: Number(job_post_details_id),
                     job_seeker_id: user_id,

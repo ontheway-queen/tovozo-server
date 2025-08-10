@@ -17,6 +17,10 @@ const stripe_1 = require("../../../utils/miscellaneous/stripe");
 const customError_1 = __importDefault(require("../../../utils/lib/customError"));
 const constants_1 = require("../../../utils/miscellaneous/constants");
 const config_1 = __importDefault(require("../../../app/config"));
+const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
+const commonModelTypes_1 = require("../../../utils/modelTypes/common/commonModelTypes");
+const socket_1 = require("../../../app/socket");
+const lib_1 = __importDefault(require("../../../utils/lib/lib"));
 class PaymentService extends abstract_service_1.default {
     constructor() {
         super();
@@ -133,6 +137,7 @@ class PaymentService extends abstract_service_1.default {
     }
     verifyCheckoutSession(req) {
         return __awaiter(this, void 0, void 0, function* () {
+            const { user_id } = req.hotelier;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const sessionId = req.query.session_id;
                 const { user_id } = req.hotelier;
@@ -168,6 +173,13 @@ class PaymentService extends abstract_service_1.default {
                 if (payment.status === "paid") {
                     throw new customError_1.default("The payment is aleady paid", this.StatusCode.HTTP_CONFLICT);
                 }
+                const jobseeker = yield this.Model.UserModel().checkUser({
+                    id: Number(paymentIntent.metadata.job_seeker_id),
+                });
+                console.log({ jobseeker });
+                if (jobseeker && jobseeker.length < 1) {
+                    throw new customError_1.default("User not found", this.StatusCode.HTTP_NOT_FOUND);
+                }
                 const paymentPayload = {
                     payment_type: constants_1.PAYMENT_TYPE.ONLINE_PAYMENT,
                     status: constants_1.PAYMENT_STATUS.PAID,
@@ -201,11 +213,65 @@ class PaymentService extends abstract_service_1.default {
                 });
                 if (chatSession) {
                     yield chatModel.updateChatSession({
-                        session_id: chatSession[0].id,
+                        session_id: chatSession.id,
                         payload: {
                             enable_chat: false,
                         },
                     });
+                }
+                console.log({ payment });
+                yield this.insertNotification(trx, userModelTypes_1.TypeUser.JOB_SEEKER, {
+                    user_id: Number(paymentIntent.metadata.job_seeker_id),
+                    sender_id: user_id,
+                    sender_type: constants_1.USER_TYPE.HOTELIER,
+                    title: this.NotificationMsg.PAYMENT_RECEIVED.title,
+                    content: this.NotificationMsg.PAYMENT_RECEIVED.content({
+                        jobTitle: paymentIntent.metadata.job_title,
+                        amount: Number(payment.job_seeker_pay),
+                    }),
+                    related_id: payment.id,
+                    type: commonModelTypes_1.NotificationTypeEnum.PAYMENT,
+                });
+                yield this.insertNotification(trx, userModelTypes_1.TypeUser.ADMIN, {
+                    user_id: Number(paymentIntent.metadata.job_seeker_id),
+                    sender_type: constants_1.USER_TYPE.HOTELIER,
+                    title: this.NotificationMsg.PAYMENT_RECEIVED.title,
+                    content: this.NotificationMsg.PAYMENT_RECEIVED.content({
+                        jobTitle: paymentIntent.metadata.job_title,
+                        amount: Number(payment.platform_fee),
+                    }),
+                    related_id: payment.id,
+                    type: commonModelTypes_1.NotificationTypeEnum.PAYMENT,
+                });
+                const isJobSeekerOnline = yield (0, socket_1.getAllOnlineSocketIds)({
+                    user_id: Number(paymentIntent.metadata.job_seeker_id),
+                    type: userModelTypes_1.TypeUser.JOB_SEEKER,
+                });
+                if (isJobSeekerOnline && isJobSeekerOnline.length > 0) {
+                    socket_1.io.to(paymentIntent.metadata.job_seeker_id).emit(commonModelTypes_1.TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION, {
+                        user_id: Number(paymentIntent.metadata.job_seeker_id),
+                        sender_id: user_id,
+                        sender_type: constants_1.USER_TYPE.HOTELIER,
+                        title: this.NotificationMsg.PAYMENT_RECEIVED.title,
+                        content: this.NotificationMsg.PAYMENT_RECEIVED.content({
+                            jobTitle: paymentIntent.metadata.job_title,
+                            amount: Number(payment.job_seeker_pay),
+                        }),
+                        related_id: payment.id,
+                        type: commonModelTypes_1.NotificationTypeEnum.PAYMENT,
+                    });
+                }
+                else {
+                    if (jobseeker[0].device_id) {
+                        yield lib_1.default.sendNotificationToMobile({
+                            to: jobseeker[0].device_id,
+                            notificationTitle: this.NotificationMsg.PAYMENT_RECEIVED.title,
+                            notificationBody: this.NotificationMsg.PAYMENT_RECEIVED.content({
+                                jobTitle: paymentIntent.metadata.job_title,
+                                amount: Number(payment.job_seeker_pay),
+                            }),
+                        });
+                    }
                 }
                 return {
                     success: true,

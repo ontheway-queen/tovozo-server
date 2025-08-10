@@ -99,7 +99,7 @@ class ChatModel extends Schema {
 	> {
 		const { user_id, name } = query;
 
-		const baseQuery = this.db("chat_sessions as cs")
+		return await this.db("chat_sessions as cs")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
 				"cs.id as session_id",
@@ -138,16 +138,13 @@ class ChatModel extends Schema {
 				"cs.id",
 				"other_participant.chat_session_id"
 			)
-			.where("csp.user_id", user_id)
+			.where((qb) => {
+				qb.andWhere("csp.user_id", user_id);
+				if (name) {
+					qb.andWhereILike("other_participant.name", `%${name}%`);
+				}
+			})
 			.orderBy("cs.last_message_at", "desc");
-
-		if (name !== "undefined") {
-			console.log({ name });
-			console.log(1);
-			baseQuery.whereILike("other_participant.name", `%${name}%`);
-		}
-
-		return await baseQuery;
 	}
 
 	public async getChatSessionById(id: number): Promise<{
@@ -224,7 +221,7 @@ class ChatModel extends Schema {
 		}[]
 	> {
 		const { user_id, chat_session_id, limit = 100, skip = 0 } = query;
-		const messages = await this.db("chat_messages as cm")
+		return await this.db("chat_messages as cm")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
 				"cm.id",
@@ -249,8 +246,6 @@ class ChatModel extends Schema {
 			.orderBy("cm.created_at", "asc")
 			.limit(limit)
 			.offset(skip);
-
-		return messages;
 	}
 
 	// check session for admin

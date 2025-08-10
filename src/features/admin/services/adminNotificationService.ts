@@ -4,7 +4,6 @@ import { USER_TYPE } from "../../../utils/miscellaneous/constants";
 
 class AdminNotificationService extends AbstractServices {
 	public async getAllNotification(req: Request) {
-		console.log({ req });
 		const user_id = req.admin.user_id;
 		const model = this.Model.commonModel();
 		const data = await model.getNotification({ ...req.query, user_id });
@@ -17,7 +16,7 @@ class AdminNotificationService extends AbstractServices {
 	}
 
 	public async deleteNotification(req: Request) {
-		const { user_id } = req.hotelier;
+		const { user_id } = req.admin;
 		const { id } = req.query as unknown as {
 			id?: number;
 		};
@@ -85,7 +84,7 @@ class AdminNotificationService extends AbstractServices {
 	}
 
 	public async readNotification(req: Request) {
-		const { user_id } = req.hotelier;
+		const { user_id } = req.admin;
 		const { id } = req.query as unknown as {
 			id?: number;
 		};

@@ -259,6 +259,7 @@ class PaymentModel extends schema_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("payment")
                 .withSchema(this.DBO_SCHEMA)
+                .select("*")
                 .where({ id })
                 .first();
         });

@@ -25,10 +25,14 @@ export class HotelierChatService extends AbstractServices {
 	public async getMessages(req: Request) {
 		const { user_id } = req.hotelier;
 		const session_id = Number(req.query.session_id);
+		const limit = Number(req.query.limit);
+		const skip = Number(req.query.skip);
 		const chatModel = this.Model.chatModel();
 		const data = await chatModel.getMessages({
 			chat_session_id: session_id,
 			user_id,
+			limit,
+			skip,
 		});
 
 		return {
@@ -45,6 +49,17 @@ export class HotelierChatService extends AbstractServices {
 
 		return await this.db.transaction(async (trx) => {
 			const chatModel = this.Model.chatModel(trx);
+
+			const isSessionExists = await chatModel.getChatSessionById(
+				chat_session_id
+			);
+			if (isSessionExists && !isSessionExists.enable_chat) {
+				throw new CustomError(
+					"This chat session is closed and no longer accepts new messages.",
+					this.StatusCode.HTTP_FORBIDDEN
+				);
+			}
+
 			const messagePayload = {
 				sender_id: user_id,
 				message,
@@ -75,6 +90,11 @@ export class HotelierChatService extends AbstractServices {
 				success: true,
 				message: this.ResMsg.HTTP_OK,
 				code: this.StatusCode.HTTP_OK,
+				data: {
+					id: newMessage[0].id,
+					message,
+					created_at: newMessage[0].created_at,
+				},
 			};
 		});
 	}

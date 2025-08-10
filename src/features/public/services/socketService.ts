@@ -15,6 +15,7 @@ class SocketService {
 	) {
 		const {
 			emitType,
+			user_id,
 			read_status = false,
 			created_at = new Date().toISOString(),
 			socketId,
@@ -27,7 +28,7 @@ class SocketService {
 			created_at,
 		};
 
-		io.to(socketId).emit(emitType as unknown as string, payload);
+		io.to(String(user_id)).emit(emitType as unknown as string, payload);
 	}
 }
 
