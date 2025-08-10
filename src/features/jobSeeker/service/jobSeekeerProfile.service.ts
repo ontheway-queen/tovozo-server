@@ -48,7 +48,7 @@ export default class JobSeekerProfileService extends AbstractServices {
 		return this.db.transaction(async (trx) => {
 			const files = (req.files as Express.Multer.File[]) || [];
 			const { user_id } = req.jobSeeker;
-
+			console.log("xyz");
 			const parsed = {
 				user: Lib.safeParseJSON(req.body.user) || {},
 				jobSeeker: Lib.safeParseJSON(req.body.job_seeker) || {},

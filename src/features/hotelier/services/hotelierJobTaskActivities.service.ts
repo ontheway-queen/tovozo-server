@@ -469,8 +469,8 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 				(totalWorkingHours * platformFeeRate).toFixed(2)
 			);
 
+			console.log({ jobSeekerPay });
 			console.log({ platformFee });
-			console.log({ transactionFee });
 			console.log({ totalAmount });
 			const paymentPayload = {
 				application_id: application.job_application_id,

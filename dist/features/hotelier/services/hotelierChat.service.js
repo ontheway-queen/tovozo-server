@@ -38,10 +38,14 @@ class HotelierChatService extends abstract_service_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             const { user_id } = req.hotelier;
             const session_id = Number(req.query.session_id);
+            const limit = Number(req.query.limit);
+            const skip = Number(req.query.skip);
             const chatModel = this.Model.chatModel();
             const data = yield chatModel.getMessages({
                 chat_session_id: session_id,
                 user_id,
+                limit,
+                skip,
             });
             return {
                 success: true,
@@ -57,6 +61,10 @@ class HotelierChatService extends abstract_service_1.default {
             const { message, chat_session_id } = req.body;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const chatModel = this.Model.chatModel(trx);
+                const isSessionExists = yield chatModel.getChatSessionById(chat_session_id);
+                if (isSessionExists && !isSessionExists.enable_chat) {
+                    throw new customError_1.default("This chat session is closed and no longer accepts new messages.", this.StatusCode.HTTP_FORBIDDEN);
+                }
                 const messagePayload = {
                     sender_id: user_id,
                     message,
@@ -83,6 +91,11 @@ class HotelierChatService extends abstract_service_1.default {
                     success: true,
                     message: this.ResMsg.HTTP_OK,
                     code: this.StatusCode.HTTP_OK,
+                    data: {
+                        id: newMessage[0].id,
+                        message,
+                        created_at: newMessage[0].created_at,
+                    },
                 };
             }));
         });

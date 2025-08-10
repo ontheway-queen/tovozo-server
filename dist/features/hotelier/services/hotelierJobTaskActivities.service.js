@@ -321,8 +321,8 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 const transactionFee = Number((totalAmount - baseAmount).toFixed(2));
                 const jobSeekerPay = Number((totalWorkingHours * jobSeekerPayRate).toFixed(2));
                 const platformFee = Number((totalWorkingHours * platformFeeRate).toFixed(2));
+                console.log({ jobSeekerPay });
                 console.log({ platformFee });
-                console.log({ transactionFee });
                 console.log({ totalAmount });
                 const paymentPayload = {
                     application_id: application.job_application_id,

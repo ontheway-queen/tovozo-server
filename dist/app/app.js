@@ -89,12 +89,6 @@ class App {
                 }
             }
             console.log("Socket Connected");
-            socket.conn.on("packet", (packet) => {
-                if (packet.type === "ping")
-                    console.log("⬅️ ping");
-                if (packet.type === "pong")
-                    console.log("➡️ pong");
-            });
             let lastLocation = {};
             if (type === userModelTypes_1.TypeUser.JOB_SEEKER) {
                 socket.on("send-location", (data) => {

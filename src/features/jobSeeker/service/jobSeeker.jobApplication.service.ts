@@ -56,15 +56,15 @@ export class JobSeekerJobApplication extends AbstractServices {
 				);
 			}
 			//! Need to uncomment later.
-			// if (
-			// 	jobPost.status !==
-			// 	(JOB_POST_DETAILS_STATUS.Pending as unknown as IJobPostDetailsStatus)
-			// ) {
-			// 	throw new CustomError(
-			// 		"This job post is no longer accepting applications.",
-			//		this.StatusCode.HTTP_BAD_REQUEST
-			// 	);
-			// }
+			if (
+				jobPost.status !==
+				(JOB_POST_DETAILS_STATUS.Pending as unknown as IJobPostDetailsStatus)
+			) {
+				throw new CustomError(
+					"This job post is no longer accepting applications.",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
 
 			const jobPostReport =
 				await cancellationLogModel.getSingleJobPostCancellationLog({
@@ -89,18 +89,18 @@ export class JobSeekerJobApplication extends AbstractServices {
 			});
 
 			//! Need to uncomment later.
-			// if (
-			// 	existPendingApplication &&
-			// 	(existPendingApplication.job_application_status ===
-			// 		JOB_APPLICATION_STATUS.PENDING ||
-			// 		existPendingApplication.job_application_status ===
-			// 			JOB_APPLICATION_STATUS.IN_PROGRESS)
-			// ) {
-			// 	throw new CustomError(
-			// 		"Hold on! You need to complete your current job before moving on to the next.",
-			// 		this.StatusCode.HTTP_BAD_REQUEST
-			// 	);
-			// }
+			if (
+				existPendingApplication &&
+				(existPendingApplication.job_application_status ===
+					JOB_APPLICATION_STATUS.PENDING ||
+					existPendingApplication.job_application_status ===
+						JOB_APPLICATION_STATUS.IN_PROGRESS)
+			) {
+				throw new CustomError(
+					"Hold on! You need to complete your current job before moving on to the next.",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
 
 			const payload = {
 				job_post_details_id: Number(job_post_details_id),

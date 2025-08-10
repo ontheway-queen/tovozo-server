@@ -93,11 +93,6 @@ class App {
 
 			console.log("Socket Connected");
 
-			socket.conn.on("packet", (packet) => {
-				if (packet.type === "ping") console.log("⬅️ ping");
-				if (packet.type === "pong") console.log("➡️ pong");
-			});
-
 			let lastLocation: {
 				latitude?: number;
 				longitude?: number;

@@ -55,4 +55,8 @@ NotificationMessage.TASK_SUBMITTED_FOR_FINAL_APPROVAL = {
     title: "Task Submitted for Your Approval",
     content: ({ id, jobTitle }) => `The task for "${jobTitle}" (ID: #${id}) has been submitted by the job seeker. Please review and approve it to proceed with payment.`,
 };
+NotificationMessage.PAYMENT_RECEIVED = {
+    title: "Payment Received",
+    content: ({ jobTitle, amount, }) => `You have received a payment of $${amount} for the job "${jobTitle}". The amount will be available in your bank account very soon.`,
+};
 exports.default = NotificationMessage;

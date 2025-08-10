@@ -44,7 +44,12 @@ class JobSeekerAuthService extends AbstractServices {
 				"job_seeker_info"
 			) as IJobSeekerInfoBody;
 
-			const validFileFields = ["visa_copy", "id_copy", "photo"];
+			const validFileFields = [
+				"visa_copy",
+				"id_copy",
+				"photo",
+				"passport_copy",
+			];
 			// files.forEach(({ fieldname, filename }) => {
 			// 	if (!validFileFields.includes(fieldname)) {
 			// 		throw new CustomError(
