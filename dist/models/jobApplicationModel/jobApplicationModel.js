@@ -42,7 +42,7 @@ class JobApplicationModel extends schema_1.default {
             const { user_id: job_seeker_id, orderBy, orderTo, status, limit, skip, need_total = true, } = params;
             const data = yield this.db("job_applications as ja")
                 .withSchema(this.DBO_SCHEMA)
-                .select("ja.id as job_application_id", "ja.status as job_application_status", "jpd.start_time", "jpd.end_time", "j.title as job_post_title", "j.details as job_post_details", "j.job_seeker_pay", "org.id as organization_id", "org.name as organization_name", "org_p.file as organization_photo", "vwl.location_address", "vwl.city_name", "vwl.longitude", "vwl.latitude")
+                .select("ja.id as job_application_id", "ja.status as job_application_status", "jpd.start_time", "jpd.end_time", "j.title as job_post_title", "j.details as job_post_details", "j.job_seeker_pay", "org.id as organization_id", "org.user_id as hotelier_id", "org.name as organization_name", "org_p.file as organization_photo", "vwl.location_address", "vwl.city_name", "vwl.longitude", "vwl.latitude")
                 .leftJoin("job_post_details as jpd", "ja.job_post_details_id", "jpd.id")
                 .leftJoin("jobs as j", "jpd.job_id", "j.id")
                 .leftJoin("job_post as jp", "jpd.job_post_id", "jp.id")

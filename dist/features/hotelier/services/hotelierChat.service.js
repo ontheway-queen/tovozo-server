@@ -24,13 +24,39 @@ class HotelierChatService extends abstract_service_1.default {
     getChatSessions(req) {
         return __awaiter(this, void 0, void 0, function* () {
             const { user_id } = req.hotelier;
+            const { name } = req.query;
             const chatModel = this.Model.chatModel();
-            const data = yield chatModel.getChatSessions({ user_id });
+            const data = yield chatModel.getChatSessions({
+                user_id,
+                name: name,
+            });
             return {
                 success: true,
                 message: this.ResMsg.HTTP_OK,
                 code: this.StatusCode.HTTP_OK,
                 data,
+            };
+        });
+    }
+    getSingleJobSeekerChatSession(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const job_seeker_id = req.params.job_seeker_id;
+            const { user_id } = req.hotelier;
+            const chatModel = this.Model.chatModel();
+            const isSessionExists = yield chatModel.getChatSessionBetweenUsers({
+                hotelier_id: user_id,
+                job_seeker_id: Number(job_seeker_id),
+            });
+            if (!isSessionExists) {
+                throw new customError_1.default("Unable to start chat — no existing conversation found between you and this job seeker.", this.StatusCode.HTTP_BAD_REQUEST);
+            }
+            return {
+                success: true,
+                message: this.ResMsg.HTTP_OK,
+                code: this.StatusCode.HTTP_OK,
+                data: {
+                    chat_session_id: isSessionExists.id,
+                },
             };
         });
     }
@@ -41,12 +67,27 @@ class HotelierChatService extends abstract_service_1.default {
             const limit = Number(req.query.limit);
             const skip = Number(req.query.skip);
             const chatModel = this.Model.chatModel();
-            const data = yield chatModel.getMessages({
-                chat_session_id: session_id,
+            const read_messages = yield chatModel.getAllReadMessagesByUserAndSession({
                 user_id,
+                session_id,
+            });
+            const data = yield chatModel.getMessages({
+                user_id,
+                chat_session_id: session_id,
                 limit,
                 skip,
             });
+            const readMessageIds = new Set(read_messages.map((r) => r.message_id));
+            const unreadMessages = data.filter((msg) => !readMessageIds.has(msg.id));
+            if (unreadMessages.length > 0) {
+                const insertData = unreadMessages.map((msg) => ({
+                    message_id: msg.id,
+                    chat_session_id: session_id,
+                    user_id,
+                    seen_at: new Date(),
+                }));
+                yield chatModel.markMessagesAsSeenBulk(insertData);
+            }
             return {
                 success: true,
                 message: this.ResMsg.HTTP_OK,
@@ -140,7 +181,7 @@ class HotelierChatService extends abstract_service_1.default {
                 {
                     chat_session_id,
                     user_id,
-                    type: userModelTypes_1.TypeUser.HOTELIER,
+                    type: userModelTypes_1.TypeUser.JOB_SEEKER,
                     joined_at: new Date(),
                 },
             ]);

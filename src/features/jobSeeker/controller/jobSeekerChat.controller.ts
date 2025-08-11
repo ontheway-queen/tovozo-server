@@ -19,6 +19,15 @@ export class JobSeekerChatController extends AbstractController {
 		}
 	);
 
+	public getSingleHotelierChatSession = this.asyncWrapper.wrap(
+		null,
+		async (req: Request, res: Response) => {
+			const { code, ...data } =
+				await this.service.getSingleHotelierChatSession(req);
+			res.status(code).json(data);
+		}
+	);
+
 	public getMessages = this.asyncWrapper.wrap(
 		{ querySchema: this.validator.getMessagesValidator },
 		async (req: Request, res: Response) => {
