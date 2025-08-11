@@ -2,6 +2,7 @@ import { io } from "../../../app/socket";
 import {
 	INotificationPayload,
 	TypeEmitNotification,
+	TypeEmitNotificationEnum,
 } from "../../../utils/modelTypes/common/commonModelTypes";
 
 class SocketService {
@@ -27,8 +28,9 @@ class SocketService {
 			read_status,
 			created_at,
 		};
-
-		io.to(String(user_id)).emit(emitType as unknown as string, payload);
+		if (emitType === TypeEmitNotificationEnum.ADMIN_NEW_NOTIFICATION) {
+			io.to(String(user_id)).emit(emitType as unknown as string, payload);
+		}
 	}
 }
 

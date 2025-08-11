@@ -58,6 +58,7 @@ export default class JobApplicationModel extends Schema {
 				"j.details as job_post_details",
 				"j.job_seeker_pay",
 				"org.id as organization_id",
+				"org.user_id as hotelier_id",
 				"org.name as organization_name",
 				"org_p.file as organization_photo",
 				"vwl.location_address",

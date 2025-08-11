@@ -17,6 +17,9 @@ class JobSeekerChatRouter extends abstract_router_1.default {
             .route("/chat-sessions")
             .get(this.controller.getChatSessions);
         this.router
+            .route("/chat-session/:hotelier_id")
+            .get(this.controller.getSingleHotelierChatSession);
+        this.router
             .route("/messages")
             .get(this.controller.getMessages)
             .post(this.controller.sendMessage);

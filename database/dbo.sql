@@ -441,8 +441,14 @@ CREATE TABLE IF NOT EXISTS dbo.chat_messages (
     sender_id INTEGER NOT NULL REFERENCES dbo."user"(id) ON DELETE CASCADE,
     message TEXT NOT NULL,
     file TEXT,
-    is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS dbo.chat_message_reads (
+  id SERIAL PRIMARY KEY,
+  message_id INTEGER NOT NULL REFERENCES dbo.chat_messages(id),
+  user_id INTEGER NOT NULL REFERENCES dbo.user(id),
+  seen_at TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS dbo.saved_job_post_details(
@@ -453,3 +459,49 @@ CREATE TABLE IF NOT EXISTS dbo.saved_job_post_details(
   CONSTRAINT unique_saved_job
    UNIQUE (job_post_details_id, job_seeker_id)
 )
+
+/* 
+{
+    "success": true,
+    "message": "The request is OK",
+    "data": [
+        {
+            "session_id": 4,
+            "last_message": "ererer",
+            "last_message_at": "2025-08-11T05:16:50.055Z",
+            "enable_chat": false,
+            "participant_user_id": 266,
+            "participant_name": "soton soton",
+            "participant_email": "soton.m360ict@gmail.com",
+            "participant_image": "job-seeker-files/1754291953366-387273557.jpg",
+            "participant_type": "JOB_SEEKER",
+            "unread_message_count": 0
+        },
+        {
+            "session_id": 18,
+            "last_message": "THis is testing...😂",
+            "last_message_at": "2025-08-11T04:46:01.787Z",
+            "enable_chat": false,
+            "participant_user_id": 295,
+            "participant_name": "Tovozo Jobseeker",
+            "participant_email": "tovozo.jobseeker@yopmail.com",
+            "participant_image": null,
+            "participant_type": "JOB_SEEKER",
+            "unread_message_count": 2
+        },
+        {
+            "session_id": 19,
+            "last_message": "THis is testing...😂",
+            "last_message_at": "2025-08-11T04:46:01.787Z",
+            "enable_chat": false,
+            "participant_user_id": 295,
+            "participant_name": "Tovozo Jobseeker",
+            "participant_email": "tovozo.jobseeker@yopmail.com",
+            "participant_image": null,
+            "participant_type": "JOB_SEEKER",
+            "unread_message_count": 3
+        }
+    ],
+    unread_session_count: 2
+}
+*/

@@ -15,6 +15,10 @@ export class HotelierChatRouter extends AbstractRouter {
 			.get(this.controller.getChatSessions);
 
 		this.router
+			.route("/chat-session/:job_seeker_id")
+			.get(this.controller.getSingleJobSeekerChatSession);
+
+		this.router
 			.route("/messages")
 			.get(this.controller.getMessages)
 			.post(this.controller.sendMessage);

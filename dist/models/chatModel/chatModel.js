@@ -71,23 +71,36 @@ class ChatModel extends schema_1.default {
             const { user_id, name } = query;
             return yield this.db("chat_sessions as cs")
                 .withSchema(this.DBO_SCHEMA)
-                .select("cs.id as session_id", "cs.last_message", "cs.last_message_at", "other_participant.id as participant_user_id", "other_participant.name as participant_name", "other_participant.email as participant_email", "other_participant.photo as participant_image", "other_participant.type as participant_type")
+                .select("cs.id as session_id", "cs.last_message", "cs.last_message_at", "cs.enable_chat", "other_participant.id as participant_user_id", "other_participant.name as participant_name", "other_participant.email as participant_email", "other_participant.photo as participant_image", "other_participant.type as participant_type", this.db.raw(`COALESCE(unread_counts.unread_message_count, 0) as unread_message_count`))
                 .join("chat_session_participants as csp", "cs.id", "csp.chat_session_id")
                 .join(this.db.raw(`
-				(
-					SELECT
-						csp2.chat_session_id,
-						u.id,
-						u.name,
-            u.email,
-						u.photo,
-						csp2.type
-					FROM "dbo"."chat_session_participants" csp2
-					LEFT JOIN "dbo"."user" u ON u.id = csp2.user_id
-					WHERE (csp2.user_id IS NULL OR csp2.user_id != ?)
-					  AND u.type IS DISTINCT FROM 'ADMIN'
-				) as other_participant
-			`, [user_id]), "cs.id", "other_participant.chat_session_id")
+      (
+        SELECT
+          csp2.chat_session_id,
+          u.id,
+          u.name,
+          u.email,
+          u.photo,
+          csp2.type
+        FROM "dbo"."chat_session_participants" csp2
+        LEFT JOIN "dbo"."user" u ON u.id = csp2.user_id
+        WHERE (csp2.user_id IS NULL OR csp2.user_id != ?)
+          AND u.type IS DISTINCT FROM 'ADMIN'
+      ) as other_participant
+    `, [user_id]), "cs.id", "other_participant.chat_session_id")
+                .leftJoin(this.db.raw(`
+      (
+        SELECT
+          cm.chat_session_id,
+          COUNT(*) AS unread_message_count
+        FROM "dbo"."chat_messages" cm
+        LEFT JOIN "dbo"."chat_message_reads" cmr
+          ON cm.id = cmr.message_id AND cmr.user_id = ?
+        WHERE cmr.id IS NULL
+          AND cm.sender_id != ?
+        GROUP BY cm.chat_session_id
+      ) as unread_counts
+      `, [user_id, user_id]), "unread_counts.chat_session_id", "cs.id")
                 .where((qb) => {
                 qb.andWhere("csp.user_id", user_id);
                 if (name) {
@@ -103,7 +116,6 @@ class ChatModel extends schema_1.default {
                 .withSchema(this.DBO_SCHEMA)
                 .select("*")
                 .where("cs.id", id)
-                .andWhere("cs.enable_chat", true)
                 .first();
         });
     }
@@ -138,7 +150,7 @@ class ChatModel extends schema_1.default {
                 .join("chat_session_participants as csp", "csp.chat_session_id", "cm.chat_session_id")
                 .join("chat_sessions as cs", "csp.chat_session_id", "cs.id")
                 .where("cm.chat_session_id", chat_session_id)
-                .andWhere("cs.enable_chat", true)
+                // .andWhere("cs.enable_chat", true)
                 .andWhere("csp.user_id", user_id)
                 .orderBy("cm.created_at", "asc")
                 .limit(limit)
@@ -166,6 +178,23 @@ class ChatModel extends schema_1.default {
                 .select("*")
                 .where("csp.chat_session_id", session_id);
             // .first();
+        });
+    }
+    // ------------------------------------------------------------------------------------------------
+    getAllReadMessagesByUserAndSession(_a) {
+        return __awaiter(this, arguments, void 0, function* ({ user_id, session_id, }) {
+            return yield this.db("chat_message_reads as cmr")
+                .withSchema(this.DBO_SCHEMA)
+                .select("cmr.id as message_id")
+                .where("cmr.chat_session_id", session_id)
+                .andWhere("cmr.user_id", user_id);
+        });
+    }
+    markMessagesAsSeenBulk(records) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("chat_message_reads")
+                .withSchema(this.DBO_SCHEMA)
+                .insert(records, "id");
         });
     }
 }
