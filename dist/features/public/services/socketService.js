@@ -12,12 +12,15 @@ var __rest = (this && this.__rest) || function (s, e) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const socket_1 = require("../../../app/socket");
+const commonModelTypes_1 = require("../../../utils/modelTypes/common/commonModelTypes");
 class SocketService {
     emitNotification(data) {
         const { emitType, user_id, read_status = false, created_at = new Date().toISOString(), socketId } = data, restData = __rest(data, ["emitType", "user_id", "read_status", "created_at", "socketId"]);
         const payload = Object.assign(Object.assign({}, restData), { read_status,
             created_at });
-        socket_1.io.to(String(user_id)).emit(emitType, payload);
+        if (emitType === commonModelTypes_1.TypeEmitNotificationEnum.ADMIN_NEW_NOTIFICATION) {
+            socket_1.io.to(String(user_id)).emit(emitType, payload);
+        }
     }
 }
 exports.default = SocketService;

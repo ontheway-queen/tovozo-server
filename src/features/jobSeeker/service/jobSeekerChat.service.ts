@@ -27,18 +27,69 @@ export class JobSeekerChatService extends AbstractServices {
 		};
 	}
 
+	public async getSingleHotelierChatSession(req: Request) {
+		const hotelier_id = req.params.hotelier_id;
+		const { user_id } = req.jobSeeker;
+		const chatModel = this.Model.chatModel();
+
+		const isSessionExists =
+			await chatModel.checkSessionForJobSeekerAndHotelier({
+				hotelier_id: Number(hotelier_id),
+				job_seeker_id: Number(user_id),
+			});
+		if (!isSessionExists) {
+			throw new CustomError(
+				"Unable to start chat — no existing conversation found between you and this Hiring Manager.",
+				this.StatusCode.HTTP_BAD_REQUEST
+			);
+		}
+
+		return {
+			success: true,
+			message: this.ResMsg.HTTP_OK,
+			code: this.StatusCode.HTTP_OK,
+			data: {
+				chat_session_id: isSessionExists.id,
+			},
+		};
+	}
+
 	public async getMessages(req: Request) {
 		const { user_id } = req.jobSeeker;
 		const session_id = Number(req.query.session_id);
 		const limit = Number(req.query.limit);
 		const skip = Number(req.query.skip);
 		const chatModel = this.Model.chatModel();
+
+		const read_messages =
+			await chatModel.getAllReadMessagesByUserAndSession({
+				user_id,
+				session_id,
+			});
+
 		const data = await chatModel.getMessages({
 			user_id,
 			chat_session_id: session_id,
 			limit,
 			skip,
 		});
+
+		// 3. Extract IDs of read messages for quick lookup
+		const readMessageIds = new Set(read_messages.map((r) => r.message_id));
+
+		const unreadMessages = data.filter(
+			(msg) => !readMessageIds.has(msg.id)
+		);
+
+		if (unreadMessages.length > 0) {
+			const insertData = unreadMessages.map((msg) => ({
+				message_id: msg.id,
+				chat_session_id: session_id,
+				user_id,
+				seen_at: new Date(),
+			}));
+			await chatModel.markMessagesAsSeenBulk(insertData);
+		}
 
 		return {
 			success: true,
@@ -151,7 +202,7 @@ export class JobSeekerChatService extends AbstractServices {
 				success: true,
 				message: this.ResMsg.HTTP_OK,
 				code: this.StatusCode.HTTP_OK,
-				data: chat_session_id,
+				data: { chat_session_id },
 			};
 		}
 
@@ -184,7 +235,7 @@ export class JobSeekerChatService extends AbstractServices {
 			success: true,
 			message: this.ResMsg.HTTP_OK,
 			code: this.StatusCode.HTTP_OK,
-			data: chat_session_id,
+			data: { chat_session_id },
 		};
 	}
 }

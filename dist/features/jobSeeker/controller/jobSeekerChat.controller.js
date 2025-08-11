@@ -36,6 +36,10 @@ class JobSeekerChatController extends abstract_controller_1.default {
             const _a = yield this.service.getChatSessions(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
+        this.getSingleHotelierChatSession = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.getSingleHotelierChatSession(req), { code } = _a, data = __rest(_a, ["code"]);
+            res.status(code).json(data);
+        }));
         this.getMessages = this.asyncWrapper.wrap({ querySchema: this.validator.getMessagesValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
             const _a = yield this.service.getMessages(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);

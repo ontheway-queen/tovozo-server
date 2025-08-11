@@ -38,6 +38,28 @@ class JobSeekerChatService extends abstract_service_1.default {
             };
         });
     }
+    getSingleHotelierChatSession(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const hotelier_id = req.params.hotelier_id;
+            const { user_id } = req.jobSeeker;
+            const chatModel = this.Model.chatModel();
+            const isSessionExists = yield chatModel.checkSessionForJobSeekerAndHotelier({
+                hotelier_id: Number(hotelier_id),
+                job_seeker_id: Number(user_id),
+            });
+            if (!isSessionExists) {
+                throw new customError_1.default("Unable to start chat — no existing conversation found between you and this Hiring Manager.", this.StatusCode.HTTP_BAD_REQUEST);
+            }
+            return {
+                success: true,
+                message: this.ResMsg.HTTP_OK,
+                code: this.StatusCode.HTTP_OK,
+                data: {
+                    chat_session_id: isSessionExists.id,
+                },
+            };
+        });
+    }
     getMessages(req) {
         return __awaiter(this, void 0, void 0, function* () {
             const { user_id } = req.jobSeeker;
@@ -45,12 +67,28 @@ class JobSeekerChatService extends abstract_service_1.default {
             const limit = Number(req.query.limit);
             const skip = Number(req.query.skip);
             const chatModel = this.Model.chatModel();
+            const read_messages = yield chatModel.getAllReadMessagesByUserAndSession({
+                user_id,
+                session_id,
+            });
             const data = yield chatModel.getMessages({
                 user_id,
                 chat_session_id: session_id,
                 limit,
                 skip,
             });
+            // 3. Extract IDs of read messages for quick lookup
+            const readMessageIds = new Set(read_messages.map((r) => r.message_id));
+            const unreadMessages = data.filter((msg) => !readMessageIds.has(msg.id));
+            if (unreadMessages.length > 0) {
+                const insertData = unreadMessages.map((msg) => ({
+                    message_id: msg.id,
+                    chat_session_id: session_id,
+                    user_id,
+                    seen_at: new Date(),
+                }));
+                yield chatModel.markMessagesAsSeenBulk(insertData);
+            }
             return {
                 success: true,
                 message: this.ResMsg.HTTP_OK,
@@ -134,7 +172,7 @@ class JobSeekerChatService extends abstract_service_1.default {
                     success: true,
                     message: this.ResMsg.HTTP_OK,
                     code: this.StatusCode.HTTP_OK,
-                    data: chat_session_id,
+                    data: { chat_session_id },
                 };
             }
             const newSession = yield chatModel.createChatSession({});
@@ -161,7 +199,7 @@ class JobSeekerChatService extends abstract_service_1.default {
                 success: true,
                 message: this.ResMsg.HTTP_OK,
                 code: this.StatusCode.HTTP_OK,
-                data: chat_session_id,
+                data: { chat_session_id },
             };
         });
     }

@@ -11,8 +11,12 @@ export class HotelierChatService extends AbstractServices {
 
 	public async getChatSessions(req: Request) {
 		const { user_id } = req.hotelier;
+		const { name } = req.query;
 		const chatModel = this.Model.chatModel();
-		const data = await chatModel.getChatSessions({ user_id });
+		const data = await chatModel.getChatSessions({
+			user_id,
+			name: name as string,
+		});
 
 		return {
 			success: true,
@@ -22,18 +26,67 @@ export class HotelierChatService extends AbstractServices {
 		};
 	}
 
+	public async getSingleJobSeekerChatSession(req: Request) {
+		const job_seeker_id = req.params.job_seeker_id;
+		const { user_id } = req.hotelier;
+		const chatModel = this.Model.chatModel();
+
+		const isSessionExists = await chatModel.getChatSessionBetweenUsers({
+			hotelier_id: user_id,
+			job_seeker_id: Number(job_seeker_id),
+		});
+		if (!isSessionExists) {
+			throw new CustomError(
+				"Unable to start chat — no existing conversation found between you and this job seeker.",
+				this.StatusCode.HTTP_BAD_REQUEST
+			);
+		}
+
+		return {
+			success: true,
+			message: this.ResMsg.HTTP_OK,
+			code: this.StatusCode.HTTP_OK,
+			data: {
+				chat_session_id: isSessionExists.id,
+			},
+		};
+	}
+
 	public async getMessages(req: Request) {
 		const { user_id } = req.hotelier;
 		const session_id = Number(req.query.session_id);
 		const limit = Number(req.query.limit);
 		const skip = Number(req.query.skip);
 		const chatModel = this.Model.chatModel();
+
+		const read_messages =
+			await chatModel.getAllReadMessagesByUserAndSession({
+				user_id,
+				session_id,
+			});
+
 		const data = await chatModel.getMessages({
-			chat_session_id: session_id,
 			user_id,
+			chat_session_id: session_id,
 			limit,
 			skip,
 		});
+
+		const readMessageIds = new Set(read_messages.map((r) => r.message_id));
+
+		const unreadMessages = data.filter(
+			(msg) => !readMessageIds.has(msg.id)
+		);
+
+		if (unreadMessages.length > 0) {
+			const insertData = unreadMessages.map((msg) => ({
+				message_id: msg.id,
+				chat_session_id: session_id,
+				user_id,
+				seen_at: new Date(),
+			}));
+			await chatModel.markMessagesAsSeenBulk(insertData);
+		}
 
 		return {
 			success: true,
@@ -115,15 +168,14 @@ export class HotelierChatService extends AbstractServices {
 		let chatSession = await chatModel.checkSupportSession(user_id);
 		if (chatSession) {
 			const chat_session_id = chatSession.id;
-
 			const existingParticipants = await chatModel.getSessionParticipants(
 				chat_session_id
 			);
 
 			const existingAdminIds = new Set(
 				existingParticipants
-					.filter((p) => p.type === TypeUser.ADMIN)
-					.map((p) => p.user_id)
+					.filter((p: any) => p.type === TypeUser.ADMIN)
+					.map((p: any) => p.user_id)
 			);
 
 			const admins = await userModel.checkUser({ type: TypeUser.ADMIN });
@@ -159,7 +211,7 @@ export class HotelierChatService extends AbstractServices {
 			{
 				chat_session_id,
 				user_id,
-				type: TypeUser.HOTELIER,
+				type: TypeUser.JOB_SEEKER,
 				joined_at: new Date(),
 			},
 		]);
