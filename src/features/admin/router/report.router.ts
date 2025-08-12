@@ -10,8 +10,12 @@ export default class AdminReportRouter extends AbstractRouter {
 
 	private callRouter() {
 		this.router
-			.route("/")
-			.get(this.adminReportController.getReportsWithInfo);
+			.route("/job-seeker")
+			.get(this.adminReportController.getJobSeekersReports);
+
+		this.router
+			.route("/hotelier")
+			.get(this.adminReportController.getHotelierReports);
 
 		this.router
 			.route("/:id")

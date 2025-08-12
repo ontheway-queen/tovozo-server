@@ -31,8 +31,12 @@ class AdminReportController extends abstract_controller_1.default {
         super();
         this.adminReportService = new report_service_1.default();
         this.validator = new report_validator_1.default();
-        this.getReportsWithInfo = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.adminReportService.getReportsWithInfo(req), { code } = _a, data = __rest(_a, ["code"]);
+        this.getJobSeekersReports = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.adminReportService.getJobSeekersReports(req), { code } = _a, data = __rest(_a, ["code"]);
+            res.status(code).json(data);
+        }));
+        this.getHotelierReports = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.adminReportService.getHotelierReports(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         this.reportMarkAsAcknowledge = this.asyncWrapper.wrap({

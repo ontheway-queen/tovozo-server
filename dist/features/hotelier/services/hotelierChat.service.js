@@ -127,6 +127,7 @@ class HotelierChatService extends abstract_service_1.default {
                     photo: "",
                     content: message,
                     read_status: false,
+                    sender_type: "HOTELIER",
                 });
                 return {
                     success: true,

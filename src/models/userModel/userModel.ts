@@ -43,35 +43,21 @@ export default class UserModel extends Schema {
 			});
 	}
 
-	public async checkUser({
-		email,
-		id,
-		username,
-		type,
-		phone_number,
-	}: ICheckUserParams): Promise<ICheckUserData[]> {
+	public async checkUser(
+		params: ICheckUserParams
+	): Promise<ICheckUserData[]> {
+		const { email, id, username, type, phone_number } = params;
+
 		return await this.db(this.TABLES.user)
 			.withSchema(this.DBO_SCHEMA)
 			.select("*")
-			.where((qb) => {
-				qb.where("is_deleted", false).andWhere((qbc) => {
-					if (id) {
-						qbc.andWhere("id", id);
-					}
-					if (type) {
-						qbc.andWhere("type", type).andWhere((subQbc) => {
-							if (email) {
-								subQbc.andWhere("email", email);
-							}
-							if (username) {
-								subQbc.orWhere("username", username);
-							}
-							if (phone_number) {
-								subQbc.orWhere("phone_number", phone_number);
-							}
-						});
-					}
-				});
+			.where("is_deleted", false)
+			.modify((qb) => {
+				if (id) qb.where("id", id);
+				if (type) qb.where("type", type);
+				if (email) qb.orWhere("email", email);
+				if (username) qb.orWhere("username", username);
+				if (phone_number) qb.orWhere("phone_number", phone_number);
 			});
 	}
 
@@ -90,35 +76,28 @@ export default class UserModel extends Schema {
 		email?: string;
 		phone_number?: string;
 	}): Promise<T> {
-		return await this.db(table_name)
+		return this.db(table_name)
 			.withSchema(schema_name)
 			.select("*")
-			.where((qb) => {
+			.modify((qb) => {
 				if (user_id) {
-					qb.andWhere("user_id", user_id);
+					qb.where("user_id", user_id);
 				}
-				if (user_name) {
-					qb.andWhere("username", user_name);
-				}
-				if (email) {
-					qb.andWhere("email", email);
-				}
-				if (phone_number) {
-					qb.andWhere("phone_number", phone_number);
-				}
+				if (user_name) qb.where("username", user_name);
+				if (email) qb.where("email", email);
+				if (phone_number) qb.where("phone_number", phone_number);
 			})
 			.first();
 	}
 
 	//get last  user Id
 	public async getLastUserID(): Promise<number> {
-		const data = await this.db("user")
+		const result = await this.db(this.TABLES.user)
 			.withSchema(this.DBO_SCHEMA)
-			.select("id")
-			.orderBy("id", "desc")
-			.limit(1);
+			.max<{ max: number }>("id as max")
+			.first();
 
-		return data.length ? data[0].id : 0;
+		return result?.max ?? 0;
 	}
 
 	public async deleteUser(id: number) {
@@ -126,19 +105,5 @@ export default class UserModel extends Schema {
 			.withSchema(this.DBO_SCHEMA)
 			.update({ is_deleted: true })
 			.where({ id });
-	}
-
-	// Add Strie Payout Account
-	public async addStripePayoutAccount({
-		user_id,
-		stripe_acc_id,
-	}: {
-		user_id: number;
-		stripe_acc_id: string;
-	}) {
-		return await this.db("job_seeker")
-			.withSchema(this.JOB_SEEKER)
-			.update({ stripe_acc_id })
-			.where({ user_id });
 	}
 }

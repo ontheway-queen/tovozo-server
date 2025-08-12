@@ -19,21 +19,52 @@ const config_1 = __importDefault(require("../../app/config"));
 const express_1 = __importDefault(require("express"));
 exports.stripe = new stripe_1.default(config_1.default.STRIPE_SECRET_KEY);
 class StripeWebhook {
-    constructor(stripeInstance, webhookSecret) {
+    constructor() {
         this.Router = express_1.default.Router();
-        this.stripe = stripeInstance;
-        this.webhookSecret = webhookSecret;
+        this.stripe = exports.stripe;
         this.initRoutes();
     }
     initRoutes() {
-        this.Router.post("/stripe", body_parser_1.default.raw({ type: "application/json" }), (req, res) => this.handleWebhook(req, res));
+        this.Router.post("/stripe/account", body_parser_1.default.raw({ type: "application/json" }), (req, res) => this.handleAccountWebhook(req, res));
+        this.Router.post("/stripe/connect-account", body_parser_1.default.raw({ type: "application/json" }), (req, res) => this.handleConnectAccountWebhook(req, res));
     }
-    handleWebhook(req, res) {
+    handleAccountWebhook(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             const sig = req.headers["stripe-signature"];
             let event;
             try {
-                event = this.stripe.webhooks.constructEvent(req.body, sig, this.webhookSecret);
+                event = this.stripe.webhooks.constructEvent(req.body, sig, config_1.default.ACCOUNT_WEBHOOK_SECRET);
+            }
+            catch (err) {
+                console.error("❌ Webhook signature verification failed:", err.message);
+                return res.status(400).send(`Webhook Error: ${err.message}`);
+            }
+            console.log(`📩 Received event: ${event.type}`);
+            switch (event.type) {
+                case "payout.created":
+                    yield this.onPayoutCreated(event.data.object);
+                    break;
+                case "payout.paid":
+                    yield this.onPayoutPaid(event.data.object);
+                    break;
+                case "payout.failed":
+                    yield this.onPayoutFailed(event.data.object);
+                    break;
+                case "payout.canceled":
+                    yield this.onPayoutCanceled(event.data.object);
+                    break;
+                default:
+                    console.log(`⚠️ Ignored event type: ${event.type}`);
+            }
+            res.json({ received: true });
+        });
+    }
+    handleConnectAccountWebhook(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const sig = req.headers["stripe-signature"];
+            let event;
+            try {
+                event = this.stripe.webhooks.constructEvent(req.body, sig, config_1.default.CONNECT_ACCOUNT_WEBHOOK_SECRET);
             }
             catch (err) {
                 console.error("❌ Webhook signature verification failed:", err.message);
