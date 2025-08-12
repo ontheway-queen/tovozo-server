@@ -9,23 +9,30 @@ export const stripe = new Stripe(config.STRIPE_SECRET_KEY!);
 export class StripeWebhook {
 	public Router = express.Router();
 	private stripe: Stripe;
-	private webhookSecret: string;
 
-	constructor(stripeInstance: Stripe, webhookSecret: string) {
-		this.stripe = stripeInstance;
-		this.webhookSecret = webhookSecret;
+	constructor() {
+		this.stripe = stripe;
 		this.initRoutes();
 	}
 
 	private initRoutes() {
 		this.Router.post(
-			"/stripe",
+			"/stripe/account",
 			bodyParser.raw({ type: "application/json" }),
-			(req: Request, res: Response) => this.handleWebhook(req, res)
+			(req: Request, res: Response) => this.handleAccountWebhook(req, res)
+		);
+		this.Router.post(
+			"/stripe/connect-account",
+			bodyParser.raw({ type: "application/json" }),
+			(req: Request, res: Response) =>
+				this.handleConnectAccountWebhook(req, res)
 		);
 	}
 
-	private async handleWebhook(req: Request, res: Response): Promise<any> {
+	private async handleAccountWebhook(
+		req: Request,
+		res: Response
+	): Promise<any> {
 		const sig = req.headers["stripe-signature"] as string;
 		let event: Stripe.Event;
 
@@ -33,7 +40,50 @@ export class StripeWebhook {
 			event = this.stripe.webhooks.constructEvent(
 				req.body,
 				sig,
-				this.webhookSecret
+				config.ACCOUNT_WEBHOOK_SECRET
+			);
+		} catch (err: any) {
+			console.error(
+				"❌ Webhook signature verification failed:",
+				err.message
+			);
+			return res.status(400).send(`Webhook Error: ${err.message}`);
+		}
+
+		console.log(`📩 Received event: ${event.type}`);
+
+		switch (event.type) {
+			case "payout.created":
+				await this.onPayoutCreated(event.data.object as Stripe.Payout);
+				break;
+			case "payout.paid":
+				await this.onPayoutPaid(event.data.object as Stripe.Payout);
+				break;
+			case "payout.failed":
+				await this.onPayoutFailed(event.data.object as Stripe.Payout);
+				break;
+			case "payout.canceled":
+				await this.onPayoutCanceled(event.data.object as Stripe.Payout);
+				break;
+			default:
+				console.log(`⚠️ Ignored event type: ${event.type}`);
+		}
+
+		res.json({ received: true });
+	}
+
+	private async handleConnectAccountWebhook(
+		req: Request,
+		res: Response
+	): Promise<any> {
+		const sig = req.headers["stripe-signature"] as string;
+		let event: Stripe.Event;
+
+		try {
+			event = this.stripe.webhooks.constructEvent(
+				req.body,
+				sig,
+				config.CONNECT_ACCOUNT_WEBHOOK_SECRET
 			);
 		} catch (err: any) {
 			console.error(

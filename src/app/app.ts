@@ -58,10 +58,7 @@ class App {
 
 	//init middleware
 	private initMiddleware() {
-		this.app.use(
-			"/webhook",
-			new StripeWebhook(stripe, process.env.STRIPE_WEBHOOK_SECRET!).Router
-		);
+		this.app.use("/webhook", new StripeWebhook().Router);
 
 		this.app.use(express.json({ limit: "2mb" }));
 		this.app.use(express.urlencoded({ limit: "2mb", extended: true }));

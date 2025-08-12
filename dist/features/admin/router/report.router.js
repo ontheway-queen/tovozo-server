@@ -13,8 +13,11 @@ class AdminReportRouter extends abstract_router_1.default {
     }
     callRouter() {
         this.router
-            .route("/")
-            .get(this.adminReportController.getReportsWithInfo);
+            .route("/job-seeker")
+            .get(this.adminReportController.getJobSeekersReports);
+        this.router
+            .route("/hotelier")
+            .get(this.adminReportController.getHotelierReports);
         this.router
             .route("/:id")
             .patch(this.adminReportController.reportMarkAsAcknowledge);

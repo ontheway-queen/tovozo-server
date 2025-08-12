@@ -12,7 +12,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const constants_1 = require("../../utils/miscellaneous/constants");
 const schema_1 = __importDefault(require("../../utils/miscellaneous/schema"));
 class ReportModel extends schema_1.default {
     constructor(db) {
@@ -41,67 +40,153 @@ class ReportModel extends schema_1.default {
                 .first();
         });
     }
-    getReportsWithInfo(query) {
+    getJobSeekersReports(query) {
         return __awaiter(this, void 0, void 0, function* () {
             const { type, need_total = true, limit = 100, skip = 0, searchQuery, report_status, } = query;
-            console.log({ searchQuery });
-            const data = yield this.db("reports as rp")
+            // Main data query
+            const dataQuery = this.db("reports as rp")
                 .withSchema(this.DBO_SCHEMA)
-                .select("rp.id", "rp.status as report_status", "rp.report_type", "rp.reason as report_reason", "rp.job_post_details_id", "rp.related_id", "rp.resolution", "j.title as job_title", "jsu.id as job_seeker_id", "jsu.name as job_seeker_name", "org.id as organization_id", "org.name as organization_name")
-                .leftJoin("job_post_details as jpd", "jpd.id", "rp.job_post_details_id")
-                .leftJoin("job_post as jp", "jp.id", "jpd.job_post_id")
-                .leftJoin("jobs as j", "j.id", "jpd.job_id")
-                .leftJoin("job_applications as ja", "ja.id", "rp.related_id")
-                .leftJoin("user as jsu", "jsu.id", "ja.job_seeker_id")
+                .select("rp.id", "rp.report_type", "rp.reason", "rp.status", "js.id as reporter_id", "js.name as reporter_name", "jpd.id as job_post_details_id", "j.title as job_title", "org.user_id as hotelier_id", "org.name as organization_name", this.db.raw(`json_build_object(
+					'resolved_by', rp.resolved_by,
+					'resolved_by_name', admin.name,
+					'resolved_by_email', admin.email,
+					'resolution_note', rp.resolution,
+					'resolved_at', rp.resolved_at
+				) as resolve_info`))
+                .join("job_post_details as jpd", "jpd.id", "rp.job_post_details_id")
+                .join("jobs as j", "j.id", "jpd.job_id")
+                .join("job_applications as ja", "ja.job_post_details_id", "jpd.id")
+                .join("user as js", "js.id", "ja.job_seeker_id")
+                .join("job_post as jp", "jp.id", "ja.job_post_id")
                 .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
                 `${this.HOTELIER}.${this.TABLES.organization}`,
             ])
-                .where((qb) => {
+                .leftJoin("user as admin", "rp.resolved_by", "admin.id")
+                .modify((qb) => {
                 if (type)
-                    qb.andWhere("rp.report_type", type);
-                if (searchQuery)
-                    qb.andWhere("j.title", "ilike", `%${searchQuery}%`);
+                    qb.where("rp.report_type", type);
                 if (report_status)
-                    qb.andWhere("rp.status", report_status);
-            });
-            const groupedMap = new Map();
-            for (const row of data) {
-                const key = `${row.job_post_details_id}-${row.related_id}`;
-                if (!groupedMap.has(key)) {
-                    groupedMap.set(key, {
-                        job_post_details_id: row.job_post_details_id,
-                        job_title: row.job_title,
+                    qb.where("rp.status", report_status);
+                if (searchQuery) {
+                    qb.andWhere((builder) => {
+                        builder
+                            .whereILike("j.title", `%${searchQuery}%`)
+                            .orWhereILike("org.name", `%${searchQuery}%`)
+                            .orWhereILike("rp.reason", `%${searchQuery}%`);
                     });
                 }
-                const group = groupedMap.get(key);
-                if (row.report_type === constants_1.REPORT_TYPE.JobPost) {
-                    group.job_seeker_report = {
-                        report_id: row.id,
-                        report_type: row.report_type,
-                        report_status: row.report_status,
-                        report_reason: row.report_reason,
-                        job_seeker_name: row.job_seeker_name,
-                        job_seeker_id: row.job_seeker_id,
-                        resolution_note: row.resolution,
-                    };
-                }
-                else {
-                    group.hotelier_report = {
-                        report_id: row.id,
-                        report_type: row.report_type,
-                        report_status: row.report_status,
-                        report_reason: row.report_reason,
-                        organization_id: row.organization_id,
-                        organization_name: row.organization_name,
-                        resolution_note: row.resolution,
-                    };
-                }
+            })
+                .orderBy("rp.id", "desc")
+                .limit(limit)
+                .offset(skip);
+            const rows = yield dataQuery;
+            // Total count query
+            let total = undefined;
+            if (need_total) {
+                const totalQuery = this.db("reports as rp")
+                    .withSchema(this.DBO_SCHEMA)
+                    .countDistinct("rp.id as total")
+                    .join("job_post_details as jpd", "jpd.id", "rp.job_post_details_id")
+                    .join("jobs as j", "j.id", "jpd.job_id")
+                    .join("job_applications as ja", "ja.job_post_details_id", "jpd.id")
+                    .join("job_post as jp", "jp.id", "ja.job_post_id")
+                    .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
+                    `${this.HOTELIER}.${this.TABLES.organization}`,
+                ])
+                    .modify((qb) => {
+                    if (type)
+                        qb.where("rp.report_type", type);
+                    if (report_status)
+                        qb.where("rp.status", report_status);
+                    if (searchQuery) {
+                        qb.andWhere((builder) => {
+                            builder
+                                .whereILike("j.title", `%${searchQuery}%`)
+                                .orWhereILike("org.name", `%${searchQuery}%`)
+                                .orWhereILike("rp.reason", `%${searchQuery}%`);
+                        });
+                    }
+                });
+                const totalRes = yield totalQuery.first();
+                total = Number(totalRes === null || totalRes === void 0 ? void 0 : totalRes.total) || 0;
             }
-            const groupedArray = Array.from(groupedMap.values());
-            const paginated = groupedArray.slice(skip || 0, skip + limit || 100);
             return {
-                data: paginated,
-                total: need_total ? groupedArray.length : undefined,
+                data: rows,
+                total,
+            };
+        });
+    }
+    getHotelierReports(query) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { type, need_total = true, limit = 100, skip = 0, searchQuery, report_status, } = query;
+            const dataQuery = this.db("reports as rp")
+                .withSchema(this.DBO_SCHEMA)
+                .select("rp.id", "rp.report_type", "rp.reason", "rp.status", "jpd.id as job_post_details_id", "j.title as job_title", "org.id as reporter_id", "org.name as reporter_name", "js.id as job_seeker_id", "js.name as job_seeker_name", this.db.raw(`json_build_object(
+					'resolved_by', rp.resolved_by,
+					'resolved_by_name', admin.name,
+					'resolved_by_email', admin.email,
+					'resolution_note', rp.resolution,
+					'resolved_at', rp.resolved_at
+				) as resolve_info`))
+                .join("job_post_details as jpd", "jpd.id", "rp.job_post_details_id")
+                .join("jobs as j", "j.id", "jpd.job_id")
+                .join("job_applications as ja", "ja.job_post_details_id", "jpd.id")
+                .join("user as js", "js.id", "ja.job_seeker_id")
+                .join("job_post as jp", "jp.id", "ja.job_post_id")
+                .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
+                `${this.HOTELIER}.${this.TABLES.organization}`,
+            ])
+                .leftJoin("user as admin", "rp.resolved_by", "admin.id")
+                .modify((qb) => {
+                if (type)
+                    qb.where("rp.report_type", type);
+                if (report_status)
+                    qb.where("rp.status", report_status);
+                if (searchQuery) {
+                    qb.andWhere((builder) => {
+                        builder
+                            .whereILike("j.title", `%${searchQuery}%`)
+                            .orWhereILike("org.name", `%${searchQuery}%`)
+                            .orWhereILike("rp.reason", `%${searchQuery}%`);
+                    });
+                }
+            })
+                .orderBy("rp.id", "desc")
+                .limit(limit)
+                .offset(skip);
+            const rows = yield dataQuery;
+            let total = undefined;
+            if (need_total) {
+                const totalQuery = this.db("reports as rp")
+                    .withSchema(this.DBO_SCHEMA)
+                    .countDistinct("rp.id as total")
+                    .join("job_post_details as jpd", "jpd.id", "rp.job_post_details_id")
+                    .join("jobs as j", "j.id", "jpd.job_id")
+                    .join("job_applications as ja", "ja.job_post_details_id", "jpd.id")
+                    .join("job_post as jp", "jp.id", "ja.job_post_id")
+                    .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
+                    `${this.HOTELIER}.${this.TABLES.organization}`,
+                ])
+                    .modify((qb) => {
+                    if (type)
+                        qb.where("rp.report_type", type);
+                    if (report_status)
+                        qb.where("rp.status", report_status);
+                    if (searchQuery) {
+                        qb.andWhere((builder) => {
+                            builder
+                                .whereILike("j.title", `%${searchQuery}%`)
+                                .orWhereILike("org.name", `%${searchQuery}%`)
+                                .orWhereILike("rp.reason", `%${searchQuery}%`);
+                        });
+                    }
+                });
+                const totalRes = yield totalQuery.first();
+                total = Number(totalRes === null || totalRes === void 0 ? void 0 : totalRes.total) || 0;
+            }
+            return {
+                data: rows,
+                total,
             };
         });
     }

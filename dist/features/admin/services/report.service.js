@@ -18,14 +18,26 @@ const constants_1 = require("../../../utils/miscellaneous/constants");
 class AdminReportService extends abstract_service_1.default {
     constructor() {
         super();
-        this.getReportsWithInfo = (req) => __awaiter(this, void 0, void 0, function* () {
-            const { limit, skip, searchQuery, type, report_status } = req.query;
+        this.getJobSeekersReports = (req) => __awaiter(this, void 0, void 0, function* () {
+            const { limit, skip, searchQuery, report_status } = req.query;
             const model = this.Model.reportModel();
-            const res = yield model.getReportsWithInfo({
+            const res = yield model.getJobSeekersReports({
                 limit: Number(limit),
                 skip: Number(skip),
                 searchQuery: searchQuery,
-                type: type,
+                type: constants_1.REPORT_TYPE.JobPost,
+                report_status: report_status,
+            });
+            return Object.assign({ success: true, code: this.StatusCode.HTTP_OK, message: this.ResMsg.HTTP_OK }, res);
+        });
+        this.getHotelierReports = (req) => __awaiter(this, void 0, void 0, function* () {
+            const { limit, skip, searchQuery, report_status } = req.query;
+            const model = this.Model.reportModel();
+            const res = yield model.getHotelierReports({
+                limit: Number(limit),
+                skip: Number(skip),
+                searchQuery: searchQuery,
+                type: constants_1.REPORT_TYPE.TaskActivity,
                 report_status: report_status,
             });
             return Object.assign({ success: true, code: this.StatusCode.HTTP_OK, message: this.ResMsg.HTTP_OK }, res);

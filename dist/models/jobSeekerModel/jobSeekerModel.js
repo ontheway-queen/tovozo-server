@@ -344,5 +344,14 @@ class JobSeekerModel extends schema_1.default {
             });
         });
     }
+    // Add Strie Payout Account
+    addStripePayoutAccount(_a) {
+        return __awaiter(this, arguments, void 0, function* ({ user_id, stripe_acc_id, }) {
+            return yield this.db("job_seeker")
+                .withSchema(this.JOB_SEEKER)
+                .update({ stripe_acc_id })
+                .where({ user_id });
+        });
+    }
 }
 exports.default = JobSeekerModel;
