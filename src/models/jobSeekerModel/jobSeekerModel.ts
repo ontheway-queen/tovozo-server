@@ -482,4 +482,18 @@ export default class JobSeekerModel extends Schema {
 				}
 			});
 	}
+
+	// Add Strie Payout Account
+	public async addStripePayoutAccount({
+		user_id,
+		stripe_acc_id,
+	}: {
+		user_id: number;
+		stripe_acc_id: string;
+	}) {
+		return await this.db("job_seeker")
+			.withSchema(this.JOB_SEEKER)
+			.update({ stripe_acc_id })
+			.where({ user_id });
+	}
 }

@@ -222,6 +222,7 @@ class AdminChatService extends abstract_service_1.default {
                     id: newMessage[0].id,
                     message,
                     created_at: newMessage[0].created_at,
+                    sender_type: "ADMIN",
                 });
                 return {
                     success: true,

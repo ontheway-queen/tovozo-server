@@ -28,6 +28,8 @@ const getConfig = () => {
         STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
         BASE_URL: process.env.BASE_URL,
         PRIVATE_KEY: process.env.PRIVATE_KEY,
+        ACCOUNT_WEBHOOK_SECRET: process.env.ACCOUNT_WEBHOOK_SECRET,
+        CONNECT_ACCOUNT_WEBHOOK_SECRET: process.env.CONNECT_ACCOUNT_WEBHOOK_SECRET,
     };
 };
 const getSanitzedConfig = (config) => {

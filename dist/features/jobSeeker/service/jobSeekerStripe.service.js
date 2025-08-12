@@ -77,16 +77,14 @@ class JobSeekerStripeService extends abstract_service_1.default {
             const account = yield stripe_1.stripe.accounts.retrieve(stripe_acc_id);
             console.log({ account });
             if (!account.payouts_enabled) {
-                // 🔥 Delete the Stripe account from Connect dashboard
                 yield stripe_1.stripe.accounts.del(stripe_acc_id);
                 return {
                     success: false,
                     code: this.StatusCode.HTTP_BAD_REQUEST,
-                    message: "Stripe account not eligible. Account has been deleted.",
+                    message: "Stripe account not eligible. Account has been deleted. Please onboard again.",
                 };
             }
-            // ✅ Save if verified
-            yield this.Model.UserModel().addStripePayoutAccount({
+            yield this.Model.jobSeekerModel().addStripePayoutAccount({
                 user_id,
                 stripe_acc_id,
             });

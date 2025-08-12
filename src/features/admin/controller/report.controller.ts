@@ -11,11 +11,20 @@ export default class AdminReportController extends AbstractController {
 		super();
 	}
 
-	public getReportsWithInfo = this.asyncWrapper.wrap(
+	public getJobSeekersReports = this.asyncWrapper.wrap(
 		null,
 		async (req: Request, res: Response) => {
 			const { code, ...data } =
-				await this.adminReportService.getReportsWithInfo(req);
+				await this.adminReportService.getJobSeekersReports(req);
+			res.status(code).json(data);
+		}
+	);
+
+	public getHotelierReports = this.asyncWrapper.wrap(
+		null,
+		async (req: Request, res: Response) => {
+			const { code, ...data } =
+				await this.adminReportService.getHotelierReports(req);
 			res.status(code).json(data);
 		}
 	);

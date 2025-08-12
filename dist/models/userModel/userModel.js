@@ -45,51 +45,42 @@ class UserModel extends schema_1.default {
             });
         });
     }
-    checkUser(_a) {
-        return __awaiter(this, arguments, void 0, function* ({ email, id, username, type, phone_number, }) {
+    checkUser(params) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { email, id, username, type, phone_number } = params;
             return yield this.db(this.TABLES.user)
                 .withSchema(this.DBO_SCHEMA)
                 .select("*")
-                .where((qb) => {
-                qb.where("is_deleted", false).andWhere((qbc) => {
-                    if (id) {
-                        qbc.andWhere("id", id);
-                    }
-                    if (type) {
-                        qbc.andWhere("type", type).andWhere((subQbc) => {
-                            if (email) {
-                                subQbc.andWhere("email", email);
-                            }
-                            if (username) {
-                                subQbc.orWhere("username", username);
-                            }
-                            if (phone_number) {
-                                subQbc.orWhere("phone_number", phone_number);
-                            }
-                        });
-                    }
-                });
+                .where("is_deleted", false)
+                .modify((qb) => {
+                if (id)
+                    qb.where("id", id);
+                if (type)
+                    qb.where("type", type);
+                if (email)
+                    qb.orWhere("email", email);
+                if (username)
+                    qb.orWhere("username", username);
+                if (phone_number)
+                    qb.orWhere("phone_number", phone_number);
             });
         });
     }
     getSingleCommonAuthUser(_a) {
         return __awaiter(this, arguments, void 0, function* ({ schema_name, table_name, user_id, user_name, email, phone_number, }) {
-            return yield this.db(table_name)
+            return this.db(table_name)
                 .withSchema(schema_name)
                 .select("*")
-                .where((qb) => {
+                .modify((qb) => {
                 if (user_id) {
-                    qb.andWhere("user_id", user_id);
+                    qb.where("user_id", user_id);
                 }
-                if (user_name) {
-                    qb.andWhere("username", user_name);
-                }
-                if (email) {
-                    qb.andWhere("email", email);
-                }
-                if (phone_number) {
-                    qb.andWhere("phone_number", phone_number);
-                }
+                if (user_name)
+                    qb.where("username", user_name);
+                if (email)
+                    qb.where("email", email);
+                if (phone_number)
+                    qb.where("phone_number", phone_number);
             })
                 .first();
         });
@@ -97,12 +88,12 @@ class UserModel extends schema_1.default {
     //get last  user Id
     getLastUserID() {
         return __awaiter(this, void 0, void 0, function* () {
-            const data = yield this.db("user")
+            var _a;
+            const result = yield this.db(this.TABLES.user)
                 .withSchema(this.DBO_SCHEMA)
-                .select("id")
-                .orderBy("id", "desc")
-                .limit(1);
-            return data.length ? data[0].id : 0;
+                .max("id as max")
+                .first();
+            return (_a = result === null || result === void 0 ? void 0 : result.max) !== null && _a !== void 0 ? _a : 0;
         });
     }
     deleteUser(id) {
@@ -111,15 +102,6 @@ class UserModel extends schema_1.default {
                 .withSchema(this.DBO_SCHEMA)
                 .update({ is_deleted: true })
                 .where({ id });
-        });
-    }
-    // Add Strie Payout Account
-    addStripePayoutAccount(_a) {
-        return __awaiter(this, arguments, void 0, function* ({ user_id, stripe_acc_id, }) {
-            return yield this.db("job_seeker")
-                .withSchema(this.JOB_SEEKER)
-                .update({ stripe_acc_id })
-                .where({ user_id });
         });
     }
 }

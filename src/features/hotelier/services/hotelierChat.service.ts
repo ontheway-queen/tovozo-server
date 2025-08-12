@@ -137,6 +137,7 @@ export class HotelierChatService extends AbstractServices {
 				photo: "",
 				content: message,
 				read_status: false,
+				sender_type: "HOTELIER",
 			});
 
 			return {

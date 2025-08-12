@@ -19,185 +19,172 @@ export default class StatisticsModel extends Schema {
 	public async generateAdminStatistic(query: IStatsQuery) {
 		const { from, to } = query;
 		const today = new Date();
-		const startOfLastMonth = new Date(
-			today.getFullYear(),
-			today.getMonth() - 1,
-			1
-		);
-		const endOfLastMonth = new Date(
-			today.getFullYear(),
-			today.getMonth(),
-			0
-		); // last day of previous month
-
-		const finalFrom = from || startOfLastMonth.toISOString().split("T")[0];
-		const finalTo = to || endOfLastMonth.toISOString().split("T")[0];
-
-		const dateFilter = (qb: any, table = "paid_at") => {
-			if (from || startOfLastMonth.toISOString())
-				qb.where(table, ">=", from || startOfLastMonth.toISOString());
-			if (to || endOfLastMonth.toISOString())
-				qb.where(table, "<=", to || endOfLastMonth.toISOString());
-		};
-
-		const [totalJobSeekers] = await this.db("job_seeker")
-			.withSchema(this.JOB_SEEKER)
-			// .modify((qb) => dateFilter(qb))
-			.count("user_id as total");
-
-		const [totalHoteliers] = await this.db("organization")
-			.withSchema(this.HOTELIER)
-			// .modify((qb) => dateFilter(qb))
-			.count("user_id as total");
-
-		const [newJobSeekers] = await this.db("user")
-			.withSchema(this.DBO_SCHEMA)
-			.whereRaw(`DATE(created_at) = ?`, [today])
-			.andWhere("type", USER_TYPE.JOB_SEEKER)
-			.count("id as total");
-
-		const [newHoteliers] = await this.db("user")
-			.withSchema(this.DBO_SCHEMA)
-			.whereRaw(`DATE(created_at) = ?`, [today])
-			.andWhere("type", USER_TYPE.HOTELIER)
-			.count("id as total");
-
-		const [totalJobPosts] = await this.db("job_post")
-			.withSchema(this.DBO_SCHEMA)
-			// .modify((qb) => dateFilter(qb))
-			.count("id as total");
-
-		const [activeJobPosts] = await this.db("job_post")
-			.withSchema(this.DBO_SCHEMA)
-			.where("status", "Live")
-			// .modify((qb) => dateFilter(qb))
-			.count("id as total");
-
-		const [cancelledJobPosts] = await this.db("job_post")
-			.withSchema(this.DBO_SCHEMA)
-			.where("status", "Cancelled")
-			// .modify((qb) => dateFilter(qb))
-			.count("id as total");
-
-		const [successfulHires] = await this.db("payment")
-			.withSchema(this.DBO_SCHEMA)
-			.where("status", "Paid")
-			// .modify((qb) => dateFilter(qb))
-			.countDistinct("application_id as total");
-
-		const [totalPayments] = await this.db("payment")
-			.withSchema(this.DBO_SCHEMA)
-			// .modify((qb) => dateFilter(qb))
-			.sum("total_amount as total");
-
-		const [pendingPayments] = await this.db("payment")
-			.withSchema(this.DBO_SCHEMA)
-			.where("status", "Unpaid")
-			// .modify((qb) => dateFilter(qb))
-			.sum("total_amount as total");
-
-		const [paidPayments] = await this.db("payment")
-			.withSchema(this.DBO_SCHEMA)
-			.where("status", "Paid")
-			// .modify((qb) => dateFilter(qb))
-			.sum("total_amount as total");
-
-		const [pendingReports] = await this.db("reports")
-			.withSchema(this.DBO_SCHEMA)
-			.where("status", "Pending")
-			// .modify((qb) => dateFilter(qb))
-			.count("id as total");
-
-		const latestApplications = await this.db("job_applications as ja")
-			.withSchema(this.DBO_SCHEMA)
-			.select(
-				"ja.id",
-				"ja.job_post_details_id",
-				"j.title as job_title",
-				"ja.job_seeker_id",
-				"jsu.name as job_seeker_name",
-				"jsu.photo as job_seeker_photo",
-				"ja.status",
-				"ja.created_at"
-			)
-			.leftJoin(
-				"job_post_details as jpd",
-				"jpd.id",
-				"ja.job_post_details_id"
-			)
-			.leftJoin("jobs as j", "j.id", "jpd.job_id")
-			.leftJoin("user as jsu", "jsu.id", "ja.job_seeker_id")
-			.orderBy("created_at", "desc")
-			.where("ja.status", "Pending")
-			.limit(5);
-
-		const [pendingJobSeekers] = await this.db("job_seeker")
-			.withSchema(this.JOB_SEEKER)
-			.where("account_status", "Pending")
-			.count("user_id as total");
-
-		console.log({ pendingJobSeekers });
-
-		const [inactiveJobSeekers] = await this.db("job_seeker")
-			.withSchema(this.JOB_SEEKER)
-			.where("account_status", "Inactive")
-			.count("user_id as total");
-
-		const [pendingHoteliers] = await this.db("organization")
-			.withSchema(this.HOTELIER)
-			.where("status", "Pending")
-			.count("user_id as total");
-
-		const [inactiveHoteliers] = await this.db("organization")
-			.withSchema(this.HOTELIER)
-			.where("status", "Inactive")
-			.count("user_id as total");
-
-		// last 6 months payment data
 		const now = dayjs();
 		const sixMonthsAgo = now.subtract(5, "month").startOf("month").toDate();
-		const rows = await this.db("payment")
-			.withSchema(this.DBO_SCHEMA)
-			.select(
-				this.db.raw(`DATE_TRUNC('month', paid_at) AS month`),
-				this.db.raw(`SUM(total_amount)::float AS hotelier_paid`),
-				this.db.raw(`SUM(job_seeker_pay)::float AS job_seeker_get`),
-				this.db.raw(`SUM(platform_fee)::float AS admin_earned`)
-			)
-			.where("status", "Paid")
-			.andWhere("paid_at", ">=", sixMonthsAgo)
-			.groupByRaw("1")
-			.orderByRaw("1 DESC");
+
+		const [
+			jobSeekersData,
+			hoteliersData,
+			jobPostsData,
+			paymentStats,
+			reportStats,
+			latestApplications,
+			paymentChart,
+		] = await Promise.all([
+			// Job seekers
+			this.db("job_seeker as js")
+				.withSchema(this.JOB_SEEKER)
+				.select(
+					this.db.raw("COUNT(*) AS total"),
+					this.db.raw(
+						"SUM(CASE WHEN account_status = 'Pending' THEN 1 ELSE 0 END) AS pending"
+					),
+					this.db.raw(
+						"SUM(CASE WHEN account_status = 'Inactive' THEN 1 ELSE 0 END) AS inactive"
+					)
+				)
+				.first(),
+
+			// Hoteliers
+			this.db("organization as org")
+				.withSchema(this.HOTELIER)
+				.select(
+					this.db.raw("COUNT(*) AS total"),
+					this.db.raw(
+						"SUM(CASE WHEN status = 'Pending' THEN 1 ELSE 0 END) AS pending"
+					),
+					this.db.raw(
+						"SUM(CASE WHEN status = 'Inactive' THEN 1 ELSE 0 END) AS inactive"
+					)
+				)
+				.first(),
+
+			// Job posts
+			this.db("job_post as jp")
+				.withSchema(this.DBO_SCHEMA)
+				.select(
+					this.db.raw("COUNT(*) AS total"),
+					this.db.raw(
+						"SUM(CASE WHEN status = 'Live' THEN 1 ELSE 0 END) AS active"
+					),
+					this.db.raw(
+						"SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END) AS cancelled"
+					)
+				)
+				.first(),
+
+			// Payments
+			this.db("payment as p")
+				.withSchema(this.DBO_SCHEMA)
+				.select(
+					this.db.raw("SUM(total_amount) AS total"),
+					this.db.raw(
+						"SUM(CASE WHEN status = 'Paid' THEN total_amount ELSE 0 END) AS paid"
+					),
+					this.db.raw(
+						"SUM(CASE WHEN status = 'Unpaid' THEN total_amount ELSE 0 END) AS pending"
+					),
+					this.db.raw(
+						"COUNT(DISTINCT CASE WHEN status = 'Paid' THEN application_id ELSE NULL END) AS successful_hires"
+					)
+				)
+				.first(),
+
+			// Reports
+			this.db("reports as r")
+				.withSchema(this.DBO_SCHEMA)
+				.select(
+					this.db.raw(
+						"SUM(CASE WHEN status = 'Pending' THEN 1 ELSE 0 END) AS pending"
+					)
+				)
+				.first(),
+
+			// Latest applications
+			this.db("job_applications as ja")
+				.withSchema(this.DBO_SCHEMA)
+				.select(
+					"ja.id",
+					"ja.job_post_details_id",
+					"j.title as job_title",
+					"ja.job_seeker_id",
+					"jsu.name as job_seeker_name",
+					"jsu.photo as job_seeker_photo",
+					"ja.status",
+					"ja.created_at"
+				)
+				.leftJoin(
+					"job_post_details as jpd",
+					"jpd.id",
+					"ja.job_post_details_id"
+				)
+				.leftJoin("jobs as j", "j.id", "jpd.job_id")
+				.leftJoin("user as jsu", "jsu.id", "ja.job_seeker_id")
+				.where("ja.status", "Pending")
+				.orderBy("ja.created_at", "desc")
+				.limit(5),
+
+			// Payment chart (last 6 months)
+			this.db("payment")
+				.withSchema(this.DBO_SCHEMA)
+				.select(
+					this.db.raw(
+						`TO_CHAR(DATE_TRUNC('month', paid_at), 'YYYY-MM-DD') AS month`
+					),
+					this.db.raw(`SUM(total_amount) AS hotelier_paid`),
+					this.db.raw(`SUM(job_seeker_pay) AS job_seeker_get`),
+					this.db.raw(`SUM(platform_fee) AS admin_earned`)
+				)
+				.where("status", "Paid")
+				.andWhere("paid_at", ">=", sixMonthsAgo)
+				.groupByRaw(`DATE_TRUNC('month', paid_at)`)
+				.orderByRaw(`DATE_TRUNC('month', paid_at) DESC`),
+		]);
 
 		return {
 			jobSeekers: {
-				total: Number(totalJobSeekers.total),
-				new: Number(newJobSeekers.total),
-				pending: Number(pendingJobSeekers.total),
-				inactive: Number(inactiveJobSeekers.total),
+				total: Number(jobSeekersData.total),
+				new: await this.countNewUsers(USER_TYPE.JOB_SEEKER, today),
+				pending: Number(jobSeekersData.pending),
+				inactive: Number(jobSeekersData.inactive),
 			},
 			hoteliers: {
-				total: Number(totalHoteliers.total),
-				new: Number(newHoteliers.total),
-				pending: Number(pendingHoteliers.total),
-				inactive: Number(inactiveHoteliers.total),
+				total: Number(hoteliersData.total),
+				new: await this.countNewUsers(USER_TYPE.HOTELIER, today),
+				pending: Number(hoteliersData.pending),
+				inactive: Number(hoteliersData.inactive),
 			},
 			jobPosts: {
-				total: Number(totalJobPosts.total),
-				active: Number(activeJobPosts.total),
-				cancelled: Number(cancelledJobPosts.total),
+				total: Number(jobPostsData.total),
+				active: Number(jobPostsData.active),
+				cancelled: Number(jobPostsData.cancelled),
 			},
-			successfulHires: Number(successfulHires.total),
+			successfulHires: Number(paymentStats.successful_hires),
 			payments: {
-				total: Number(totalPayments.total || 0),
-				paid: Number(paidPayments.total || 0),
-				pending: Number(pendingPayments.total || 0),
+				total: Number(paymentStats.total || 0),
+				paid: Number(paymentStats.paid || 0),
+				pending: Number(paymentStats.pending || 0),
 			},
 			reports: {
-				pending: Number(pendingReports.total),
+				pending: Number(reportStats.pending),
 			},
 			latestApplications,
-			rows,
+			rows: paymentChart,
 		};
+	}
+
+	// Helper to count today's new users
+	private async countNewUsers(type: string, today: Date) {
+		const start = dayjs(today).startOf("day").toDate();
+		const end = dayjs(today).endOf("day").toDate();
+
+		const [result] = await this.db("user")
+			.withSchema(this.DBO_SCHEMA)
+			.where("type", type)
+			.andWhere("created_at", ">=", start)
+			.andWhere("created_at", "<=", end)
+			.count("id as total");
+
+		return Number(result.total);
 	}
 }

@@ -15,14 +15,33 @@ export default class AdminReportService extends AbstractServices {
 		super();
 	}
 
-	public getReportsWithInfo = async (req: Request) => {
-		const { limit, skip, searchQuery, type, report_status } = req.query;
+	public getJobSeekersReports = async (req: Request) => {
+		const { limit, skip, searchQuery, report_status } = req.query;
 		const model = this.Model.reportModel();
-		const res = await model.getReportsWithInfo({
+		const res = await model.getJobSeekersReports({
 			limit: Number(limit),
 			skip: Number(skip),
 			searchQuery: searchQuery as string,
-			type: type as IReportType,
+			type: REPORT_TYPE.JobPost,
+			report_status: report_status as IReportStatus,
+		});
+
+		return {
+			success: true,
+			code: this.StatusCode.HTTP_OK,
+			message: this.ResMsg.HTTP_OK,
+			...res,
+		};
+	};
+
+	public getHotelierReports = async (req: Request) => {
+		const { limit, skip, searchQuery, report_status } = req.query;
+		const model = this.Model.reportModel();
+		const res = await model.getHotelierReports({
+			limit: Number(limit),
+			skip: Number(skip),
+			searchQuery: searchQuery as string,
+			type: REPORT_TYPE.TaskActivity,
 			report_status: report_status as IReportStatus,
 		});
 

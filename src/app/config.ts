@@ -24,6 +24,8 @@ interface ENV {
 	STRIPE_PUBLISHABLE_KEY: string | undefined;
 	BASE_URL: string | undefined;
 	PRIVATE_KEY: string | undefined;
+	ACCOUNT_WEBHOOK_SECRET: string | undefined;
+	CONNECT_ACCOUNT_WEBHOOK_SECRET: string | undefined;
 }
 
 // Config types
@@ -46,6 +48,8 @@ interface Config {
 	STRIPE_PUBLISHABLE_KEY: string;
 	BASE_URL: string;
 	PRIVATE_KEY: string;
+	ACCOUNT_WEBHOOK_SECRET: string;
+	CONNECT_ACCOUNT_WEBHOOK_SECRET: string;
 }
 
 // Loading process.env as  ENV interface
@@ -69,6 +73,9 @@ const getConfig = (): ENV => {
 		STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
 		BASE_URL: process.env.BASE_URL,
 		PRIVATE_KEY: process.env.PRIVATE_KEY,
+		ACCOUNT_WEBHOOK_SECRET: process.env.ACCOUNT_WEBHOOK_SECRET,
+		CONNECT_ACCOUNT_WEBHOOK_SECRET:
+			process.env.CONNECT_ACCOUNT_WEBHOOK_SECRET,
 	};
 };
 
