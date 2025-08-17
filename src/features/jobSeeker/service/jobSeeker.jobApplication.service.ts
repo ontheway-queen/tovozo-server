@@ -225,6 +225,8 @@ export class JobSeekerJobApplication extends AbstractServices {
 				);
 			} else {
 				if (hotelier[0].device_id) {
+					const device_id = hotelier[0].device_id;
+					console.log({ device_id });
 					await Lib.sendNotificationToMobile({
 						to: hotelier[0].device_id,
 						notificationTitle:

@@ -172,6 +172,8 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 }
                 else {
                     if (hotelier[0].device_id) {
+                        const device_id = hotelier[0].device_id;
+                        console.log({ device_id });
                         yield lib_1.default.sendNotificationToMobile({
                             to: hotelier[0].device_id,
                             notificationTitle: this.NotificationMsg.JOB_APPLICATION_RECEIVED.title,

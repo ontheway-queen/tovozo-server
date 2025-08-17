@@ -11,10 +11,11 @@ import CommonModel from "../../models/commonModel/commonModel";
 import * as admin from "firebase-admin";
 
 import dotenv from "dotenv";
+import CustomError from "./customError";
 
 dotenv.config();
 
-const serviceAccount = require("../../../tovozo-af573-c696b1e30dfc.json");
+const serviceAccount = require("../../../fcm_tovozo.json");
 
 class Lib {
 	// send email by nodemailer
@@ -269,16 +270,26 @@ class Lib {
 				title: notificationTitle,
 				body: notificationBody,
 			},
-			data: data ? { payload: data } : undefined,
+			// data: data ? { payload: data } : undefined,
 		};
 
 		try {
 			const response = await admin.messaging().send(message);
-			console.log("Notification sent:", response);
+			console.log({ "🛑PushNotification": response });
+
 			return response;
-		} catch (error) {
-			console.error("Error sending notification:", error);
-			throw error;
+		} catch (error: any) {
+			if (error.code === "messaging/registration-token-not-registered") {
+				console.warn(
+					`⚠️ Push token expired or invalid. Token: ${message.token}. 
+                User should reopen the app to re-enable notifications.`
+				);
+				// Optionally remove from DB:
+			} else {
+				console.error("❌ Error sending notification:", error.message);
+			}
+			console.error("🚫 error", error);
+			return null;
 		}
 	}
 }

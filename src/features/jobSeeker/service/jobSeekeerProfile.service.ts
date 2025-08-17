@@ -104,10 +104,9 @@ export default class JobSeekerProfileService extends AbstractServices {
 					"ERROR"
 				);
 			}
-
 			if (
 				parsed.user.phone_number &&
-				parsed.user.phone_number !== existingUser.phone_number
+				parsed.user.phone_number === existingUser.phone_number
 			) {
 				const phoneExists = await userModel.checkUser({
 					phone_number: parsed.user.phone_number,

@@ -167,6 +167,7 @@ class HotelierJobPostService extends AbstractServices {
 					);
 				} else {
 					if (isSeekerExists[0].device_id) {
+						console.log({ device_id: isSeekerExists[0].device_id });
 						const sendPushNotification =
 							await Lib.sendNotificationToMobile({
 								to: isSeekerExists[0].device_id as string,
@@ -176,10 +177,10 @@ class HotelierJobPostService extends AbstractServices {
 								notificationBody:
 									this.NotificationMsg.NEW_JOB_POST_NEARBY
 										.content,
-								data: JSON.stringify({
-									related_id: jobpostDetailsId[0].id,
-									photo: checkOrganization.photo,
-								}),
+								// data: JSON.stringify({
+								// 	related_id: jobpostDetailsId[0].id,
+								// 	photo: checkOrganization.photo,
+								// }),
 							});
 						console.log({ sendPushNotification });
 					}

@@ -66,7 +66,7 @@ export default class ReportModel extends Schema {
 				"js.name as reporter_name",
 				"jpd.id as job_post_details_id",
 				"j.title as job_title",
-				"org.user_id as hotelier_id",
+				"org.id as hotelier_id",
 				"org.name as organization_name",
 				this.db.raw(
 					`json_build_object(
