@@ -107,8 +107,8 @@ export interface IGetOTP {
 }
 
 export interface ILocationPayload {
-	city_id: number;
-	name: string;
+	city_id?: number;
+	name?: string;
 	address?: string;
 	longitude?: number;
 	latitude?: number;

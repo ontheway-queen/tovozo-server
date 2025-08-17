@@ -6,7 +6,7 @@ export default class JobSeekerProfileUpdate {
 			name: Joi.string().min(1).max(255).optional(),
 			phone_number: Joi.string().min(7).max(20).optional(),
 			photo: Joi.string().max(255).optional(),
-			device_id: Joi.string().allow("").optional(),
+			device_id: Joi.string().optional(),
 		}).optional(),
 
 		own_address: Joi.object({

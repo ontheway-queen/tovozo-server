@@ -21,6 +21,7 @@ import { registrationJobSeekerTemplate } from "../../../utils/templates/jobSeeke
 import {
 	IJobSeekerAuthView,
 	IJobSeekerInfoBody,
+	IJobSeekerLocationInfo,
 	IJobSeekerNationalityBody,
 	IJobSeekerUserBody,
 } from "../utils/types/jobSeekerAuth.types";
@@ -43,6 +44,9 @@ class JobSeekerAuthService extends AbstractServices {
 			const jobSeekerInfoInput = parseInput(
 				"job_seeker_info"
 			) as IJobSeekerInfoBody;
+			const jobSeekerLocationInput = parseInput(
+				"own_address"
+			) as IJobSeekerLocationInfo;
 
 			const validFileFields = [
 				"visa_copy",
@@ -50,37 +54,6 @@ class JobSeekerAuthService extends AbstractServices {
 				"photo",
 				"passport_copy",
 			];
-			// files.forEach(({ fieldname, filename }) => {
-			// 	if (!validFileFields.includes(fieldname)) {
-			// 		throw new CustomError(
-			// 			this.ResMsg.UNKNOWN_FILE_FIELD,
-			// 			this.StatusCode.HTTP_BAD_REQUEST,
-			// 			"ERROR"
-			// 		);
-			// 	}
-
-			// 	if (fieldname === "photo") {
-			// 		userInput.photo = filename;
-			// 	} else {
-			// 		if (jobSeekerInput.nationality === BRITISH_ID) {
-			// 			console.log({ fieldname });
-			// 			if (fieldname !== "id_copy") {
-			// 				throw new CustomError(
-			// 					"id_copy required for British Nationality",
-			// 					this.StatusCode.HTTP_BAD_REQUEST
-			// 				);
-			// 			}
-			// 		} else {
-			// 			if (fieldname !== "visa_copy") {
-			// 				throw new CustomError(
-			// 					"visa_copy required for British Nationality",
-			// 					this.StatusCode.HTTP_BAD_REQUEST
-			// 				);
-			// 			}
-			// 		}
-			// 		jobSeekerInfoInput[fieldname] = filename;
-			// 	}
-			// });
 
 			let hasIdCopy = false;
 			let hasVisaCopy = false;
@@ -97,25 +70,21 @@ class JobSeekerAuthService extends AbstractServices {
 				if (fieldname === "photo") {
 					userInput.photo = filename;
 				} else {
-					if (fieldname === "id_copy") {
-						hasIdCopy = true;
-					}
-					if (fieldname === "visa_copy") {
-						hasVisaCopy = true;
-					}
+					if (fieldname === "id_copy") hasIdCopy = true;
+					if (fieldname === "visa_copy") hasVisaCopy = true;
+
 					jobSeekerInfoInput[fieldname as keyof IJobSeekerInfoBody] =
 						filename;
 				}
 			});
 
-			// After the loop, validate required fields:
+			// Validate required docs
 			if (jobSeekerInput.nationality === BRITISH_ID && !hasIdCopy) {
 				throw new CustomError(
 					"id_copy required for British Nationality",
 					this.StatusCode.HTTP_BAD_REQUEST
 				);
 			}
-
 			if (jobSeekerInput.nationality !== BRITISH_ID && !hasVisaCopy) {
 				throw new CustomError(
 					"visa_copy required for non-British Nationality",
@@ -128,11 +97,14 @@ class JobSeekerAuthService extends AbstractServices {
 
 			const userModel = this.Model.UserModel(trx);
 			const jobSeekerModel = this.Model.jobSeekerModel(trx);
+			const commonModel = this.Model.commonModel(trx);
+
 			const existingUser = await userModel.checkUser({
 				email,
 				phone_number,
 				type: USER_TYPE.JOB_SEEKER,
 			});
+
 			if (existingUser && existingUser.length) {
 				for (const user of existingUser) {
 					if (user.email === email) {
@@ -142,7 +114,6 @@ class JobSeekerAuthService extends AbstractServices {
 							message: this.ResMsg.EMAIL_ALREADY_EXISTS,
 						};
 					}
-
 					if (user.phone_number === phone_number) {
 						return {
 							success: false,
@@ -170,12 +141,23 @@ class JobSeekerAuthService extends AbstractServices {
 					"ERROR"
 				);
 			}
-			console.log({ registration });
+
 			const jobSeekerId = registration[0].id;
+
+			let locationId: number | null = null;
+			if (jobSeekerLocationInput?.address) {
+				const [locationRecord] = await commonModel.createLocation({
+					address: jobSeekerLocationInput.address,
+					longitude: jobSeekerLocationInput.longitude,
+					latitude: jobSeekerLocationInput.latitude,
+				});
+				locationId = locationRecord.id;
+			}
 
 			await jobSeekerModel.createJobSeeker({
 				...jobSeekerInput,
 				user_id: jobSeekerId,
+				location_id: locationId as number,
 			});
 
 			await jobSeekerModel.createJobSeekerInfo({

@@ -130,7 +130,6 @@ class JobPostModel extends schema_1.default {
     // for jobseeker
     getSingleJobPostForJobSeeker(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log(`object`, id);
             return yield this.db("job_post as jp")
                 .withSchema(this.DBO_SCHEMA)
                 .select("jpd.id", "jp.id as job_post_id", "jpd.start_time", "jpd.end_time", "jpd.status", "jp.organization_id", "j.title as job_title", "j.details as job_details", "j.job_seeker_pay", "jp.created_time", "u.id as hotelier_id", "org.name as organization_name", "org_p.file as organization_photo", "vwl.location_address", "vwl.city_name", "vwl.longitude", "vwl.latitude")
@@ -160,6 +159,8 @@ class JobPostModel extends schema_1.default {
 					ELSE json_build_object(
 						'job_seeker_id', ja.job_seeker_id,
 						'job_seeker_name', js.name,
+            'job_seeker_image', js.photo,
+            'stripe_acc_id', jsu.stripe_acc_id,
 						'longitude', js_vwl.longitude,
 						'latitude', js_vwl.latitude
 					)
@@ -253,6 +254,7 @@ class JobPostModel extends schema_1.default {
 						'application_status', ja.status,
 						'job_seeker_id', ja.job_seeker_id,
 						'job_seeker_name', js.name,
+            'job_seeker_image', js.photo,
             'location_address', js_vwl.location_address,
             'city', js_vwl.city_name,
 						'longitude', js_vwl.longitude,

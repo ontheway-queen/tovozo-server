@@ -89,7 +89,7 @@ class JobSeekerProfileService extends abstract_service_1.default {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND, "ERROR");
                 }
                 if (parsed.user.phone_number &&
-                    parsed.user.phone_number !== existingUser.phone_number) {
+                    parsed.user.phone_number === existingUser.phone_number) {
                     const phoneExists = yield userModel.checkUser({
                         phone_number: parsed.user.phone_number,
                         type: constants_1.USER_TYPE.JOB_SEEKER,
