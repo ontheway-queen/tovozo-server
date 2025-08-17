@@ -42,42 +42,13 @@ class JobSeekerAuthService extends abstract_service_1.default {
                 const userInput = parseInput("user");
                 const jobSeekerInput = parseInput("job_seeker");
                 const jobSeekerInfoInput = parseInput("job_seeker_info");
+                const jobSeekerLocationInput = parseInput("own_address");
                 const validFileFields = [
                     "visa_copy",
                     "id_copy",
                     "photo",
                     "passport_copy",
                 ];
-                // files.forEach(({ fieldname, filename }) => {
-                // 	if (!validFileFields.includes(fieldname)) {
-                // 		throw new CustomError(
-                // 			this.ResMsg.UNKNOWN_FILE_FIELD,
-                // 			this.StatusCode.HTTP_BAD_REQUEST,
-                // 			"ERROR"
-                // 		);
-                // 	}
-                // 	if (fieldname === "photo") {
-                // 		userInput.photo = filename;
-                // 	} else {
-                // 		if (jobSeekerInput.nationality === BRITISH_ID) {
-                // 			console.log({ fieldname });
-                // 			if (fieldname !== "id_copy") {
-                // 				throw new CustomError(
-                // 					"id_copy required for British Nationality",
-                // 					this.StatusCode.HTTP_BAD_REQUEST
-                // 				);
-                // 			}
-                // 		} else {
-                // 			if (fieldname !== "visa_copy") {
-                // 				throw new CustomError(
-                // 					"visa_copy required for British Nationality",
-                // 					this.StatusCode.HTTP_BAD_REQUEST
-                // 				);
-                // 			}
-                // 		}
-                // 		jobSeekerInfoInput[fieldname] = filename;
-                // 	}
-                // });
                 let hasIdCopy = false;
                 let hasVisaCopy = false;
                 files.forEach(({ fieldname, filename }) => {
@@ -88,17 +59,15 @@ class JobSeekerAuthService extends abstract_service_1.default {
                         userInput.photo = filename;
                     }
                     else {
-                        if (fieldname === "id_copy") {
+                        if (fieldname === "id_copy")
                             hasIdCopy = true;
-                        }
-                        if (fieldname === "visa_copy") {
+                        if (fieldname === "visa_copy")
                             hasVisaCopy = true;
-                        }
                         jobSeekerInfoInput[fieldname] =
                             filename;
                     }
                 });
-                // After the loop, validate required fields:
+                // Validate required docs
                 if (jobSeekerInput.nationality === constants_1.BRITISH_ID && !hasIdCopy) {
                     throw new customError_1.default("id_copy required for British Nationality", this.StatusCode.HTTP_BAD_REQUEST);
                 }
@@ -108,6 +77,7 @@ class JobSeekerAuthService extends abstract_service_1.default {
                 const { email, phone_number, password } = userInput, restUserData = __rest(userInput, ["email", "phone_number", "password"]);
                 const userModel = this.Model.UserModel(trx);
                 const jobSeekerModel = this.Model.jobSeekerModel(trx);
+                const commonModel = this.Model.commonModel(trx);
                 const existingUser = yield userModel.checkUser({
                     email,
                     phone_number,
@@ -138,9 +108,17 @@ class JobSeekerAuthService extends abstract_service_1.default {
                 if (!registration.length) {
                     throw new customError_1.default(this.ResMsg.HTTP_BAD_REQUEST, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
                 }
-                console.log({ registration });
                 const jobSeekerId = registration[0].id;
-                yield jobSeekerModel.createJobSeeker(Object.assign(Object.assign({}, jobSeekerInput), { user_id: jobSeekerId }));
+                let locationId = null;
+                if (jobSeekerLocationInput === null || jobSeekerLocationInput === void 0 ? void 0 : jobSeekerLocationInput.address) {
+                    const [locationRecord] = yield commonModel.createLocation({
+                        address: jobSeekerLocationInput.address,
+                        longitude: jobSeekerLocationInput.longitude,
+                        latitude: jobSeekerLocationInput.latitude,
+                    });
+                    locationId = locationRecord.id;
+                }
+                yield jobSeekerModel.createJobSeeker(Object.assign(Object.assign({}, jobSeekerInput), { user_id: jobSeekerId, location_id: locationId }));
                 yield jobSeekerModel.createJobSeekerInfo(Object.assign(Object.assign({}, jobSeekerInfoInput), { job_seeker_id: jobSeekerId }));
                 const tokenPayload = {
                     user_id: jobSeekerId,

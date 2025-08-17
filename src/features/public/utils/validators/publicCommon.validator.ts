@@ -211,14 +211,14 @@ export default class PublicCommonValidator {
 		passport_copy: Joi.string().max(255).allow("").optional(),
 		id_copy: Joi.string().max(255).allow("").optional(),
 		visa_copy: Joi.string().max(255).allow("").optional(),
-		// own_address: Joi.object({
-		//   city_id: Joi.number().integer().required(),
-		//   name: Joi.string().max(100).required(),
-		//   address: Joi.string().optional(),
-		//   longitude: Joi.number().precision(6).optional(),
-		//   latitude: Joi.number().precision(6).optional(),
-		//   postal_code: Joi.string().max(20).optional(),
-		// }).required(),
+		own_address: Joi.object({
+			// city_id: Joi.number().integer().required(),
+			// name: Joi.string().max(100).required(),
+			address: Joi.string().optional(),
+			longitude: Joi.number().precision(6).optional(),
+			latitude: Joi.number().precision(6).optional(),
+			// postal_code: Joi.string().max(20).optional(),
+		}).required(),
 
 		// job_preferences: Joi.array().items(Joi.number().integer()).required(),
 

@@ -180,7 +180,6 @@ class JobPostModel extends Schema {
 	public async getSingleJobPostForJobSeeker(
 		id: number
 	): Promise<IJobSeekerJob> {
-		console.log(`object`, id);
 		return await this.db("job_post as jp")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
@@ -260,6 +259,8 @@ class JobPostModel extends Schema {
 					ELSE json_build_object(
 						'job_seeker_id', ja.job_seeker_id,
 						'job_seeker_name', js.name,
+            'job_seeker_image', js.photo,
+            'stripe_acc_id', jsu.stripe_acc_id,
 						'longitude', js_vwl.longitude,
 						'latitude', js_vwl.latitude
 					)
@@ -369,6 +370,7 @@ class JobPostModel extends Schema {
 						'application_status', ja.status,
 						'job_seeker_id', ja.job_seeker_id,
 						'job_seeker_name', js.name,
+            'job_seeker_image', js.photo,
             'location_address', js_vwl.location_address,
             'city', js_vwl.city_name,
 						'longitude', js_vwl.longitude,

@@ -11,7 +11,7 @@ class JobSeekerProfileUpdate {
                 name: joi_1.default.string().min(1).max(255).optional(),
                 phone_number: joi_1.default.string().min(7).max(20).optional(),
                 photo: joi_1.default.string().max(255).optional(),
-                device_id: joi_1.default.string().allow("").optional(),
+                device_id: joi_1.default.string().optional(),
             }).optional(),
             own_address: joi_1.default.object({
                 id: joi_1.default.number().optional(),

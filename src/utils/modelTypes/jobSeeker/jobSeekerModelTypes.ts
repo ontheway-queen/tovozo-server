@@ -10,6 +10,7 @@ export interface ICreateJobSeekerPayload {
 	work_permit?: boolean;
 	account_status?: string;
 	criminal_convictions?: boolean;
+	location_id?: number;
 }
 
 export interface IUpdateJobSeekerPayload

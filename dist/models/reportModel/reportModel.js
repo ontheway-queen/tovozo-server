@@ -46,7 +46,7 @@ class ReportModel extends schema_1.default {
             // Main data query
             const dataQuery = this.db("reports as rp")
                 .withSchema(this.DBO_SCHEMA)
-                .select("rp.id", "rp.report_type", "rp.reason", "rp.status", "js.id as reporter_id", "js.name as reporter_name", "jpd.id as job_post_details_id", "j.title as job_title", "org.user_id as hotelier_id", "org.name as organization_name", this.db.raw(`json_build_object(
+                .select("rp.id", "rp.report_type", "rp.reason", "rp.status", "js.id as reporter_id", "js.name as reporter_name", "jpd.id as job_post_details_id", "j.title as job_title", "org.id as hotelier_id", "org.name as organization_name", this.db.raw(`json_build_object(
 					'resolved_by', rp.resolved_by,
 					'resolved_by_name', admin.name,
 					'resolved_by_email', admin.email,

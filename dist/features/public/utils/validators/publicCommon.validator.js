@@ -174,14 +174,14 @@ class PublicCommonValidator {
             passport_copy: joi_1.default.string().max(255).allow("").optional(),
             id_copy: joi_1.default.string().max(255).allow("").optional(),
             visa_copy: joi_1.default.string().max(255).allow("").optional(),
-            // own_address: Joi.object({
-            //   city_id: Joi.number().integer().required(),
-            //   name: Joi.string().max(100).required(),
-            //   address: Joi.string().optional(),
-            //   longitude: Joi.number().precision(6).optional(),
-            //   latitude: Joi.number().precision(6).optional(),
-            //   postal_code: Joi.string().max(20).optional(),
-            // }).required(),
+            own_address: joi_1.default.object({
+                // city_id: Joi.number().integer().required(),
+                // name: Joi.string().max(100).required(),
+                address: joi_1.default.string().optional(),
+                longitude: joi_1.default.number().precision(6).optional(),
+                latitude: joi_1.default.number().precision(6).optional(),
+                // postal_code: Joi.string().max(20).optional(),
+            }).required(),
             // job_preferences: Joi.array().items(Joi.number().integer()).required(),
             // job_shifting: Joi.array()
             //   .items(Joi.string().valid("Morning", "Afternoon", "Night", "Flexible"))
