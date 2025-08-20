@@ -218,7 +218,7 @@ export default class PublicCommonValidator {
 			longitude: Joi.number().precision(6).optional(),
 			latitude: Joi.number().precision(6).optional(),
 			// postal_code: Joi.string().max(20).optional(),
-		}).required(),
+		}).optional(),
 
 		// job_preferences: Joi.array().items(Joi.number().integer()).required(),
 
