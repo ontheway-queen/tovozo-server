@@ -82,7 +82,51 @@ class HotelierAuthService extends abstract_service_1.default {
                 if (!registration.length) {
                     throw new customError_1.default(this.ResMsg.HTTP_BAD_REQUEST, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
                 }
-                const organization_location = yield commonModel.createLocation(organizationAddress);
+                const checkCountry = yield commonModel.getAllCountry({
+                    id: organizationAddress.country_id,
+                });
+                if (!checkCountry.length) {
+                    throw new customError_1.default("Service is not available in this country", this.StatusCode.HTTP_BAD_REQUEST);
+                }
+                let stateId = 0;
+                const checkState = yield commonModel.getAllStates({
+                    country_id: organizationAddress.country_id,
+                    name: organizationAddress.state,
+                });
+                if (!checkState.length) {
+                    const state = yield commonModel.createState({
+                        country_id: organizationAddress.country_id,
+                        name: organizationAddress.state,
+                    });
+                    stateId = state[0].id;
+                }
+                else {
+                    stateId = checkState[0].id;
+                }
+                let cityId = 0;
+                const checkCity = yield commonModel.getAllCity({
+                    country_id: organizationAddress.country_id,
+                    state_id: stateId,
+                    name: organizationAddress.city,
+                });
+                if (!checkCity.length) {
+                    const city = yield commonModel.createCity({
+                        country_id: organizationAddress.country_id,
+                        state_id: stateId,
+                        name: organizationAddress.city,
+                    });
+                    cityId = city[0].id;
+                }
+                else {
+                    cityId = checkCity[0].id;
+                }
+                const organization_location = yield commonModel.createLocation({
+                    address: organizationAddress.address,
+                    city_id: cityId,
+                    latitude: organizationAddress.latitude,
+                    longitude: organizationAddress.longitude,
+                    postal_code: organizationAddress.postal_code,
+                });
                 const locationId = organization_location[0].id;
                 const userId = registration[0].id;
                 yield userModel.createUserMaintenanceDesignation({

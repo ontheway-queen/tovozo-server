@@ -63,11 +63,7 @@ export default class PaymentModel extends Schema {
 			)
 			.leftJoin("job_applications as ja", "ja.id", "p.application_id")
 			.leftJoin("job_post as jp", "jp.id", "ja.job_post_id")
-			.leftJoin(
-				"job_post_details as jpd",
-				"jpd.id",
-				"ja.job_post_details_id"
-			)
+			.leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
 			.leftJoin("jobs as j", "j.id", "jpd.job_id")
 			.joinRaw(
 				`
@@ -124,11 +120,7 @@ export default class PaymentModel extends Schema {
 			)
 			.leftJoin("job_applications as ja", "ja.id", "p.application_id")
 			.leftJoin("job_post as jp", "jp.id", "ja.job_post_id")
-			.leftJoin(
-				"job_post_details as jpd",
-				"jpd.id",
-				"ja.job_post_details_id"
-			)
+			.leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
 			.leftJoin("jobs as j", "j.id", "jpd.job_id")
 			.leftJoin("user as job_seeker", "job_seeker.id", "ja.job_seeker_id")
 			.joinRaw(`LEFT JOIN ?? as org ON org.id = jp.organization_id`, [
@@ -144,10 +136,7 @@ export default class PaymentModel extends Schema {
 	}
 
 	// For Hotelier
-	public async verifyCheckoutSessionAndUpdatePayment(
-		id: number,
-		payload: any
-	) {
+	public async verifyCheckoutSessionAndUpdatePayment(id: number, payload: any) {
 		return await this.db("payment")
 			.withSchema(this.DBO_SCHEMA)
 			.where({ id })
@@ -183,11 +172,7 @@ export default class PaymentModel extends Schema {
 				"p.trx_id"
 			)
 			.leftJoin("job_applications as ja", "ja.id", "p.application_id")
-			.leftJoin(
-				"job_post_details as jpd",
-				"jpd.id",
-				"ja.job_post_details_id"
-			)
+			.leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
 			.leftJoin("jobs as j", "j.id", "jpd.job_id")
 			.leftJoin("job_post as jp", "jp.id", "ja.job_post_id")
 			.joinRaw(
@@ -211,9 +196,7 @@ export default class PaymentModel extends Schema {
 			.count<{ count: string }>("p.id as count")
 			.first();
 
-		const dataQuery = baseQuery
-			.offset(skip as number)
-			.limit(limit as number);
+		const dataQuery = baseQuery.offset(skip as number).limit(limit as number);
 
 		const [data, countResult] = await Promise.all([dataQuery, countQuery]);
 
@@ -243,11 +226,7 @@ export default class PaymentModel extends Schema {
 				"p.trx_id"
 			)
 			.leftJoin("job_applications as ja", "ja.id", "p.application_id")
-			.leftJoin(
-				"job_post_details as jpd",
-				"jpd.id",
-				"ja.job_post_details_id"
-			)
+			.leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
 			.leftJoin("jobs as j", "j.id", "jpd.job_id")
 			.leftJoin("job_post as jp", "jp.id", "ja.job_post_id")
 			.joinRaw(`LEFT JOIN ?? as org ON org.id = jp.organization_id`, [
@@ -285,17 +264,14 @@ export default class PaymentModel extends Schema {
 				"p.total_amount",
 				"p.job_seeker_pay",
 				"p.platform_fee",
+				"p.trx_fee",
 				"p.status",
 				"p.payment_no",
 				"p.trx_id",
 				"p.paid_at"
 			)
 			.leftJoin("job_applications as ja", "ja.id", "p.application_id")
-			.leftJoin(
-				"job_post_details as jpd",
-				"jpd.id",
-				"ja.job_post_details_id"
-			)
+			.leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
 			.leftJoin("jobs as j", "j.id", "jpd.job_id")
 			.leftJoin("job_post as jp", "jp.id", "ja.job_post_id")
 			.leftJoin("user as job_seeker", "job_seeker.id", "ja.job_seeker_id")
@@ -321,14 +297,14 @@ export default class PaymentModel extends Schema {
 		const totalResult = await this.db("payment as p")
 			.withSchema(this.DBO_SCHEMA)
 			.leftJoin("job_applications as ja", "ja.id", "p.application_id")
-			.leftJoin(
-				"job_post_details as jpd",
-				"jpd.id",
-				"ja.job_post_details_id"
-			)
+			.leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
 			.leftJoin("jobs as j", "j.id", "jpd.job_id")
 			.leftJoin("job_post as jp", "jp.id", "ja.job_post_id")
-			.leftJoin("user as job_seeker", "job_seeker.id", "ja.job_seeker_id") // ✅ Add this line
+			.leftJoin("user as job_seeker", "job_seeker.id", "ja.job_seeker_id")
+
+			.joinRaw(`LEFT JOIN ?? AS org ON org.id = jp.organization_id`, [
+				`${this.HOTELIER}.${this.TABLES.organization}`,
+			])
 			.where((qb) => {
 				if (search) {
 					qb.andWhere((subQb) => {
@@ -348,9 +324,7 @@ export default class PaymentModel extends Schema {
 		return { data, total };
 	}
 
-	public async getSinglePaymentForAdmin(
-		id: number
-	): Promise<IGetAdminPayment> {
+	public async getSinglePaymentForAdmin(id: number): Promise<IGetAdminPayment> {
 		return await this.db("payment as p")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
@@ -359,35 +333,37 @@ export default class PaymentModel extends Schema {
 				"j.title as job_title",
 				"job_seeker.id as job_seeker_id",
 				"job_seeker.name as job_seeker_name",
+				"job_seeker.phone_number as job_seeker_phone_number",
+				"job_seeker.email as job_seeker_email",
 				"org.id as paid_by_id",
-				"org.name as paid_by",
+				"org.name as paid_by_organization",
+				"pu.name as paid_by_name",
+				"pu.email as paid_by_email",
+				"pu.phone_number as paid_by_phone_number",
 				"p.total_amount",
 				"p.job_seeker_pay",
 				"p.platform_fee",
 				"p.status",
 				"p.payment_no",
 				"p.trx_id",
+				"p.trx_fee",
 				"p.paid_at"
 			)
 			.leftJoin("job_applications as ja", "ja.id", "p.application_id")
-			.leftJoin(
-				"job_post_details as jpd",
-				"jpd.id",
-				"ja.job_post_details_id"
-			)
+			.leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
 			.leftJoin("jobs as j", "j.id", "jpd.job_id")
 			.leftJoin("job_post as jp", "jp.id", "ja.job_post_id")
 			.leftJoin("user as job_seeker", "job_seeker.id", "ja.job_seeker_id")
 			.joinRaw(`LEFT JOIN ?? AS org ON org.id = jp.organization_id`, [
 				`${this.HOTELIER}.${this.TABLES.organization}`,
 			])
+			.leftJoin("user as pu", "pu.id", "p.paid_by")
 			.where("p.id", id)
 			.first();
 	}
 
 	// Update payment
 	public async updatePayment(id: number, payload: IPaymentUpdate) {
-		console.log({ payload });
 		return await this.db("payment")
 			.withSchema(this.DBO_SCHEMA)
 			.update(payload)
@@ -547,11 +523,7 @@ export default class PaymentModel extends Schema {
 			)
 			.leftJoin("payment as p", "p.payment_no", "pl.voucher_no")
 			.leftJoin("job_applications as ja", "ja.id", "p.application_id")
-			.leftJoin(
-				"job_post_details as jpd",
-				"jpd.id",
-				"ja.job_post_details_id"
-			)
+			.leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
 			.leftJoin("jobs as j", "j.id", "jpd.job_id")
 			.leftJoin("job_post as jp", "jp.id", "ja.job_post_id")
 			.joinRaw(

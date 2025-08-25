@@ -13,14 +13,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
-const stripe_1 = require("../../../utils/miscellaneous/stripe");
-const customError_1 = __importDefault(require("../../../utils/lib/customError"));
-const constants_1 = require("../../../utils/miscellaneous/constants");
 const config_1 = __importDefault(require("../../../app/config"));
-const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
-const commonModelTypes_1 = require("../../../utils/modelTypes/common/commonModelTypes");
 const socket_1 = require("../../../app/socket");
+const customError_1 = __importDefault(require("../../../utils/lib/customError"));
 const lib_1 = __importDefault(require("../../../utils/lib/lib"));
+const constants_1 = require("../../../utils/miscellaneous/constants");
+const stripe_1 = require("../../../utils/miscellaneous/stripe");
+const commonModelTypes_1 = require("../../../utils/modelTypes/common/commonModelTypes");
+const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
 class PaymentService extends abstract_service_1.default {
     constructor() {
         super();
@@ -70,13 +70,11 @@ class PaymentService extends abstract_service_1.default {
                 const { job_title, job_seeker_id, job_seeker_name, stripe_acc_id } = req.body;
                 const id = Number(req.params.id);
                 const { user_id } = req.hotelier;
-                console.log({ id });
                 if (!id) {
                     throw new customError_1.default("Id not found", this.StatusCode.HTTP_NOT_FOUND);
                 }
                 const paymentModel = this.Model.paymnentModel();
                 const payment = yield paymentModel.getSinglePayment(id);
-                console.log({ payment });
                 if (!payment) {
                     throw new customError_1.default("Payment record not found", this.StatusCode.HTTP_NOT_FOUND, "ERROR");
                 }
@@ -176,7 +174,6 @@ class PaymentService extends abstract_service_1.default {
                 const jobseeker = yield this.Model.UserModel().checkUser({
                     id: Number(paymentIntent.metadata.job_seeker_id),
                 });
-                console.log({ jobseeker });
                 if (jobseeker && jobseeker.length < 1) {
                     throw new customError_1.default("User not found", this.StatusCode.HTTP_NOT_FOUND);
                 }
@@ -219,7 +216,6 @@ class PaymentService extends abstract_service_1.default {
                         },
                     });
                 }
-                console.log({ payment });
                 yield this.insertNotification(trx, userModelTypes_1.TypeUser.JOB_SEEKER, {
                     user_id: Number(paymentIntent.metadata.job_seeker_id),
                     sender_id: user_id,

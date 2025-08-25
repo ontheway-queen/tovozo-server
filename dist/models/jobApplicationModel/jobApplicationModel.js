@@ -81,7 +81,6 @@ class JobApplicationModel extends schema_1.default {
     }
     getMyJobApplication(_a) {
         return __awaiter(this, arguments, void 0, function* ({ job_application_id, job_seeker_id, }) {
-            console.log({ job_seeker_id });
             return yield this.db("job_applications as ja")
                 .withSchema(this.DBO_SCHEMA)
                 .select("ja.id as job_application_id", "ja.status as job_application_status", "jpd.id as job_post_details_id", "jpd.status as job_post_details_status", "jpd.start_time", "jpd.end_time", "jpd.job_post_id", "j.title as job_post_title", "j.details as job_post_details", "j.job_seeker_pay", "org.user_id as hotelier_id", "org.id as organization_id", "org.name as organization_name", "org_p.file as organization_photo", "vwl.location_address", "vwl.city_name", "vwl.longitude", "vwl.latitude", this.db.raw(`json_build_object(
@@ -105,8 +104,7 @@ class JobApplicationModel extends schema_1.default {
                 .leftJoin("jobs as j", "jpd.job_id", "j.id")
                 .leftJoin("job_task_activities as jta", "jta.job_application_id", "ja.id")
                 .leftJoin(this.db
-                .select("jtl.job_task_activity_id", this.db
-                .raw(`COALESCE(json_agg(DISTINCT jsonb_build_object(
+                .select("jtl.job_task_activity_id", this.db.raw(`COALESCE(json_agg(DISTINCT jsonb_build_object(
                   'id', jtl.id,
         'message', jtl.message,
         'is_completed', jtl.is_completed,
@@ -142,7 +140,6 @@ class JobApplicationModel extends schema_1.default {
     // cancel all job application if hotelier cancel the job.
     cancelApplication(job_post_id) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log("job_post_id", job_post_id);
             return yield this.db("job_applications")
                 .withSchema(this.DBO_SCHEMA)
                 .where("job_post_id", job_post_id)
@@ -156,7 +153,6 @@ class JobApplicationModel extends schema_1.default {
     getAllAdminAssignedApplications(query) {
         return __awaiter(this, void 0, void 0, function* () {
             const { status, from_date, to_date, skip = 0, limit = 100, need_total = true, name, } = query;
-            console.log({ query });
             const selectFields = [
                 "ja.id as job_application_id",
                 "ja.status as job_application_status",
@@ -164,7 +160,8 @@ class JobApplicationModel extends schema_1.default {
                 "jpd.start_time",
                 "jpd.end_time",
                 "j.title as job_post_title",
-                "org.user_id as organization_id",
+                "org.id as organization_id",
+                "org.user_id as organization_user_id",
                 "org.name as organization_name",
                 "org_p.file as organization_photo",
                 "js.user_id as job_seeker_id",

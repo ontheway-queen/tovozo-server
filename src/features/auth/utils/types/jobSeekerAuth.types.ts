@@ -65,4 +65,7 @@ export interface IJobSeekerInfoBody {
 export interface IJobSeekerNationalityBody {
 	nationality: number;
 	account_status?: UserStatusType;
+	final_completed?: boolean;
+	final_completed_at?: string;
+	final_completed_by?: number;
 }

@@ -20,12 +20,10 @@ class JobSeekerReportService extends abstract_service_1.default {
         super();
         this.submitReport = (req) => __awaiter(this, void 0, void 0, function* () {
             var _a;
-            console.log(req.body);
             const body = req.body;
             const model = this.Model.reportModel();
             const isReportExist = yield model.getSingleReport(body.job_post_details_id);
-            if (isReportExist &&
-                isReportExist.report_type === constants_1.REPORT_TYPE.JobPost) {
+            if (isReportExist && isReportExist.report_type === constants_1.REPORT_TYPE.JobPost) {
                 throw new customError_1.default(`A report is already submitted for the job post.`, this.StatusCode.HTTP_CONFLICT);
             }
             const res = yield model.submitReport(Object.assign({}, body));

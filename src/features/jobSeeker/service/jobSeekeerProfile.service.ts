@@ -9,7 +9,6 @@ import {
 } from "../../../utils/miscellaneous/constants";
 import { IChangePasswordPayload } from "../../../utils/modelTypes/common/commonModelTypes";
 import { IJobSeekerAuthView } from "../../auth/utils/types/jobSeekerAuth.types";
-import { stripe } from "../../../utils/miscellaneous/stripe";
 
 export default class JobSeekerProfileService extends AbstractServices {
 	constructor() {
@@ -21,15 +20,13 @@ export default class JobSeekerProfileService extends AbstractServices {
 		const { user_id } = req.jobSeeker;
 		const jobSeekerModel = this.Model.jobSeekerModel();
 
-		const { applied_jobs, ...rest } =
-			await jobSeekerModel.getJobSeekerDetails({
-				user_id,
-			});
+		const { applied_jobs, ...rest } = await jobSeekerModel.getJobSeekerDetails({
+			user_id,
+		});
 
 		const isWaitingForApproval = applied_jobs?.filter(
 			(job) =>
-				job.application_status ===
-				JOB_APPLICATION_STATUS.WaitingForApproval
+				job.application_status === JOB_APPLICATION_STATUS.WaitingForApproval
 		);
 
 		return {
@@ -48,27 +45,21 @@ export default class JobSeekerProfileService extends AbstractServices {
 		return this.db.transaction(async (trx) => {
 			const files = (req.files as Express.Multer.File[]) || [];
 			const { user_id } = req.jobSeeker;
-			console.log("xyz");
 			const parsed = {
 				user: Lib.safeParseJSON(req.body.user) || {},
 				jobSeeker: Lib.safeParseJSON(req.body.job_seeker) || {},
-				jobSeekerInfo:
-					Lib.safeParseJSON(req.body.job_seeker_info) || {},
+				jobSeekerInfo: Lib.safeParseJSON(req.body.job_seeker_info) || {},
 				ownAddress: Lib.safeParseJSON(req.body.own_address) || {},
 				addJobPreferences:
 					Lib.safeParseJSON(req.body.add_job_preferences) || [],
 				delJobPreferences:
 					Lib.safeParseJSON(req.body.del_job_preferences) || [],
-				addJobLocations:
-					Lib.safeParseJSON(req.body.add_job_locations) || [],
-				delJobLocations:
-					Lib.safeParseJSON(req.body.del_job_locations) || [],
+				addJobLocations: Lib.safeParseJSON(req.body.add_job_locations) || [],
+				delJobLocations: Lib.safeParseJSON(req.body.del_job_locations) || [],
 				updateJobLocations:
 					Lib.safeParseJSON(req.body.update_job_locations) || [],
-				addJobShifting:
-					Lib.safeParseJSON(req.body.add_job_shifting) || [],
-				delJobShifting:
-					Lib.safeParseJSON(req.body.del_job_shifting) || [],
+				addJobShifting: Lib.safeParseJSON(req.body.add_job_shifting) || [],
+				delJobShifting: Lib.safeParseJSON(req.body.del_job_shifting) || [],
 			};
 
 			for (const { fieldname, filename } of files) {
@@ -125,15 +116,10 @@ export default class JobSeekerProfileService extends AbstractServices {
 			const updateTasks: Promise<any>[] = [];
 
 			if (parsed.user && Object.keys(parsed.user).length > 0) {
-				updateTasks.push(
-					userModel.updateProfile(parsed.user, { id: user_id })
-				);
+				updateTasks.push(userModel.updateProfile(parsed.user, { id: user_id }));
 			}
 
-			if (
-				parsed.ownAddress &&
-				Object.keys(parsed.ownAddress).length > 0
-			) {
+			if (parsed.ownAddress && Object.keys(parsed.ownAddress).length > 0) {
 				updateTasks.push(
 					commonModel.updateLocation(parsed.ownAddress, {
 						location_id: parsed.ownAddress.id!,
@@ -209,13 +195,9 @@ export default class JobSeekerProfileService extends AbstractServices {
 			}
 
 			if (parsed.addJobPreferences.length > 0) {
-				const existingPrefs = await jobSeekerModel.getJobPreferences(
-					user_id
-				);
+				const existingPrefs = await jobSeekerModel.getJobPreferences(user_id);
 
-				const existingJobIds = new Set(
-					existingPrefs.map((p) => p.job_id)
-				);
+				const existingJobIds = new Set(existingPrefs.map((p) => p.job_id));
 
 				const newPrefs = parsed.addJobPreferences.filter(
 					(id: number) => !existingJobIds.has(id)
@@ -238,13 +220,9 @@ export default class JobSeekerProfileService extends AbstractServices {
 			}
 
 			if (parsed.addJobShifting.length > 0) {
-				const existingShifts = await jobSeekerModel.getJobShifting(
-					user_id
-				);
+				const existingShifts = await jobSeekerModel.getJobShifting(user_id);
 
-				const existingShiftNames = new Set(
-					existingShifts.map((s) => s.shift)
-				);
+				const existingShiftNames = new Set(existingShifts.map((s) => s.shift));
 
 				const newShifts = parsed.addJobShifting.filter(
 					(shift: string) => !existingShiftNames.has(shift)
@@ -279,8 +257,7 @@ export default class JobSeekerProfileService extends AbstractServices {
 	//change password
 	public async changePassword(req: Request) {
 		const { user_id } = req.jobSeeker;
-		const { old_password, new_password } =
-			req.body as IChangePasswordPayload;
+		const { old_password, new_password } = req.body as IChangePasswordPayload;
 
 		const model = this.Model.UserModel();
 		const user_details =

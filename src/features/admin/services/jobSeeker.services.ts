@@ -73,8 +73,7 @@ class AdminJobSeekerService extends AbstractServices {
 				);
 			}
 
-			const { email, phone_number, password, ...restUserData } =
-				userInput;
+			const { email, phone_number, password, ...restUserData } = userInput;
 
 			const userModel = this.Model.UserModel(trx);
 			const jobSeekerModel = this.Model.jobSeekerModel(trx);
@@ -150,10 +149,9 @@ class AdminJobSeekerService extends AbstractServices {
 				user_id: jobSeekerId,
 				sender_type: USER_TYPE.ADMIN,
 				title: this.NotificationMsg.JOB_SEEKER_ACCOUNT_CREATED.title,
-				content:
-					this.NotificationMsg.JOB_SEEKER_ACCOUNT_CREATED.content(
-						userInput.name
-					),
+				content: this.NotificationMsg.JOB_SEEKER_ACCOUNT_CREATED.content(
+					userInput.name
+				),
 				related_id: jobSeekerId,
 				type: NotificationTypeEnum.JOB_SEEKER_VERIFICATION,
 			});
@@ -249,6 +247,7 @@ class AdminJobSeekerService extends AbstractServices {
 	public async updateJobSeeker(req: Request) {
 		const id = req.params.id as unknown as number;
 		return await this.db.transaction(async (trx) => {
+			const { user_id } = req.admin;
 			const model = this.Model.jobSeekerModel(trx);
 			const data = await model.getJobSeekerDetails({ user_id: id });
 			if (!data) {
@@ -262,24 +261,20 @@ class AdminJobSeekerService extends AbstractServices {
 			const parsed = {
 				user: Lib.safeParseJSON(req.body.user) || {},
 				jobSeeker: Lib.safeParseJSON(req.body.job_seeker) || {},
-				jobSeekerInfo:
-					Lib.safeParseJSON(req.body.job_seeker_info) || {},
+				jobSeekerInfo: Lib.safeParseJSON(req.body.job_seeker_info) || {},
 				ownAddress: Lib.safeParseJSON(req.body.own_address) || {},
 				addJobPreferences:
 					Lib.safeParseJSON(req.body.add_job_preferences) || [],
 				delJobPreferences:
 					Lib.safeParseJSON(req.body.del_job_preferences) || [],
-				addJobLocations:
-					Lib.safeParseJSON(req.body.add_job_locations) || [],
-				delJobLocations:
-					Lib.safeParseJSON(req.body.del_job_locations) || [],
+				addJobLocations: Lib.safeParseJSON(req.body.add_job_locations) || [],
+				delJobLocations: Lib.safeParseJSON(req.body.del_job_locations) || [],
 				updateJobLocations:
 					Lib.safeParseJSON(req.body.update_job_locations) || [],
-				addJobShifting:
-					Lib.safeParseJSON(req.body.add_job_shifting) || [],
-				delJobShifting:
-					Lib.safeParseJSON(req.body.del_job_shifting) || [],
+				addJobShifting: Lib.safeParseJSON(req.body.add_job_shifting) || [],
+				delJobShifting: Lib.safeParseJSON(req.body.del_job_shifting) || [],
 			} as IAdminJobSeekerUpdateParsedBody;
+
 			for (const { fieldname, filename } of files) {
 				switch (fieldname) {
 					case "resume":
@@ -313,8 +308,6 @@ class AdminJobSeekerService extends AbstractServices {
 				id: id,
 				type: USER_TYPE.JOB_SEEKER,
 			});
-
-			console.log({ existingUser });
 
 			if (!existingUser) {
 				throw new CustomError(
@@ -368,13 +361,32 @@ class AdminJobSeekerService extends AbstractServices {
 					}
 
 					if (
-						parsed.jobSeeker.account_status ===
-						checkJobSeeker.account_status
+						parsed.jobSeeker.account_status === checkJobSeeker.account_status
 					) {
 						throw new CustomError(
 							`Already updated status to ${parsed.jobSeeker.account_status}`,
 							this.StatusCode.HTTP_CONFLICT
 						);
+					}
+					if (parsed.jobSeeker.final_completed) {
+						if (!checkJobSeeker.is_completed) {
+							throw new CustomError(
+								"Job Seeker account not completed!",
+								this.StatusCode.HTTP_CONFLICT
+							);
+						}
+						parsed.jobSeeker.final_completed_at = new Date().toISOString();
+						parsed.jobSeeker.final_completed_by = user_id;
+
+						await this.insertNotification(trx, USER_TYPE.JOB_SEEKER, {
+							title: "Your account has been completed",
+							content: `Your account has been completed. You can now start applying for jobs.`,
+							related_id: id,
+							sender_type: USER_TYPE.ADMIN,
+							sender_id: user_id,
+							user_id: id,
+							type: "JOB_SEEKER_VERIFICATION",
+						});
 					}
 				}
 				updateTasks.push(
@@ -441,13 +453,9 @@ class AdminJobSeekerService extends AbstractServices {
 			}
 
 			if (parsed.addJobPreferences.length > 0) {
-				const existingPrefer = await jobSeekerModel.getJobPreferences(
-					id
-				);
+				const existingPrefer = await jobSeekerModel.getJobPreferences(id);
 
-				const existingJobIds = new Set(
-					existingPrefer.map((p) => p.job_id)
-				);
+				const existingJobIds = new Set(existingPrefer.map((p) => p.job_id));
 
 				const newPrefer = parsed.addJobPreferences.filter(
 					(id: number) => !existingJobIds.has(id)
@@ -472,9 +480,7 @@ class AdminJobSeekerService extends AbstractServices {
 			if (parsed.addJobShifting.length > 0) {
 				const existingShifts = await jobSeekerModel.getJobShifting(id);
 
-				const existingShiftNames = new Set(
-					existingShifts.map((s) => s.shift)
-				);
+				const existingShiftNames = new Set(existingShifts.map((s) => s.shift));
 
 				const newShifts = parsed.addJobShifting.filter(
 					(shift: string) => !existingShiftNames.has(shift)

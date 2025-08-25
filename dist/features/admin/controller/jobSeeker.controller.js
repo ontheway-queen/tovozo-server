@@ -36,30 +36,30 @@ class AdminJobSeekerController extends abstract_controller_1.default {
             res.status(code).json(data);
         }));
         this.getJobSeekers = this.asyncWrapper.wrap({ querySchema: this.validator.getAllJobSeekerSchema }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.getJobSeekers(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _b = yield this.service.getJobSeekers(req), { code } = _b, data = __rest(_b, ["code"]);
             res.status(code).json(data);
         }));
         this.getSingleJobSeeker = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.singleParamValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.getSingleJobSeeker(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _c = yield this.service.getSingleJobSeeker(req), { code } = _c, data = __rest(_c, ["code"]);
             res.status(code).json(data);
         }));
         this.updateJobSeeker = this.asyncWrapper.wrap({
             paramSchema: this.commonValidator.singleParamValidator,
-            bodySchema: this.validator.updateJobSeekerValidator,
+            // bodySchema: this.validator.updateJobSeekerValidator,
         }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.updateJobSeeker(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _d = yield this.service.updateJobSeeker(req), { code } = _d, data = __rest(_d, ["code"]);
             res.status(code).json(data);
         }));
         this.deleteJobSeeker = this.asyncWrapper.wrap({
             paramSchema: this.commonValidator.singleParamValidator,
         }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.deleteJobSeeker(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _e = yield this.service.deleteJobSeeker(req), { code } = _e, data = __rest(_e, ["code"]);
             res.status(code).json(data);
         }));
         this.getNearestJobSeekers = this.asyncWrapper.wrap({
             querySchema: this.validator.latlonValidator,
         }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.getNearestJobSeekers(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _f = yield this.service.getNearestJobSeekers(req), { code } = _f, data = __rest(_f, ["code"]);
             res.status(code).json(data);
         }));
     }

@@ -48,7 +48,6 @@ class JobPostWorker {
     jobStartReminder(job) {
         return __awaiter(this, void 0, void 0, function* () {
             const { id, hotelier_id, job_seeker_id, photo, title, content, type, related_id, job_seeker_device_id, } = job.data;
-            console.log({ data: job.data });
             return yield database_1.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const commonModel = new commonModel_1.default(trx);
                 yield commonModel.createNotification({

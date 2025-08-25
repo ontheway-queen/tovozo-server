@@ -13,9 +13,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
-const stripe_1 = require("../../../utils/miscellaneous/stripe");
 const config_1 = __importDefault(require("../../../app/config"));
 const customError_1 = __importDefault(require("../../../utils/lib/customError"));
+const constants_1 = require("../../../utils/miscellaneous/constants");
+const stripe_1 = require("../../../utils/miscellaneous/stripe");
 class JobSeekerStripeService extends abstract_service_1.default {
     constructor() {
         super();
@@ -25,12 +26,38 @@ class JobSeekerStripeService extends abstract_service_1.default {
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const { user_id } = req.jobSeeker;
                 const { email, country } = req.body;
+                const files = req.files || [];
+                const filesBody = {};
+                if (!files.length) {
+                    throw new customError_1.default(`Please upload passport and visa copy to complete your profile.`, this.StatusCode.HTTP_BAD_REQUEST);
+                }
+                if (files.length > 3 || files.length < 2) {
+                    throw new customError_1.default(`Please upload passport, visa and id copy to complete your profile.`, this.StatusCode.HTTP_BAD_REQUEST);
+                }
+                for (const file of files) {
+                    switch (file.fieldname) {
+                        case "passport_copy": {
+                            filesBody.passport_copy = file.filename;
+                            break;
+                        }
+                        case "visa_copy": {
+                            filesBody.visa_copy = file.filename;
+                            break;
+                        }
+                        case "id_copy": {
+                            filesBody.id_copy = file.filename;
+                            break;
+                        }
+                        default:
+                            throw new customError_1.default("Invalid fieldname", this.StatusCode.HTTP_BAD_REQUEST);
+                    }
+                }
                 const userModel = this.Model.UserModel(trx);
                 const user = yield userModel.checkUser({ id: user_id });
+                const jobSeekerModel = this.Model.jobSeekerModel(trx);
                 if (!user || user.length === 0) {
                     throw new customError_1.default("User not found", this.StatusCode.HTTP_NOT_FOUND);
                 }
-                console.log({ user });
                 if (user[0].stripe_acc_id) {
                     throw new customError_1.default("Stripe account already exists for this user", this.StatusCode.HTTP_BAD_REQUEST);
                 }
@@ -51,12 +78,14 @@ class JobSeekerStripeService extends abstract_service_1.default {
                         last_name,
                     },
                 });
-                console.log({ account });
                 const accountLink = yield stripe_1.stripe.accountLinks.create({
                     account: account.id,
                     refresh_url: `${config_1.default.BASE_URL}/job-seeker/stripe/onboard/refresh`,
                     return_url: `${config_1.default.BASE_URL}/job-seeker/stripe/onboard/complete?stripe_acc_id=${account.id}`,
                     type: "account_onboarding",
+                });
+                yield jobSeekerModel.updateJobSeekerInfo(filesBody, {
+                    job_seeker_id: user_id,
                 });
                 return {
                     success: true,
@@ -75,7 +104,6 @@ class JobSeekerStripeService extends abstract_service_1.default {
                 throw new Error("Stripe account ID is required");
             }
             const account = yield stripe_1.stripe.accounts.retrieve(stripe_acc_id);
-            console.log({ account });
             if (!account.payouts_enabled) {
                 yield stripe_1.stripe.accounts.del(stripe_acc_id);
                 return {
@@ -84,15 +112,27 @@ class JobSeekerStripeService extends abstract_service_1.default {
                     message: "Stripe account not eligible. Account has been deleted. Please onboard again.",
                 };
             }
-            yield this.Model.jobSeekerModel().addStripePayoutAccount({
-                user_id,
-                stripe_acc_id,
-            });
-            return {
-                success: true,
-                code: this.StatusCode.HTTP_OK,
-                message: "Onboarding completed successfully",
-            };
+            return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const jobSeekerModel = this.Model.jobSeekerModel(trx);
+                yield jobSeekerModel.addStripePayoutAccount({
+                    user_id,
+                    stripe_acc_id,
+                });
+                yield this.insertNotification(trx, constants_1.USER_TYPE.ADMIN, {
+                    title: "Onboarding Completed",
+                    content: `Job Seeker has completed onboarding. Stripe Account ID: ${stripe_acc_id}. Please check the Stripe account to confirm the details.`,
+                    related_id: user_id,
+                    sender_type: constants_1.USER_TYPE.JOB_SEEKER,
+                    type: "JOB_SEEKER_VERIFICATION",
+                    user_id,
+                    sender_id: user_id,
+                });
+                return {
+                    success: true,
+                    code: this.StatusCode.HTTP_OK,
+                    message: "Onboarding completed successfully",
+                };
+            }));
         });
     }
     loginStripeAccount(req) {

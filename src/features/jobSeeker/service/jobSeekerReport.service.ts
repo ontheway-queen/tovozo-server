@@ -2,10 +2,6 @@ import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
 import CustomError from "../../../utils/lib/customError";
 import { REPORT_TYPE } from "../../../utils/miscellaneous/constants";
-import {
-	IReportStatus,
-	IReportType,
-} from "../../../utils/modelTypes/report/reportModel.types";
 
 export default class JobSeekerReportService extends AbstractServices {
 	constructor() {
@@ -13,17 +9,11 @@ export default class JobSeekerReportService extends AbstractServices {
 	}
 
 	public submitReport = async (req: Request) => {
-		console.log(req.body);
 		const body = req.body;
 		const model = this.Model.reportModel();
-		const isReportExist = await model.getSingleReport(
-			body.job_post_details_id
-		);
+		const isReportExist = await model.getSingleReport(body.job_post_details_id);
 
-		if (
-			isReportExist &&
-			isReportExist.report_type === REPORT_TYPE.JobPost
-		) {
+		if (isReportExist && isReportExist.report_type === REPORT_TYPE.JobPost) {
 			throw new CustomError(
 				`A report is already submitted for the job post.`,
 				this.StatusCode.HTTP_CONFLICT

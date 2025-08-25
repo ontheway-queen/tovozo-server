@@ -104,10 +104,7 @@ export default class JobSeekerModel extends Schema {
 					qb.andWhere("user_id", user_id);
 				}
 				if (name) {
-					qb.andWhereILike("name", `%${name}%`).orWhere(
-						"email",
-						name
-					);
+					qb.andWhereILike("name", `%${name}%`).orWhere("email", name);
 				}
 				if (status) {
 					qb.andWhere("account_status", status);
@@ -121,10 +118,7 @@ export default class JobSeekerModel extends Schema {
 				) {
 					qb.andWhere((subQb) => {
 						subQb
-							.where(
-								"ja.status",
-								JOB_APPLICATION_STATUS.COMPLETED
-							)
+							.where("ja.status", JOB_APPLICATION_STATUS.COMPLETED)
 							.orWhereNull("ja.job_seeker_id");
 					});
 				}
@@ -146,9 +140,7 @@ export default class JobSeekerModel extends Schema {
 				}
 				if (name) {
 					qb.andWhere((subQb) => {
-						subQb
-							.whereILike("name", `%${name}%`)
-							.orWhere("email", name);
+						subQb.whereILike("name", `%${name}%`).orWhere("email", name);
 					});
 				}
 				if (status) {
@@ -163,10 +155,7 @@ export default class JobSeekerModel extends Schema {
 				) {
 					qb.andWhere((subQb) => {
 						subQb
-							.where(
-								"ja.status",
-								JOB_APPLICATION_STATUS.COMPLETED
-							)
+							.where("ja.status", JOB_APPLICATION_STATUS.COMPLETED)
 							.orWhereNull("ja.job_seeker_id");
 					});
 				}
@@ -199,6 +188,10 @@ export default class JobSeekerModel extends Schema {
 				"nationality",
 				"work_permit",
 				"account_status",
+				"is_completed",
+				"completed_at",
+				"final_completed",
+				"final_completed_at",
 				"stripe_acc_id",
 				"home_location_id",
 				"home_location_name",
@@ -224,11 +217,7 @@ export default class JobSeekerModel extends Schema {
 				"j.title",
 				"j.details"
 			)
-			.leftJoin(
-				"job_post_details as jpd",
-				"jpd.id",
-				"ja.job_post_details_id"
-			)
+			.leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
 			.leftJoin("jobs as j", "jpd.job_id", "j.id")
 			.where("ja.job_seeker_id", where.user_id);
 
@@ -285,9 +274,7 @@ export default class JobSeekerModel extends Schema {
 			});
 	}
 
-	public async setJobShifting(
-		payload: IJobShiftPayload | IJobShiftPayload[]
-	) {
+	public async setJobShifting(payload: IJobShiftPayload | IJobShiftPayload[]) {
 		return await this.db("job_shifting")
 			.withSchema(this.JOB_SEEKER)
 			.insert(payload);
@@ -493,7 +480,7 @@ export default class JobSeekerModel extends Schema {
 	}) {
 		return await this.db("job_seeker")
 			.withSchema(this.JOB_SEEKER)
-			.update({ stripe_acc_id })
+			.update({ stripe_acc_id, is_complete: true, completed_at: new Date() })
 			.where({ user_id });
 	}
 }

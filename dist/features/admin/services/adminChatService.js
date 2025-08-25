@@ -170,7 +170,6 @@ class AdminChatService extends abstract_service_1.default {
                 user_id,
                 name: name,
             });
-            console.log({ dataA: data });
             return {
                 success: true,
                 message: this.ResMsg.HTTP_OK,

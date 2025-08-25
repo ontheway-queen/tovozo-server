@@ -15,7 +15,7 @@ class JobSeekerStripeRouter extends abstract_router_1.default {
         // Add Stripe Payout Account
         this.router
             .route("/add-stripe-payout-account")
-            .patch(this.stripeController.addStripePayoutAccount);
+            .patch(this.uploader.cloudUploadRaw(this.fileFolders.JOB_SEEKER_FILES), this.stripeController.addStripePayoutAccount);
         // Onboard complete route
         this.router
             .route("/onboard/complete")

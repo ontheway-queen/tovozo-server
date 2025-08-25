@@ -63,17 +63,22 @@ class JobSeekerAuthService extends abstract_service_1.default {
                             hasIdCopy = true;
                         if (fieldname === "visa_copy")
                             hasVisaCopy = true;
-                        jobSeekerInfoInput[fieldname] =
-                            filename;
+                        jobSeekerInfoInput[fieldname] = filename;
                     }
                 });
                 // Validate required docs
-                if (jobSeekerInput.nationality === constants_1.BRITISH_ID && !hasIdCopy) {
-                    throw new customError_1.default("id_copy required for British Nationality", this.StatusCode.HTTP_BAD_REQUEST);
-                }
-                if (jobSeekerInput.nationality !== constants_1.BRITISH_ID && !hasVisaCopy) {
-                    throw new customError_1.default("visa_copy required for non-British Nationality", this.StatusCode.HTTP_BAD_REQUEST);
-                }
+                // if (jobSeekerInput.nationality === BRITISH_ID && !hasIdCopy) {
+                // 	throw new CustomError(
+                // 		"id_copy required for British Nationality",
+                // 		this.StatusCode.HTTP_BAD_REQUEST
+                // 	);
+                // }
+                // if (jobSeekerInput.nationality !== BRITISH_ID && !hasVisaCopy) {
+                // 	throw new CustomError(
+                // 		"visa_copy required for non-British Nationality",
+                // 		this.StatusCode.HTTP_BAD_REQUEST
+                // 	);
+                // }
                 const { email, phone_number, password } = userInput, restUserData = __rest(userInput, ["email", "phone_number", "password"]);
                 const userModel = this.Model.UserModel(trx);
                 const jobSeekerModel = this.Model.jobSeekerModel(trx);

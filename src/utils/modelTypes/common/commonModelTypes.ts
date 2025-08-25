@@ -1,3 +1,5 @@
+import { TypeUser } from "../user/userModelTypes";
+
 export interface IInsertLastNoPayload {
 	last_id: number;
 	type: "Job";
@@ -163,7 +165,7 @@ export enum NotificationTypeEnum {
 export interface INotificationPayload {
 	user_id: number;
 	sender_id?: number;
-	sender_type: string;
+	sender_type: `${TypeUser}`;
 	title: string;
 	content: string;
 	type: `${NotificationTypeEnum}`;
@@ -222,6 +224,17 @@ export interface IGetAllCityParams {
 	skip?: number;
 	filter?: string;
 	name?: string;
+}
+
+export interface ICreateCityPayload {
+	country_id: number;
+	state_id: number;
+	name: string;
+}
+
+export interface ICreateStatePayload {
+	country_id: number;
+	name: string;
 }
 
 export interface IGetCity {

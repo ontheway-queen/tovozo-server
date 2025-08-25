@@ -3,7 +3,6 @@ import {
 	GENDERS,
 	REPORT_STATUS_ENUM,
 	REPORT_TYPE_ENUM,
-	USER_STATUS_ENUM,
 } from "../../../../utils/miscellaneous/constants";
 import { SEND_OTP_TYPES } from "./validatorConstant";
 export default class PublicCommonValidator {
@@ -120,8 +119,7 @@ export default class PublicCommonValidator {
 		}),
 		password: Joi.string().min(8).required().messages({
 			"string.base": "Provide valid password",
-			"string.min":
-				"Please provide valid password that's length must be min 8",
+			"string.min": "Please provide valid password that's length must be min 8",
 			"any.required": "Password is required",
 		}),
 	});
@@ -198,19 +196,19 @@ export default class PublicCommonValidator {
 			phone_number: Joi.string().min(7).max(20).optional(),
 		}).required(),
 
-		job_seeker: Joi.object({
-			// date_of_birth: Joi.date().required(),
-			// gender: Joi.string().valid("Male", "Female", "Other").required(),
-			nationality: Joi.number().integer().required(),
-			// work_permit: Joi.boolean().required(),
-			account_status: Joi.string()
-				.valid(...USER_STATUS_ENUM)
-				.default("Pending"),
-			// criminal_convictions: Joi.boolean().required(),
-		}).required(),
-		passport_copy: Joi.string().max(255).allow("").optional(),
-		id_copy: Joi.string().max(255).allow("").optional(),
-		visa_copy: Joi.string().max(255).allow("").optional(),
+		// job_seeker: Joi.object({
+		// 	// date_of_birth: Joi.date().required(),
+		// 	// gender: Joi.string().valid("Male", "Female", "Other").required(),
+		// 	nationality: Joi.number().integer().required(),
+		// 	// work_permit: Joi.boolean().required(),
+		// 	account_status: Joi.string()
+		// 		.valid(...USER_STATUS_ENUM)
+		// 		.default("Pending"),
+		// 	// criminal_convictions: Joi.boolean().required(),
+		// }).required(),
+		// passport_copy: Joi.string().max(255).allow("").optional(),
+		// id_copy: Joi.string().max(255).allow("").optional(),
+		// visa_copy: Joi.string().max(255).allow("").optional(),
 		own_address: Joi.object({
 			// city_id: Joi.number().integer().required(),
 			// name: Joi.string().max(100).required(),
@@ -276,8 +274,9 @@ export default class PublicCommonValidator {
 		}).required(),
 
 		organization_address: Joi.object({
-			city_id: Joi.number().integer().required(),
-			name: Joi.string().max(100).required(),
+			city: Joi.string().max(255).required(),
+			state: Joi.string().max(255).required(),
+			country_id: Joi.number().positive().integer().required(),
 			address: Joi.string().optional(),
 			longitude: Joi.number().precision(6).optional(),
 			latitude: Joi.number().precision(6).optional(),

@@ -1,7 +1,6 @@
 import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
 import { io } from "../../../app/socket";
-import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
 
 class AdminChatService extends AbstractServices {
 	constructor() {
@@ -183,7 +182,6 @@ class AdminChatService extends AbstractServices {
 			user_id,
 			name: name as string,
 		});
-		console.log({ dataA: data });
 		return {
 			success: true,
 			message: this.ResMsg.HTTP_OK,

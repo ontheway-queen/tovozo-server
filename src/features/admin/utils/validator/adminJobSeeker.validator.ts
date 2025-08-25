@@ -116,18 +116,13 @@ class AdminJobSeekerValidator {
 			criminal_convictions: Joi.boolean().optional(),
 			account_status: Joi.valid(...Object.values(USER_STATUS)).optional(),
 			is_2fa_on: Joi.boolean().optional(),
+			final_completed: Joi.boolean().optional(),
 		}).optional(),
 
-		add_job_preferences: Joi.array()
-			.items(Joi.number().integer())
-			.optional(),
-		del_job_preferences: Joi.array()
-			.items(Joi.number().integer())
-			.optional(),
+		add_job_preferences: Joi.array().items(Joi.number().integer()).optional(),
+		del_job_preferences: Joi.array().items(Joi.number().integer()).optional(),
 
-		delete_job_locations: Joi.array()
-			.items(Joi.number().integer())
-			.optional(),
+		delete_job_locations: Joi.array().items(Joi.number().integer()).optional(),
 
 		update_job_locations: Joi.array()
 			.items(
@@ -158,14 +153,10 @@ class AdminJobSeekerValidator {
 			.optional(),
 
 		add_job_shifting: Joi.array()
-			.items(
-				Joi.string().valid("Morning", "Afternoon", "Night", "Flexible")
-			)
+			.items(Joi.string().valid("Morning", "Afternoon", "Night", "Flexible"))
 			.optional(),
 		del_job_shifting: Joi.array()
-			.items(
-				Joi.string().valid("Morning", "Afternoon", "Night", "Flexible")
-			)
+			.items(Joi.string().valid("Morning", "Afternoon", "Night", "Flexible"))
 			.optional(),
 
 		job_seeker_info: Joi.object({

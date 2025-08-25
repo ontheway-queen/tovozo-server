@@ -30,7 +30,7 @@ export default class AdminPaymentService extends AbstractServices {
 	public async getSinglePayment(req: Request) {
 		const { id } = req.params;
 		const paymentModel = this.Model.paymnentModel();
-		const payment = await paymentModel.getSinglePayment(Number(id));
+		const payment = await paymentModel.getSinglePaymentForAdmin(Number(id));
 		if (!payment) {
 			return {
 				success: false,

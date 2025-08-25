@@ -107,16 +107,11 @@ class AdminJobSeekerValidator {
                 criminal_convictions: joi_1.default.boolean().optional(),
                 account_status: joi_1.default.valid(...Object.values(constants_1.USER_STATUS)).optional(),
                 is_2fa_on: joi_1.default.boolean().optional(),
+                final_completed: joi_1.default.boolean().optional(),
             }).optional(),
-            add_job_preferences: joi_1.default.array()
-                .items(joi_1.default.number().integer())
-                .optional(),
-            del_job_preferences: joi_1.default.array()
-                .items(joi_1.default.number().integer())
-                .optional(),
-            delete_job_locations: joi_1.default.array()
-                .items(joi_1.default.number().integer())
-                .optional(),
+            add_job_preferences: joi_1.default.array().items(joi_1.default.number().integer()).optional(),
+            del_job_preferences: joi_1.default.array().items(joi_1.default.number().integer()).optional(),
+            delete_job_locations: joi_1.default.array().items(joi_1.default.number().integer()).optional(),
             update_job_locations: joi_1.default.array()
                 .items(joi_1.default.object({
                 id: joi_1.default.number().optional(),

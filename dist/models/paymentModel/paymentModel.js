@@ -131,9 +131,7 @@ class PaymentModel extends schema_1.default {
                 .clearSelect()
                 .count("p.id as count")
                 .first();
-            const dataQuery = baseQuery
-                .offset(skip)
-                .limit(limit);
+            const dataQuery = baseQuery.offset(skip).limit(limit);
             const [data, countResult] = yield Promise.all([dataQuery, countQuery]);
             return {
                 data,
@@ -171,7 +169,7 @@ class PaymentModel extends schema_1.default {
             const { limit, skip, search, status } = params;
             const data = yield this.db("payment as p")
                 .withSchema(this.DBO_SCHEMA)
-                .select("p.id", "p.application_id", "j.title as job_title", "job_seeker.id as job_seeker_id", "job_seeker.name as job_seeker_name", "org.id as paid_by_id", "org.name as paid_by", "p.total_amount", "p.job_seeker_pay", "p.platform_fee", "p.status", "p.payment_no", "p.trx_id", "p.paid_at")
+                .select("p.id", "p.application_id", "j.title as job_title", "job_seeker.id as job_seeker_id", "job_seeker.name as job_seeker_name", "org.id as paid_by_id", "org.name as paid_by", "p.total_amount", "p.job_seeker_pay", "p.platform_fee", "p.trx_fee", "p.status", "p.payment_no", "p.trx_id", "p.paid_at")
                 .leftJoin("job_applications as ja", "ja.id", "p.application_id")
                 .leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
                 .leftJoin("jobs as j", "j.id", "jpd.job_id")
@@ -201,7 +199,10 @@ class PaymentModel extends schema_1.default {
                 .leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
                 .leftJoin("jobs as j", "j.id", "jpd.job_id")
                 .leftJoin("job_post as jp", "jp.id", "ja.job_post_id")
-                .leftJoin("user as job_seeker", "job_seeker.id", "ja.job_seeker_id") // ✅ Add this line
+                .leftJoin("user as job_seeker", "job_seeker.id", "ja.job_seeker_id")
+                .joinRaw(`LEFT JOIN ?? AS org ON org.id = jp.organization_id`, [
+                `${this.HOTELIER}.${this.TABLES.organization}`,
+            ])
                 .where((qb) => {
                 if (search) {
                     qb.andWhere((subQb) => {
@@ -224,7 +225,7 @@ class PaymentModel extends schema_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("payment as p")
                 .withSchema(this.DBO_SCHEMA)
-                .select("p.id", "p.application_id", "j.title as job_title", "job_seeker.id as job_seeker_id", "job_seeker.name as job_seeker_name", "org.id as paid_by_id", "org.name as paid_by", "p.total_amount", "p.job_seeker_pay", "p.platform_fee", "p.status", "p.payment_no", "p.trx_id", "p.paid_at")
+                .select("p.id", "p.application_id", "j.title as job_title", "job_seeker.id as job_seeker_id", "job_seeker.name as job_seeker_name", "job_seeker.phone_number as job_seeker_phone_number", "job_seeker.email as job_seeker_email", "org.id as paid_by_id", "org.name as paid_by_organization", "pu.name as paid_by_name", "pu.email as paid_by_email", "pu.phone_number as paid_by_phone_number", "p.total_amount", "p.job_seeker_pay", "p.platform_fee", "p.status", "p.payment_no", "p.trx_id", "p.trx_fee", "p.paid_at")
                 .leftJoin("job_applications as ja", "ja.id", "p.application_id")
                 .leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
                 .leftJoin("jobs as j", "j.id", "jpd.job_id")
@@ -233,6 +234,7 @@ class PaymentModel extends schema_1.default {
                 .joinRaw(`LEFT JOIN ?? AS org ON org.id = jp.organization_id`, [
                 `${this.HOTELIER}.${this.TABLES.organization}`,
             ])
+                .leftJoin("user as pu", "pu.id", "p.paid_by")
                 .where("p.id", id)
                 .first();
         });
@@ -240,7 +242,6 @@ class PaymentModel extends schema_1.default {
     // Update payment
     updatePayment(id, payload) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log({ payload });
             return yield this.db("payment")
                 .withSchema(this.DBO_SCHEMA)
                 .update(payload)

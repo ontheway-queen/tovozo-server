@@ -32,6 +32,12 @@ CREATE TABLE IF NOT EXISTS jobSeeker.job_seeker (
     FOREIGN KEY (user_id) REFERENCES dbo."user" (id) ON DELETE CASCADE
 );
 
+ALTER TABLE jobSeeker.job_seeker ADD is_completed BOOLEAN DEFAULT false;
+ALTER TABLE jobSeeker.job_seeker ADD completed_at TIMESTAMP;
+ALTER TABLE jobSeeker.job_seeker ADD final_completed BOOLEAN DEFAULT false;
+ALTER TABLE jobSeeker.job_seeker ADD final_completed_by INTEGER references dbo."user"(id);
+ALTER TABLE jobSeeker.job_seeker ADD final_completed_at TIMESTAMP;
+
 -- Job preferences (many-to-many)
 CREATE TABLE IF NOT EXISTS jobSeeker.job_preferences (
     job_seeker_id INTEGER NOT NULL,
@@ -76,6 +82,8 @@ CREATE TABLE IF NOT EXISTS jobSeeker.job_seeker_info (
  visa_copy VARCHAR(255);
     FOREIGN KEY (job_seeker_id) REFERENCES jobSeeker.job_seeker(user_id) ON DELETE CASCADE
 );
+
+
 
 
 -- CREATE TABLE IF NOT EXISTS jobSeeker.job_application (
@@ -132,6 +140,11 @@ CREATE OR REPLACE VIEW jobseeker.vw_full_job_seeker_profile
     js.nationality,
     js.work_permit,
     js.account_status,
+    js.is_completed,
+    js.completed_at,
+    js.final_completed,
+    js.final_completed_at,
+    js.final_completed_by,
     js.stripe_acc_id,
     js.criminal_convictions,
     loc.id AS home_location_id,

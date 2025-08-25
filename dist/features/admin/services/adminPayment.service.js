@@ -40,7 +40,7 @@ class AdminPaymentService extends abstract_service_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             const { id } = req.params;
             const paymentModel = this.Model.paymnentModel();
-            const payment = yield paymentModel.getSinglePayment(Number(id));
+            const payment = yield paymentModel.getSinglePaymentForAdmin(Number(id));
             if (!payment) {
                 return {
                     success: false,

@@ -28,9 +28,7 @@ class AdminJobSeekerController extends AbstractController {
 	public getSingleJobSeeker = this.asyncWrapper.wrap(
 		{ paramSchema: this.commonValidator.singleParamValidator },
 		async (req: Request, res: Response) => {
-			const { code, ...data } = await this.service.getSingleJobSeeker(
-				req
-			);
+			const { code, ...data } = await this.service.getSingleJobSeeker(req);
 			res.status(code).json(data);
 		}
 	);
@@ -38,7 +36,7 @@ class AdminJobSeekerController extends AbstractController {
 	public updateJobSeeker = this.asyncWrapper.wrap(
 		{
 			paramSchema: this.commonValidator.singleParamValidator,
-			bodySchema: this.validator.updateJobSeekerValidator,
+			// bodySchema: this.validator.updateJobSeekerValidator,
 		},
 		async (req: Request, res: Response) => {
 			const { code, ...data } = await this.service.updateJobSeeker(req);
@@ -60,9 +58,7 @@ class AdminJobSeekerController extends AbstractController {
 			querySchema: this.validator.latlonValidator,
 		},
 		async (req: Request, res: Response) => {
-			const { code, ...data } = await this.service.getNearestJobSeekers(
-				req
-			);
+			const { code, ...data } = await this.service.getNearestJobSeekers(req);
 			res.status(code).json(data);
 		}
 	);

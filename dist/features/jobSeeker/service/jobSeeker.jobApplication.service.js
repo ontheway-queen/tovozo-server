@@ -14,15 +14,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.JobSeekerJobApplication = void 0;
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
+const socket_1 = require("../../../app/socket");
 const cancellationLogModel_1 = __importDefault(require("../../../models/cancellationLogModel/cancellationLogModel"));
 const jobPostModel_1 = __importDefault(require("../../../models/hotelierModel/jobPostModel"));
-const customError_1 = __importDefault(require("../../../utils/lib/customError"));
-const constants_1 = require("../../../utils/miscellaneous/constants");
 const userModel_1 = __importDefault(require("../../../models/userModel/userModel"));
-const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
-const commonModelTypes_1 = require("../../../utils/modelTypes/common/commonModelTypes");
-const socket_1 = require("../../../app/socket");
+const customError_1 = __importDefault(require("../../../utils/lib/customError"));
 const lib_1 = __importDefault(require("../../../utils/lib/lib"));
+const constants_1 = require("../../../utils/miscellaneous/constants");
+const commonModelTypes_1 = require("../../../utils/modelTypes/common/commonModelTypes");
+const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
 class JobSeekerJobApplication extends abstract_service_1.default {
     constructor() {
         super();
@@ -32,6 +32,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const userModel = new userModel_1.default(trx);
                 const jobPostModel = new jobPostModel_1.default(trx);
+                const jobSeekerModel = this.Model.jobSeekerModel(trx);
                 const cancellationLogModel = new cancellationLogModel_1.default(trx);
                 const jobSeeker = yield userModel.checkUser({
                     id: user_id,
@@ -39,6 +40,15 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 });
                 if (jobSeeker && jobSeeker.length < 1) {
                     throw new customError_1.default("Job seeker not found!", this.StatusCode.HTTP_NOT_FOUND);
+                }
+                const jobSeekerDetails = yield jobSeekerModel.getJobSeeker({
+                    user_id,
+                });
+                if (!jobSeekerDetails) {
+                    throw new customError_1.default("Job seeker not found!", this.StatusCode.HTTP_NOT_FOUND);
+                }
+                if (jobSeekerDetails.is_completed === false) {
+                    throw new customError_1.default("Please complete your profile first!", this.StatusCode.HTTP_BAD_REQUEST);
                 }
                 const jobPost = yield jobPostModel.getSingleJobPostForJobSeeker(job_post_details_id);
                 if (!jobPost) {
@@ -68,18 +78,13 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     job_seeker_id: user_id,
                 });
                 //! Need to uncomment later.
-                // if (
-                // 	existPendingApplication &&
-                // 	(existPendingApplication.job_application_status ===
-                // 		JOB_APPLICATION_STATUS.PENDING ||
-                // 		existPendingApplication.job_application_status ===
-                // 			JOB_APPLICATION_STATUS.IN_PROGRESS)
-                // ) {
-                // 	throw new CustomError(
-                // 		"Hold on! You need to complete your current job before moving on to the next.",
-                // 		this.StatusCode.HTTP_BAD_REQUEST
-                // 	);
-                // }
+                if (existPendingApplication &&
+                    (existPendingApplication.job_application_status ===
+                        constants_1.JOB_APPLICATION_STATUS.PENDING ||
+                        existPendingApplication.job_application_status ===
+                            constants_1.JOB_APPLICATION_STATUS.IN_PROGRESS)) {
+                    throw new customError_1.default("Hold on! You need to complete your current job before moving on to the next.", this.StatusCode.HTTP_BAD_REQUEST);
+                }
                 const payload = {
                     job_post_details_id: Number(job_post_details_id),
                     job_seeker_id: user_id,
@@ -158,8 +163,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     socket_1.io.to(String(jobPost.hotelier_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION, {
                         user_id,
                         photo: jobSeeker[0].photo,
-                        title: this.NotificationMsg.JOB_APPLICATION_RECEIVED
-                            .title,
+                        title: this.NotificationMsg.JOB_APPLICATION_RECEIVED.title,
                         content: this.NotificationMsg.JOB_APPLICATION_RECEIVED.content({
                             jobTitle: jobPost.job_title,
                             jobPostId: jobPost.id,
@@ -173,7 +177,6 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 else {
                     if (hotelier[0].device_id) {
                         const device_id = hotelier[0].device_id;
-                        console.log({ device_id });
                         yield lib_1.default.sendNotificationToMobile({
                             to: hotelier[0].device_id,
                             notificationTitle: this.NotificationMsg.JOB_APPLICATION_RECEIVED.title,
@@ -247,8 +250,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 if (!application) {
                     throw new customError_1.default("Application not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }
-                if (application.job_application_status !==
-                    constants_1.JOB_APPLICATION_STATUS.PENDING) {
+                if (application.job_application_status !== constants_1.JOB_APPLICATION_STATUS.PENDING) {
                     throw new customError_1.default("This application cannot be cancelled because it has already been processed.", this.StatusCode.HTTP_BAD_REQUEST);
                 }
                 const cancellationLogModel = this.Model.cancellationLogModel(trx);
@@ -258,8 +260,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 }
                 const currentTime = new Date();
                 const startTime = new Date(application === null || application === void 0 ? void 0 : application.start_time);
-                const hoursDiff = (startTime.getTime() - currentTime.getTime()) /
-                    (1000 * 60 * 60);
+                const hoursDiff = (startTime.getTime() - currentTime.getTime()) / (1000 * 60 * 60);
                 if (hoursDiff > 24) {
                     const data = yield applicationModel.updateMyJobApplicationStatus({
                         application_id: parseInt(id),
@@ -280,15 +281,13 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     };
                 }
                 else {
-                    if (body.report_type !==
-                        constants_1.CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION ||
+                    if (body.report_type !== constants_1.CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION ||
                         !body.reason) {
                         throw new customError_1.default("Cancellation report must include a valid reason and type 'CANCEL_APPLICATION'.", this.StatusCode.HTTP_UNPROCESSABLE_ENTITY);
                     }
                     body.reporter_id = user_id;
                     body.related_id = id;
                     const cancellationReportModel = this.Model.cancellationLogModel(trx);
-                    console.log({ body });
                     yield cancellationReportModel.requestForCancellationLog(body);
                     return {
                         success: true,

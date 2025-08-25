@@ -1,7 +1,4 @@
-import {
-	IAdminApplications,
-	IJobSeekerJobApplication,
-} from "../../features/jobSeeker/utils/types/jobSeekerJobApplicationTypes";
+import { IJobSeekerJobApplication } from "../../features/jobSeeker/utils/types/jobSeekerJobApplicationTypes";
 import { TDB } from "../../features/public/utils/types/publicCommon.types";
 import { JOB_APPLICATION_STATUS } from "../../utils/miscellaneous/constants";
 import Schema from "../../utils/miscellaneous/schema";
@@ -66,21 +63,13 @@ export default class JobApplicationModel extends Schema {
 				"vwl.longitude",
 				"vwl.latitude"
 			)
-			.leftJoin(
-				"job_post_details as jpd",
-				"ja.job_post_details_id",
-				"jpd.id"
-			)
+			.leftJoin("job_post_details as jpd", "ja.job_post_details_id", "jpd.id")
 			.leftJoin("jobs as j", "jpd.job_id", "j.id")
 			.leftJoin("job_post as jp", "jpd.job_post_id", "jp.id")
 			.joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
 				`${this.HOTELIER}.${this.TABLES.organization}`,
 			])
-			.leftJoin(
-				"vw_location as vwl",
-				"vwl.location_id",
-				"org.location_id"
-			)
+			.leftJoin("vw_location as vwl", "vwl.location_id", "org.location_id")
 			.leftJoin(
 				this.db.raw(`?? as org_p ON org_p.organization_id = org.id`, [
 					`${this.HOTELIER}.${this.TABLES.organization_photos}`,
@@ -122,7 +111,6 @@ export default class JobApplicationModel extends Schema {
 		job_application_id?: number | null;
 		job_seeker_id?: number;
 	}): Promise<IJobSeekerJobApplication> {
-		console.log({ job_seeker_id });
 		return await this.db("job_applications as ja")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
@@ -154,11 +142,7 @@ export default class JobApplicationModel extends Schema {
             'tasks', task_list_agg.tasks
         ) as job_task_activity`)
 			)
-			.leftJoin(
-				"job_post_details as jpd",
-				"ja.job_post_details_id",
-				"jpd.id"
-			)
+			.leftJoin("job_post_details as jpd", "ja.job_post_details_id", "jpd.id")
 			.leftJoin("job_post as jp", "jpd.job_post_id", "jp.id")
 			.joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
 				`${this.HOTELIER}.${this.TABLES.organization}`,
@@ -168,23 +152,14 @@ export default class JobApplicationModel extends Schema {
 					`${this.HOTELIER}.${this.TABLES.organization_photos}`,
 				])
 			)
-			.leftJoin(
-				"vw_location as vwl",
-				"vwl.location_id",
-				"org.location_id"
-			)
+			.leftJoin("vw_location as vwl", "vwl.location_id", "org.location_id")
 			.leftJoin("jobs as j", "jpd.job_id", "j.id")
-			.leftJoin(
-				"job_task_activities as jta",
-				"jta.job_application_id",
-				"ja.id"
-			)
+			.leftJoin("job_task_activities as jta", "jta.job_application_id", "ja.id")
 			.leftJoin(
 				this.db
 					.select(
 						"jtl.job_task_activity_id",
-						this.db
-							.raw(`COALESCE(json_agg(DISTINCT jsonb_build_object(
+						this.db.raw(`COALESCE(json_agg(DISTINCT jsonb_build_object(
                   'id', jtl.id,
         'message', jtl.message,
         'is_completed', jtl.is_completed,
@@ -231,7 +206,6 @@ export default class JobApplicationModel extends Schema {
 
 	// cancel all job application if hotelier cancel the job.
 	public async cancelApplication(job_post_id: number) {
-		console.log("job_post_id", job_post_id);
 		return await this.db("job_applications")
 			.withSchema(this.DBO_SCHEMA)
 			.where("job_post_id", job_post_id)
@@ -260,7 +234,6 @@ export default class JobApplicationModel extends Schema {
 			need_total = true,
 			name,
 		} = query;
-		console.log({ query });
 
 		const selectFields = [
 			"ja.id as job_application_id",
@@ -269,7 +242,8 @@ export default class JobApplicationModel extends Schema {
 			"jpd.start_time",
 			"jpd.end_time",
 			"j.title as job_post_title",
-			"org.user_id as organization_id",
+			"org.id as organization_id",
+			"org.user_id as organization_user_id",
 			"org.name as organization_name",
 			"org_p.file as organization_photo",
 			"js.user_id as job_seeker_id",
@@ -282,21 +256,13 @@ export default class JobApplicationModel extends Schema {
 		const data = await this.db("job_applications as ja")
 			.withSchema(this.DBO_SCHEMA)
 			.select(selectFields)
-			.leftJoin(
-				"job_post_details as jpd",
-				"ja.job_post_details_id",
-				"jpd.id"
-			)
+			.leftJoin("job_post_details as jpd", "ja.job_post_details_id", "jpd.id")
 			.leftJoin("jobs as j", "jpd.job_id", "j.id")
 			.leftJoin("job_post as jp", "jpd.job_post_id", "jp.id")
 			.joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
 				`${this.HOTELIER}.${this.TABLES.organization}`,
 			])
-			.leftJoin(
-				"vw_location as vwl",
-				"vwl.location_id",
-				"org.location_id"
-			)
+			.leftJoin("vw_location as vwl", "vwl.location_id", "org.location_id")
 			.leftJoin(
 				this.db.raw(`?? as org_p ON org_p.organization_id = org.id`, [
 					`${this.HOTELIER}.${this.TABLES.organization_photos}`,
@@ -314,11 +280,7 @@ export default class JobApplicationModel extends Schema {
 				if (status) qb.where("ja.status", status);
 				if (from_date) qb.andWhere("ja.created_at", ">=", from_date);
 				if (to_date)
-					qb.andWhere(
-						"ja.created_at",
-						"<=",
-						`${to_date}T23:59:59.999Z`
-					);
+					qb.andWhere("ja.created_at", "<=", `${to_date}T23:59:59.999Z`);
 				if (name) qb.andWhereILike("j.title", `%${name}%`);
 			})
 			.orderBy("ja.created_at", "desc")
@@ -330,23 +292,14 @@ export default class JobApplicationModel extends Schema {
 			const totalQuery = await this.db("job_applications as ja")
 				.withSchema(this.DBO_SCHEMA)
 				.count("ja.id as total")
-				.leftJoin(
-					"job_post_details as jpd",
-					"ja.job_post_details_id",
-					"jpd.id"
-				)
+				.leftJoin("job_post_details as jpd", "ja.job_post_details_id", "jpd.id")
 				.leftJoin("jobs as j", "jpd.job_id", "j.id")
 				.whereNotNull("ja.created_by")
 				.modify((qb) => {
 					if (status) qb.where("ja.status", status);
-					if (from_date)
-						qb.andWhere("ja.created_at", ">=", from_date);
+					if (from_date) qb.andWhere("ja.created_at", ">=", from_date);
 					if (to_date)
-						qb.andWhere(
-							"ja.created_at",
-							"<=",
-							`${to_date}T23:59:59.999Z`
-						);
+						qb.andWhere("ja.created_at", "<=", `${to_date}T23:59:59.999Z`);
 					if (name) qb.andWhereILike("j.title", `%${name}%`);
 				})
 				.first();

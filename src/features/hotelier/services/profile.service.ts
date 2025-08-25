@@ -1,5 +1,6 @@
 import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
+import CustomError from "../../../utils/lib/customError";
 import Lib from "../../../utils/lib/lib";
 import {
 	USER_AUTHENTICATION_VIEW,
@@ -10,11 +11,10 @@ import {
 	IChangePasswordPayload,
 	ILocationUpdatePayload,
 } from "../../../utils/modelTypes/common/commonModelTypes";
+import { registrationVerificationCompletedTemplate } from "../../../utils/templates/registrationVerificationCompletedTemplate";
+import { IHotelierUpdateParsedBody } from "../../admin/utils/types/adminHotelier.types";
 import { IHotelierAuthView } from "../../auth/utils/types/hotelierAuth.types";
 import { IJobSeekerAuthView } from "../../auth/utils/types/jobSeekerAuth.types";
-import CustomError from "../../../utils/lib/customError";
-import { IHotelierUpdateParsedBody } from "../../admin/utils/types/adminHotelier.types";
-import { registrationVerificationCompletedTemplate } from "../../../utils/templates/registrationVerificationCompletedTemplate";
 
 export default class HotelierProfileService extends AbstractServices {
 	constructor() {
@@ -34,14 +34,12 @@ export default class HotelierProfileService extends AbstractServices {
 				user_id,
 			});
 
-		const [organization_amenities, organization_photos] = await Promise.all(
-			[
-				organizationModel.getAmenities({
-					organization_id: rest.organization_id,
-				}),
-				organizationModel.getPhotos(rest.organization_id),
-			]
-		);
+		const [organization_amenities, organization_photos] = await Promise.all([
+			organizationModel.getAmenities({
+				organization_id: rest.organization_id,
+			}),
+			organizationModel.getPhotos(rest.organization_id),
+		]);
 
 		return {
 			success: true,
@@ -58,8 +56,7 @@ export default class HotelierProfileService extends AbstractServices {
 	//change password
 	public async changePassword(req: Request) {
 		const { user_id } = req.hotelier;
-		const { old_password, new_password } =
-			req.body as IChangePasswordPayload;
+		const { old_password, new_password } = req.body as IChangePasswordPayload;
 
 		const model = this.Model.UserModel();
 		const user_details =
@@ -130,11 +127,8 @@ export default class HotelierProfileService extends AbstractServices {
 				);
 			}
 
-			console.log(1);
-
 			const data = await model.getOrganization({ user_id });
 
-			console.log(2);
 			if (!data) {
 				throw new CustomError(
 					this.ResMsg.HTTP_NOT_FOUND,
@@ -143,7 +137,6 @@ export default class HotelierProfileService extends AbstractServices {
 			}
 			const files = req.files as Express.MulterS3.File[];
 			const body = req.body;
-			console.log({ body });
 			const parsed = {
 				organization: Lib.safeParseJSON(body.organization) || {},
 				user: Lib.safeParseJSON(body.user) || {},
@@ -330,12 +323,9 @@ export default class HotelierProfileService extends AbstractServices {
 						);
 					}
 					updateTasks.push(
-						commonModel.updateLocation(
-							parsed.organization_address,
-							{
-								location_id: parsed.organization_address.id,
-							}
-						)
+						commonModel.updateLocation(parsed.organization_address, {
+							location_id: parsed.organization_address.id,
+						})
 					);
 				} else {
 					updateTasks.push(

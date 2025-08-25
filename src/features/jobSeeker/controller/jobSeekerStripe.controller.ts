@@ -1,9 +1,11 @@
 import { Request, Response } from "express";
 import AbstractController from "../../../abstract/abstract.controller";
 import JobSeekerStripeService from "../service/jobSeekerStripe.service";
+import { StripePayoutValidator } from "../utils/validator/stripePayout.validator";
 
 export default class JobSeekerStripeController extends AbstractController {
 	private stripeService = new JobSeekerStripeService();
+	private validator = new StripePayoutValidator();
 
 	constructor() {
 		super();
@@ -11,10 +13,11 @@ export default class JobSeekerStripeController extends AbstractController {
 
 	// Add Strie Payout Account
 	public addStripePayoutAccount = this.asyncWrapper.wrap(
-		null,
+		{ bodySchema: this.validator.addStripePayoutAccount },
 		async (req: Request, res: Response) => {
-			const { code, ...data } =
-				await this.stripeService.addStripePayoutAccount(req);
+			const { code, ...data } = await this.stripeService.addStripePayoutAccount(
+				req
+			);
 			res.status(code).json(data);
 		}
 	);
@@ -22,9 +25,7 @@ export default class JobSeekerStripeController extends AbstractController {
 	public onboardComplete = this.asyncWrapper.wrap(
 		null,
 		async (req: Request, res: Response) => {
-			const { code, ...data } = await this.stripeService.onboardComplete(
-				req
-			);
+			const { code, ...data } = await this.stripeService.onboardComplete(req);
 			res.status(code).json(data);
 		}
 	);
@@ -32,8 +33,9 @@ export default class JobSeekerStripeController extends AbstractController {
 	public loginStripeAccount = this.asyncWrapper.wrap(
 		null,
 		async (req: Request, res: Response) => {
-			const { code, ...data } =
-				await this.stripeService.loginStripeAccount(req);
+			const { code, ...data } = await this.stripeService.loginStripeAccount(
+				req
+			);
 			res.status(code).json(data);
 		}
 	);

@@ -84,6 +84,8 @@ export interface IGetAdminPayment {
 	status: (typeof PAYMENT_STATUS)[keyof typeof PAYMENT_STATUS];
 	trx_id: string;
 	created_at: string;
+	job_seeker_name: string;
+	job_seeker_id: number;
 	paid_by: number;
 	paid_at: Date;
 	is_deleted: boolean;

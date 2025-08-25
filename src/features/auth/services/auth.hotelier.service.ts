@@ -17,6 +17,7 @@ import {
 } from "../../../utils/modelTypes/common/commonModelTypes";
 import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
 import { registrationHotelierTemplate } from "../../../utils/templates/registrationHotelierTemplate";
+import { sendEmailOtpTemplate } from "../../../utils/templates/sendEmailOtpTemplate";
 import {
 	IHotelierAuthView,
 	IHotelierRegistrationBodyPayload,
@@ -25,7 +26,6 @@ import {
 	IOrganizationAmenitiesType,
 	IOrganizationName,
 } from "../utils/types/hotelierAuth.types";
-import { sendEmailOtpTemplate } from "../../../utils/templates/sendEmailOtpTemplate";
 
 export default class HotelierAuthService extends AbstractServices {
 	constructor() {
@@ -103,9 +103,56 @@ export default class HotelierAuthService extends AbstractServices {
 				);
 			}
 
-			const organization_location = await commonModel.createLocation(
-				organizationAddress
-			);
+			const checkCountry = await commonModel.getAllCountry({
+				id: organizationAddress.country_id,
+			});
+
+			if (!checkCountry.length) {
+				throw new CustomError(
+					"Service is not available in this country",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
+
+			let stateId = 0;
+			const checkState = await commonModel.getAllStates({
+				country_id: organizationAddress.country_id,
+				name: organizationAddress.state,
+			});
+			if (!checkState.length) {
+				const state = await commonModel.createState({
+					country_id: organizationAddress.country_id,
+					name: organizationAddress.state,
+				});
+				stateId = state[0].id;
+			} else {
+				stateId = checkState[0].id;
+			}
+
+			let cityId = 0;
+			const checkCity = await commonModel.getAllCity({
+				country_id: organizationAddress.country_id,
+				state_id: stateId,
+				name: organizationAddress.city,
+			});
+			if (!checkCity.length) {
+				const city = await commonModel.createCity({
+					country_id: organizationAddress.country_id,
+					state_id: stateId,
+					name: organizationAddress.city,
+				});
+				cityId = city[0].id;
+			} else {
+				cityId = checkCity[0].id;
+			}
+
+			const organization_location = await commonModel.createLocation({
+				address: organizationAddress.address,
+				city_id: cityId,
+				latitude: organizationAddress.latitude,
+				longitude: organizationAddress.longitude,
+				postal_code: organizationAddress.postal_code,
+			});
 			const locationId = organization_location[0].id;
 			const userId = registration[0].id;
 
@@ -260,10 +307,7 @@ export default class HotelierAuthService extends AbstractServices {
 			await Lib.sendEmailDefault({
 				email: checkUser.email,
 				emailSub: "Two Factor Verification",
-				emailBody: sendEmailOtpTemplate(
-					generateOtp,
-					"two factor verification"
-				),
+				emailBody: sendEmailOtpTemplate(generateOtp, "two factor verification"),
 			});
 			return {
 				success: true,
@@ -303,10 +347,7 @@ export default class HotelierAuthService extends AbstractServices {
 	// loginData for 2FA user info retrieval
 	public async loginData(req: Request) {
 		const { token, email } = req.body as { token: string; email: string };
-		const token_verify: any = Lib.verifyToken(
-			token,
-			config.JWT_SECRET_HOTEL
-		);
+		const token_verify: any = Lib.verifyToken(token, config.JWT_SECRET_HOTEL);
 		const user_model = this.Model.UserModel();
 
 		if (!token_verify) {
@@ -378,10 +419,7 @@ export default class HotelierAuthService extends AbstractServices {
 	//forget pass
 	public async forgetPassword(req: Request) {
 		const { token, email, password } = req.body as IForgetPasswordPayload;
-		const token_verify: any = Lib.verifyToken(
-			token,
-			config.JWT_SECRET_HOTEL
-		);
+		const token_verify: any = Lib.verifyToken(token, config.JWT_SECRET_HOTEL);
 
 		if (!token_verify) {
 			return {

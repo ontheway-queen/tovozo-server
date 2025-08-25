@@ -141,6 +141,11 @@ export interface IGetJobSeeker {
 	work_permit?: boolean;
 	account_status: UserStatusType;
 	criminal_convictions?: string;
+	is_completed?: boolean;
+	is_completed_at?: string;
+	final_completed_by?: number;
+	final_completed_at?: string;
+	final_completed?: boolean;
 	is_2fa_on: boolean;
 	location_id: number;
 }

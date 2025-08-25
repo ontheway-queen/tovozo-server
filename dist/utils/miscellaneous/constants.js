@@ -6,11 +6,15 @@ exports.origin = [
     "http://localhost:3000",
     "http://localhost:3001",
     "http://localhost:3002",
+    "http://localhost:3003",
+    "http://localhost:3004",
     "http://localhost:5000",
     "http://10.10.220.47:5000",
     "http://10.10.220.46:3000",
     "http://10.10.220.46:3001",
     "http://10.10.220.46:3002",
+    "http://10.10.220.46:3003",
+    "http://10.10.220.46:3004",
     "https://main.d3hmr74pp6xhci.amplifyapp.com",
 ];
 // OTP types constants

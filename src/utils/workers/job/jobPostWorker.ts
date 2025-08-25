@@ -50,7 +50,6 @@ export default class JobPostWorker {
 			related_id,
 			job_seeker_device_id,
 		} = job.data;
-		console.log({ data: job.data });
 		return await db.transaction(async (trx) => {
 			const commonModel = new CommonModel(trx);
 			await commonModel.createNotification({

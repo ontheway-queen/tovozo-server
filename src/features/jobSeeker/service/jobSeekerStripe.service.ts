@@ -1,8 +1,9 @@
 import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
-import { stripe } from "../../../utils/miscellaneous/stripe";
 import config from "../../../app/config";
 import CustomError from "../../../utils/lib/customError";
+import { USER_TYPE } from "../../../utils/miscellaneous/constants";
+import { stripe } from "../../../utils/miscellaneous/stripe";
 
 export default class JobSeekerStripeService extends AbstractServices {
 	constructor() {
@@ -14,16 +15,51 @@ export default class JobSeekerStripeService extends AbstractServices {
 			const { user_id } = req.jobSeeker;
 			const { email, country } = req.body;
 
-			const userModel = this.Model.UserModel(trx);
-			const user = await userModel.checkUser({ id: user_id });
+			const files = (req.files as Express.Multer.File[]) || [];
 
-			if (!user || user.length === 0) {
+			const filesBody = {} as Record<string, string>;
+			if (!files.length) {
 				throw new CustomError(
-					"User not found",
-					this.StatusCode.HTTP_NOT_FOUND
+					`Please upload passport and visa copy to complete your profile.`,
+					this.StatusCode.HTTP_BAD_REQUEST
 				);
 			}
-			console.log({ user });
+			if (files.length > 3 || files.length < 2) {
+				throw new CustomError(
+					`Please upload passport, visa and id copy to complete your profile.`,
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
+			for (const file of files) {
+				switch (file.fieldname) {
+					case "passport_copy": {
+						filesBody.passport_copy = file.filename;
+						break;
+					}
+					case "visa_copy": {
+						filesBody.visa_copy = file.filename;
+						break;
+					}
+					case "id_copy": {
+						filesBody.id_copy = file.filename;
+						break;
+					}
+					default:
+						throw new CustomError(
+							"Invalid fieldname",
+							this.StatusCode.HTTP_BAD_REQUEST
+						);
+				}
+			}
+
+			const userModel = this.Model.UserModel(trx);
+			const user = await userModel.checkUser({ id: user_id });
+			const jobSeekerModel = this.Model.jobSeekerModel(trx);
+
+			if (!user || user.length === 0) {
+				throw new CustomError("User not found", this.StatusCode.HTTP_NOT_FOUND);
+			}
+
 			if (user[0].stripe_acc_id) {
 				throw new CustomError(
 					"Stripe account already exists for this user",
@@ -49,12 +85,16 @@ export default class JobSeekerStripeService extends AbstractServices {
 					last_name,
 				},
 			});
-			console.log({ account });
+
 			const accountLink = await stripe.accountLinks.create({
 				account: account.id,
 				refresh_url: `${config.BASE_URL}/job-seeker/stripe/onboard/refresh`,
 				return_url: `${config.BASE_URL}/job-seeker/stripe/onboard/complete?stripe_acc_id=${account.id}`,
 				type: "account_onboarding",
+			});
+
+			await jobSeekerModel.updateJobSeekerInfo(filesBody, {
+				job_seeker_id: user_id,
 			});
 
 			return {
@@ -75,7 +115,6 @@ export default class JobSeekerStripeService extends AbstractServices {
 		}
 
 		const account = await stripe.accounts.retrieve(stripe_acc_id);
-		console.log({ account });
 		if (!account.payouts_enabled) {
 			await stripe.accounts.del(stripe_acc_id);
 
@@ -87,16 +126,28 @@ export default class JobSeekerStripeService extends AbstractServices {
 			};
 		}
 
-		await this.Model.jobSeekerModel().addStripePayoutAccount({
-			user_id,
-			stripe_acc_id,
-		});
+		return await this.db.transaction(async (trx) => {
+			const jobSeekerModel = this.Model.jobSeekerModel(trx);
+			await jobSeekerModel.addStripePayoutAccount({
+				user_id,
+				stripe_acc_id,
+			});
 
-		return {
-			success: true,
-			code: this.StatusCode.HTTP_OK,
-			message: "Onboarding completed successfully",
-		};
+			await this.insertNotification(trx, USER_TYPE.ADMIN, {
+				title: "Onboarding Completed",
+				content: `Job Seeker has completed onboarding. Stripe Account ID: ${stripe_acc_id}. Please check the Stripe account to confirm the details.`,
+				related_id: user_id,
+				sender_type: USER_TYPE.JOB_SEEKER,
+				type: "JOB_SEEKER_VERIFICATION",
+				user_id,
+				sender_id: user_id,
+			});
+			return {
+				success: true,
+				code: this.StatusCode.HTTP_OK,
+				message: "Onboarding completed successfully",
+			};
+		});
 	}
 
 	public async loginStripeAccount(req: Request) {
@@ -105,10 +156,7 @@ export default class JobSeekerStripeService extends AbstractServices {
 		const jobSeekerModel = this.Model.jobSeekerModel();
 		const checkUser = await userModel.checkUser({ id: user_id });
 		if (checkUser.length < 1) {
-			throw new CustomError(
-				"User not found!",
-				this.StatusCode.HTTP_NOT_FOUND
-			);
+			throw new CustomError("User not found!", this.StatusCode.HTTP_NOT_FOUND);
 		}
 
 		const jobSeeker = await jobSeekerModel.getJobSeekerDetails({ user_id });

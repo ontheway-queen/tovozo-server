@@ -1,25 +1,24 @@
 import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
+import { getAllOnlineSocketIds, io } from "../../../app/socket";
 import CancellationLogModel from "../../../models/cancellationLogModel/cancellationLogModel";
 import JobPostModel from "../../../models/hotelierModel/jobPostModel";
+import UserModel from "../../../models/userModel/userModel";
 import CustomError from "../../../utils/lib/customError";
+import Lib from "../../../utils/lib/lib";
 import {
 	CANCELLATION_REPORT_STATUS,
 	CANCELLATION_REPORT_TYPE,
-	GENDER_TYPE,
 	JOB_APPLICATION_STATUS,
 	JOB_POST_DETAILS_STATUS,
 } from "../../../utils/miscellaneous/constants";
-import { IJobPostDetailsStatus } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
-import { ICreateJobApplicationPayload } from "../../../utils/modelTypes/jobApplication/jobApplicationModel.types";
-import UserModel from "../../../models/userModel/userModel";
-import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
 import {
 	NotificationTypeEnum,
 	TypeEmitNotificationEnum,
 } from "../../../utils/modelTypes/common/commonModelTypes";
-import { getAllOnlineSocketIds, io } from "../../../app/socket";
-import Lib from "../../../utils/lib/lib";
+import { IJobPostDetailsStatus } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
+import { ICreateJobApplicationPayload } from "../../../utils/modelTypes/jobApplication/jobApplicationModel.types";
+import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
 
 export class JobSeekerJobApplication extends AbstractServices {
 	constructor() {
@@ -33,6 +32,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 		return await this.db.transaction(async (trx) => {
 			const userModel = new UserModel(trx);
 			const jobPostModel = new JobPostModel(trx);
+			const jobSeekerModel = this.Model.jobSeekerModel(trx);
 			const cancellationLogModel = new CancellationLogModel(trx);
 
 			const jobSeeker = await userModel.checkUser({
@@ -43,6 +43,22 @@ export class JobSeekerJobApplication extends AbstractServices {
 				throw new CustomError(
 					"Job seeker not found!",
 					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
+
+			const jobSeekerDetails = await jobSeekerModel.getJobSeeker({
+				user_id,
+			});
+			if (!jobSeekerDetails) {
+				throw new CustomError(
+					"Job seeker not found!",
+					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
+			if (jobSeekerDetails.is_completed === false) {
+				throw new CustomError(
+					"Please complete your profile first!",
+					this.StatusCode.HTTP_BAD_REQUEST
 				);
 			}
 
@@ -89,27 +105,25 @@ export class JobSeekerJobApplication extends AbstractServices {
 			});
 
 			//! Need to uncomment later.
-			// if (
-			// 	existPendingApplication &&
-			// 	(existPendingApplication.job_application_status ===
-			// 		JOB_APPLICATION_STATUS.PENDING ||
-			// 		existPendingApplication.job_application_status ===
-			// 			JOB_APPLICATION_STATUS.IN_PROGRESS)
-			// ) {
-			// 	throw new CustomError(
-			// 		"Hold on! You need to complete your current job before moving on to the next.",
-			// 		this.StatusCode.HTTP_BAD_REQUEST
-			// 	);
-			// }
+			if (
+				existPendingApplication &&
+				(existPendingApplication.job_application_status ===
+					JOB_APPLICATION_STATUS.PENDING ||
+					existPendingApplication.job_application_status ===
+						JOB_APPLICATION_STATUS.IN_PROGRESS)
+			) {
+				throw new CustomError(
+					"Hold on! You need to complete your current job before moving on to the next.",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
 
 			const payload = {
 				job_post_details_id: Number(job_post_details_id),
 				job_seeker_id: user_id,
 				job_post_id: jobPost.job_post_id,
 			};
-			await model.createJobApplication(
-				payload as ICreateJobApplicationPayload
-			);
+			await model.createJobApplication(payload as ICreateJobApplicationPayload);
 
 			await model.markJobPostDetailAsApplied(Number(job_post_details_id));
 
@@ -133,9 +147,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 
 			const startTime = new Date(jobPost.start_time);
 			// Job start reminder queue start from here
-			const reminderTime = new Date(
-				startTime.getTime() - 2 * 60 * 60 * 1000
-			);
+			const reminderTime = new Date(startTime.getTime() - 2 * 60 * 60 * 1000);
 			const jobStartReminderQueue = this.getQueue("jobStartReminder");
 			await jobStartReminderQueue.add(
 				"jobStartReminder",
@@ -162,9 +174,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 			// Job start reminder queue end from here
 
 			// Chat Session Create Message queue start from here
-			const oneHourBeforeStart = new Date(
-				startTime.getTime() - 60 * 60 * 1000
-			);
+			const oneHourBeforeStart = new Date(startTime.getTime() - 60 * 60 * 1000);
 			const chatSessionDelay = oneHourBeforeStart.getTime() - Date.now();
 			const safeDelay = chatSessionDelay > 0 ? chatSessionDelay : 0;
 
@@ -208,15 +218,11 @@ export class JobSeekerJobApplication extends AbstractServices {
 					{
 						user_id,
 						photo: jobSeeker[0].photo,
-						title: this.NotificationMsg.JOB_APPLICATION_RECEIVED
-							.title,
-						content:
-							this.NotificationMsg.JOB_APPLICATION_RECEIVED.content(
-								{
-									jobTitle: jobPost.job_title,
-									jobPostId: jobPost.id,
-								}
-							),
+						title: this.NotificationMsg.JOB_APPLICATION_RECEIVED.title,
+						content: this.NotificationMsg.JOB_APPLICATION_RECEIVED.content({
+							jobTitle: jobPost.job_title,
+							jobPostId: jobPost.id,
+						}),
 						related_id: jobPost.id,
 						type: NotificationTypeEnum.APPLICATION_UPDATE,
 						read_status: false,
@@ -226,18 +232,15 @@ export class JobSeekerJobApplication extends AbstractServices {
 			} else {
 				if (hotelier[0].device_id) {
 					const device_id = hotelier[0].device_id;
-					console.log({ device_id });
 					await Lib.sendNotificationToMobile({
 						to: hotelier[0].device_id,
 						notificationTitle:
 							this.NotificationMsg.JOB_APPLICATION_RECEIVED.title,
 						notificationBody:
-							this.NotificationMsg.JOB_APPLICATION_RECEIVED.content(
-								{
-									jobTitle: jobPost.job_title,
-									jobPostId: jobPost.id,
-								}
-							),
+							this.NotificationMsg.JOB_APPLICATION_RECEIVED.content({
+								jobTitle: jobPost.job_title,
+								jobPostId: jobPost.id,
+							}),
 						data: JSON.stringify({
 							photo: jobSeeker[0].photo,
 							related_id: jobPost.id,
@@ -317,8 +320,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 				);
 			}
 			if (
-				application.job_application_status !==
-				JOB_APPLICATION_STATUS.PENDING
+				application.job_application_status !== JOB_APPLICATION_STATUS.PENDING
 			) {
 				throw new CustomError(
 					"This application cannot be cancelled because it has already been processed.",
@@ -340,16 +342,14 @@ export class JobSeekerJobApplication extends AbstractServices {
 			const currentTime = new Date();
 			const startTime = new Date(application?.start_time);
 			const hoursDiff =
-				(startTime.getTime() - currentTime.getTime()) /
-				(1000 * 60 * 60);
+				(startTime.getTime() - currentTime.getTime()) / (1000 * 60 * 60);
 
 			if (hoursDiff > 24) {
-				const data =
-					await applicationModel.updateMyJobApplicationStatus({
-						application_id: parseInt(id),
-						job_seeker_id: user_id,
-						status: JOB_APPLICATION_STATUS.CANCELLED,
-					});
+				const data = await applicationModel.updateMyJobApplicationStatus({
+					application_id: parseInt(id),
+					job_seeker_id: user_id,
+					status: JOB_APPLICATION_STATUS.CANCELLED,
+				});
 
 				if (!data) {
 					throw new CustomError(
@@ -360,7 +360,8 @@ export class JobSeekerJobApplication extends AbstractServices {
 
 				await jobPostModel.updateJobPostDetailsStatus({
 					id: data.job_post_details_id,
-					status: JOB_POST_DETAILS_STATUS.Pending as unknown as IJobPostDetailsStatus,
+					status:
+						JOB_POST_DETAILS_STATUS.Pending as unknown as IJobPostDetailsStatus,
 				});
 
 				return {
@@ -370,8 +371,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 				};
 			} else {
 				if (
-					body.report_type !==
-						CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION ||
+					body.report_type !== CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION ||
 					!body.reason
 				) {
 					throw new CustomError(
@@ -382,9 +382,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 				body.reporter_id = user_id;
 				body.related_id = id;
 
-				const cancellationReportModel =
-					this.Model.cancellationLogModel(trx);
-				console.log({ body });
+				const cancellationReportModel = this.Model.cancellationLogModel(trx);
 				await cancellationReportModel.requestForCancellationLog(body);
 
 				return {

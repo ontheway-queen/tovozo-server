@@ -24,9 +24,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
+const customError_1 = __importDefault(require("../../../utils/lib/customError"));
 const lib_1 = __importDefault(require("../../../utils/lib/lib"));
 const constants_1 = require("../../../utils/miscellaneous/constants");
-const customError_1 = __importDefault(require("../../../utils/lib/customError"));
 const registrationVerificationCompletedTemplate_1 = require("../../../utils/templates/registrationVerificationCompletedTemplate");
 class HotelierProfileService extends abstract_service_1.default {
     constructor() {
@@ -117,15 +117,12 @@ class HotelierProfileService extends abstract_service_1.default {
                 if (!existingUser) {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND, "ERROR");
                 }
-                console.log(1);
                 const data = yield model.getOrganization({ user_id });
-                console.log(2);
                 if (!data) {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
                 }
                 const files = req.files;
                 const body = req.body;
-                console.log({ body });
                 const parsed = {
                     organization: lib_1.default.safeParseJSON(body.organization) || {},
                     user: lib_1.default.safeParseJSON(body.user) || {},
