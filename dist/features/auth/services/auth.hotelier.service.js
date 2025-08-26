@@ -56,7 +56,6 @@ class HotelierAuthService extends abstract_service_1.default {
                 const commonModel = this.Model.commonModel(trx);
                 const [existingUser] = yield userModel.checkUser({
                     email,
-                    phone_number,
                     type: constants_1.USER_TYPE.HOTELIER,
                 });
                 console.log({ existingUser });
