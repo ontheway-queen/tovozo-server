@@ -62,6 +62,7 @@ export default class JobTaskActivitiesService extends AbstractServices {
 					this.StatusCode.HTTP_BAD_REQUEST
 				);
 			}
+
 			const startTime = new Date(myApplication.start_time);
 			const now = new Date();
 			if (now < startTime) {

@@ -335,7 +335,8 @@ class JobPostModel extends schema_1.default {
             return yield this.db("job_post_details")
                 .withSchema(this.DBO_SCHEMA)
                 .where("id", id)
-                .update({ status });
+                .update({ status })
+                .returning("*");
         });
     }
     // Job List for Admin

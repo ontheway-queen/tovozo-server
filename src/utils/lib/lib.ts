@@ -9,9 +9,12 @@ import config from "../../app/config";
 import { TDB } from "../../features/public/utils/types/publicCommon.types";
 import CommonModel from "../../models/commonModel/commonModel";
 import * as admin from "firebase-admin";
+import PDFDocument from "pdfkit";
 
 import dotenv from "dotenv";
 import CustomError from "./customError";
+import { stripe } from "../miscellaneous/stripe";
+import puppeteer from "puppeteer";
 
 dotenv.config();
 
@@ -55,6 +58,28 @@ class Lib {
 		} catch (err: any) {
 			console.log({ err });
 			return false;
+		}
+	}
+
+	public static async generateHtmlToPdfBuffer(html: string): Promise<Buffer> {
+		const browser = await puppeteer.launch({
+			headless: true,
+			// executablePath: "/snap/bin/chromium",
+			args: ["--no-sandbox", "--disable-setuid-sandbox"],
+		});
+		try {
+			const page = await browser.newPage();
+			await page.setViewport({ width: 1280, height: 800 });
+			await page.setContent(html, {
+				waitUntil: ["load", "domcontentloaded", "networkidle0"],
+			});
+			const pdfUint8Array = await page.pdf({
+				format: "A4",
+				printBackground: true,
+			});
+			return Buffer.from(pdfUint8Array);
+		} finally {
+			await browser.close();
 		}
 	}
 
@@ -291,6 +316,106 @@ class Lib {
 			console.error("🚫 error", error);
 			return null;
 		}
+	}
+
+	public static async generateInvoicePDF(
+		paymentPayload: any,
+		jobPost: any,
+		hotelier: any
+	) {
+		return new Promise<string>((resolve, reject) => {
+			const invoicesDir = path.join(__dirname, "../../../invoices");
+
+			// Ensure invoices folder exists
+			if (!fs.existsSync(invoicesDir)) {
+				fs.mkdirSync(invoicesDir, { recursive: true });
+			}
+
+			const filePath = path.join(
+				invoicesDir,
+				`${paymentPayload.payment_no}.pdf`
+			);
+
+			const doc = new PDFDocument();
+			const stream = fs.createWriteStream(filePath);
+			doc.pipe(stream);
+
+			doc.fontSize(20).text("Task Completion Invoice", {
+				align: "center",
+			});
+			doc.moveDown();
+
+			doc.fontSize(12).text(`Hotelier: ${hotelier[0].name}`);
+			doc.text(`Email: ${hotelier[0].email}`);
+			doc.moveDown();
+
+			doc.text(`Job Post: ${jobPost.title}`);
+			doc.text(`Payment ID: ${paymentPayload.payment_no}`);
+			doc.text(
+				`Working Hours: ${paymentPayload.total_working_hours ?? "N/A"}`
+			);
+			doc.moveDown();
+
+			doc.text(`Total Amount: $${paymentPayload.total_amount}`);
+			doc.text(`Job Seeker Pay: $${paymentPayload.job_seeker_pay}`);
+			doc.text(`Platform Fee: $${paymentPayload.platform_fee}`);
+			doc.text(`Transaction Fee: $${paymentPayload.trx_fee}`);
+			doc.moveDown();
+
+			console.log({ link: paymentPayload.paymentLink });
+			const paymentLink = paymentPayload.paymentLink;
+			doc.fontSize(14).fillColor("blue").text("Click here to pay", {
+				link: paymentLink,
+				underline: true,
+			});
+
+			doc.end();
+
+			stream.on("finish", () => resolve(filePath));
+			stream.on("error", reject);
+		});
+	}
+
+	public static async generatePaymentLink(query: {
+		id: number;
+		priceId: string;
+		job_seeker_id: number;
+		job_title: string;
+		job_seeker_name: string;
+		user_id: number;
+	}) {
+		const {
+			id,
+			priceId,
+			job_seeker_id,
+			job_title,
+			job_seeker_name,
+			user_id,
+		} = query;
+		const paymentLink = await stripe.paymentLinks.create({
+			line_items: [
+				{
+					price: priceId,
+					quantity: 1,
+				},
+			],
+			metadata: {
+				id,
+				job_seeker_id,
+				job_title,
+				job_seeker_name,
+				paid_by: user_id,
+			},
+			after_completion: {
+				type: "redirect",
+				redirect: {
+					url: `${config.BASE_URL}/hotelier/payment/verify-checkout-session?session_id={CHECKOUT_SESSION_ID}`,
+				},
+			},
+		});
+
+		console.log({ abcLink: paymentLink.url });
+		return paymentLink.url;
 	}
 }
 export default Lib;

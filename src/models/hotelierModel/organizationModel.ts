@@ -52,6 +52,7 @@ export default class OrganizationModel extends Schema {
 				"org.is_2fa_on",
 				"org.location_id",
 				"org_photo.file as photo",
+				"l.address",
 				"l.longitude",
 				"l.latitude"
 			)

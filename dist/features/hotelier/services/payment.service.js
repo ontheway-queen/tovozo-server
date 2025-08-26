@@ -21,6 +21,8 @@ const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes"
 const commonModelTypes_1 = require("../../../utils/modelTypes/common/commonModelTypes");
 const socket_1 = require("../../../app/socket");
 const lib_1 = __importDefault(require("../../../utils/lib/lib"));
+const dayjs_1 = __importDefault(require("dayjs"));
+const invoiceTemplate_1 = require("../../../utils/templates/invoiceTemplate");
 class PaymentService extends abstract_service_1.default {
     constructor() {
         super();
@@ -76,17 +78,12 @@ class PaymentService extends abstract_service_1.default {
                 }
                 const paymentModel = this.Model.paymnentModel();
                 const payment = yield paymentModel.getSinglePayment(id);
-                console.log({ payment });
                 if (!payment) {
                     throw new customError_1.default("Payment record not found", this.StatusCode.HTTP_NOT_FOUND, "ERROR");
                 }
                 if (payment.status === constants_1.PAYMENT_STATUS.PAID) {
                     throw new customError_1.default("The payment is already paid", this.StatusCode.HTTP_CONFLICT);
                 }
-                // const loginLink = await stripe.accounts.createLoginLink(
-                // 	"acct_1RsFUAED98rhPWLe"
-                // );
-                // console.log("Login Link:", loginLink.url);
                 const total_amount = Number(payment.total_amount);
                 const jobSeekerPay = Number(payment.job_seeker_pay);
                 const applicationFeeAmount = total_amount - jobSeekerPay;
@@ -137,10 +134,9 @@ class PaymentService extends abstract_service_1.default {
     }
     verifyCheckoutSession(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { user_id } = req.hotelier;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const sessionId = req.query.session_id;
-                const { user_id } = req.hotelier;
+                const { user_id, email } = req.hotelier;
                 if (!user_id) {
                     throw new customError_1.default("Hotelier ID is required", this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
                 }
@@ -176,7 +172,6 @@ class PaymentService extends abstract_service_1.default {
                 const jobseeker = yield this.Model.UserModel().checkUser({
                     id: Number(paymentIntent.metadata.job_seeker_id),
                 });
-                console.log({ jobseeker });
                 if (jobseeker && jobseeker.length < 1) {
                     throw new customError_1.default("User not found", this.StatusCode.HTTP_NOT_FOUND);
                 }
@@ -203,7 +198,7 @@ class PaymentService extends abstract_service_1.default {
                     job_seeker_id: Number(paymentIntent.metadata.job_seeker_id),
                     status: constants_1.JOB_APPLICATION_STATUS.COMPLETED,
                 });
-                yield jobPostModel.updateJobPostDetailsStatus({
+                const jobPost = yield jobPostModel.updateJobPostDetailsStatus({
                     id: updatedApplication.job_post_details_id,
                     status: constants_1.JOB_POST_DETAILS_STATUS.Completed,
                 });
@@ -219,7 +214,6 @@ class PaymentService extends abstract_service_1.default {
                         },
                     });
                 }
-                console.log({ payment });
                 yield this.insertNotification(trx, userModelTypes_1.TypeUser.JOB_SEEKER, {
                     user_id: Number(paymentIntent.metadata.job_seeker_id),
                     sender_id: user_id,
@@ -273,6 +267,53 @@ class PaymentService extends abstract_service_1.default {
                         });
                     }
                 }
+                // pdf for hotelier
+                const hotelierPdfBuffer = yield lib_1.default.generateHtmlToPdfBuffer((0, invoiceTemplate_1.hotelierInvoiceTemplate)({
+                    to: email,
+                    address: organization.address,
+                    invoice_no: payment.payment_no,
+                    date: (0, dayjs_1.default)().format("DD/MM/YYYY"),
+                    amount: payment.total_amount,
+                    customer: organization.name,
+                    authorize: "TOVOZO",
+                }));
+                yield lib_1.default.sendEmailDefault({
+                    email,
+                    emailSub: `Invoice ${payment.payment_no} for Job ${jobPost[0].job_post_title} - ${new Date().toLocaleDateString()}`,
+                    emailBody: `Attached is your invoice ${payment.payment_no} for the job "${jobPost[0].job_post_title}".
+Total Amount: $${payment.total_amount}.`,
+                    attachments: [
+                        {
+                            filename: `${payment.payment_no}.pdf`,
+                            content: hotelierPdfBuffer,
+                            contentType: "application/pdf",
+                        },
+                    ],
+                });
+                console.log({ jobseeker });
+                // pdf for job seeker
+                const jobseekerPdfBuffer = yield lib_1.default.generateHtmlToPdfBuffer((0, invoiceTemplate_1.jobSeekerInvoiceTemplate)({
+                    to: "mehedihassan.m360ict@gmail.com",
+                    address: "This is test job seeker address",
+                    invoice_no: payment.payment_no,
+                    date: (0, dayjs_1.default)().format("DD/MM/YYYY"),
+                    amount: payment.job_seeker_pay,
+                    customer: jobseeker[0].name,
+                    authorize: "TOVOZO",
+                }));
+                yield lib_1.default.sendEmailDefault({
+                    email: "mehedihassan.m360ict@gmail.com",
+                    emailSub: `Invoice ${payment.payment_no} for Job ${jobPost[0].job_post_title} - ${new Date().toLocaleDateString()}`,
+                    emailBody: `Attached is your invoice ${payment.payment_no} for the job "${jobPost[0].job_post_title}".
+Total Amount: $${payment.job_seeker_pay}.`,
+                    attachments: [
+                        {
+                            filename: `${payment.payment_no}.pdf`,
+                            content: jobseekerPdfBuffer,
+                            contentType: "application/pdf",
+                        },
+                    ],
+                });
                 return {
                     success: true,
                     message: this.ResMsg.HTTP_OK,

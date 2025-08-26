@@ -264,10 +264,10 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
             }));
         });
         this.approveEndJobTaskActivity = (req) => __awaiter(this, void 0, void 0, function* () {
-            const id = req.params.id;
-            console.log({ id });
-            const { user_id } = req.hotelier;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const id = req.params.id;
+                console.log({ data: req.hotelier });
+                const { user_id, email, username } = req.hotelier;
                 const userModel = this.Model.UserModel(trx);
                 const paymentModel = this.Model.paymnentModel(trx);
                 const jobPostModel = this.Model.jobPostModel(trx);
@@ -278,12 +278,11 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                     type: userModelTypes_1.TypeUser.HOTELIER,
                 });
                 if (hotelier && hotelier.length < 1) {
-                    throw new customError_1.default("Organization nor found!", this.StatusCode.HTTP_NOT_FOUND);
+                    throw new customError_1.default("Organization not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }
                 const taskActivity = yield jobTaskActivitiesModel.getSingleTaskActivity({
                     id: Number(id),
                 });
-                console.log({ taskActivity });
                 if (taskActivity.application_status !==
                     constants_1.JOB_APPLICATION_STATUS.IN_PROGRESS) {
                     throw new customError_1.default(`You cannot perform this action because the application is still in progress.`, this.StatusCode.HTTP_FORBIDDEN);
@@ -313,17 +312,13 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 const hourlyRate = Number(jobPost.hourly_rate);
                 const jobSeekerPayRate = Number(jobPost.job_seeker_pay);
                 const platformFeeRate = Number(jobPost.platform_fee);
-                // Transaction fee (e.g., 2.9% + 0.30)
                 const feePercentage = 0.029;
                 const fixedFee = 0.3;
                 const baseAmount = Number((totalWorkingHours * hourlyRate).toFixed(2));
-                const totalAmount = Number(((baseAmount + fixedFee) / (1 - feePercentage)).toFixed(2));
-                const transactionFee = Number((totalAmount - baseAmount).toFixed(2));
+                const totalAmount = baseAmount;
+                const transactionFee = Number((baseAmount * feePercentage + fixedFee).toFixed(2));
                 const jobSeekerPay = Number((totalWorkingHours * jobSeekerPayRate).toFixed(2));
                 const platformFee = Number((totalWorkingHours * platformFeeRate).toFixed(2));
-                console.log({ jobSeekerPay });
-                console.log({ platformFee });
-                console.log({ totalAmount });
                 const paymentPayload = {
                     application_id: application.job_application_id,
                     total_amount: totalAmount,

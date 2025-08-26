@@ -181,7 +181,7 @@ class PublicCommonValidator {
                 longitude: joi_1.default.number().precision(6).optional(),
                 latitude: joi_1.default.number().precision(6).optional(),
                 // postal_code: Joi.string().max(20).optional(),
-            }).required(),
+            }).optional(),
             // job_preferences: Joi.array().items(Joi.number().integer()).required(),
             // job_shifting: Joi.array()
             //   .items(Joi.string().valid("Morning", "Afternoon", "Night", "Flexible"))
