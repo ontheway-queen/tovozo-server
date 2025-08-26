@@ -59,6 +59,7 @@ class HotelierAuthService extends abstract_service_1.default {
                     phone_number,
                     type: constants_1.USER_TYPE.HOTELIER,
                 });
+                console.log({ existingUser });
                 if (existingUser) {
                     if (existingUser.email === email) {
                         return {
@@ -67,6 +68,7 @@ class HotelierAuthService extends abstract_service_1.default {
                             message: this.ResMsg.EMAIL_ALREADY_EXISTS,
                         };
                     }
+                    console.log(existingUser.phone_number, phone_number);
                     if (existingUser.phone_number === phone_number) {
                         return {
                             success: false,
@@ -83,19 +85,19 @@ class HotelierAuthService extends abstract_service_1.default {
                     throw new customError_1.default(this.ResMsg.HTTP_BAD_REQUEST, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
                 }
                 const checkCountry = yield commonModel.getAllCountry({
-                    id: organizationAddress.country_id,
+                    name: organizationAddress.country,
                 });
                 if (!checkCountry.length) {
                     throw new customError_1.default("Service is not available in this country", this.StatusCode.HTTP_BAD_REQUEST);
                 }
                 let stateId = 0;
                 const checkState = yield commonModel.getAllStates({
-                    country_id: organizationAddress.country_id,
+                    country_id: checkCountry[0].id,
                     name: organizationAddress.state,
                 });
                 if (!checkState.length) {
                     const state = yield commonModel.createState({
-                        country_id: organizationAddress.country_id,
+                        country_id: checkCountry[0].id,
                         name: organizationAddress.state,
                     });
                     stateId = state[0].id;
@@ -105,13 +107,13 @@ class HotelierAuthService extends abstract_service_1.default {
                 }
                 let cityId = 0;
                 const checkCity = yield commonModel.getAllCity({
-                    country_id: organizationAddress.country_id,
+                    country_id: checkCountry[0].id,
                     state_id: stateId,
                     name: organizationAddress.city,
                 });
                 if (!checkCity.length) {
                     const city = yield commonModel.createCity({
-                        country_id: organizationAddress.country_id,
+                        country_id: checkCountry[0].id,
                         state_id: stateId,
                         name: organizationAddress.city,
                     });

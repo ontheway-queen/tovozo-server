@@ -64,9 +64,10 @@ export default class HotelierAuthService extends AbstractServices {
 
 			const [existingUser] = await userModel.checkUser({
 				email,
-				phone_number,
 				type: USER_TYPE.HOTELIER,
 			});
+
+			console.log({ existingUser });
 
 			if (existingUser) {
 				if (existingUser.email === email) {
@@ -76,6 +77,7 @@ export default class HotelierAuthService extends AbstractServices {
 						message: this.ResMsg.EMAIL_ALREADY_EXISTS,
 					};
 				}
+				console.log(existingUser.phone_number, phone_number);
 				if (existingUser.phone_number === phone_number) {
 					return {
 						success: false,
@@ -104,7 +106,7 @@ export default class HotelierAuthService extends AbstractServices {
 			}
 
 			const checkCountry = await commonModel.getAllCountry({
-				id: organizationAddress.country_id,
+				name: organizationAddress.country,
 			});
 
 			if (!checkCountry.length) {
@@ -116,12 +118,12 @@ export default class HotelierAuthService extends AbstractServices {
 
 			let stateId = 0;
 			const checkState = await commonModel.getAllStates({
-				country_id: organizationAddress.country_id,
+				country_id: checkCountry[0].id,
 				name: organizationAddress.state,
 			});
 			if (!checkState.length) {
 				const state = await commonModel.createState({
-					country_id: organizationAddress.country_id,
+					country_id: checkCountry[0].id,
 					name: organizationAddress.state,
 				});
 				stateId = state[0].id;
@@ -131,13 +133,13 @@ export default class HotelierAuthService extends AbstractServices {
 
 			let cityId = 0;
 			const checkCity = await commonModel.getAllCity({
-				country_id: organizationAddress.country_id,
+				country_id: checkCountry[0].id,
 				state_id: stateId,
 				name: organizationAddress.city,
 			});
 			if (!checkCity.length) {
 				const city = await commonModel.createCity({
-					country_id: organizationAddress.country_id,
+					country_id: checkCountry[0].id,
 					state_id: stateId,
 					name: organizationAddress.city,
 				});

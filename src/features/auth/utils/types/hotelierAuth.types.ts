@@ -18,7 +18,7 @@ export interface IHotelierUser {
 
 export interface IOrganizationAddressPayload {
 	city: string;
-	country_id: number;
+	country: string;
 	state: string;
 	address?: string;
 	longitude?: number;

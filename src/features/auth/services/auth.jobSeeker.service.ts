@@ -141,8 +141,63 @@ class JobSeekerAuthService extends AbstractServices {
 			const jobSeekerId = registration[0].id;
 
 			let locationId: number | null = null;
+			let city_id = 0;
 			if (jobSeekerLocationInput?.address) {
+				if (jobSeekerLocationInput.city) {
+					if (
+						!jobSeekerLocationInput.state &&
+						!jobSeekerLocationInput.country
+					) {
+						throw new CustomError(
+							"state and country required",
+							this.StatusCode.HTTP_BAD_REQUEST
+						);
+					}
+
+					const checkCountry = await commonModel.getAllCountry({
+						name: jobSeekerLocationInput.country,
+					});
+
+					if (!checkCountry.length) {
+						throw new CustomError(
+							"Service not available in this country",
+							this.StatusCode.HTTP_BAD_REQUEST
+						);
+					}
+
+					let stateId = 0;
+					const checkState = await commonModel.getAllStates({
+						country_id: checkCountry[0].id,
+						name: jobSeekerLocationInput.state,
+					});
+					if (!checkState.length) {
+						const state = await commonModel.createState({
+							country_id: checkCountry[0].id,
+							name: jobSeekerLocationInput.state,
+						});
+						stateId = state[0].id;
+					} else {
+						stateId = checkState[0].id;
+					}
+
+					const checkCity = await commonModel.getAllCity({
+						country_id: checkCountry[0].id,
+						state_id: stateId,
+						name: jobSeekerLocationInput.city,
+					});
+					if (!checkCity.length) {
+						const city = await commonModel.createCity({
+							country_id: checkCountry[0].id,
+							state_id: stateId,
+							name: jobSeekerLocationInput.city,
+						});
+						city_id = city[0].id;
+					} else {
+						city_id = checkCity[0].id;
+					}
+				}
 				const [locationRecord] = await commonModel.createLocation({
+					city_id,
 					address: jobSeekerLocationInput.address,
 					longitude: jobSeekerLocationInput.longitude,
 					latitude: jobSeekerLocationInput.latitude,

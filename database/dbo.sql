@@ -460,7 +460,33 @@ CREATE TABLE IF NOT EXISTS dbo.saved_job_post_details(
    UNIQUE (job_post_details_id, job_seeker_id)
 )
 
-/* 
+
+
+
+
+CREATE SEQUENCE states_id_seq;
+
+ALTER TABLE dbo.states
+ALTER COLUMN id SET DEFAULT nextval('states_id_seq');
+
+SELECT setval('states_id_seq', COALESCE((SELECT MAX(id) FROM dbo.states), 0));
+
+ALTER TABLE dbo.states
+ADD PRIMARY KEY (id);
+
+
+CREATE SEQUENCE cities_id_seq;
+
+ALTER TABLE dbo.cities
+ALTER COLUMN id SET DEFAULT nextval('cities_id_seq');
+
+SELECT setval('cities_id_seq', COALESCE((SELECT MAX(id) FROM dbo.cities), 0));
+
+ALTER TABLE dbo.cities
+ADD PRIMARY KEY (id);
+
+
+/*
 {
     "success": true,
     "message": "The request is OK",

@@ -115,8 +115,53 @@ class JobSeekerAuthService extends abstract_service_1.default {
                 }
                 const jobSeekerId = registration[0].id;
                 let locationId = null;
+                let city_id = 0;
                 if (jobSeekerLocationInput === null || jobSeekerLocationInput === void 0 ? void 0 : jobSeekerLocationInput.address) {
+                    if (jobSeekerLocationInput.city) {
+                        if (!jobSeekerLocationInput.state &&
+                            !jobSeekerLocationInput.country) {
+                            throw new customError_1.default("state and country required", this.StatusCode.HTTP_BAD_REQUEST);
+                        }
+                        const checkCountry = yield commonModel.getAllCountry({
+                            name: jobSeekerLocationInput.country,
+                        });
+                        if (!checkCountry.length) {
+                            throw new customError_1.default("Service not available in this country", this.StatusCode.HTTP_BAD_REQUEST);
+                        }
+                        let stateId = 0;
+                        const checkState = yield commonModel.getAllStates({
+                            country_id: checkCountry[0].id,
+                            name: jobSeekerLocationInput.state,
+                        });
+                        if (!checkState.length) {
+                            const state = yield commonModel.createState({
+                                country_id: checkCountry[0].id,
+                                name: jobSeekerLocationInput.state,
+                            });
+                            stateId = state[0].id;
+                        }
+                        else {
+                            stateId = checkState[0].id;
+                        }
+                        const checkCity = yield commonModel.getAllCity({
+                            country_id: checkCountry[0].id,
+                            state_id: stateId,
+                            name: jobSeekerLocationInput.city,
+                        });
+                        if (!checkCity.length) {
+                            const city = yield commonModel.createCity({
+                                country_id: checkCountry[0].id,
+                                state_id: stateId,
+                                name: jobSeekerLocationInput.city,
+                            });
+                            city_id = city[0].id;
+                        }
+                        else {
+                            city_id = checkCity[0].id;
+                        }
+                    }
                     const [locationRecord] = yield commonModel.createLocation({
+                        city_id,
                         address: jobSeekerLocationInput.address,
                         longitude: jobSeekerLocationInput.longitude,
                         latitude: jobSeekerLocationInput.latitude,

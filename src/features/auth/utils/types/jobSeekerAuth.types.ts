@@ -43,7 +43,9 @@ export interface IJobSeekerUserBody {
 }
 
 export interface IJobSeekerLocationInfo {
-	city_id?: number;
+	city?: string;
+	state: string;
+	country: string;
 	name?: string;
 	address?: string;
 	longitude?: number;

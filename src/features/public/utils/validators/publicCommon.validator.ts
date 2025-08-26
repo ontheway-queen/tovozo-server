@@ -213,6 +213,9 @@ export default class PublicCommonValidator {
 			// city_id: Joi.number().integer().required(),
 			// name: Joi.string().max(100).required(),
 			address: Joi.string().optional(),
+			city: Joi.string().max(100).optional(),
+			country: Joi.string().max(100).optional(),
+			state: Joi.string().max(100).optional(),
 			longitude: Joi.number().precision(6).optional(),
 			latitude: Joi.number().precision(6).optional(),
 			// postal_code: Joi.string().max(20).optional(),
@@ -276,7 +279,7 @@ export default class PublicCommonValidator {
 		organization_address: Joi.object({
 			city: Joi.string().max(255).required(),
 			state: Joi.string().max(255).required(),
-			country_id: Joi.number().positive().integer().required(),
+			country: Joi.string().max(255).required(),
 			address: Joi.string().optional(),
 			longitude: Joi.number().precision(6).optional(),
 			latitude: Joi.number().precision(6).optional(),
