@@ -25,13 +25,16 @@ CREATE TABLE IF NOT EXISTS jobSeeker.job_seeker (
     nationality VARCHAR(255),
     address TEXT,
     location_id INT,
-    work_permit BOOLEAN,
+    work_permit VARCHAR(255),
+    passport_copy VARCHAR(255),
+    visa_copy VARCHAR(255),
+    id_copy VARCHAR(255),
+    is_2fa_on BOOLEAN DEFAULT false,
     account_status jobSeeker.job_seeker_account_status DEFAULT 'Pending',
-    criminal_convictions BOOLEAN,
-    stripe_acc_id VARCHAR(255),
-    FOREIGN KEY (user_id) REFERENCES dbo."user" (id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES dbo."user" (id)
 );
 
+<<<<<<< HEAD
 ALTER TABLE jobSeeker.job_seeker ADD is_completed BOOLEAN DEFAULT false;
 ALTER TABLE jobSeeker.job_seeker ADD completed_at TIMESTAMP;
 ALTER TABLE jobSeeker.job_seeker ADD final_completed BOOLEAN DEFAULT false;
@@ -99,6 +102,24 @@ CREATE TABLE IF NOT EXISTS jobSeeker.job_seeker_info (
 --     payment_status dbo.payment_status DEFAULT 'PENDING',
 -- );
 
+=======
+CREATE TABLE jobSeeker.job_seeker_bank_details (
+    id SERIAL PRIMARY KEY,
+    job_seeker_id INT NOT NULL REFERENCES jobSeeker.job_seeker(user_id),
+    bank_name VARCHAR(255),
+    account_name VARCHAR(255) NOT NULL,
+    account_number VARCHAR(50) NOT NULL,
+    bank_code VARCHAR(50) NOT NULL,
+    routing_number VARCHAR(50),
+    swift_code VARCHAR(50),
+    is_primary BOOLEAN DEFAULT true,
+    is_deleted BOOLEAN DEFAULT false,
+    created_at TIMESTAMP DEFAULT now(),
+    updated_at TIMESTAMP DEFAULT now(),
+    UNIQUE(job_seeker_id, account_number)
+);
+
+>>>>>>> barat
 
 -- Job Seeker Auth View
 CREATE OR REPLACE VIEW jobSeeker.job_seeker_auth_view AS
@@ -117,7 +138,6 @@ SELECT
     js.nationality,
     js.work_permit,
     js.account_status,
-    js.criminal_convictions,
     js.is_2fa_on
 FROM dbo."user" u
 JOIN jobSeeker.job_seeker js ON u.id = js.user_id
@@ -140,6 +160,7 @@ CREATE OR REPLACE VIEW jobseeker.vw_full_job_seeker_profile
     js.nationality,
     js.work_permit,
     js.account_status,
+<<<<<<< HEAD
     js.is_completed,
     js.completed_at,
     js.final_completed,
@@ -147,6 +168,11 @@ CREATE OR REPLACE VIEW jobseeker.vw_full_job_seeker_profile
     js.final_completed_by,
     js.stripe_acc_id,
     js.criminal_convictions,
+=======
+    js.passport_copy,
+    js.visa_copy,
+    js.id_copy,
+>>>>>>> barat
     loc.id AS home_location_id,
     loc.city_id AS home_city_id,
     loc.name AS home_location_name,
@@ -159,37 +185,17 @@ CREATE OR REPLACE VIEW jobseeker.vw_full_job_seeker_profile
     loc.is_home_address,
     loc.created_at AS home_created_at,
     loc.updated_at AS home_updated_at,
-    jsi.hospitality_exp,
-    jsi.languages,
-    jsi.hospitality_certifications,
-    jsi.medical_condition,
-    jsi.dietary_restrictions,
-    jsi.work_start,
-    jsi.certifications,
-    jsi.reference,
-    jsi.resume,
-    jsi.training_program_interested,
-    jsi.start_working,
-    jsi.hours_available,
-    jsi.comment,
-    jsi.passport_copy,
-    jsi.visa_copy,
-    jsi.id_copy,
-    ( SELECT COALESCE(json_agg(json_build_object('id', j.id, 'title', j.title, 'details', j.details)), '[]'::json) AS "coalesce"
-           FROM jobseeker.job_preferences jp
-             JOIN dbo.jobs j ON jp.job_id = j.id
-          WHERE jp.job_seeker_id = js.user_id) AS job_preferences,
-    ( SELECT COALESCE(json_agg(json_build_object('location_id', jl.location_id, 'city_id', l.city_id, 'name', l.name, 'address', l.address, 'longitude', l.longitude, 'latitude', l.latitude, 'type', l.type, 'postal_code', l.postal_code, 'status', l.status, 'is_home_address', l.is_home_address, 'created_at', l.created_at, 'updated_at', l.updated_at)), '[]'::json) AS "coalesce"
-           FROM jobseeker.job_locations jl
-             JOIN dbo.location l ON jl.location_id = l.id
-          WHERE jl.job_seeker_id = js.user_id) AS job_locations,
-    ( SELECT COALESCE(json_agg(jsf.shift), '[]'::json) AS "coalesce"
-           FROM jobseeker.job_shifting jsf
-          WHERE jsf.job_seeker_id = js.user_id) AS job_shifts
+    bd.id AS bank_id,
+    bd.account_name,
+    bd.account_number,
+    bd.is_primary AS bank_is_primary,
+    bd.created_at AS bank_created_at,
+    bd.updated_at AS bank_updated_at
    FROM dbo."user" u
      JOIN jobseeker.job_seeker js ON u.id = js.user_id
      LEFT JOIN dbo.location loc ON js.location_id = loc.id AND loc.is_home_address = true
-     LEFT JOIN jobseeker.job_seeker_info jsi ON js.user_id = jsi.job_seeker_id
+     LEFT JOIN jobSeeker.job_seeker_bank_details bd 
+    ON js.user_id = bd.job_seeker_id AND bd.is_primary = true
   WHERE u.is_deleted = false;
 
 -------------------------------------------------------------------------------------------------

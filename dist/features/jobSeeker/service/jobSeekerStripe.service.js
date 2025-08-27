@@ -112,6 +112,7 @@ class JobSeekerStripeService extends abstract_service_1.default {
                     message: "Stripe account not eligible. Account has been deleted. Please onboard again.",
                 };
             }
+<<<<<<< HEAD
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const jobSeekerModel = this.Model.jobSeekerModel(trx);
                 yield jobSeekerModel.addStripePayoutAccount({
@@ -133,6 +134,13 @@ class JobSeekerStripeService extends abstract_service_1.default {
                     message: "Onboarding completed successfully",
                 };
             }));
+=======
+            return {
+                success: true,
+                code: this.StatusCode.HTTP_OK,
+                message: "Onboarding completed successfully",
+            };
+>>>>>>> barat
         });
     }
     loginStripeAccount(req) {

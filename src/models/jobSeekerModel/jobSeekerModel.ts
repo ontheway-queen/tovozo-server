@@ -104,7 +104,10 @@ export default class JobSeekerModel extends Schema {
 					qb.andWhere("user_id", user_id);
 				}
 				if (name) {
-					qb.andWhereILike("name", `%${name}%`).orWhere("email", name);
+					qb.andWhereILike("name", `%${name}%`).orWhere(
+						"email",
+						name
+					);
 				}
 				if (status) {
 					qb.andWhere("account_status", status);
@@ -118,7 +121,10 @@ export default class JobSeekerModel extends Schema {
 				) {
 					qb.andWhere((subQb) => {
 						subQb
-							.where("ja.status", JOB_APPLICATION_STATUS.COMPLETED)
+							.where(
+								"ja.status",
+								JOB_APPLICATION_STATUS.COMPLETED
+							)
 							.orWhereNull("ja.job_seeker_id");
 					});
 				}
@@ -140,7 +146,9 @@ export default class JobSeekerModel extends Schema {
 				}
 				if (name) {
 					qb.andWhere((subQb) => {
-						subQb.whereILike("name", `%${name}%`).orWhere("email", name);
+						subQb
+							.whereILike("name", `%${name}%`)
+							.orWhere("email", name);
 					});
 				}
 				if (status) {
@@ -155,7 +163,10 @@ export default class JobSeekerModel extends Schema {
 				) {
 					qb.andWhere((subQb) => {
 						subQb
-							.where("ja.status", JOB_APPLICATION_STATUS.COMPLETED)
+							.where(
+								"ja.status",
+								JOB_APPLICATION_STATUS.COMPLETED
+							)
 							.orWhereNull("ja.job_seeker_id");
 					});
 				}
@@ -192,18 +203,13 @@ export default class JobSeekerModel extends Schema {
 				"completed_at",
 				"final_completed",
 				"final_completed_at",
-				"stripe_acc_id",
 				"home_location_id",
 				"home_location_name",
 				"home_address",
 				"home_postal_code",
 				"home_status",
 				"is_home_address",
-				"languages",
-				"passport_copy",
-				"visa_copy",
-				"id_copy",
-				"job_locations"
+				"id_copy"
 			)
 			.where("user_id", where.user_id)
 			.first();
@@ -217,7 +223,11 @@ export default class JobSeekerModel extends Schema {
 				"j.title",
 				"j.details"
 			)
-			.leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
+			.leftJoin(
+				"job_post_details as jpd",
+				"jpd.id",
+				"ja.job_post_details_id"
+			)
 			.leftJoin("jobs as j", "jpd.job_id", "j.id")
 			.where("ja.job_seeker_id", where.user_id);
 
@@ -238,198 +248,37 @@ export default class JobSeekerModel extends Schema {
 			.del();
 	}
 
-	public async setJobPreferences(
-		payload: IJobPreferencePayload | IJobPreferencePayload[]
-	) {
-		return await this.db("job_preferences")
-			.withSchema(this.JOB_SEEKER)
-			.insert(payload);
-	}
-
-	public async setJobLocations(
-		payload: IJobLocationPayload | IJobLocationPayload[]
-	) {
-		return await this.db("job_locations")
-			.withSchema(this.JOB_SEEKER)
-			.insert(payload);
-	}
-
-	public async updateJobLocations(
-		payload: Partial<IUpdateJobSeekerPayload>,
-		query: {
-			job_seeker_id: number;
-			location_id: number;
-		}
-	) {
-		return await this.db("job_locations")
-			.withSchema(this.JOB_SEEKER)
-			.update(payload)
-			.where((qb) => {
-				if (query.job_seeker_id) {
-					qb.andWhere("job_seeker_id", query.job_seeker_id);
-				}
-				if (query.location_id) {
-					qb.andWhere("location_id", query.location_id);
-				}
-			});
-	}
-
-	public async setJobShifting(payload: IJobShiftPayload | IJobShiftPayload[]) {
-		return await this.db("job_shifting")
-			.withSchema(this.JOB_SEEKER)
-			.insert(payload);
-	}
-
-	public async getJobPreferences(
-		job_seeker_id: number
-	): Promise<IGetJobPreference[]> {
-		return await this.db("job_preferences AS jp")
-			.withSchema(this.JOB_SEEKER)
-			.select("jp.*", "j.title")
-			.joinRaw("LEFT JOIN dbo.jobs j ON jp.job_id = j.id")
-			.where({ job_seeker_id });
-	}
-
-	public async getSingleJobPreference(query: {
+	// add bank details
+	public async addBankDetails(payload: {
 		job_seeker_id: number;
-		job_id: number;
-	}): Promise<IGetJobPreference> {
-		return await this.db("job_preferences AS jp")
-			.withSchema(this.JOB_SEEKER)
-			.select("jp.*", "j.title")
-			.joinRaw("LEFT JOIN dbo.jobs j ON jp.job_id = j.id")
-			.where((qb) => {
-				if (query.job_seeker_id) {
-					qb.andWhere({ job_seeker_id: query.job_seeker_id });
-				}
-				if (query.job_id) {
-					qb.andWhere({ job_id: query.job_id });
-				}
-			})
-			.first();
-	}
-
-	public async deleteJobPreferences(query: {
-		job_seeker_id: number;
-		job_ids: number[];
+		account_name: string;
+		account_number: string;
+		bank_code: string;
 	}) {
-		return await this.db("job_preferences AS jp")
+		return await this.db("job_seeker_bank_details")
 			.withSchema(this.JOB_SEEKER)
-			.del()
-			.where((qb) => {
-				if (query.job_seeker_id) {
-					qb.andWhere({ job_seeker_id: query.job_seeker_id });
-				}
-				if (query.job_ids) {
-					qb.whereIn("job_id", query.job_ids);
-				}
-			});
+			.insert(payload, "id");
 	}
 
-	public async getJobLocations(job_seeker_id: number) {
-		return await this.db("job_locations AS jl")
+	// check primary account
+	public async getBankAccounts(where: { id?: number; is_primary?: boolean }) {
+		return await this.db("job_seeker_bank_details as jsbd")
 			.withSchema(this.JOB_SEEKER)
 			.select(
-				"jl.*",
-				"l.name as location_name",
-				"l.address as location_address"
+				"jsbd.id",
+				"jsbd.job_seeker_id",
+				"jsbd.account_name",
+				"jsbd.account_number",
+				"jsbd.bank_code",
+				"jsbd.is_primary"
 			)
-			.joinRaw("LEFT JOIN dbo.location l ON jl.location_id = l.id")
-			.where({ job_seeker_id });
-	}
-
-	public async deleteJobLocations(query: {
-		job_seeker_id: number;
-		location_ids: number[];
-	}) {
-		return await this.db("job_locations")
-			.withSchema(this.JOB_SEEKER)
-			.del()
-			.where((qb) => {
-				qb.andWhere({ is_home_address: false });
-				if (query.job_seeker_id) {
-					qb.andWhere({ job_seeker_id: query.job_seeker_id });
-				}
-				if (query.location_ids) {
-					qb.whereIn("location_id", query.location_ids);
-				}
-			});
-	}
-
-	public async getJobShifting(job_seeker_id: number) {
-		return await this.db("job_shifting")
-			.withSchema(this.JOB_SEEKER)
-			.select("*")
-			.where({ job_seeker_id });
-	}
-
-	public async getSingleJobShift(query: {
-		job_seeker_id: number;
-		shift?: string;
-	}) {
-		return await this.db("job_shifting")
-			.withSchema(this.JOB_SEEKER)
-			.select("*")
-			.where((qb) => {
-				if (query.job_seeker_id) {
-					qb.andWhere({ job_seeker_id: query.job_seeker_id });
-				}
-				if (query.shift) {
-					qb.andWhere({ shift: query.shift });
+			.where("jsbd.job_seeker_id", where.id)
+			.modify((qb) => {
+				if (where.is_primary) {
+					qb.andWhere("jsbd.is_primary", where.is_primary);
 				}
 			})
-			.first();
-	}
-
-	public async deleteJobShifting(query: {
-		job_seeker_id: number;
-		name?: string[];
-	}) {
-		return await this.db("job_shifting")
-			.withSchema(this.JOB_SEEKER)
-			.del()
-			.where((qb) => {
-				if (query.job_seeker_id) {
-					qb.andWhere({ job_seeker_id: query.job_seeker_id });
-				}
-				if (query.name) {
-					qb.whereIn("shift", query.name);
-				}
-			});
-	}
-
-	public async createJobSeekerInfo(payload: IJobSeekerInfoPayload) {
-		return await this.db("job_seeker_info")
-			.withSchema(this.JOB_SEEKER)
-			.insert(payload);
-	}
-
-	public async updateJobSeekerInfo(
-		payload: Partial<IJobSeekerInfoPayload>,
-		query: {
-			job_seeker_id: number;
-		}
-	) {
-		return await this.db("job_seeker_info")
-			.withSchema(this.JOB_SEEKER)
-			.update(payload)
-			.where((qb) => {
-				if (query.job_seeker_id) {
-					qb.andWhere({ job_seeker_id: query.job_seeker_id });
-				}
-			});
-	}
-
-	public async getJobSeekerInfo(query: { job_seeker_id: number }) {
-		return await this.db("job_seeker_info")
-			.withSchema(this.JOB_SEEKER)
-			.select("*")
-			.where((qb) => {
-				if (query.job_seeker_id) {
-					qb.andWhere({ job_seeker_id: query.job_seeker_id });
-				}
-			})
-			.first();
+			.andWhere("jsbd.is_deleted", false);
 	}
 
 	public async getJobSeekerLocation(query: { name?: string }): Promise<
@@ -468,19 +317,5 @@ export default class JobSeekerModel extends Schema {
 					qb.andWhereILike("u.name", `%${name}%`);
 				}
 			});
-	}
-
-	// Add Strie Payout Account
-	public async addStripePayoutAccount({
-		user_id,
-		stripe_acc_id,
-	}: {
-		user_id: number;
-		stripe_acc_id: string;
-	}) {
-		return await this.db("job_seeker")
-			.withSchema(this.JOB_SEEKER)
-			.update({ stripe_acc_id, is_complete: true, completed_at: new Date() })
-			.where({ user_id });
 	}
 }

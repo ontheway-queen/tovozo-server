@@ -45,7 +45,9 @@ class Uploader extends abstract_storatge_1.default {
                         cb(null, true); // no errors
                     }
                     else {
-                        cb(new Error("File mimetype is not allowed" + " for " + file.fieldname));
+                        cb(new Error("File mimetype is not allowed" +
+                            " for " +
+                            file.fieldname));
                     }
                 },
             });

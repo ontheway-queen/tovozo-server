@@ -38,16 +38,6 @@ CREATE TABLE hotelier.organization_photos (
     CONSTRAINT fk_org_photo FOREIGN KEY (organization_id) REFERENCES hotelier.organization(id) ON DELETE CASCADE
 );
 
--- Organization amenities
-CREATE TABLE hotelier.organization_amenities (
-    id SERIAL PRIMARY KEY,
-    organization_id INTEGER NOT NULL,
-    amenity VARCHAR(255) NOT NULL,
-    CONSTRAINT fk_org_amenity FOREIGN KEY (organization_id) REFERENCES hotelier.organization(id) ON DELETE CASCADE
-);
-
-
-
 --  hotelier auth view
 -- DROP VIEW hotelier.vw_hotelier_auth;
 
@@ -85,18 +75,9 @@ SELECT
 
 FROM dbo."user" u
 INNER JOIN hotelier.organization o ON o.user_id = u.id
-LEFT JOIN hotelier.maintenance_designation md ON md.user_id = u.id
 LEFT JOIN dbo.location l ON l.id = o.location_id
 WHERE u.is_deleted = false;
 
 
 ALTER TABLE hotelier.vw_hotelier_auth
     OWNER TO postgres;
-
-
-CREATE TABLE IF NOT EXISTS hotelier.maintenance_designation(
-    id serial PRIMARY key,
-    designation VARCHAR(500) not null,
-    user_id integer not null,
-    CONSTRAINT fk_hotelier_maintenance FOREIGN KEY(user_id) REFERENCES dbo.user(id)
-);

@@ -7,10 +7,13 @@ export interface ICreateJobSeekerPayload {
 	gender?: IGenderType;
 	nationality: number;
 	address?: string;
-	work_permit?: boolean;
+	work_permit?: string;
 	account_status?: string;
 	criminal_convictions?: boolean;
 	location_id?: number;
+	visa_copy?: string;
+	id_copy?: string;
+	passport_copy?: string;
 }
 
 export interface IUpdateJobSeekerPayload

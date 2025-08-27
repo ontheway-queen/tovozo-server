@@ -41,16 +41,8 @@ class JobSeekerAuthService extends abstract_service_1.default {
                 const parseInput = (key) => lib_1.default.safeParseJSON(req.body[key]) || {};
                 const userInput = parseInput("user");
                 const jobSeekerInput = parseInput("job_seeker");
-                const jobSeekerInfoInput = parseInput("job_seeker_info");
                 const jobSeekerLocationInput = parseInput("own_address");
-                const validFileFields = [
-                    "visa_copy",
-                    "id_copy",
-                    "photo",
-                    "passport_copy",
-                ];
-                let hasIdCopy = false;
-                let hasVisaCopy = false;
+                const validFileFields = ["id_copy", "photo"];
                 files.forEach(({ fieldname, filename }) => {
                     if (!validFileFields.includes(fieldname)) {
                         throw new customError_1.default(this.ResMsg.UNKNOWN_FILE_FIELD, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
@@ -59,6 +51,7 @@ class JobSeekerAuthService extends abstract_service_1.default {
                         userInput.photo = filename;
                     }
                     else {
+<<<<<<< HEAD
                         if (fieldname === "id_copy")
                             hasIdCopy = true;
                         if (fieldname === "visa_copy")
@@ -79,6 +72,13 @@ class JobSeekerAuthService extends abstract_service_1.default {
                 // 		this.StatusCode.HTTP_BAD_REQUEST
                 // 	);
                 // }
+=======
+                        if (fieldname === "id_copy") {
+                            jobSeekerInput.id_copy = filename;
+                        }
+                    }
+                });
+>>>>>>> barat
                 const { email, phone_number, password } = userInput, restUserData = __rest(userInput, ["email", "phone_number", "password"]);
                 const userModel = this.Model.UserModel(trx);
                 const jobSeekerModel = this.Model.jobSeekerModel(trx);
@@ -169,7 +169,6 @@ class JobSeekerAuthService extends abstract_service_1.default {
                     locationId = locationRecord.id;
                 }
                 yield jobSeekerModel.createJobSeeker(Object.assign(Object.assign({}, jobSeekerInput), { user_id: jobSeekerId, location_id: locationId }));
-                yield jobSeekerModel.createJobSeekerInfo(Object.assign(Object.assign({}, jobSeekerInfoInput), { job_seeker_id: jobSeekerId }));
                 const tokenPayload = {
                     user_id: jobSeekerId,
                     name: userInput.name,

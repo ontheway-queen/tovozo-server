@@ -70,4 +70,6 @@ export interface IJobSeekerNationalityBody {
 	final_completed?: boolean;
 	final_completed_at?: string;
 	final_completed_by?: number;
+	id_copy?: string;
+	work_permit?: string;
 }
