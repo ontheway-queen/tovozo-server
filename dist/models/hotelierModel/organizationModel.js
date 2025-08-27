@@ -42,7 +42,7 @@ class OrganizationModel extends schema_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("organization as org")
                 .withSchema(this.HOTELIER)
-                .select("org.id", "org.name", "org.user_id", "org.details", "org.status", "org.is_deleted", "org.is_2fa_on", "org.location_id", "org_photo.file as photo", "l.longitude", "l.latitude")
+                .select("org.id", "org.name", "org.user_id", "org.details", "org.status", "org.is_deleted", "org.is_2fa_on", "org.location_id", "org_photo.file as photo", "l.address", "l.longitude", "l.latitude")
                 .joinRaw(`LEFT JOIN ?? as l ON l.id = org.location_id`, [
                 `${this.DBO_SCHEMA}.${this.TABLES.location}`,
             ])

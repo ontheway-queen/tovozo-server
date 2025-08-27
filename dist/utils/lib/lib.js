@@ -43,7 +43,10 @@ const path_1 = __importDefault(require("path"));
 const config_1 = __importDefault(require("../../app/config"));
 const commonModel_1 = __importDefault(require("../../models/commonModel/commonModel"));
 const admin = __importStar(require("firebase-admin"));
+const pdfkit_1 = __importDefault(require("pdfkit"));
 const dotenv_1 = __importDefault(require("dotenv"));
+const stripe_1 = require("../miscellaneous/stripe");
+const puppeteer_1 = __importDefault(require("puppeteer"));
 dotenv_1.default.config();
 const serviceAccount = require("../../../fcm_tovozo.json");
 class Lib {
@@ -73,6 +76,30 @@ class Lib {
             catch (err) {
                 console.log({ err });
                 return false;
+            }
+        });
+    }
+    static generateHtmlToPdfBuffer(html) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const browser = yield puppeteer_1.default.launch({
+                headless: true,
+                // executablePath: "/snap/bin/chromium",
+                args: ["--no-sandbox", "--disable-setuid-sandbox"],
+            });
+            try {
+                const page = yield browser.newPage();
+                yield page.setViewport({ width: 1280, height: 800 });
+                yield page.setContent(html, {
+                    waitUntil: ["load", "domcontentloaded", "networkidle0"],
+                });
+                const pdfUint8Array = yield page.pdf({
+                    format: "A4",
+                    printBackground: true,
+                });
+                return Buffer.from(pdfUint8Array);
+            }
+            finally {
+                yield browser.close();
             }
         });
     }
@@ -253,6 +280,75 @@ class Lib {
                 console.error("🚫 error", error);
                 return null;
             }
+        });
+    }
+    static generateInvoicePDF(paymentPayload, jobPost, hotelier) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => {
+                var _a;
+                const invoicesDir = path_1.default.join(__dirname, "../../../invoices");
+                // Ensure invoices folder exists
+                if (!fs_1.default.existsSync(invoicesDir)) {
+                    fs_1.default.mkdirSync(invoicesDir, { recursive: true });
+                }
+                const filePath = path_1.default.join(invoicesDir, `${paymentPayload.payment_no}.pdf`);
+                const doc = new pdfkit_1.default();
+                const stream = fs_1.default.createWriteStream(filePath);
+                doc.pipe(stream);
+                doc.fontSize(20).text("Task Completion Invoice", {
+                    align: "center",
+                });
+                doc.moveDown();
+                doc.fontSize(12).text(`Hotelier: ${hotelier[0].name}`);
+                doc.text(`Email: ${hotelier[0].email}`);
+                doc.moveDown();
+                doc.text(`Job Post: ${jobPost.title}`);
+                doc.text(`Payment ID: ${paymentPayload.payment_no}`);
+                doc.text(`Working Hours: ${(_a = paymentPayload.total_working_hours) !== null && _a !== void 0 ? _a : "N/A"}`);
+                doc.moveDown();
+                doc.text(`Total Amount: $${paymentPayload.total_amount}`);
+                doc.text(`Job Seeker Pay: $${paymentPayload.job_seeker_pay}`);
+                doc.text(`Platform Fee: $${paymentPayload.platform_fee}`);
+                doc.text(`Transaction Fee: $${paymentPayload.trx_fee}`);
+                doc.moveDown();
+                console.log({ link: paymentPayload.paymentLink });
+                const paymentLink = paymentPayload.paymentLink;
+                doc.fontSize(14).fillColor("blue").text("Click here to pay", {
+                    link: paymentLink,
+                    underline: true,
+                });
+                doc.end();
+                stream.on("finish", () => resolve(filePath));
+                stream.on("error", reject);
+            });
+        });
+    }
+    static generatePaymentLink(query) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { id, priceId, job_seeker_id, job_title, job_seeker_name, user_id, } = query;
+            const paymentLink = yield stripe_1.stripe.paymentLinks.create({
+                line_items: [
+                    {
+                        price: priceId,
+                        quantity: 1,
+                    },
+                ],
+                metadata: {
+                    id,
+                    job_seeker_id,
+                    job_title,
+                    job_seeker_name,
+                    paid_by: user_id,
+                },
+                after_completion: {
+                    type: "redirect",
+                    redirect: {
+                        url: `${config_1.default.BASE_URL}/hotelier/payment/verify-checkout-session?session_id={CHECKOUT_SESSION_ID}`,
+                    },
+                },
+            });
+            console.log({ abcLink: paymentLink.url });
+            return paymentLink.url;
         });
     }
 }

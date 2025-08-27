@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
 import config from "../../../app/config";
@@ -12,13 +13,16 @@ import {
 	PAYMENT_TYPE,
 	USER_TYPE,
 } from "../../../utils/miscellaneous/constants";
-import { stripe } from "../../../utils/miscellaneous/stripe";
 import {
 	NotificationTypeEnum,
 	TypeEmitNotificationEnum,
 } from "../../../utils/modelTypes/common/commonModelTypes";
 import { IPaymentUpdate } from "../../../utils/modelTypes/payment/paymentModelTypes";
 import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
+import {
+	hotelierInvoiceTemplate,
+	jobSeekerInvoiceTemplate,
+} from "../../../utils/templates/invoiceTemplate";
 
 export default class PaymentService extends AbstractServices {
 	constructor() {
@@ -93,10 +97,6 @@ export default class PaymentService extends AbstractServices {
 					this.StatusCode.HTTP_CONFLICT
 				);
 			}
-			// const loginLink = await stripe.accounts.createLoginLink(
-			// 	"acct_1RsFUAED98rhPWLe"
-			// );
-			// console.log("Login Link:", loginLink.url);
 
 			const total_amount = Number(payment.total_amount);
 			const jobSeekerPay = Number(payment.job_seeker_pay);
@@ -153,10 +153,9 @@ export default class PaymentService extends AbstractServices {
 	}
 
 	public async verifyCheckoutSession(req: Request) {
-		const { user_id } = req.hotelier;
 		return await this.db.transaction(async (trx) => {
 			const sessionId = req.query.session_id as string;
-			const { user_id } = req.hotelier;
+			const { user_id, email } = req.hotelier;
 			if (!user_id) {
 				throw new CustomError(
 					"Hotelier ID is required",
@@ -275,7 +274,7 @@ export default class PaymentService extends AbstractServices {
 					job_seeker_id: Number(paymentIntent.metadata.job_seeker_id),
 					status: JOB_APPLICATION_STATUS.COMPLETED,
 				});
-			await jobPostModel.updateJobPostDetailsStatus({
+			const jobPost = await jobPostModel.updateJobPostDetailsStatus({
 				id: updatedApplication.job_post_details_id,
 				status: JOB_POST_DETAILS_STATUS.Completed,
 			});
@@ -349,6 +348,65 @@ export default class PaymentService extends AbstractServices {
 					});
 				}
 			}
+
+			// pdf for hotelier
+			const hotelierPdfBuffer = await Lib.generateHtmlToPdfBuffer(
+				hotelierInvoiceTemplate({
+					to: email,
+					address: organization.address as string,
+					invoice_no: payment.payment_no,
+					date: dayjs().format("DD/MM/YYYY"),
+					amount: payment.total_amount,
+					customer: organization.name,
+					authorize: "TOVOZO",
+				})
+			);
+
+			await Lib.sendEmailDefault({
+				email,
+				emailSub: `Invoice ${payment.payment_no} for Job ${
+					jobPost[0].job_post_title
+				} - ${new Date().toLocaleDateString()}`,
+				emailBody: `Attached is your invoice ${payment.payment_no} for the job "${jobPost[0].job_post_title}".
+Total Amount: $${payment.total_amount}.`,
+				attachments: [
+					{
+						filename: `${payment.payment_no}.pdf`,
+						content: hotelierPdfBuffer,
+						contentType: "application/pdf",
+					},
+				],
+			});
+			console.log({ jobseeker });
+
+			// pdf for job seeker
+			const jobseekerPdfBuffer = await Lib.generateHtmlToPdfBuffer(
+				jobSeekerInvoiceTemplate({
+					to: "mehedihassan.m360ict@gmail.com",
+					address: "This is test job seeker address",
+					invoice_no: payment.payment_no,
+					date: dayjs().format("DD/MM/YYYY"),
+					amount: payment.job_seeker_pay,
+					customer: jobseeker[0].name,
+					authorize: "TOVOZO",
+				})
+			);
+
+			await Lib.sendEmailDefault({
+				email: "mehedihassan.m360ict@gmail.com",
+				emailSub: `Invoice ${payment.payment_no} for Job ${
+					jobPost[0].job_post_title
+				} - ${new Date().toLocaleDateString()}`,
+				emailBody: `Attached is your invoice ${payment.payment_no} for the job "${jobPost[0].job_post_title}".
+Total Amount: $${payment.job_seeker_pay}.`,
+				attachments: [
+					{
+						filename: `${payment.payment_no}.pdf`,
+						content: jobseekerPdfBuffer,
+						contentType: "application/pdf",
+					},
+				],
+			});
 
 			return {
 				success: true,

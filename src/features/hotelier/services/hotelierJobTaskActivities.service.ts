@@ -367,10 +367,10 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 	};
 
 	public approveEndJobTaskActivity = async (req: Request) => {
-		const id = req.params.id;
-		console.log({ id });
-		const { user_id } = req.hotelier;
 		return await this.db.transaction(async (trx) => {
+			const id = req.params.id;
+			console.log({ data: req.hotelier });
+			const { user_id, email, username } = req.hotelier;
 			const userModel = this.Model.UserModel(trx);
 			const paymentModel = this.Model.paymnentModel(trx);
 			const jobPostModel = this.Model.jobPostModel(trx);
@@ -384,7 +384,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 			});
 			if (hotelier && hotelier.length < 1) {
 				throw new CustomError(
-					"Organization nor found!",
+					"Organization not found!",
 					this.StatusCode.HTTP_NOT_FOUND
 				);
 			}
@@ -393,7 +393,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 				await jobTaskActivitiesModel.getSingleTaskActivity({
 					id: Number(id),
 				});
-			console.log({ taskActivity });
+
 			if (
 				taskActivity.application_status !==
 				JOB_APPLICATION_STATUS.IN_PROGRESS
@@ -446,7 +446,6 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 			const jobSeekerPayRate = Number(jobPost.job_seeker_pay);
 			const platformFeeRate = Number(jobPost.platform_fee);
 
-			// Transaction fee (e.g., 2.9% + 0.30)
 			const feePercentage = 0.029;
 			const fixedFee = 0.3;
 
@@ -454,11 +453,10 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 				(totalWorkingHours * hourlyRate).toFixed(2)
 			);
 
-			const totalAmount = Number(
-				((baseAmount + fixedFee) / (1 - feePercentage)).toFixed(2)
-			);
+			const totalAmount = baseAmount;
+
 			const transactionFee = Number(
-				(totalAmount - baseAmount).toFixed(2)
+				(baseAmount * feePercentage + fixedFee).toFixed(2)
 			);
 
 			const jobSeekerPay = Number(
@@ -469,9 +467,6 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 				(totalWorkingHours * platformFeeRate).toFixed(2)
 			);
 
-			console.log({ jobSeekerPay });
-			console.log({ platformFee });
-			console.log({ totalAmount });
 			const paymentPayload = {
 				application_id: application.job_application_id,
 				total_amount: totalAmount,
