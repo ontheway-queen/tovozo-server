@@ -94,7 +94,9 @@ class JobSeekerModel extends schema_1.default {
                 }
                 if (name) {
                     qb.andWhere((subQb) => {
-                        subQb.whereILike("name", `%${name}%`).orWhere("email", name);
+                        subQb
+                            .whereILike("name", `%${name}%`)
+                            .orWhere("email", name);
                     });
                 }
                 if (status) {
@@ -124,11 +126,7 @@ class JobSeekerModel extends schema_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             const profile = yield this.db("vw_full_job_seeker_profile")
                 .withSchema(this.JOB_SEEKER)
-<<<<<<< HEAD
-                .select("user_id", "email", "name", "phone_number", "photo", "user_status", "user_type", "user_created_at", "date_of_birth", "gender", "nationality", "work_permit", "account_status", "is_completed", "completed_at", "final_completed", "final_completed_at", "stripe_acc_id", "home_location_id", "home_location_name", "home_address", "home_postal_code", "home_status", "is_home_address", "languages", "passport_copy", "visa_copy", "id_copy", "job_locations")
-=======
-                .select("user_id", "email", "name", "phone_number", "photo", "user_status", "user_type", "user_created_at", "date_of_birth", "gender", "nationality", "work_permit", "account_status", "home_location_id", "home_location_name", "home_address", "home_postal_code", "home_status", "is_home_address", "id_copy")
->>>>>>> barat
+                .select("user_id", "email", "name", "phone_number", "photo", "user_status", "user_type", "user_created_at", "date_of_birth", "gender", "nationality", "work_permit", "account_status", "is_completed", "completed_at", "final_completed", "final_completed_at", "home_location_id", "home_location_name", "home_address", "home_postal_code", "home_status", "is_home_address", "id_copy")
                 .where("user_id", where.user_id)
                 .first();
             const appliedJobs = yield this.db("job_applications as ja")
@@ -196,17 +194,5 @@ class JobSeekerModel extends schema_1.default {
             });
         });
     }
-<<<<<<< HEAD
-    // Add Strie Payout Account
-    addStripePayoutAccount(_a) {
-        return __awaiter(this, arguments, void 0, function* ({ user_id, stripe_acc_id, }) {
-            return yield this.db("job_seeker")
-                .withSchema(this.JOB_SEEKER)
-                .update({ stripe_acc_id, is_complete: true, completed_at: new Date() })
-                .where({ user_id });
-        });
-    }
-=======
->>>>>>> barat
 }
 exports.default = JobSeekerModel;

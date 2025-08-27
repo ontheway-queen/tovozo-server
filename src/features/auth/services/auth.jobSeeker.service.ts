@@ -25,7 +25,7 @@ import {
 	IJobSeekerNationalityBody,
 	IJobSeekerUserBody,
 } from "../utils/types/jobSeekerAuth.types";
-import { sendEmailOtpTemplate } from "../../../utils/templates/sendEmailOtpTemplate";
+
 import { io } from "../../../app/socket";
 
 class JobSeekerAuthService extends AbstractServices {
@@ -47,7 +47,6 @@ class JobSeekerAuthService extends AbstractServices {
 			) as IJobSeekerLocationInfo;
 
 			const validFileFields = ["id_copy", "photo"];
-
 			files.forEach(({ fieldname, filename }) => {
 				if (!validFileFields.includes(fieldname)) {
 					throw new CustomError(
@@ -59,28 +58,8 @@ class JobSeekerAuthService extends AbstractServices {
 
 				if (fieldname === "photo") {
 					userInput.photo = filename;
-				} else {
-					if (fieldname === "id_copy") hasIdCopy = true;
-					if (fieldname === "visa_copy") hasVisaCopy = true;
-
-					jobSeekerInfoInput[fieldname as keyof IJobSeekerInfoBody] =
-						filename;
 				}
 			});
-
-			// Validate required docs
-			if (jobSeekerInput.nationality === BRITISH_ID && !hasIdCopy) {
-				throw new CustomError(
-					"id_copy required for British Nationality",
-					this.StatusCode.HTTP_BAD_REQUEST
-				);
-			}
-			if (jobSeekerInput.nationality !== BRITISH_ID && !hasVisaCopy) {
-				throw new CustomError(
-					"visa_copy required for non-British Nationality",
-					this.StatusCode.HTTP_BAD_REQUEST
-				);
-			}
 
 			const { email, phone_number, password, ...restUserData } =
 				userInput;

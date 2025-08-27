@@ -160,28 +160,12 @@ class PublicCommonValidator {
                 password: joi_1.default.string().min(8).max(100).required(),
                 phone_number: joi_1.default.string().min(7).max(20).optional(),
             }).required(),
-<<<<<<< HEAD
-            // job_seeker: Joi.object({
-            // 	// date_of_birth: Joi.date().required(),
-            // 	// gender: Joi.string().valid("Male", "Female", "Other").required(),
-            // 	nationality: Joi.number().integer().required(),
-            // 	// work_permit: Joi.boolean().required(),
-            // 	account_status: Joi.string()
-            // 		.valid(...USER_STATUS_ENUM)
-            // 		.default("Pending"),
-            // 	// criminal_convictions: Joi.boolean().required(),
-            // }).required(),
-            // passport_copy: Joi.string().max(255).allow("").optional(),
-            // id_copy: Joi.string().max(255).allow("").optional(),
-            // visa_copy: Joi.string().max(255).allow("").optional(),
-=======
             job_seeker: joi_1.default.object({
                 nationality: joi_1.default.number().integer().required(),
                 account_status: joi_1.default.string()
                     .valid(...constants_1.USER_STATUS_ENUM)
                     .default("Pending"),
             }).required(),
->>>>>>> barat
             own_address: joi_1.default.object({
                 address: joi_1.default.string().optional(),
                 city: joi_1.default.string().max(100).optional(),

@@ -39,11 +39,11 @@ class JobTaskActivitiesController extends abstract_controller_1.default {
             paramSchema: this.commonValidator.getSingleItemWithIdValidator,
             querySchema: this.validator.toogleTaskCompletion,
         }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _b = yield this.service.toggleTaskCompletionStatus(req), { code } = _b, data = __rest(_b, ["code"]);
+            const _a = yield this.service.toggleTaskCompletionStatus(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         this.endJobTaskActivity = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.getSingleItemWithIdValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _c = yield this.service.endJobTaskActivities(req), { code } = _c, data = __rest(_c, ["code"]);
+            const _a = yield this.service.endJobTaskActivities(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }

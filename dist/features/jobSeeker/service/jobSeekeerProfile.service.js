@@ -37,7 +37,8 @@ class JobSeekerProfileService extends abstract_service_1.default {
             const _a = yield jobSeekerModel.getJobSeekerDetails({
                 user_id,
             }), { applied_jobs } = _a, rest = __rest(_a, ["applied_jobs"]);
-            const isWaitingForApproval = applied_jobs === null || applied_jobs === void 0 ? void 0 : applied_jobs.filter((job) => job.application_status === constants_1.JOB_APPLICATION_STATUS.WaitingForApproval);
+            const isWaitingForApproval = applied_jobs === null || applied_jobs === void 0 ? void 0 : applied_jobs.filter((job) => job.application_status ===
+                constants_1.JOB_APPLICATION_STATUS.WaitingForApproval);
             return {
                 success: true,
                 code: this.StatusCode.HTTP_OK,
@@ -96,7 +97,8 @@ class JobSeekerProfileService extends abstract_service_1.default {
                 if (parsed.user && Object.keys(parsed.user).length > 0) {
                     updateTasks.push(userModel.updateProfile(parsed.user, { id: user_id }));
                 }
-                if (parsed.ownAddress && Object.keys(parsed.ownAddress).length > 0) {
+                if (parsed.ownAddress &&
+                    Object.keys(parsed.ownAddress).length > 0) {
                     updateTasks.push(commonModel.updateLocation(parsed.ownAddress, {
                         location_id: parsed.ownAddress.id,
                     }));

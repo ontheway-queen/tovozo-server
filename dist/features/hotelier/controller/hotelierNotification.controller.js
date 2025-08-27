@@ -36,13 +36,13 @@ class HotelierNotificationController extends abstract_controller_1.default {
         this.deleteNotification = this.asyncWrapper.wrap({
             querySchema: this.commonValidator.mutationNotificationValidator,
         }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _b = yield this.services.deleteNotification(req), { code } = _b, data = __rest(_b, ["code"]);
+            const _a = yield this.services.deleteNotification(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         this.readNotification = this.asyncWrapper.wrap({
             querySchema: this.commonValidator.mutationNotificationValidator,
         }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _c = yield this.services.readNotification(req), { code } = _c, data = __rest(_c, ["code"]);
+            const _a = yield this.services.readNotification(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }

@@ -37,19 +37,19 @@ class HotelierChatController extends abstract_controller_1.default {
             res.status(code).json(data);
         }));
         this.getSingleJobSeekerChatSession = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _b = yield this.service.getSingleJobSeekerChatSession(req), { code } = _b, data = __rest(_b, ["code"]);
+            const _a = yield this.service.getSingleJobSeekerChatSession(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         this.getMessages = this.asyncWrapper.wrap({ querySchema: this.validator.getMessagesValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _c = yield this.service.getMessages(req), { code } = _c, data = __rest(_c, ["code"]);
+            const _a = yield this.service.getMessages(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         this.sendMessage = this.asyncWrapper.wrap({ bodySchema: this.validator.sendMessageValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _d = yield this.service.sendMessage(req), { code } = _d, data = __rest(_d, ["code"]);
+            const _a = yield this.service.sendMessage(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         this.getSupportSession = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _e = yield this.service.getSupportSession(req), { code } = _e, data = __rest(_e, ["code"]);
+            const _a = yield this.service.getSupportSession(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }

@@ -20,13 +20,9 @@ const jobPostModel_1 = __importDefault(require("../../../models/hotelierModel/jo
 const userModel_1 = __importDefault(require("../../../models/userModel/userModel"));
 const customError_1 = __importDefault(require("../../../utils/lib/customError"));
 const lib_1 = __importDefault(require("../../../utils/lib/lib"));
-<<<<<<< HEAD
 const constants_1 = require("../../../utils/miscellaneous/constants");
 const commonModelTypes_1 = require("../../../utils/modelTypes/common/commonModelTypes");
 const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
-=======
-const jobSeekerModel_1 = __importDefault(require("../../../models/jobSeekerModel/jobSeekerModel"));
->>>>>>> barat
 class JobSeekerJobApplication extends abstract_service_1.default {
     constructor() {
         super();
@@ -38,30 +34,12 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 const jobPostModel = new jobPostModel_1.default(trx);
                 const jobSeekerModel = this.Model.jobSeekerModel(trx);
                 const cancellationLogModel = new cancellationLogModel_1.default(trx);
-                const jobSeekerModel = new jobSeekerModel_1.default(trx);
                 const jobSeeker = yield userModel.checkUser({
                     id: user_id,
                     type: userModelTypes_1.TypeUser.JOB_SEEKER,
                 });
                 if (jobSeeker && jobSeeker.length < 1) {
                     throw new customError_1.default("Job seeker not found!", this.StatusCode.HTTP_NOT_FOUND);
-                }
-<<<<<<< HEAD
-                const jobSeekerDetails = yield jobSeekerModel.getJobSeeker({
-                    user_id,
-                });
-                if (!jobSeekerDetails) {
-                    throw new customError_1.default("Job seeker not found!", this.StatusCode.HTTP_NOT_FOUND);
-                }
-                if (jobSeekerDetails.is_completed === false) {
-                    throw new customError_1.default("Please complete your profile first!", this.StatusCode.HTTP_BAD_REQUEST);
-=======
-                const isBankExists = yield jobSeekerModel.getBankAccounts({
-                    id: user_id,
-                });
-                if (isBankExists.length < 1) {
-                    throw new customError_1.default("Please provide your bank account details to continue with the application process.", this.StatusCode.HTTP_BAD_REQUEST);
->>>>>>> barat
                 }
                 const jobPost = yield jobPostModel.getSingleJobPostForJobSeeker(job_post_details_id);
                 if (!jobPost) {
@@ -84,10 +62,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 const existPendingApplication = yield model.getMyJobApplication({
                     job_seeker_id: user_id,
                 });
-<<<<<<< HEAD
                 //! Need to uncomment later.
-=======
->>>>>>> barat
                 if (existPendingApplication &&
                     (existPendingApplication.job_application_status ===
                         constants_1.JOB_APPLICATION_STATUS.PENDING ||
@@ -137,6 +112,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     removeOnComplete: true,
                     removeOnFail: false,
                 });
+                // Chat Session Create Message queue start from here
                 const oneHourBeforeStart = new Date(startTime.getTime() - 60 * 60 * 1000);
                 const chatSessionDelay = oneHourBeforeStart.getTime() - Date.now();
                 const safeDelay = chatSessionDelay > 0 ? chatSessionDelay : 0;
@@ -171,7 +147,8 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     socket_1.io.to(String(jobPost.hotelier_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION, {
                         user_id,
                         photo: jobSeeker[0].photo,
-                        title: this.NotificationMsg.JOB_APPLICATION_RECEIVED.title,
+                        title: this.NotificationMsg.JOB_APPLICATION_RECEIVED
+                            .title,
                         content: this.NotificationMsg.JOB_APPLICATION_RECEIVED.content({
                             jobTitle: jobPost.job_title,
                             jobPostId: jobPost.id,
@@ -258,7 +235,8 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 if (!application) {
                     throw new customError_1.default("Application not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }
-                if (application.job_application_status !== constants_1.JOB_APPLICATION_STATUS.PENDING) {
+                if (application.job_application_status !==
+                    constants_1.JOB_APPLICATION_STATUS.PENDING) {
                     throw new customError_1.default("This application cannot be cancelled because it has already been processed.", this.StatusCode.HTTP_BAD_REQUEST);
                 }
                 const cancellationLogModel = this.Model.cancellationLogModel(trx);
@@ -268,7 +246,8 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 }
                 const currentTime = new Date();
                 const startTime = new Date(application === null || application === void 0 ? void 0 : application.start_time);
-                const hoursDiff = (startTime.getTime() - currentTime.getTime()) / (1000 * 60 * 60);
+                const hoursDiff = (startTime.getTime() - currentTime.getTime()) /
+                    (1000 * 60 * 60);
                 if (hoursDiff > 24) {
                     const data = yield applicationModel.updateMyJobApplicationStatus({
                         application_id: parseInt(id),
@@ -289,7 +268,8 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     };
                 }
                 else {
-                    if (body.report_type !== constants_1.CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION ||
+                    if (body.report_type !==
+                        constants_1.CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION ||
                         !body.reason) {
                         throw new customError_1.default("Cancellation report must include a valid reason and type 'CANCEL_APPLICATION'.", this.StatusCode.HTTP_UNPROCESSABLE_ENTITY);
                     }

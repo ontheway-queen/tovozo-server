@@ -183,11 +183,8 @@ class AdminJobSeekerService extends abstract_service_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 var _a;
-<<<<<<< HEAD
-                const { user_id } = req.admin;
-=======
+                const user_id = req.admin.user_id;
                 const id = req.params.id;
->>>>>>> barat
                 const model = this.Model.jobSeekerModel(trx);
                 const data = yield model.getJobSeekerDetails({ user_id: id });
                 if (!data) {
@@ -270,14 +267,16 @@ class AdminJobSeekerService extends abstract_service_1.default {
                         if (!checkJobSeeker) {
                             throw new customError_1.default("Job Seeker account not found!", this.StatusCode.HTTP_NOT_FOUND);
                         }
-                        if (parsed.jobSeeker.account_status === checkJobSeeker.account_status) {
+                        if (parsed.jobSeeker.account_status ===
+                            checkJobSeeker.account_status) {
                             throw new customError_1.default(`Already updated status to ${parsed.jobSeeker.account_status}`, this.StatusCode.HTTP_CONFLICT);
                         }
                         if (parsed.jobSeeker.final_completed) {
                             if (!checkJobSeeker.is_completed) {
                                 throw new customError_1.default("Job Seeker account not completed!", this.StatusCode.HTTP_CONFLICT);
                             }
-                            parsed.jobSeeker.final_completed_at = new Date().toISOString();
+                            parsed.jobSeeker.final_completed_at =
+                                new Date().toISOString();
                             parsed.jobSeeker.final_completed_by = user_id;
                             yield this.insertNotification(trx, constants_1.USER_TYPE.JOB_SEEKER, {
                                 title: "Your account has been completed",
