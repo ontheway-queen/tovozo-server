@@ -13,6 +13,7 @@ import {
 	PAYMENT_TYPE,
 	USER_TYPE,
 } from "../../../utils/miscellaneous/constants";
+import { stripe } from "../../../utils/miscellaneous/stripe";
 import {
 	NotificationTypeEnum,
 	TypeEmitNotificationEnum,

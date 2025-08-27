@@ -12,20 +12,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const dayjs_1 = __importDefault(require("dayjs"));
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
 const config_1 = __importDefault(require("../../../app/config"));
 const socket_1 = require("../../../app/socket");
 const customError_1 = __importDefault(require("../../../utils/lib/customError"));
 const lib_1 = __importDefault(require("../../../utils/lib/lib"));
-<<<<<<< HEAD
 const constants_1 = require("../../../utils/miscellaneous/constants");
 const stripe_1 = require("../../../utils/miscellaneous/stripe");
 const commonModelTypes_1 = require("../../../utils/modelTypes/common/commonModelTypes");
 const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
-=======
-const dayjs_1 = __importDefault(require("dayjs"));
 const invoiceTemplate_1 = require("../../../utils/templates/invoiceTemplate");
->>>>>>> 5e06b241ed0e142f638ced6b9ac8aab7cb7ad313
 class PaymentService extends abstract_service_1.default {
     constructor() {
         super();
