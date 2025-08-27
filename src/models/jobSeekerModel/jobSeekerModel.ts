@@ -10,13 +10,8 @@ import Schema from "../../utils/miscellaneous/schema";
 import { IJobApplicationStatus } from "../../utils/modelTypes/jobApplication/jobApplicationModel.types";
 import {
 	ICreateJobSeekerPayload,
-	IGetJobPreference,
 	IGetJobSeeker,
-	IJobLocationPayload,
-	IJobPreferencePayload,
-	IJobSeekerInfoPayload,
 	IJobSeekerProfile,
-	IJobShiftPayload,
 	IUpdateJobSeekerPayload,
 } from "../../utils/modelTypes/jobSeeker/jobSeekerModelTypes";
 

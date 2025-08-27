@@ -47,6 +47,17 @@ export class JobSeekerJobApplication extends AbstractServices {
 				);
 			}
 
+			const isBankExists = await jobSeekerModel.getBankAccounts({
+				id: user_id,
+			});
+
+			if (isBankExists.length < 1) {
+				throw new CustomError(
+					"Please provide your bank account details to continue with the application process.",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
+
 			const jobPost = await jobPostModel.getSingleJobPostForJobSeeker(
 				job_post_details_id
 			);

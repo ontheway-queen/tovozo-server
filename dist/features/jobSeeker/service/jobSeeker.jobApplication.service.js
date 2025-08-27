@@ -41,6 +41,12 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 if (jobSeeker && jobSeeker.length < 1) {
                     throw new customError_1.default("Job seeker not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }
+                const isBankExists = yield jobSeekerModel.getBankAccounts({
+                    id: user_id,
+                });
+                if (isBankExists.length < 1) {
+                    throw new customError_1.default("Please provide your bank account details to continue with the application process.", this.StatusCode.HTTP_BAD_REQUEST);
+                }
                 const jobPost = yield jobPostModel.getSingleJobPostForJobSeeker(job_post_details_id);
                 if (!jobPost) {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);

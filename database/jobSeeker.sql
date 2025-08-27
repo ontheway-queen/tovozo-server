@@ -34,7 +34,6 @@ CREATE TABLE IF NOT EXISTS jobSeeker.job_seeker (
     FOREIGN KEY (user_id) REFERENCES dbo."user" (id)
 );
 
-<<<<<<< HEAD
 ALTER TABLE jobSeeker.job_seeker ADD is_completed BOOLEAN DEFAULT false;
 ALTER TABLE jobSeeker.job_seeker ADD completed_at TIMESTAMP;
 ALTER TABLE jobSeeker.job_seeker ADD final_completed BOOLEAN DEFAULT false;
@@ -102,24 +101,6 @@ CREATE TABLE IF NOT EXISTS jobSeeker.job_seeker_info (
 --     payment_status dbo.payment_status DEFAULT 'PENDING',
 -- );
 
-=======
-CREATE TABLE jobSeeker.job_seeker_bank_details (
-    id SERIAL PRIMARY KEY,
-    job_seeker_id INT NOT NULL REFERENCES jobSeeker.job_seeker(user_id),
-    bank_name VARCHAR(255),
-    account_name VARCHAR(255) NOT NULL,
-    account_number VARCHAR(50) NOT NULL,
-    bank_code VARCHAR(50) NOT NULL,
-    routing_number VARCHAR(50),
-    swift_code VARCHAR(50),
-    is_primary BOOLEAN DEFAULT true,
-    is_deleted BOOLEAN DEFAULT false,
-    created_at TIMESTAMP DEFAULT now(),
-    updated_at TIMESTAMP DEFAULT now(),
-    UNIQUE(job_seeker_id, account_number)
-);
-
->>>>>>> barat
 
 -- Job Seeker Auth View
 CREATE OR REPLACE VIEW jobSeeker.job_seeker_auth_view AS
@@ -160,19 +141,12 @@ CREATE OR REPLACE VIEW jobseeker.vw_full_job_seeker_profile
     js.nationality,
     js.work_permit,
     js.account_status,
-<<<<<<< HEAD
     js.is_completed,
     js.completed_at,
     js.final_completed,
     js.final_completed_at,
     js.final_completed_by,
-    js.stripe_acc_id,
-    js.criminal_convictions,
-=======
-    js.passport_copy,
-    js.visa_copy,
     js.id_copy,
->>>>>>> barat
     loc.id AS home_location_id,
     loc.city_id AS home_city_id,
     loc.name AS home_location_name,
