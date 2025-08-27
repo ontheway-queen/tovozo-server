@@ -8,7 +8,6 @@ import jobSeekerNotificationRouter from "./router/jobSeekerNotification.router";
 import JobSeekerPaymentRouter from "./router/jobSeekerPayment.router";
 import jobSeekerProfileRouter from "./router/jobSeekerProfile.router";
 import JobSeekerReportRouter from "./router/jobSeekerReport.router";
-import JobSeekerStripeRouter from "./router/jobSeekerStripe.router";
 
 export default class JobSeekerRootRouter extends AbstractRouter {
 	constructor() {
@@ -41,9 +40,6 @@ export default class JobSeekerRootRouter extends AbstractRouter {
 
 		// reports
 		this.router.use("/reports", new JobSeekerReportRouter().router);
-
-		// Stripe
-		this.router.use("/stripe", new JobSeekerStripeRouter().router);
 
 		// payments
 		this.router.use("/payments", new JobSeekerPaymentRouter().router);

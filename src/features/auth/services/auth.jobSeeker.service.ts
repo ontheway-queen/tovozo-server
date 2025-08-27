@@ -26,7 +26,6 @@ import {
 	IJobSeekerUserBody,
 } from "../utils/types/jobSeekerAuth.types";
 import { sendEmailOtpTemplate } from "../../../utils/templates/sendEmailOtpTemplate";
-import { io } from "../../../app/socket";
 
 class JobSeekerAuthService extends AbstractServices {
 	//registration service
@@ -41,22 +40,12 @@ class JobSeekerAuthService extends AbstractServices {
 			const jobSeekerInput = parseInput(
 				"job_seeker"
 			) as IJobSeekerNationalityBody;
-			const jobSeekerInfoInput = parseInput(
-				"job_seeker_info"
-			) as IJobSeekerInfoBody;
+
 			const jobSeekerLocationInput = parseInput(
 				"own_address"
 			) as IJobSeekerLocationInfo;
 
-			const validFileFields = [
-				"visa_copy",
-				"id_copy",
-				"photo",
-				"passport_copy",
-			];
-
-			let hasIdCopy = false;
-			let hasVisaCopy = false;
+			const validFileFields = ["id_copy", "photo"];
 
 			files.forEach(({ fieldname, filename }) => {
 				if (!validFileFields.includes(fieldname)) {
@@ -70,27 +59,11 @@ class JobSeekerAuthService extends AbstractServices {
 				if (fieldname === "photo") {
 					userInput.photo = filename;
 				} else {
-					if (fieldname === "id_copy") hasIdCopy = true;
-					if (fieldname === "visa_copy") hasVisaCopy = true;
-
-					jobSeekerInfoInput[fieldname as keyof IJobSeekerInfoBody] =
-						filename;
+					if (fieldname === "id_copy") {
+						jobSeekerInput.id_copy = filename;
+					}
 				}
 			});
-
-			// Validate required docs
-			if (jobSeekerInput.nationality === BRITISH_ID && !hasIdCopy) {
-				throw new CustomError(
-					"id_copy required for British Nationality",
-					this.StatusCode.HTTP_BAD_REQUEST
-				);
-			}
-			if (jobSeekerInput.nationality !== BRITISH_ID && !hasVisaCopy) {
-				throw new CustomError(
-					"visa_copy required for non-British Nationality",
-					this.StatusCode.HTTP_BAD_REQUEST
-				);
-			}
 
 			const { email, phone_number, password, ...restUserData } =
 				userInput;
@@ -158,11 +131,6 @@ class JobSeekerAuthService extends AbstractServices {
 				...jobSeekerInput,
 				user_id: jobSeekerId,
 				location_id: locationId as number,
-			});
-
-			await jobSeekerModel.createJobSeekerInfo({
-				...jobSeekerInfoInput,
-				job_seeker_id: jobSeekerId,
 			});
 
 			const tokenPayload = {

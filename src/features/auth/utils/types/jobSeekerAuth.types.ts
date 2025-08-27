@@ -65,4 +65,8 @@ export interface IJobSeekerInfoBody {
 export interface IJobSeekerNationalityBody {
 	nationality: number;
 	account_status?: UserStatusType;
+	visa_copy?: string;
+	id_copy?: string;
+	passport_copy?: string;
+	work_permit?: string;
 }

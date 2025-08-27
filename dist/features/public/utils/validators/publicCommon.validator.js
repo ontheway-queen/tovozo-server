@@ -155,70 +155,25 @@ class PublicCommonValidator {
         });
         this.registerJobSeekerValidator = joi_1.default.object({
             user: joi_1.default.object({
-                // username: Joi.string().min(1).max(255).required(),
                 name: joi_1.default.string().min(1).max(255).required(),
                 email: joi_1.default.string().email().lowercase().min(1).max(255).required(),
                 password: joi_1.default.string().min(8).max(100).required(),
                 phone_number: joi_1.default.string().min(7).max(20).optional(),
             }).required(),
             job_seeker: joi_1.default.object({
-                // date_of_birth: Joi.date().required(),
-                // gender: Joi.string().valid("Male", "Female", "Other").required(),
                 nationality: joi_1.default.number().integer().required(),
-                // work_permit: Joi.boolean().required(),
                 account_status: joi_1.default.string()
                     .valid(...constants_1.USER_STATUS_ENUM)
                     .default("Pending"),
-                // criminal_convictions: Joi.boolean().required(),
             }).required(),
-            passport_copy: joi_1.default.string().max(255).allow("").optional(),
-            id_copy: joi_1.default.string().max(255).allow("").optional(),
-            visa_copy: joi_1.default.string().max(255).allow("").optional(),
             own_address: joi_1.default.object({
-                // city_id: Joi.number().integer().required(),
-                // name: Joi.string().max(100).required(),
                 address: joi_1.default.string().optional(),
                 longitude: joi_1.default.number().precision(6).optional(),
                 latitude: joi_1.default.number().precision(6).optional(),
-                // postal_code: Joi.string().max(20).optional(),
             }).optional(),
-            // job_preferences: Joi.array().items(Joi.number().integer()).required(),
-            // job_shifting: Joi.array()
-            //   .items(Joi.string().valid("Morning", "Afternoon", "Night", "Flexible"))
-            //   .required(),
-            // job_seeker_info: Joi.object({
-            //   // hospitality_exp: Joi.boolean().required(),
-            //   // languages: Joi.string().allow("").optional(),
-            //   // hospitality_certifications: Joi.string().allow("").optional(),
-            //   // medical_condition: Joi.string().allow("").optional(),
-            //   // dietary_restrictions: Joi.string().allow("").optional(),
-            //   // work_start: Joi.string().max(42).allow("").optional(),
-            //   // certifications: Joi.string().allow("").optional(),
-            //   // reference: Joi.string().allow("").optional(),
-            //   // resume: Joi.string().max(255).allow("").optional(),
-            //   // training_program_interested: Joi.boolean().required(),
-            //   // start_working: Joi.string().max(42).allow("").optional(),
-            //   // hours_available: Joi.string().max(42).allow("").optional(),
-            //   // comment: Joi.string().allow("").optional(),
-            // })
-            // .required(),
-            // job_locations: Joi.array()
-            //   .items(
-            //     Joi.object({
-            //       city_id: Joi.number().integer().required(),
-            //       name: Joi.string().max(100).required(),
-            //       address: Joi.string().optional(),
-            //       longitude: Joi.number().precision(6).optional(),
-            //       latitude: Joi.number().precision(6).optional(),
-            //       postal_code: Joi.string().max(20).optional(),
-            //     })
-            //   )
-            //   .min(1)
-            //   .required(),
         });
         this.registerOrganizationValidator = joi_1.default.object({
             user: joi_1.default.object({
-                // username: Joi.string().min(1).max(255).required(),
                 name: joi_1.default.string().min(1).max(255).required(),
                 email: joi_1.default.string().email().lowercase().min(1).max(255).required(),
                 password: joi_1.default.string().min(8).max(100).required(),

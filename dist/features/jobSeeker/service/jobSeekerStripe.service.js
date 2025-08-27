@@ -84,10 +84,6 @@ class JobSeekerStripeService extends abstract_service_1.default {
                     message: "Stripe account not eligible. Account has been deleted. Please onboard again.",
                 };
             }
-            yield this.Model.jobSeekerModel().addStripePayoutAccount({
-                user_id,
-                stripe_acc_id,
-            });
             return {
                 success: true,
                 code: this.StatusCode.HTTP_OK,

@@ -130,11 +130,6 @@ class AdminJobSeekerService extends AbstractServices {
 				user_id: jobSeekerId,
 			});
 
-			await jobSeekerModel.createJobSeekerInfo({
-				...jobSeekerInfoInput,
-				job_seeker_id: jobSeekerId,
-			});
-
 			const tokenPayload = {
 				user_id: jobSeekerId,
 				name: userInput.name,
@@ -247,8 +242,8 @@ class AdminJobSeekerService extends AbstractServices {
 	}
 
 	public async updateJobSeeker(req: Request) {
-		const id = req.params.id as unknown as number;
 		return await this.db.transaction(async (trx) => {
+			const id = req.params.id as unknown as number;
 			const model = this.Model.jobSeekerModel(trx);
 			const data = await model.getJobSeekerDetails({ user_id: id });
 			if (!data) {
@@ -259,6 +254,7 @@ class AdminJobSeekerService extends AbstractServices {
 				};
 			}
 			const files = req.files as Express.MulterS3.File[];
+			console.log({ files });
 			const parsed = {
 				user: Lib.safeParseJSON(req.body.user) || {},
 				jobSeeker: Lib.safeParseJSON(req.body.job_seeker) || {},
@@ -384,116 +380,12 @@ class AdminJobSeekerService extends AbstractServices {
 				);
 			}
 
-			if (Object.keys(parsed.jobSeekerInfo).length > 0) {
-				updateTasks.push(
-					jobSeekerModel.updateJobSeekerInfo(parsed.jobSeekerInfo, {
-						job_seeker_id: id,
-					})
-				);
-			}
-
-			if (parsed.delJobPreferences.length > 0) {
-				updateTasks.push(
-					jobSeekerModel.deleteJobPreferences({
-						job_seeker_id: id,
-						job_ids: parsed.delJobPreferences,
-					})
-				);
-			}
-
-			if (parsed.delJobLocations.length > 0) {
-				updateTasks.push(
-					jobSeekerModel.deleteJobLocations({
-						job_seeker_id: id,
-						location_ids: parsed.delJobLocations,
-					})
-				);
-			}
-
-			if (parsed.delJobShifting.length > 0) {
-				updateTasks.push(
-					jobSeekerModel.deleteJobShifting({
-						job_seeker_id: id,
-						name: parsed.delJobShifting,
-					})
-				);
-			}
-
 			if (parsed.updateJobLocations.length > 0) {
 				for (const loc of parsed.updateJobLocations) {
 					updateTasks.push(
 						commonModel.updateLocation(loc, { location_id: loc.id })
 					);
 				}
-			}
-
-			if (parsed.addJobLocations.length > 0) {
-				const locationIds = await commonModel.createLocation(
-					parsed.addJobLocations
-				);
-
-				const jobLocations = locationIds.map((loc: { id: number }) => ({
-					job_seeker_id: id,
-					location_id: loc.id,
-				}));
-
-				updateTasks.push(jobSeekerModel.setJobLocations(jobLocations));
-			}
-
-			if (parsed.addJobPreferences.length > 0) {
-				const existingPrefer = await jobSeekerModel.getJobPreferences(
-					id
-				);
-
-				const existingJobIds = new Set(
-					existingPrefer.map((p) => p.job_id)
-				);
-
-				const newPrefer = parsed.addJobPreferences.filter(
-					(id: number) => !existingJobIds.has(id)
-				);
-
-				if (newPrefer.length !== parsed.addJobPreferences.length) {
-					throw new CustomError(
-						"Some job preferences already exist",
-						this.StatusCode.HTTP_BAD_REQUEST,
-						"ERROR"
-					);
-				}
-
-				const preferences = newPrefer.map((job_id: number) => ({
-					job_seeker_id: id,
-					job_id,
-				}));
-
-				updateTasks.push(jobSeekerModel.setJobPreferences(preferences));
-			}
-
-			if (parsed.addJobShifting.length > 0) {
-				const existingShifts = await jobSeekerModel.getJobShifting(id);
-
-				const existingShiftNames = new Set(
-					existingShifts.map((s) => s.shift)
-				);
-
-				const newShifts = parsed.addJobShifting.filter(
-					(shift: string) => !existingShiftNames.has(shift)
-				);
-
-				if (newShifts.length !== parsed.addJobShifting.length) {
-					throw new CustomError(
-						"Some job shifts already exist",
-						this.StatusCode.HTTP_BAD_REQUEST,
-						"ERROR"
-					);
-				}
-
-				const shifts = newShifts.map((shift: string) => ({
-					job_seeker_id: id,
-					shift,
-				}));
-
-				updateTasks.push(jobSeekerModel.setJobShifting(shifts));
 			}
 
 			await Promise.all(updateTasks);

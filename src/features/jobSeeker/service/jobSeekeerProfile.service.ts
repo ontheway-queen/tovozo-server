@@ -47,38 +47,30 @@ export default class JobSeekerProfileService extends AbstractServices {
 	public async updateProfile(req: Request) {
 		return this.db.transaction(async (trx) => {
 			const files = (req.files as Express.Multer.File[]) || [];
+
 			const { user_id } = req.jobSeeker;
-			console.log("xyz");
+
 			const parsed = {
 				user: Lib.safeParseJSON(req.body.user) || {},
 				jobSeeker: Lib.safeParseJSON(req.body.job_seeker) || {},
-				jobSeekerInfo:
-					Lib.safeParseJSON(req.body.job_seeker_info) || {},
 				ownAddress: Lib.safeParseJSON(req.body.own_address) || {},
-				addJobPreferences:
-					Lib.safeParseJSON(req.body.add_job_preferences) || [],
-				delJobPreferences:
-					Lib.safeParseJSON(req.body.del_job_preferences) || [],
-				addJobLocations:
-					Lib.safeParseJSON(req.body.add_job_locations) || [],
-				delJobLocations:
-					Lib.safeParseJSON(req.body.del_job_locations) || [],
-				updateJobLocations:
-					Lib.safeParseJSON(req.body.update_job_locations) || [],
-				addJobShifting:
-					Lib.safeParseJSON(req.body.add_job_shifting) || [],
-				delJobShifting:
-					Lib.safeParseJSON(req.body.del_job_shifting) || [],
+				bank_details: Lib.safeParseJSON(req.body.bank_details) || {},
 			};
 
 			for (const { fieldname, filename } of files) {
 				switch (fieldname) {
-					case "resume":
-						parsed.jobSeekerInfo.resume = filename;
-						break;
 					case "photo":
 						parsed.user.photo = filename;
 						break;
+
+					case "id_copy":
+						parsed.jobSeeker.id_copy = filename;
+						break;
+
+					case "work_permit":
+						parsed.jobSeeker.work_permit = filename;
+						break;
+
 					default:
 						throw new CustomError(
 							this.ResMsg.UNKNOWN_FILE_FIELD,
@@ -150,120 +142,32 @@ export default class JobSeekerProfileService extends AbstractServices {
 			}
 
 			if (
-				parsed.jobSeekerInfo &&
-				Object.keys(parsed.jobSeekerInfo).length > 0
+				parsed.bank_details &&
+				Object.keys(parsed.bank_details).length > 0
 			) {
-				updateTasks.push(
-					jobSeekerModel.updateJobSeekerInfo(parsed.jobSeekerInfo, {
-						job_seeker_id: user_id,
-					})
-				);
-			}
+				if (
+					parsed.bank_details.is_primary !== undefined &&
+					parsed.bank_details.is_primary !== "false"
+				) {
+					const isPrimaryAccountExists =
+						await jobSeekerModel.getBankAccounts({
+							id: user_id,
+							is_primary: parsed.bank_details.is_primary,
+						});
 
-			if (parsed.delJobPreferences.length > 0) {
-				updateTasks.push(
-					jobSeekerModel.deleteJobPreferences({
-						job_seeker_id: user_id,
-						job_ids: parsed.delJobPreferences,
-					})
-				);
-			}
-
-			if (parsed.delJobLocations.length > 0) {
-				updateTasks.push(
-					jobSeekerModel.deleteJobLocations({
-						job_seeker_id: user_id,
-						location_ids: parsed.delJobLocations,
-					})
-				);
-			}
-
-			if (parsed.delJobShifting.length > 0) {
-				updateTasks.push(
-					jobSeekerModel.deleteJobShifting({
-						job_seeker_id: user_id,
-						name: parsed.delJobShifting,
-					})
-				);
-			}
-
-			if (parsed.updateJobLocations.length > 0) {
-				for (const loc of parsed.updateJobLocations) {
-					updateTasks.push(
-						commonModel.updateLocation(loc, { location_id: loc.id })
-					);
+					if (isPrimaryAccountExists.length > 0) {
+						throw new CustomError(
+							"Primary bank details already added for this user",
+							this.StatusCode.HTTP_BAD_REQUEST
+						);
+					}
 				}
-			}
-
-			if (parsed.addJobLocations.length > 0) {
-				const locationIds = await commonModel.createLocation(
-					parsed.addJobLocations
+				updateTasks.push(
+					jobSeekerModel.addBankDetails({
+						job_seeker_id: user_id,
+						...parsed.bank_details,
+					})
 				);
-
-				const jobLocations = locationIds.map((loc: { id: number }) => ({
-					job_seeker_id: user_id,
-					location_id: loc.id,
-				}));
-
-				updateTasks.push(jobSeekerModel.setJobLocations(jobLocations));
-			}
-
-			if (parsed.addJobPreferences.length > 0) {
-				const existingPrefs = await jobSeekerModel.getJobPreferences(
-					user_id
-				);
-
-				const existingJobIds = new Set(
-					existingPrefs.map((p) => p.job_id)
-				);
-
-				const newPrefs = parsed.addJobPreferences.filter(
-					(id: number) => !existingJobIds.has(id)
-				);
-
-				if (newPrefs.length !== parsed.addJobPreferences.length) {
-					throw new CustomError(
-						"Some job preferences already exist",
-						this.StatusCode.HTTP_BAD_REQUEST,
-						"ERROR"
-					);
-				}
-
-				const preferences = newPrefs.map((job_id: number) => ({
-					job_seeker_id: user_id,
-					job_id,
-				}));
-
-				updateTasks.push(jobSeekerModel.setJobPreferences(preferences));
-			}
-
-			if (parsed.addJobShifting.length > 0) {
-				const existingShifts = await jobSeekerModel.getJobShifting(
-					user_id
-				);
-
-				const existingShiftNames = new Set(
-					existingShifts.map((s) => s.shift)
-				);
-
-				const newShifts = parsed.addJobShifting.filter(
-					(shift: string) => !existingShiftNames.has(shift)
-				);
-
-				if (newShifts.length !== parsed.addJobShifting.length) {
-					throw new CustomError(
-						"Some job shifts already exist",
-						this.StatusCode.HTTP_BAD_REQUEST,
-						"ERROR"
-					);
-				}
-
-				const shifts = newShifts.map((shift: string) => ({
-					job_seeker_id: user_id,
-					shift,
-				}));
-
-				updateTasks.push(jobSeekerModel.setJobShifting(shifts));
 			}
 
 			await Promise.all(updateTasks);

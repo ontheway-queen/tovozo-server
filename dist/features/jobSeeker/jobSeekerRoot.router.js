@@ -13,7 +13,6 @@ const jobSeekerNotification_router_1 = __importDefault(require("./router/jobSeek
 const jobSeekerPayment_router_1 = __importDefault(require("./router/jobSeekerPayment.router"));
 const jobSeekerProfile_router_1 = __importDefault(require("./router/jobSeekerProfile.router"));
 const jobSeekerReport_router_1 = __importDefault(require("./router/jobSeekerReport.router"));
-const jobSeekerStripe_router_1 = __importDefault(require("./router/jobSeekerStripe.router"));
 class JobSeekerRootRouter extends abstract_router_1.default {
     constructor() {
         super();
@@ -30,8 +29,6 @@ class JobSeekerRootRouter extends abstract_router_1.default {
         this.router.use("/job-task-activity", new jobSeekerJobTaskActivity_router_1.default().router);
         // reports
         this.router.use("/reports", new jobSeekerReport_router_1.default().router);
-        // Stripe
-        this.router.use("/stripe", new jobSeekerStripe_router_1.default().router);
         // payments
         this.router.use("/payments", new jobSeekerPayment_router_1.default().router);
         this.router.use("/notification", new jobSeekerNotification_router_1.default().router);
