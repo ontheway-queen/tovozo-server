@@ -169,7 +169,8 @@ class JobSeekerModel extends schema_1.default {
                 if (where.is_primary) {
                     qb.andWhere("jsbd.is_primary", where.is_primary);
                 }
-            });
+            })
+                .andWhere("jsbd.is_deleted", false);
         });
     }
     getJobSeekerLocation(query) {

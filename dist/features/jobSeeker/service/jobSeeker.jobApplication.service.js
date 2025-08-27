@@ -23,6 +23,7 @@ const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes"
 const commonModelTypes_1 = require("../../../utils/modelTypes/common/commonModelTypes");
 const socket_1 = require("../../../app/socket");
 const lib_1 = __importDefault(require("../../../utils/lib/lib"));
+const jobSeekerModel_1 = __importDefault(require("../../../models/jobSeekerModel/jobSeekerModel"));
 class JobSeekerJobApplication extends abstract_service_1.default {
     constructor() {
         super();
@@ -33,6 +34,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 const userModel = new userModel_1.default(trx);
                 const jobPostModel = new jobPostModel_1.default(trx);
                 const cancellationLogModel = new cancellationLogModel_1.default(trx);
+                const jobSeekerModel = new jobSeekerModel_1.default(trx);
                 const jobSeeker = yield userModel.checkUser({
                     id: user_id,
                     type: userModelTypes_1.TypeUser.JOB_SEEKER,
@@ -40,20 +42,20 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 if (jobSeeker && jobSeeker.length < 1) {
                     throw new customError_1.default("Job seeker not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }
+                const isBankExists = yield jobSeekerModel.getBankAccounts({
+                    id: user_id,
+                });
+                if (isBankExists.length < 1) {
+                    throw new customError_1.default("Please provide your bank account details to continue with the application process.", this.StatusCode.HTTP_BAD_REQUEST);
+                }
                 const jobPost = yield jobPostModel.getSingleJobPostForJobSeeker(job_post_details_id);
                 if (!jobPost) {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
                 }
-                //! Need to uncomment later.
-                // if (
-                // 	jobPost.status !==
-                // 	(JOB_POST_DETAILS_STATUS.Pending as unknown as IJobPostDetailsStatus)
-                // ) {
-                // 	throw new CustomError(
-                // 		"This job post is no longer accepting applications.",
-                // 		this.StatusCode.HTTP_BAD_REQUEST
-                // 	);
-                // }
+                if (jobPost.status !==
+                    constants_1.JOB_POST_DETAILS_STATUS.Pending) {
+                    throw new customError_1.default("This job post is no longer accepting applications.", this.StatusCode.HTTP_BAD_REQUEST);
+                }
                 const jobPostReport = yield cancellationLogModel.getSingleJobPostCancellationLog({
                     id: null,
                     report_type: constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST,
@@ -67,19 +69,13 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 const existPendingApplication = yield model.getMyJobApplication({
                     job_seeker_id: user_id,
                 });
-                //! Need to uncomment later.
-                // if (
-                // 	existPendingApplication &&
-                // 	(existPendingApplication.job_application_status ===
-                // 		JOB_APPLICATION_STATUS.PENDING ||
-                // 		existPendingApplication.job_application_status ===
-                // 			JOB_APPLICATION_STATUS.IN_PROGRESS)
-                // ) {
-                // 	throw new CustomError(
-                // 		"Hold on! You need to complete your current job before moving on to the next.",
-                // 		this.StatusCode.HTTP_BAD_REQUEST
-                // 	);
-                // }
+                if (existPendingApplication &&
+                    (existPendingApplication.job_application_status ===
+                        constants_1.JOB_APPLICATION_STATUS.PENDING ||
+                        existPendingApplication.job_application_status ===
+                            constants_1.JOB_APPLICATION_STATUS.IN_PROGRESS)) {
+                    throw new customError_1.default("Hold on! You need to complete your current job before moving on to the next.", this.StatusCode.HTTP_BAD_REQUEST);
+                }
                 const payload = {
                     job_post_details_id: Number(job_post_details_id),
                     job_seeker_id: user_id,
@@ -122,8 +118,6 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     removeOnComplete: true,
                     removeOnFail: false,
                 });
-                // Job start reminder queue end from here
-                // Chat Session Create Message queue start from here
                 const oneHourBeforeStart = new Date(startTime.getTime() - 60 * 60 * 1000);
                 const chatSessionDelay = oneHourBeforeStart.getTime() - Date.now();
                 const safeDelay = chatSessionDelay > 0 ? chatSessionDelay : 0;

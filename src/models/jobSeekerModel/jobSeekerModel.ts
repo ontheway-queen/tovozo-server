@@ -273,7 +273,8 @@ export default class JobSeekerModel extends Schema {
 				if (where.is_primary) {
 					qb.andWhere("jsbd.is_primary", where.is_primary);
 				}
-			});
+			})
+			.andWhere("jsbd.is_deleted", false);
 	}
 
 	public async getJobSeekerLocation(query: { name?: string }): Promise<

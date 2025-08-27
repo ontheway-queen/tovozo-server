@@ -20,6 +20,7 @@ import {
 } from "../../../utils/modelTypes/common/commonModelTypes";
 import { getAllOnlineSocketIds, io } from "../../../app/socket";
 import Lib from "../../../utils/lib/lib";
+import JobSeekerModel from "../../../models/jobSeekerModel/jobSeekerModel";
 
 export class JobSeekerJobApplication extends AbstractServices {
 	constructor() {
@@ -34,6 +35,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 			const userModel = new UserModel(trx);
 			const jobPostModel = new JobPostModel(trx);
 			const cancellationLogModel = new CancellationLogModel(trx);
+			const jobSeekerModel = new JobSeekerModel(trx);
 
 			const jobSeeker = await userModel.checkUser({
 				id: user_id,
@@ -46,6 +48,17 @@ export class JobSeekerJobApplication extends AbstractServices {
 				);
 			}
 
+			const isBankExists = await jobSeekerModel.getBankAccounts({
+				id: user_id,
+			});
+
+			if (isBankExists.length < 1) {
+				throw new CustomError(
+					"Please provide your bank account details to continue with the application process.",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
+
 			const jobPost = await jobPostModel.getSingleJobPostForJobSeeker(
 				job_post_details_id
 			);
@@ -55,16 +68,16 @@ export class JobSeekerJobApplication extends AbstractServices {
 					this.StatusCode.HTTP_NOT_FOUND
 				);
 			}
-			//! Need to uncomment later.
-			// if (
-			// 	jobPost.status !==
-			// 	(JOB_POST_DETAILS_STATUS.Pending as unknown as IJobPostDetailsStatus)
-			// ) {
-			// 	throw new CustomError(
-			// 		"This job post is no longer accepting applications.",
-			// 		this.StatusCode.HTTP_BAD_REQUEST
-			// 	);
-			// }
+
+			if (
+				jobPost.status !==
+				(JOB_POST_DETAILS_STATUS.Pending as unknown as IJobPostDetailsStatus)
+			) {
+				throw new CustomError(
+					"This job post is no longer accepting applications.",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
 
 			const jobPostReport =
 				await cancellationLogModel.getSingleJobPostCancellationLog({
@@ -88,19 +101,18 @@ export class JobSeekerJobApplication extends AbstractServices {
 				job_seeker_id: user_id,
 			});
 
-			//! Need to uncomment later.
-			// if (
-			// 	existPendingApplication &&
-			// 	(existPendingApplication.job_application_status ===
-			// 		JOB_APPLICATION_STATUS.PENDING ||
-			// 		existPendingApplication.job_application_status ===
-			// 			JOB_APPLICATION_STATUS.IN_PROGRESS)
-			// ) {
-			// 	throw new CustomError(
-			// 		"Hold on! You need to complete your current job before moving on to the next.",
-			// 		this.StatusCode.HTTP_BAD_REQUEST
-			// 	);
-			// }
+			if (
+				existPendingApplication &&
+				(existPendingApplication.job_application_status ===
+					JOB_APPLICATION_STATUS.PENDING ||
+					existPendingApplication.job_application_status ===
+						JOB_APPLICATION_STATUS.IN_PROGRESS)
+			) {
+				throw new CustomError(
+					"Hold on! You need to complete your current job before moving on to the next.",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
 
 			const payload = {
 				job_post_details_id: Number(job_post_details_id),
@@ -159,9 +171,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 					removeOnFail: false,
 				}
 			);
-			// Job start reminder queue end from here
 
-			// Chat Session Create Message queue start from here
 			const oneHourBeforeStart = new Date(
 				startTime.getTime() - 60 * 60 * 1000
 			);
