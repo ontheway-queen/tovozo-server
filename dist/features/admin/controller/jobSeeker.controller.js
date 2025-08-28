@@ -50,6 +50,12 @@ class AdminJobSeekerController extends abstract_controller_1.default {
             const _a = yield this.service.updateJobSeeker(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
+        this.verifyJobSeeker = this.asyncWrapper.wrap({
+            paramSchema: this.commonValidator.singleParamValidator,
+        }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.verifyJobSeeker(req), { code } = _a, data = __rest(_a, ["code"]);
+            res.status(code).json(data);
+        }));
         this.deleteJobSeeker = this.asyncWrapper.wrap({
             paramSchema: this.commonValidator.singleParamValidator,
         }, (req, res) => __awaiter(this, void 0, void 0, function* () {

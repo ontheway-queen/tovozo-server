@@ -22,16 +22,17 @@ export default class JobSeekerProfileUpdate {
 		job_seeker: Joi.object({
 			date_of_birth: Joi.date().optional(),
 			gender: Joi.string().valid("Male", "Female", "Other").optional(),
-			nationality: Joi.string().max(255).optional(),
 			address: Joi.string().optional(),
 			is_2fa_on: Joi.boolean().optional(),
 		}).optional(),
+	});
 
+	updateUserVerificationDetails = Joi.object({
 		bank_details: Joi.object({
-			account_name: Joi.string().optional(),
-			account_number: Joi.string().optional(),
-			bank_code: Joi.string().optional(),
-			is_primary: Joi.boolean().optional(),
-		}).optional(),
+			account_name: Joi.string().required(),
+			account_number: Joi.string().required(),
+			bank_code: Joi.string().required(),
+			is_primary: Joi.boolean().required(),
+		}).required(),
 	});
 }

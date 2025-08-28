@@ -124,18 +124,25 @@ class JobSeekerModel extends schema_1.default {
     // get single job seeker details
     getJobSeekerDetails(where) {
         return __awaiter(this, void 0, void 0, function* () {
+            // Fetch main profile
             const profile = yield this.db("vw_full_job_seeker_profile")
                 .withSchema(this.JOB_SEEKER)
-                .select("user_id", "email", "name", "phone_number", "photo", "user_status", "user_type", "user_created_at", "date_of_birth", "gender", "nationality", "work_permit", "account_status", "is_completed", "completed_at", "final_completed", "final_completed_at", "home_location_id", "home_location_name", "home_address", "home_postal_code", "home_status", "is_home_address", "id_copy")
+                .select("user_id", "email", "name", "phone_number", "photo", "user_status", "user_type", "user_created_at", "date_of_birth", "gender", "work_permit", "id_copy", "account_status", "is_completed", "completed_at", "final_completed", "final_completed_at", "home_location_id", "home_location_name", "home_address", "home_postal_code", "home_status", "is_home_address")
                 .where("user_id", where.user_id)
                 .first();
+            // Fetch applied jobs
             const appliedJobs = yield this.db("job_applications as ja")
                 .withSchema(this.DBO_SCHEMA)
                 .select("ja.id", "ja.job_post_details_id", "ja.status as application_status", "j.title", "j.details")
                 .leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
                 .leftJoin("jobs as j", "jpd.job_id", "j.id")
                 .where("ja.job_seeker_id", where.user_id);
-            return Object.assign(Object.assign({}, profile), { applied_jobs: appliedJobs !== null && appliedJobs !== void 0 ? appliedJobs : [] });
+            // ✅ Fetch bank details
+            const bankDetails = yield this.db("bank_details")
+                .withSchema(this.JOB_SEEKER)
+                .select("id", "account_name", "account_number", "bank_code", "is_primary", "created_at", "updated_at")
+                .where("job_seeker_id", where.user_id);
+            return Object.assign(Object.assign({}, profile), { applied_jobs: appliedJobs !== null && appliedJobs !== void 0 ? appliedJobs : [], bank_details: bankDetails !== null && bankDetails !== void 0 ? bankDetails : [] });
         });
     }
     deleteJobSeeker(where) {
@@ -153,7 +160,8 @@ class JobSeekerModel extends schema_1.default {
     // add bank details
     addBankDetails(payload) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db("job_seeker_bank_details")
+            console.log({ payload });
+            return yield this.db("bank_details")
                 .withSchema(this.JOB_SEEKER)
                 .insert(payload, "id");
         });
@@ -161,16 +169,19 @@ class JobSeekerModel extends schema_1.default {
     // check primary account
     getBankAccounts(where) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db("job_seeker_bank_details as jsbd")
+            return yield this.db("bank_details as bd")
                 .withSchema(this.JOB_SEEKER)
-                .select("jsbd.id", "jsbd.job_seeker_id", "jsbd.account_name", "jsbd.account_number", "jsbd.bank_code", "jsbd.is_primary")
-                .where("jsbd.job_seeker_id", where.id)
+                .select("bd.id", "bd.job_seeker_id", "bd.account_name", "bd.account_number", "bd.bank_code", "bd.is_primary")
+                .where("bd.job_seeker_id", where.user_id)
                 .modify((qb) => {
+                if (where.account_number) {
+                    qb.andWhere("bd.account_number", where.account_number);
+                }
                 if (where.is_primary) {
-                    qb.andWhere("jsbd.is_primary", where.is_primary);
+                    qb.andWhere("bd.is_primary", where.is_primary);
                 }
             })
-                .andWhere("jsbd.is_deleted", false);
+                .andWhere("bd.is_deleted", false);
         });
     }
     getJobSeekerLocation(query) {

@@ -219,8 +219,6 @@ export default class PublicCommonValidator {
 			email: Joi.string().email().lowercase().min(1).max(255).required(),
 			password: Joi.string().min(8).max(100).required(),
 			phone_number: Joi.string().min(7).max(20).optional(),
-			photo: Joi.string().max(255).allow("").optional(),
-			designation: Joi.string().max(500).required(),
 		}).required(),
 
 		organization: Joi.object({
@@ -237,10 +235,6 @@ export default class PublicCommonValidator {
 			latitude: Joi.number().precision(6).optional(),
 			postal_code: Joi.string().max(20).optional(),
 		}).required(),
-
-		organization_amenities: Joi.array()
-			.items(Joi.string().max(255).required())
-			.optional(),
 	});
 
 	getNotificationValidator = Joi.object({

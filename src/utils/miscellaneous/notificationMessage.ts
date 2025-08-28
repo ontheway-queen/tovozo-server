@@ -105,6 +105,14 @@ class NotificationMessage {
 		}) =>
 			`You have received a payment of $${amount} for the job "${jobTitle}". The amount will be available in your bank account very soon.`,
 	};
+
+	static readonly VERIFICATION_SUBMITTED = {
+		title: "Verification Submitted",
+		content: ({ name }: { name?: string }) =>
+			`${
+				name ? name : "A job seeker"
+			} has submitted their information for verification. Please review their ID, work permit, and bank details.`,
+	};
 }
 
 export default NotificationMessage;

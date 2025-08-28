@@ -181,8 +181,6 @@ class PublicCommonValidator {
                 email: joi_1.default.string().email().lowercase().min(1).max(255).required(),
                 password: joi_1.default.string().min(8).max(100).required(),
                 phone_number: joi_1.default.string().min(7).max(20).optional(),
-                photo: joi_1.default.string().max(255).allow("").optional(),
-                designation: joi_1.default.string().max(500).required(),
             }).required(),
             organization: joi_1.default.object({
                 org_name: joi_1.default.string().max(255).required(),
@@ -197,9 +195,6 @@ class PublicCommonValidator {
                 latitude: joi_1.default.number().precision(6).optional(),
                 postal_code: joi_1.default.string().max(20).optional(),
             }).required(),
-            organization_amenities: joi_1.default.array()
-                .items(joi_1.default.string().max(255).required())
-                .optional(),
         });
         this.getNotificationValidator = joi_1.default.object({
             limit: joi_1.default.number().integer().optional(),

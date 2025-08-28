@@ -25,7 +25,6 @@ export default class HotelierProfileService extends AbstractServices {
 	public getProfile = async (req: Request) => {
 		const { user_id } = req.hotelier;
 		const userModel = this.Model.UserModel();
-		const organizationModel = this.Model.organizationModel();
 
 		const { password_hash, ...rest } =
 			await userModel.getSingleCommonAuthUser<IHotelierAuthView>({
@@ -34,21 +33,12 @@ export default class HotelierProfileService extends AbstractServices {
 				user_id,
 			});
 
-		const [organization_amenities, organization_photos] = await Promise.all([
-			organizationModel.getAmenities({
-				organization_id: rest.organization_id,
-			}),
-			organizationModel.getPhotos(rest.organization_id),
-		]);
-
 		return {
 			success: true,
 			code: this.StatusCode.HTTP_OK,
 			message: this.ResMsg.HTTP_OK,
 			data: {
 				...rest,
-				organization_amenities,
-				organization_photos,
 			},
 		};
 	};
@@ -56,7 +46,8 @@ export default class HotelierProfileService extends AbstractServices {
 	//change password
 	public async changePassword(req: Request) {
 		const { user_id } = req.hotelier;
-		const { old_password, new_password } = req.body as IChangePasswordPayload;
+		const { old_password, new_password } =
+			req.body as IChangePasswordPayload;
 
 		const model = this.Model.UserModel();
 		const user_details =
@@ -323,9 +314,12 @@ export default class HotelierProfileService extends AbstractServices {
 						);
 					}
 					updateTasks.push(
-						commonModel.updateLocation(parsed.organization_address, {
-							location_id: parsed.organization_address.id,
-						})
+						commonModel.updateLocation(
+							parsed.organization_address,
+							{
+								location_id: parsed.organization_address.id,
+							}
+						)
 					);
 				} else {
 					updateTasks.push(

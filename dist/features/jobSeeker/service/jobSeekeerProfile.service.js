@@ -27,6 +27,8 @@ const abstract_service_1 = __importDefault(require("../../../abstract/abstract.s
 const customError_1 = __importDefault(require("../../../utils/lib/customError"));
 const lib_1 = __importDefault(require("../../../utils/lib/lib"));
 const constants_1 = require("../../../utils/miscellaneous/constants");
+const commonModelTypes_1 = require("../../../utils/modelTypes/common/commonModelTypes");
+const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
 class JobSeekerProfileService extends abstract_service_1.default {
     constructor() {
         super();
@@ -113,7 +115,7 @@ class JobSeekerProfileService extends abstract_service_1.default {
                     if (parsed.bank_details.is_primary !== undefined &&
                         parsed.bank_details.is_primary !== "false") {
                         const isPrimaryAccountExists = yield jobSeekerModel.getBankAccounts({
-                            id: user_id,
+                            user_id,
                             is_primary: parsed.bank_details.is_primary,
                         });
                         if (isPrimaryAccountExists.length > 0) {
@@ -123,6 +125,91 @@ class JobSeekerProfileService extends abstract_service_1.default {
                     updateTasks.push(jobSeekerModel.addBankDetails(Object.assign({ job_seeker_id: user_id }, parsed.bank_details)));
                 }
                 yield Promise.all(updateTasks);
+                return {
+                    success: true,
+                    code: this.StatusCode.HTTP_OK,
+                    message: this.ResMsg.HTTP_OK,
+                };
+            }));
+        });
+    }
+    // update User Verification Details
+    updateUserVerificationDetails(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const files = req.files || [];
+                const { user_id } = req.jobSeeker;
+                const parsed = {
+                    jobSeeker: lib_1.default.safeParseJSON(req.body.job_seeker) || {},
+                    bank_details: lib_1.default.safeParseJSON(req.body.bank_details) || {},
+                };
+                for (const { fieldname, filename } of files) {
+                    switch (fieldname) {
+                        case "id_copy":
+                            parsed.jobSeeker.id_copy = filename;
+                            break;
+                        case "work_permit":
+                            parsed.jobSeeker.work_permit = filename;
+                            break;
+                        default:
+                            throw new customError_1.default(this.ResMsg.UNKNOWN_FILE_FIELD, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
+                    }
+                }
+                if (!parsed.jobSeeker.id_copy) {
+                    throw new customError_1.default("ID Copy file is required", this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
+                }
+                if (!parsed.jobSeeker.work_permit) {
+                    throw new customError_1.default("Work Permit file is required", this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
+                }
+                const userModel = this.Model.UserModel(trx);
+                const jobSeekerModel = this.Model.jobSeekerModel(trx);
+                const [existingUser] = yield userModel.checkUser({
+                    id: user_id,
+                    type: constants_1.USER_TYPE.JOB_SEEKER,
+                });
+                if (!existingUser) {
+                    throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND, "ERROR");
+                }
+                const updateTasks = [];
+                if (parsed.jobSeeker && Object.keys(parsed.jobSeeker).length > 0) {
+                    updateTasks.push(jobSeekerModel.updateJobSeeker(Object.assign({ is_completed: true, completed_at: new Date() }, parsed.jobSeeker), {
+                        user_id,
+                    }));
+                }
+                const accountNumber = String(parsed.bank_details.account_number).trim();
+                const isAccountExists = yield jobSeekerModel.getBankAccounts({
+                    user_id,
+                    account_number: accountNumber,
+                });
+                console.log({ isAccountExists });
+                if (isAccountExists.length > 0) {
+                    throw new customError_1.default("Same Bank account already exists for this user", this.StatusCode.HTTP_BAD_REQUEST);
+                }
+                if (parsed.bank_details &&
+                    Object.keys(parsed.bank_details).length > 0) {
+                    if (parsed.bank_details.is_primary !== undefined &&
+                        parsed.bank_details.is_primary !== false) {
+                        const isPrimaryAccountExists = yield jobSeekerModel.getBankAccounts({
+                            user_id,
+                            is_primary: parsed.bank_details.is_primary,
+                        });
+                        if (isPrimaryAccountExists.length > 0) {
+                            throw new customError_1.default("Primary bank details already added for this user", this.StatusCode.HTTP_BAD_REQUEST);
+                        }
+                    }
+                    updateTasks.push(jobSeekerModel.addBankDetails(Object.assign({ job_seeker_id: user_id }, parsed.bank_details)));
+                }
+                yield Promise.all(updateTasks);
+                yield this.insertNotification(trx, userModelTypes_1.TypeUser.ADMIN, {
+                    user_id,
+                    sender_type: constants_1.USER_TYPE.ADMIN,
+                    title: this.NotificationMsg.VERIFICATION_SUBMITTED.title,
+                    content: this.NotificationMsg.VERIFICATION_SUBMITTED.content({
+                        name: existingUser.name,
+                    }),
+                    related_id: user_id,
+                    type: commonModelTypes_1.NotificationTypeEnum.JOB_SEEKER_VERIFICATION,
+                });
                 return {
                     success: true,
                     code: this.StatusCode.HTTP_OK,

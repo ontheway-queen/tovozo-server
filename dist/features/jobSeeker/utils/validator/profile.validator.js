@@ -25,16 +25,17 @@ class JobSeekerProfileUpdate {
             job_seeker: joi_1.default.object({
                 date_of_birth: joi_1.default.date().optional(),
                 gender: joi_1.default.string().valid("Male", "Female", "Other").optional(),
-                nationality: joi_1.default.string().max(255).optional(),
                 address: joi_1.default.string().optional(),
                 is_2fa_on: joi_1.default.boolean().optional(),
             }).optional(),
+        });
+        this.updateUserVerificationDetails = joi_1.default.object({
             bank_details: joi_1.default.object({
-                account_name: joi_1.default.string().optional(),
-                account_number: joi_1.default.string().optional(),
-                bank_code: joi_1.default.string().optional(),
-                is_primary: joi_1.default.boolean().optional(),
-            }).optional(),
+                account_name: joi_1.default.string().required(),
+                account_number: joi_1.default.string().required(),
+                bank_code: joi_1.default.string().required(),
+                is_primary: joi_1.default.boolean().required(),
+            }).required(),
         });
     }
 }

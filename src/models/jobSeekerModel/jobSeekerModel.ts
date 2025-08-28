@@ -178,6 +178,7 @@ export default class JobSeekerModel extends Schema {
 	public async getJobSeekerDetails(where: {
 		user_id: number;
 	}): Promise<IJobSeekerProfile> {
+		// Fetch main profile
 		const profile = await this.db("vw_full_job_seeker_profile")
 			.withSchema(this.JOB_SEEKER)
 			.select(
@@ -191,8 +192,8 @@ export default class JobSeekerModel extends Schema {
 				"user_created_at",
 				"date_of_birth",
 				"gender",
-				"nationality",
 				"work_permit",
+				"id_copy",
 				"account_status",
 				"is_completed",
 				"completed_at",
@@ -203,12 +204,12 @@ export default class JobSeekerModel extends Schema {
 				"home_address",
 				"home_postal_code",
 				"home_status",
-				"is_home_address",
-				"id_copy"
+				"is_home_address"
 			)
 			.where("user_id", where.user_id)
 			.first();
 
+		// Fetch applied jobs
 		const appliedJobs = await this.db("job_applications as ja")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
@@ -226,9 +227,24 @@ export default class JobSeekerModel extends Schema {
 			.leftJoin("jobs as j", "jpd.job_id", "j.id")
 			.where("ja.job_seeker_id", where.user_id);
 
+		// ✅ Fetch bank details
+		const bankDetails = await this.db("bank_details")
+			.withSchema(this.JOB_SEEKER)
+			.select(
+				"id",
+				"account_name",
+				"account_number",
+				"bank_code",
+				"is_primary",
+				"created_at",
+				"updated_at"
+			)
+			.where("job_seeker_id", where.user_id);
+
 		return {
 			...profile,
 			applied_jobs: appliedJobs ?? [],
+			bank_details: bankDetails ?? [],
 		};
 	}
 
@@ -250,30 +266,38 @@ export default class JobSeekerModel extends Schema {
 		account_number: string;
 		bank_code: string;
 	}) {
-		return await this.db("job_seeker_bank_details")
+		console.log({ payload });
+		return await this.db("bank_details")
 			.withSchema(this.JOB_SEEKER)
 			.insert(payload, "id");
 	}
 
 	// check primary account
-	public async getBankAccounts(where: { id?: number; is_primary?: boolean }) {
-		return await this.db("job_seeker_bank_details as jsbd")
+	public async getBankAccounts(where: {
+		user_id?: number;
+		account_number?: string;
+		is_primary?: boolean;
+	}) {
+		return await this.db("bank_details as bd")
 			.withSchema(this.JOB_SEEKER)
 			.select(
-				"jsbd.id",
-				"jsbd.job_seeker_id",
-				"jsbd.account_name",
-				"jsbd.account_number",
-				"jsbd.bank_code",
-				"jsbd.is_primary"
+				"bd.id",
+				"bd.job_seeker_id",
+				"bd.account_name",
+				"bd.account_number",
+				"bd.bank_code",
+				"bd.is_primary"
 			)
-			.where("jsbd.job_seeker_id", where.id)
+			.where("bd.job_seeker_id", where.user_id)
 			.modify((qb) => {
+				if (where.account_number) {
+					qb.andWhere("bd.account_number", where.account_number);
+				}
 				if (where.is_primary) {
-					qb.andWhere("jsbd.is_primary", where.is_primary);
+					qb.andWhere("bd.is_primary", where.is_primary);
 				}
 			})
-			.andWhere("jsbd.is_deleted", false);
+			.andWhere("bd.is_deleted", false);
 	}
 
 	public async getJobSeekerLocation(query: { name?: string }): Promise<

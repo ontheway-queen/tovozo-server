@@ -41,13 +41,16 @@ class HotelierAuthService extends abstract_service_1.default {
             return this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const files = req.files || [];
                 const body = req.body;
-                const _a = lib_1.default.safeParseJSON(body.user), { designation } = _a, user = __rest(_a, ["designation"]);
+                console.log({ body });
+                const user = lib_1.default.safeParseJSON(body.user);
                 const organization = lib_1.default.safeParseJSON(body.organization);
                 const organizationAddress = lib_1.default.safeParseJSON(body.organization_address);
-                const amenitiesInput = lib_1.default.safeParseJSON(req.body.organization_amenities) || [];
                 for (const file of files) {
                     if (file.fieldname === "photo") {
                         user.photo = file.filename;
+                    }
+                    if (file.fieldname === "organization_photo") {
+                        organization.photo = file.filename;
                     }
                 }
                 const { email, phone_number, password } = user, userData = __rest(user, ["email", "phone_number", "password"]);
@@ -130,30 +133,12 @@ class HotelierAuthService extends abstract_service_1.default {
                 });
                 const locationId = organization_location[0].id;
                 const userId = registration[0].id;
-                yield userModel.createUserMaintenanceDesignation({
-                    designation,
-                    user_id: userId,
-                });
                 const orgInsert = yield organizationModel.createOrganization({
                     name: organization.org_name,
                     user_id: userId,
+                    photo: organization.photo,
                     location_id: locationId,
                 });
-                const organizationId = orgInsert[0].id;
-                const photos = files.map((file) => ({
-                    organization_id: organizationId,
-                    file: file.filename,
-                }));
-                if (photos.length) {
-                    yield organizationModel.addPhoto(photos);
-                }
-                const amenities = amenitiesInput.map((a) => ({
-                    organization_id: organizationId,
-                    amenity: a,
-                }));
-                if (amenities.length) {
-                    yield organizationModel.addAmenities(amenities);
-                }
                 const tokenData = {
                     user_id: userId,
                     name: user.name,

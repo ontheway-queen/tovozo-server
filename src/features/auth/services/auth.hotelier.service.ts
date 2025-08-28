@@ -36,23 +36,20 @@ export default class HotelierAuthService extends AbstractServices {
 		return this.db.transaction(async (trx) => {
 			const files = (req.files as Express.Multer.File[]) || [];
 			const body = req.body as IHotelierRegistrationBodyPayload;
-			const { designation, ...user } = Lib.safeParseJSON(
-				body.user
-			) as IHotelierUser;
-			const organization = Lib.safeParseJSON(
-				body.organization
-			) as IOrganizationName;
+			console.log({ body });
+
+			const user = Lib.safeParseJSON(body.user) as IHotelierUser;
+			const organization = Lib.safeParseJSON(body.organization);
 			const organizationAddress = Lib.safeParseJSON(
 				body.organization_address
 			) as IOrganizationAddressPayload;
-			const amenitiesInput =
-				(Lib.safeParseJSON(
-					req.body.organization_amenities
-				) as IOrganizationAmenitiesType[]) || [];
 
 			for (const file of files) {
 				if (file.fieldname === "photo") {
 					user.photo = file.filename;
+				}
+				if (file.fieldname === "organization_photo") {
+					organization.photo = file.filename;
 				}
 			}
 
@@ -158,35 +155,12 @@ export default class HotelierAuthService extends AbstractServices {
 			const locationId = organization_location[0].id;
 			const userId = registration[0].id;
 
-			await userModel.createUserMaintenanceDesignation({
-				designation,
-				user_id: userId,
-			});
 			const orgInsert = await organizationModel.createOrganization({
 				name: organization.org_name,
 				user_id: userId,
+				photo: organization.photo,
 				location_id: locationId,
 			});
-
-			const organizationId = orgInsert[0].id;
-
-			const photos = files.map((file) => ({
-				organization_id: organizationId,
-				file: file.filename,
-			}));
-
-			if (photos.length) {
-				await organizationModel.addPhoto(photos);
-			}
-
-			const amenities = amenitiesInput.map((a: string) => ({
-				organization_id: organizationId,
-				amenity: a,
-			}));
-
-			if (amenities.length) {
-				await organizationModel.addAmenities(amenities);
-			}
 
 			const tokenData = {
 				user_id: userId,
@@ -309,7 +283,10 @@ export default class HotelierAuthService extends AbstractServices {
 			await Lib.sendEmailDefault({
 				email: checkUser.email,
 				emailSub: "Two Factor Verification",
-				emailBody: sendEmailOtpTemplate(generateOtp, "two factor verification"),
+				emailBody: sendEmailOtpTemplate(
+					generateOtp,
+					"two factor verification"
+				),
 			});
 			return {
 				success: true,
@@ -349,7 +326,10 @@ export default class HotelierAuthService extends AbstractServices {
 	// loginData for 2FA user info retrieval
 	public async loginData(req: Request) {
 		const { token, email } = req.body as { token: string; email: string };
-		const token_verify: any = Lib.verifyToken(token, config.JWT_SECRET_HOTEL);
+		const token_verify: any = Lib.verifyToken(
+			token,
+			config.JWT_SECRET_HOTEL
+		);
 		const user_model = this.Model.UserModel();
 
 		if (!token_verify) {
@@ -421,7 +401,10 @@ export default class HotelierAuthService extends AbstractServices {
 	//forget pass
 	public async forgetPassword(req: Request) {
 		const { token, email, password } = req.body as IForgetPasswordPayload;
-		const token_verify: any = Lib.verifyToken(token, config.JWT_SECRET_HOTEL);
+		const token_verify: any = Lib.verifyToken(
+			token,
+			config.JWT_SECRET_HOTEL
+		);
 
 		if (!token_verify) {
 			return {

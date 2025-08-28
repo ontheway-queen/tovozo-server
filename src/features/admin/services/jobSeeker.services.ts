@@ -255,45 +255,22 @@ class AdminJobSeekerService extends AbstractServices {
 				};
 			}
 			const files = req.files as Express.MulterS3.File[];
-			console.log({ files });
+
 			const parsed = {
 				user: Lib.safeParseJSON(req.body.user) || {},
 				jobSeeker: Lib.safeParseJSON(req.body.job_seeker) || {},
-				jobSeekerInfo:
-					Lib.safeParseJSON(req.body.job_seeker_info) || {},
 				ownAddress: Lib.safeParseJSON(req.body.own_address) || {},
-				addJobPreferences:
-					Lib.safeParseJSON(req.body.add_job_preferences) || [],
-				delJobPreferences:
-					Lib.safeParseJSON(req.body.del_job_preferences) || [],
-				addJobLocations:
-					Lib.safeParseJSON(req.body.add_job_locations) || [],
-				delJobLocations:
-					Lib.safeParseJSON(req.body.del_job_locations) || [],
-				updateJobLocations:
-					Lib.safeParseJSON(req.body.update_job_locations) || [],
-				addJobShifting:
-					Lib.safeParseJSON(req.body.add_job_shifting) || [],
-				delJobShifting:
-					Lib.safeParseJSON(req.body.del_job_shifting) || [],
 			} as IAdminJobSeekerUpdateParsedBody;
 
 			for (const { fieldname, filename } of files) {
 				switch (fieldname) {
-					case "resume":
-						parsed.jobSeekerInfo.resume = filename;
-						break;
 					case "photo":
 						parsed.user.photo = filename;
 						break;
-					case "visa_copy":
-						parsed.jobSeekerInfo.visa_copy = filename;
-						break;
 					case "id_copy":
-						parsed.jobSeekerInfo.id_copy = filename;
-						break;
-					case "passport_copy":
-						parsed.jobSeekerInfo.passport_copy = filename;
+						parsed.jobSeeker.id_copy = filename;
+					case "work_permit":
+						parsed.jobSeeker.work_permit = filename;
 						break;
 					default:
 						throw new CustomError(
@@ -434,6 +411,87 @@ class AdminJobSeekerService extends AbstractServices {
 				type: "UPDATE",
 				payload: JSON.stringify(parsed),
 			});
+			return {
+				success: true,
+				code: this.StatusCode.HTTP_OK,
+				message: this.ResMsg.HTTP_OK,
+			};
+		});
+	}
+
+	public async verifyJobSeeker(req: Request) {
+		return this.db.transaction(async (trx) => {
+			const adminUserId = req.admin.user_id;
+			const jobSeekerId = Number(req.params.id);
+
+			const jobSeekerModel = this.Model.jobSeekerModel(trx);
+			const userModel = this.Model.UserModel(trx);
+
+			const jobSeekerData = await jobSeekerModel.getJobSeekerDetails({
+				user_id: jobSeekerId,
+			});
+			if (!jobSeekerData) {
+				return {
+					success: false,
+					message: `The requested job seeker account with ID ${jobSeekerId} not found`,
+					code: this.StatusCode.HTTP_NOT_FOUND,
+				};
+			}
+
+			const [existingUser] = await userModel.checkUser({
+				id: jobSeekerId,
+				type: USER_TYPE.JOB_SEEKER,
+			});
+
+			if (!existingUser) {
+				throw new CustomError(
+					`The requested user account with ID ${jobSeekerId} not found`,
+					this.StatusCode.HTTP_NOT_FOUND,
+					"ERROR"
+				);
+			}
+
+			const updateTasks: Promise<any>[] = [];
+			updateTasks.push(
+				jobSeekerModel.updateJobSeeker(
+					{
+						final_completed: true,
+						final_completed_by: adminUserId,
+						final_completed_at: new Date().toDateString(),
+					},
+					{ user_id: jobSeekerId }
+				)
+			);
+
+			await Promise.all(updateTasks);
+
+			await this.insertNotification(trx, USER_TYPE.JOB_SEEKER, {
+				title: "Your account has been verified",
+				content: `Your account has been successfully verified. You can now start applying for jobs.`,
+				related_id: jobSeekerId,
+				sender_type: USER_TYPE.ADMIN,
+				sender_id: adminUserId,
+				user_id: jobSeekerId,
+				type: "JOB_SEEKER_VERIFICATION",
+			});
+
+			await Lib.sendEmailDefault({
+				email: existingUser.email,
+				emailSub: "Job Seeker Account Verified – You Can Now Log In",
+				emailBody: registrationVerificationCompletedTemplate(
+					existingUser.name,
+					"https://play.google.com/store/apps/details?id=com.m360ict.tovozo"
+				),
+			});
+
+			await this.insertAdminAudit(trx, {
+				details: `Job seeker (${existingUser.name} - ${jobSeekerId}) profile has been verified.`,
+				created_by: adminUserId,
+				endpoint: req.originalUrl,
+				type: "UPDATE",
+				payload: JSON.stringify({ account_status: USER_STATUS.ACTIVE }),
+			});
+
 			return {
 				success: true,
 				code: this.StatusCode.HTTP_OK,

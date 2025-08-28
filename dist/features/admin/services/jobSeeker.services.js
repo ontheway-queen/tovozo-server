@@ -195,36 +195,20 @@ class AdminJobSeekerService extends abstract_service_1.default {
                     };
                 }
                 const files = req.files;
-                console.log({ files });
                 const parsed = {
                     user: lib_1.default.safeParseJSON(req.body.user) || {},
                     jobSeeker: lib_1.default.safeParseJSON(req.body.job_seeker) || {},
-                    jobSeekerInfo: lib_1.default.safeParseJSON(req.body.job_seeker_info) || {},
                     ownAddress: lib_1.default.safeParseJSON(req.body.own_address) || {},
-                    addJobPreferences: lib_1.default.safeParseJSON(req.body.add_job_preferences) || [],
-                    delJobPreferences: lib_1.default.safeParseJSON(req.body.del_job_preferences) || [],
-                    addJobLocations: lib_1.default.safeParseJSON(req.body.add_job_locations) || [],
-                    delJobLocations: lib_1.default.safeParseJSON(req.body.del_job_locations) || [],
-                    updateJobLocations: lib_1.default.safeParseJSON(req.body.update_job_locations) || [],
-                    addJobShifting: lib_1.default.safeParseJSON(req.body.add_job_shifting) || [],
-                    delJobShifting: lib_1.default.safeParseJSON(req.body.del_job_shifting) || [],
                 };
                 for (const { fieldname, filename } of files) {
                     switch (fieldname) {
-                        case "resume":
-                            parsed.jobSeekerInfo.resume = filename;
-                            break;
                         case "photo":
                             parsed.user.photo = filename;
                             break;
-                        case "visa_copy":
-                            parsed.jobSeekerInfo.visa_copy = filename;
-                            break;
                         case "id_copy":
-                            parsed.jobSeekerInfo.id_copy = filename;
-                            break;
-                        case "passport_copy":
-                            parsed.jobSeekerInfo.passport_copy = filename;
+                            parsed.jobSeeker.id_copy = filename;
+                        case "work_permit":
+                            parsed.jobSeeker.work_permit = filename;
                             break;
                         default:
                             throw new customError_1.default(this.ResMsg.UNKNOWN_FILE_FIELD, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
@@ -312,6 +296,66 @@ class AdminJobSeekerService extends abstract_service_1.default {
                     endpoint: req.originalUrl,
                     type: "UPDATE",
                     payload: JSON.stringify(parsed),
+                });
+                return {
+                    success: true,
+                    code: this.StatusCode.HTTP_OK,
+                    message: this.ResMsg.HTTP_OK,
+                };
+            }));
+        });
+    }
+    verifyJobSeeker(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const adminUserId = req.admin.user_id;
+                const jobSeekerId = Number(req.params.id);
+                const jobSeekerModel = this.Model.jobSeekerModel(trx);
+                const userModel = this.Model.UserModel(trx);
+                const jobSeekerData = yield jobSeekerModel.getJobSeekerDetails({
+                    user_id: jobSeekerId,
+                });
+                if (!jobSeekerData) {
+                    return {
+                        success: false,
+                        message: `The requested job seeker account with ID ${jobSeekerId} not found`,
+                        code: this.StatusCode.HTTP_NOT_FOUND,
+                    };
+                }
+                const [existingUser] = yield userModel.checkUser({
+                    id: jobSeekerId,
+                    type: constants_1.USER_TYPE.JOB_SEEKER,
+                });
+                if (!existingUser) {
+                    throw new customError_1.default(`The requested user account with ID ${jobSeekerId} not found`, this.StatusCode.HTTP_NOT_FOUND, "ERROR");
+                }
+                const updateTasks = [];
+                updateTasks.push(jobSeekerModel.updateJobSeeker({
+                    final_completed: true,
+                    final_completed_by: adminUserId,
+                    final_completed_at: new Date().toDateString(),
+                }, { user_id: jobSeekerId }));
+                yield Promise.all(updateTasks);
+                yield this.insertNotification(trx, constants_1.USER_TYPE.JOB_SEEKER, {
+                    title: "Your account has been verified",
+                    content: `Your account has been successfully verified. You can now start applying for jobs.`,
+                    related_id: jobSeekerId,
+                    sender_type: constants_1.USER_TYPE.ADMIN,
+                    sender_id: adminUserId,
+                    user_id: jobSeekerId,
+                    type: "JOB_SEEKER_VERIFICATION",
+                });
+                yield lib_1.default.sendEmailDefault({
+                    email: existingUser.email,
+                    emailSub: "Job Seeker Account Verified – You Can Now Log In",
+                    emailBody: (0, registrationVerificationCompletedTemplate_1.registrationVerificationCompletedTemplate)(existingUser.name, "https://play.google.com/store/apps/details?id=com.m360ict.tovozo"),
+                });
+                yield this.insertAdminAudit(trx, {
+                    details: `Job seeker (${existingUser.name} - ${jobSeekerId}) profile has been verified.`,
+                    created_by: adminUserId,
+                    endpoint: req.originalUrl,
+                    type: "UPDATE",
+                    payload: JSON.stringify({ account_status: constants_1.USER_STATUS.ACTIVE }),
                 });
                 return {
                     success: true,

@@ -24,6 +24,9 @@ class AdminJobSeekerRouter extends abstract_router_1.default {
             .get(this.controller.getSingleJobSeeker)
             .patch(this.uploader.cloudUploadRaw(this.fileFolders.JOB_SEEKER_FILES), this.controller.updateJobSeeker)
             .delete(this.controller.deleteJobSeeker);
+        this.router
+            .route("/verify-job-seeker/:id")
+            .patch(this.controller.verifyJobSeeker);
     }
 }
 exports.default = AdminJobSeekerRouter;

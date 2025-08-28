@@ -5,15 +5,15 @@ export interface ICreateJobSeekerPayload {
 	user_id: number;
 	date_of_birth?: string;
 	gender?: IGenderType;
-	nationality: number;
 	address?: string;
 	work_permit?: string;
 	account_status?: string;
 	criminal_convictions?: boolean;
 	location_id?: number;
-	visa_copy?: string;
 	id_copy?: string;
-	passport_copy?: string;
+	final_completed?: boolean;
+	final_completed_by?: number;
+	final_completed_at?: string;
 }
 
 export interface IUpdateJobSeekerPayload
@@ -65,10 +65,8 @@ export interface IJobSeekerProfile {
 	user_created_at: string;
 	date_of_birth?: string;
 	gender?: string;
-	nationality?: string;
 	work_permit?: string;
 	account_status: string;
-	criminal_convictions?: string;
 	home_location_id?: number;
 	home_city_id?: number;
 	home_location_name?: string;
@@ -81,23 +79,12 @@ export interface IJobSeekerProfile {
 	is_home_address?: boolean;
 	home_created_at?: string;
 	home_updated_at?: string;
-	hospitality_exp?: string;
-	languages?: string;
-	hospitality_certifications?: string;
-	medical_condition?: string;
-	dietary_restrictions?: string;
-	work_start?: string;
-	certifications?: string;
-	reference?: string;
-	resume?: string;
-	training_program_interested?: string;
-	start_working?: string;
-	hours_available?: string;
-	comment?: string;
-	passport_copy?: string;
-	visa_copy?: string;
+	is_completed?: boolean;
+	completed_at?: string;
+	final_completed?: boolean;
+	final_completed_by?: number;
+	final_completed_at?: string;
 	id_copy?: string;
-	stripe_acc_id?: string;
 	applied_jobs?:
 		| {
 				id: number;

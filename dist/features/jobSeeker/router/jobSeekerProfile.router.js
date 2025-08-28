@@ -17,6 +17,9 @@ class jobSeekerProfileRouter extends abstract_router_1.default {
             .route("/")
             .get(this.controller.getProfile)
             .patch(this.uploader.cloudUploadRaw(this.fileFolders.JOB_SEEKER_FILES), this.controller.updateProfile);
+        this.router
+            .route("/verify-details")
+            .patch(this.uploader.cloudUploadRaw(this.fileFolders.JOB_SEEKER_FILES), this.controller.updateUserVerificationDetails);
         // change password
         this.router
             .route("/change-password")

@@ -5,6 +5,7 @@ export interface ICreateOrganizationPayload {
 	user_id: number;
 	details?: string;
 	status?: string;
+	photo?: string;
 	location_id: number;
 	is_deleted?: boolean;
 }

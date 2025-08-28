@@ -36,24 +36,27 @@ export class JobSeekerJobApplication extends AbstractServices {
 			const jobSeekerModel = this.Model.jobSeekerModel(trx);
 			const cancellationLogModel = new CancellationLogModel(trx);
 
-			const jobSeeker = await userModel.checkUser({
-				id: user_id,
-				type: TypeUser.JOB_SEEKER,
+			const jobSeekerUser = await userModel.checkUser({ id: user_id });
+			if (!jobSeekerUser) {
+				throw new CustomError(
+					"User not found with related ID.",
+					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
+
+			const jobSeeker = await jobSeekerModel.getJobSeekerDetails({
+				user_id,
 			});
-			if (jobSeeker && jobSeeker.length < 1) {
+			if (!jobSeeker) {
 				throw new CustomError(
 					"Job seeker not found!",
 					this.StatusCode.HTTP_NOT_FOUND
 				);
 			}
 
-			const isBankExists = await jobSeekerModel.getBankAccounts({
-				id: user_id,
-			});
-
-			if (isBankExists.length < 1) {
+			if (!jobSeeker.final_completed) {
 				throw new CustomError(
-					"Please provide your bank account details to continue with the application process.",
+					"Please provide your ID Copy, Work Permit and bank account details to continue with the application process.",
 					this.StatusCode.HTTP_BAD_REQUEST
 				);
 			}
@@ -163,7 +166,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 					}),
 					type: NotificationTypeEnum.JOB_TASK,
 					related_id: jobPost.id,
-					job_seeker_device_id: jobSeeker[0].device_id,
+					job_seeker_device_id: jobSeekerUser[0].device_id,
 				},
 				{
 					delay: reminderTime.getTime() - Date.now(),
@@ -218,7 +221,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 					TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION,
 					{
 						user_id,
-						photo: jobSeeker[0].photo,
+						photo: jobSeekerUser[0].photo,
 						title: this.NotificationMsg.JOB_APPLICATION_RECEIVED
 							.title,
 						content:
@@ -249,7 +252,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 								}
 							),
 						data: JSON.stringify({
-							photo: jobSeeker[0].photo,
+							photo: jobSeekerUser[0].photo,
 							related_id: jobPost.id,
 						}),
 					});

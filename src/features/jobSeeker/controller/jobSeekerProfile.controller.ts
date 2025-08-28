@@ -30,6 +30,15 @@ export default class JobSeekerProfileController extends AbstractController {
 		}
 	);
 
+	public updateUserVerificationDetails = this.asyncWrapper.wrap(
+		{ bodySchema: this.validator.updateUserVerificationDetails },
+		async (req: Request, res: Response) => {
+			const { code, ...data } =
+				await this.profileService.updateUserVerificationDetails(req);
+			res.status(code).json(data);
+		}
+	);
+
 	//change password
 	public changePassword = this.asyncWrapper.wrap(
 		{ bodySchema: this.commonValidator.changePassInputValidation },

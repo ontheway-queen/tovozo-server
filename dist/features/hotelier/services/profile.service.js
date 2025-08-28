@@ -35,24 +35,16 @@ class HotelierProfileService extends abstract_service_1.default {
         this.getProfile = (req) => __awaiter(this, void 0, void 0, function* () {
             const { user_id } = req.hotelier;
             const userModel = this.Model.UserModel();
-            const organizationModel = this.Model.organizationModel();
             const _a = yield userModel.getSingleCommonAuthUser({
                 table_name: constants_1.USER_AUTHENTICATION_VIEW.HOTELIER,
                 schema_name: "hotelier",
                 user_id,
             }), { password_hash } = _a, rest = __rest(_a, ["password_hash"]);
-            const [organization_amenities, organization_photos] = yield Promise.all([
-                organizationModel.getAmenities({
-                    organization_id: rest.organization_id,
-                }),
-                organizationModel.getPhotos(rest.organization_id),
-            ]);
             return {
                 success: true,
                 code: this.StatusCode.HTTP_OK,
                 message: this.ResMsg.HTTP_OK,
-                data: Object.assign(Object.assign({}, rest), { organization_amenities,
-                    organization_photos }),
+                data: Object.assign({}, rest),
             };
         });
     }

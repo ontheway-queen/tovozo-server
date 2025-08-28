@@ -312,7 +312,7 @@ CREATE TABLE IF NOT EXISTS dbo.job_applications (
     status dbo.job_application_status DEFAULT 'Pending',
     cancelled_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    is_deleted BOOLEAN NOT NULL DEFAULT FALSE
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     created_by INTEGER
 );
 

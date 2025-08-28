@@ -7,8 +7,12 @@ import {
 	USER_AUTHENTICATION_VIEW,
 	USER_TYPE,
 } from "../../../utils/miscellaneous/constants";
-import { IChangePasswordPayload } from "../../../utils/modelTypes/common/commonModelTypes";
+import {
+	IChangePasswordPayload,
+	NotificationTypeEnum,
+} from "../../../utils/modelTypes/common/commonModelTypes";
 import { IJobSeekerAuthView } from "../../auth/utils/types/jobSeekerAuth.types";
+import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
 
 export default class JobSeekerProfileService extends AbstractServices {
 	constructor() {
@@ -150,7 +154,7 @@ export default class JobSeekerProfileService extends AbstractServices {
 				) {
 					const isPrimaryAccountExists =
 						await jobSeekerModel.getBankAccounts({
-							id: user_id,
+							user_id,
 							is_primary: parsed.bank_details.is_primary,
 						});
 
@@ -170,6 +174,149 @@ export default class JobSeekerProfileService extends AbstractServices {
 			}
 
 			await Promise.all(updateTasks);
+
+			return {
+				success: true,
+				code: this.StatusCode.HTTP_OK,
+				message: this.ResMsg.HTTP_OK,
+			};
+		});
+	}
+
+	// update User Verification Details
+	public async updateUserVerificationDetails(req: Request) {
+		return this.db.transaction(async (trx) => {
+			const files = (req.files as Express.Multer.File[]) || [];
+			const { user_id } = req.jobSeeker;
+
+			const parsed = {
+				jobSeeker: Lib.safeParseJSON(req.body.job_seeker) || {},
+				bank_details: Lib.safeParseJSON(req.body.bank_details) || {},
+			};
+
+			for (const { fieldname, filename } of files) {
+				switch (fieldname) {
+					case "id_copy":
+						parsed.jobSeeker.id_copy = filename;
+						break;
+
+					case "work_permit":
+						parsed.jobSeeker.work_permit = filename;
+						break;
+
+					default:
+						throw new CustomError(
+							this.ResMsg.UNKNOWN_FILE_FIELD,
+							this.StatusCode.HTTP_BAD_REQUEST,
+							"ERROR"
+						);
+				}
+			}
+
+			if (!parsed.jobSeeker.id_copy) {
+				throw new CustomError(
+					"ID Copy file is required",
+					this.StatusCode.HTTP_BAD_REQUEST,
+					"ERROR"
+				);
+			}
+			if (!parsed.jobSeeker.work_permit) {
+				throw new CustomError(
+					"Work Permit file is required",
+					this.StatusCode.HTTP_BAD_REQUEST,
+					"ERROR"
+				);
+			}
+
+			const userModel = this.Model.UserModel(trx);
+			const jobSeekerModel = this.Model.jobSeekerModel(trx);
+
+			const [existingUser] = await userModel.checkUser({
+				id: user_id,
+				type: USER_TYPE.JOB_SEEKER,
+			});
+
+			if (!existingUser) {
+				throw new CustomError(
+					this.ResMsg.HTTP_NOT_FOUND,
+					this.StatusCode.HTTP_NOT_FOUND,
+					"ERROR"
+				);
+			}
+
+			const updateTasks: Promise<any>[] = [];
+
+			if (parsed.jobSeeker && Object.keys(parsed.jobSeeker).length > 0) {
+				updateTasks.push(
+					jobSeekerModel.updateJobSeeker(
+						{
+							is_completed: true,
+							completed_at: new Date(),
+							...parsed.jobSeeker,
+						},
+						{
+							user_id,
+						}
+					)
+				);
+			}
+			const accountNumber = String(
+				parsed.bank_details.account_number
+			).trim();
+			const isAccountExists = await jobSeekerModel.getBankAccounts({
+				user_id,
+				account_number: accountNumber,
+			});
+			console.log({ isAccountExists });
+
+			if (isAccountExists.length > 0) {
+				throw new CustomError(
+					"Same Bank account already exists for this user",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
+
+			if (
+				parsed.bank_details &&
+				Object.keys(parsed.bank_details).length > 0
+			) {
+				if (
+					parsed.bank_details.is_primary !== undefined &&
+					parsed.bank_details.is_primary !== false
+				) {
+					const isPrimaryAccountExists =
+						await jobSeekerModel.getBankAccounts({
+							user_id,
+							is_primary: parsed.bank_details.is_primary,
+						});
+
+					if (isPrimaryAccountExists.length > 0) {
+						throw new CustomError(
+							"Primary bank details already added for this user",
+							this.StatusCode.HTTP_BAD_REQUEST
+						);
+					}
+				}
+				updateTasks.push(
+					jobSeekerModel.addBankDetails({
+						job_seeker_id: user_id,
+						...parsed.bank_details,
+					})
+				);
+			}
+
+			await Promise.all(updateTasks);
+
+			await this.insertNotification(trx, TypeUser.ADMIN, {
+				user_id,
+				sender_type: USER_TYPE.ADMIN,
+				title: this.NotificationMsg.VERIFICATION_SUBMITTED.title,
+				content: this.NotificationMsg.VERIFICATION_SUBMITTED.content({
+					name: existingUser.name,
+				}),
+				related_id: user_id,
+				type: NotificationTypeEnum.JOB_SEEKER_VERIFICATION,
+			});
 
 			return {
 				success: true,

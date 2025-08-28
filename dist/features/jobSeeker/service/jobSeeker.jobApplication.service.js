@@ -34,18 +34,18 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 const jobPostModel = new jobPostModel_1.default(trx);
                 const jobSeekerModel = this.Model.jobSeekerModel(trx);
                 const cancellationLogModel = new cancellationLogModel_1.default(trx);
-                const jobSeeker = yield userModel.checkUser({
-                    id: user_id,
-                    type: userModelTypes_1.TypeUser.JOB_SEEKER,
+                const jobSeekerUser = yield userModel.checkUser({ id: user_id });
+                if (!jobSeekerUser) {
+                    throw new customError_1.default("User not found with related ID.", this.StatusCode.HTTP_NOT_FOUND);
+                }
+                const jobSeeker = yield jobSeekerModel.getJobSeekerDetails({
+                    user_id,
                 });
-                if (jobSeeker && jobSeeker.length < 1) {
+                if (!jobSeeker) {
                     throw new customError_1.default("Job seeker not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }
-                const isBankExists = yield jobSeekerModel.getBankAccounts({
-                    id: user_id,
-                });
-                if (isBankExists.length < 1) {
-                    throw new customError_1.default("Please provide your bank account details to continue with the application process.", this.StatusCode.HTTP_BAD_REQUEST);
+                if (!jobSeeker.final_completed) {
+                    throw new customError_1.default("Please provide your ID Copy, Work Permit and bank account details to continue with the application process.", this.StatusCode.HTTP_BAD_REQUEST);
                 }
                 const jobPost = yield jobPostModel.getSingleJobPostForJobSeeker(job_post_details_id);
                 if (!jobPost) {
@@ -112,7 +112,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     }),
                     type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                     related_id: jobPost.id,
-                    job_seeker_device_id: jobSeeker[0].device_id,
+                    job_seeker_device_id: jobSeekerUser[0].device_id,
                 }, {
                     delay: reminderTime.getTime() - Date.now(),
                     removeOnComplete: true,
@@ -152,7 +152,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 if (isHotelierOnline && isHotelierOnline.length > 0) {
                     socket_1.io.to(String(jobPost.hotelier_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION, {
                         user_id,
-                        photo: jobSeeker[0].photo,
+                        photo: jobSeekerUser[0].photo,
                         title: this.NotificationMsg.JOB_APPLICATION_RECEIVED
                             .title,
                         content: this.NotificationMsg.JOB_APPLICATION_RECEIVED.content({
@@ -176,7 +176,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                                 jobPostId: jobPost.id,
                             }),
                             data: JSON.stringify({
-                                photo: jobSeeker[0].photo,
+                                photo: jobSeekerUser[0].photo,
                                 related_id: jobPost.id,
                             }),
                         });

@@ -30,6 +30,10 @@ class AdminJobSeekerRouter extends AbstractRouter {
 				this.controller.updateJobSeeker
 			)
 			.delete(this.controller.deleteJobSeeker);
+
+		this.router
+			.route("/verify-job-seeker/:id")
+			.patch(this.controller.verifyJobSeeker);
 	}
 }
 
