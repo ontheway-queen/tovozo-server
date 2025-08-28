@@ -110,20 +110,6 @@ class JobSeekerProfileService extends abstract_service_1.default {
                         user_id,
                     }));
                 }
-                if (parsed.bank_details &&
-                    Object.keys(parsed.bank_details).length > 0) {
-                    if (parsed.bank_details.is_primary !== undefined &&
-                        parsed.bank_details.is_primary !== "false") {
-                        const isPrimaryAccountExists = yield jobSeekerModel.getBankAccounts({
-                            user_id,
-                            is_primary: parsed.bank_details.is_primary,
-                        });
-                        if (isPrimaryAccountExists.length > 0) {
-                            throw new customError_1.default("Primary bank details already added for this user", this.StatusCode.HTTP_BAD_REQUEST);
-                        }
-                    }
-                    updateTasks.push(jobSeekerModel.addBankDetails(Object.assign({ job_seeker_id: user_id }, parsed.bank_details)));
-                }
                 yield Promise.all(updateTasks);
                 return {
                     success: true,
@@ -187,12 +173,15 @@ class JobSeekerProfileService extends abstract_service_1.default {
                 }
                 if (parsed.bank_details &&
                     Object.keys(parsed.bank_details).length > 0) {
-                    if (parsed.bank_details.is_primary !== undefined &&
+                    const existingAccounts = yield jobSeekerModel.getBankAccounts({
+                        user_id,
+                    });
+                    if (existingAccounts.length === 0) {
+                        parsed.bank_details.is_primary = true;
+                    }
+                    else if (parsed.bank_details.is_primary !== undefined &&
                         parsed.bank_details.is_primary !== false) {
-                        const isPrimaryAccountExists = yield jobSeekerModel.getBankAccounts({
-                            user_id,
-                            is_primary: parsed.bank_details.is_primary,
-                        });
+                        const isPrimaryAccountExists = existingAccounts.filter((acc) => acc.is_primary);
                         if (isPrimaryAccountExists.length > 0) {
                             throw new customError_1.default("Primary bank details already added for this user", this.StatusCode.HTTP_BAD_REQUEST);
                         }
@@ -214,6 +203,31 @@ class JobSeekerProfileService extends abstract_service_1.default {
                     success: true,
                     code: this.StatusCode.HTTP_OK,
                     message: this.ResMsg.HTTP_OK,
+                };
+            }));
+        });
+    }
+    // make account primary
+    markAccountAsPrimary(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { id } = req.params; // bank_details id
+            const { user_id } = req.jobSeeker;
+            return this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const jobseekerModel = this.Model.jobSeekerModel(trx);
+                const allBanks = yield jobseekerModel.getBankAccounts({ user_id });
+                if (!allBanks || allBanks.length === 0) {
+                    throw new customError_1.default("No bank accounts found for this user", this.StatusCode.HTTP_NOT_FOUND);
+                }
+                const requestedBank = allBanks.find((b) => b.id === Number(id));
+                if (!requestedBank) {
+                    throw new customError_1.default("Requested bank account not found", this.StatusCode.HTTP_NOT_FOUND);
+                }
+                const updatePromises = allBanks.map((b) => jobseekerModel.markAsPrimaryBank({ id: b.id }, { is_primary: b.id === Number(id) }));
+                yield Promise.all(updatePromises);
+                return {
+                    success: true,
+                    code: this.StatusCode.HTTP_OK,
+                    message: "Bank account marked as primary",
                 };
             }));
         });
@@ -260,6 +274,41 @@ class JobSeekerProfileService extends abstract_service_1.default {
                     message: this.ResMsg.HTTP_INTERNAL_SERVER_ERROR,
                 };
             }
+        });
+    }
+    // Make a payout request
+    requestForPayout(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const { user_id } = req.jobSeeker;
+                const { amount, note } = req.body;
+                const jobseekerModel = this.Model.jobSeekerModel(trx);
+                const payoutRequestModel = this.Model.payoutRequestModel(trx);
+                const jobSeeker = yield jobseekerModel.getJobSeekerDetails({
+                    user_id,
+                });
+                const availableBalance = parseFloat(jobSeeker.available_balance);
+                if (amount > availableBalance) {
+                    throw new customError_1.default(`Requested amount exceeds your available balance of $${availableBalance}`, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
+                }
+                const isPrimaryAccountExists = Array.isArray(jobSeeker.bank_details)
+                    ? jobSeeker.bank_details.some((bd) => bd.is_primary === true)
+                    : false;
+                if (!isPrimaryAccountExists) {
+                    throw new customError_1.default("Primary bank account is not exists for this user. Please add a primary bank account for payout and then request", this.StatusCode.HTTP_BAD_REQUEST);
+                }
+                const payload = {
+                    job_seeker_id: user_id,
+                    amount,
+                    note,
+                };
+                yield payoutRequestModel.createPayoutRequest(payload);
+                return {
+                    success: true,
+                    code: this.StatusCode.HTTP_OK,
+                    message: this.ResMsg.HTTP_OK,
+                };
+            }));
         });
     }
 }

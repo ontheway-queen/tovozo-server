@@ -127,7 +127,34 @@ class JobSeekerModel extends schema_1.default {
             // Fetch main profile
             const profile = yield this.db("vw_full_job_seeker_profile")
                 .withSchema(this.JOB_SEEKER)
-                .select("user_id", "email", "name", "phone_number", "photo", "user_status", "user_type", "user_created_at", "date_of_birth", "gender", "work_permit", "id_copy", "account_status", "is_completed", "completed_at", "final_completed", "final_completed_at", "home_location_id", "home_location_name", "home_address", "home_postal_code", "home_status", "is_home_address")
+                .select("user_id", "email", "name", "phone_number", "photo", "user_status", "user_type", "user_created_at", "date_of_birth", "gender", "work_permit", "id_copy", "account_status", "is_completed", "completed_at", "final_completed", "final_completed_at", "home_location_id", "home_location_name", "home_address", "home_postal_code", "home_status", "is_home_address", this.db.raw(`
+        (SELECT COALESCE(SUM(pl.amount), 0)
+         FROM dbo.payment_ledger pl
+         WHERE pl.user_id = vw_full_job_seeker_profile.user_id
+           AND pl.trx_type = 'In') as total_earnings
+      `), this.db.raw(`
+        (SELECT COALESCE(SUM(pl.amount), 0)
+         FROM dbo.payment_ledger pl
+         WHERE pl.user_id = vw_full_job_seeker_profile.user_id
+           AND pl.trx_type = 'In'
+           AND DATE(pl.created_at) = CURRENT_DATE) as today_earnings
+      `), this.db.raw(`
+        (SELECT COALESCE(SUM(pr.amount), 0)
+         FROM jobseeker.payout_requests pr
+         WHERE pr.job_seeker_id = vw_full_job_seeker_profile.user_id
+           AND pr.status = 'Paid') as total_payout
+      `), this.db.raw(`
+        (SELECT 
+           COALESCE(SUM(pl.amount), 0) - 
+           COALESCE((SELECT SUM(pr.amount) 
+                     FROM jobseeker.payout_requests pr 
+                     WHERE pr.job_seeker_id = vw_full_job_seeker_profile.user_id 
+                       AND pr.status = 'Paid'), 0)
+         FROM dbo.payment_ledger pl
+         WHERE pl.user_id = vw_full_job_seeker_profile.user_id
+           AND pl.trx_type = 'In'
+        ) as available_balance
+      `))
                 .where("user_id", where.user_id)
                 .first();
             // Fetch applied jobs
@@ -137,10 +164,10 @@ class JobSeekerModel extends schema_1.default {
                 .leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
                 .leftJoin("jobs as j", "jpd.job_id", "j.id")
                 .where("ja.job_seeker_id", where.user_id);
-            // ✅ Fetch bank details
+            // Fetch bank details
             const bankDetails = yield this.db("bank_details")
                 .withSchema(this.JOB_SEEKER)
-                .select("id", "account_name", "account_number", "bank_code", "is_primary", "created_at", "updated_at")
+                .select("id", "account_name", "account_number", "bank_code", "is_primary", "is_verified", "created_at", "updated_at")
                 .where("job_seeker_id", where.user_id);
             return Object.assign(Object.assign({}, profile), { applied_jobs: appliedJobs !== null && appliedJobs !== void 0 ? appliedJobs : [], bank_details: bankDetails !== null && bankDetails !== void 0 ? bankDetails : [] });
         });
@@ -182,6 +209,24 @@ class JobSeekerModel extends schema_1.default {
                 }
             })
                 .andWhere("bd.is_deleted", false);
+        });
+    }
+    markAsPrimaryBank(where, payload) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("bank_details as bd")
+                .withSchema(this.JOB_SEEKER)
+                .update(payload)
+                .where("bd.id", where.id)
+                .returning("*");
+        });
+    }
+    verifyBankAccount(where) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("bank_details as bd")
+                .withSchema(this.JOB_SEEKER)
+                .update({ is_verified: true })
+                .where("bd.id", where.id)
+                .returning("*");
         });
     }
     getJobSeekerLocation(query) {

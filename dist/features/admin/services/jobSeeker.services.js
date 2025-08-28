@@ -310,6 +310,7 @@ class AdminJobSeekerService extends abstract_service_1.default {
             return this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const adminUserId = req.admin.user_id;
                 const jobSeekerId = Number(req.params.id);
+                const { bank_id } = req.body;
                 const jobSeekerModel = this.Model.jobSeekerModel(trx);
                 const userModel = this.Model.UserModel(trx);
                 const jobSeekerData = yield jobSeekerModel.getJobSeekerDetails({
@@ -335,6 +336,7 @@ class AdminJobSeekerService extends abstract_service_1.default {
                     final_completed_by: adminUserId,
                     final_completed_at: new Date().toDateString(),
                 }, { user_id: jobSeekerId }));
+                updateTasks.push(jobSeekerModel.verifyBankAccount({ id: bank_id }));
                 yield Promise.all(updateTasks);
                 yield this.insertNotification(trx, constants_1.USER_TYPE.JOB_SEEKER, {
                     title: "Your account has been verified",

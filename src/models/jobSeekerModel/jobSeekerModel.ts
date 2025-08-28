@@ -204,7 +204,38 @@ export default class JobSeekerModel extends Schema {
 				"home_address",
 				"home_postal_code",
 				"home_status",
-				"is_home_address"
+				"is_home_address",
+				this.db.raw(`
+        (SELECT COALESCE(SUM(pl.amount), 0)
+         FROM dbo.payment_ledger pl
+         WHERE pl.user_id = vw_full_job_seeker_profile.user_id
+           AND pl.trx_type = 'In') as total_earnings
+      `),
+				this.db.raw(`
+        (SELECT COALESCE(SUM(pl.amount), 0)
+         FROM dbo.payment_ledger pl
+         WHERE pl.user_id = vw_full_job_seeker_profile.user_id
+           AND pl.trx_type = 'In'
+           AND DATE(pl.created_at) = CURRENT_DATE) as today_earnings
+      `),
+				this.db.raw(`
+        (SELECT COALESCE(SUM(pr.amount), 0)
+         FROM jobseeker.payout_requests pr
+         WHERE pr.job_seeker_id = vw_full_job_seeker_profile.user_id
+           AND pr.status = 'Paid') as total_payout
+      `),
+				this.db.raw(`
+        (SELECT 
+           COALESCE(SUM(pl.amount), 0) - 
+           COALESCE((SELECT SUM(pr.amount) 
+                     FROM jobseeker.payout_requests pr 
+                     WHERE pr.job_seeker_id = vw_full_job_seeker_profile.user_id 
+                       AND pr.status = 'Paid'), 0)
+         FROM dbo.payment_ledger pl
+         WHERE pl.user_id = vw_full_job_seeker_profile.user_id
+           AND pl.trx_type = 'In'
+        ) as available_balance
+      `)
 			)
 			.where("user_id", where.user_id)
 			.first();
@@ -227,7 +258,7 @@ export default class JobSeekerModel extends Schema {
 			.leftJoin("jobs as j", "jpd.job_id", "j.id")
 			.where("ja.job_seeker_id", where.user_id);
 
-		// ✅ Fetch bank details
+		// Fetch bank details
 		const bankDetails = await this.db("bank_details")
 			.withSchema(this.JOB_SEEKER)
 			.select(
@@ -236,6 +267,7 @@ export default class JobSeekerModel extends Schema {
 				"account_number",
 				"bank_code",
 				"is_primary",
+				"is_verified",
 				"created_at",
 				"updated_at"
 			)
@@ -298,6 +330,25 @@ export default class JobSeekerModel extends Schema {
 				}
 			})
 			.andWhere("bd.is_deleted", false);
+	}
+
+	public async markAsPrimaryBank(
+		where: { id: number[] },
+		payload: { is_primary: boolean }
+	) {
+		return await this.db("bank_details as bd")
+			.withSchema(this.JOB_SEEKER)
+			.update(payload)
+			.where("bd.id", where.id)
+			.returning("*");
+	}
+
+	public async verifyBankAccount(where: { id: number }) {
+		return await this.db("bank_details as bd")
+			.withSchema(this.JOB_SEEKER)
+			.update({ is_verified: true })
+			.where("bd.id", where.id)
+			.returning("*");
 	}
 
 	public async getJobSeekerLocation(query: { name?: string }): Promise<

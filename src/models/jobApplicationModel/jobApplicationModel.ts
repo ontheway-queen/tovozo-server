@@ -206,12 +206,10 @@ export default class JobApplicationModel extends Schema {
 		const [updated] = await this.db("job_applications")
 			.withSchema(this.DBO_SCHEMA)
 			.update({ status: status })
-			.where({
-				id: application_id,
-				job_seeker_id: job_seeker_id,
-			})
+			.where("id", application_id)
+			.andWhere("job_seeker_id", job_seeker_id)
 			.returning("*");
-
+		console.log({ updated });
 		return updated ?? null;
 	}
 

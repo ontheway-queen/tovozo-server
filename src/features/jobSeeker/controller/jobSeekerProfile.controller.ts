@@ -39,6 +39,15 @@ export default class JobSeekerProfileController extends AbstractController {
 		}
 	);
 
+	public markAccountAsPrimary = this.asyncWrapper.wrap(
+		{ paramSchema: this.commonValidator.singleParamNumValidator("id") },
+		async (req: Request, res: Response) => {
+			const { code, ...data } =
+				await this.profileService.markAccountAsPrimary(req);
+			res.status(code).json(data);
+		}
+	);
+
 	//change password
 	public changePassword = this.asyncWrapper.wrap(
 		{ bodySchema: this.commonValidator.changePassInputValidation },
@@ -46,6 +55,15 @@ export default class JobSeekerProfileController extends AbstractController {
 			const { code, ...data } = await this.profileService.changePassword(
 				req
 			);
+			res.status(code).json(data);
+		}
+	);
+
+	public requestForPayout = this.asyncWrapper.wrap(
+		null,
+		async (req: Request, res: Response) => {
+			const { code, ...data } =
+				await this.profileService.requestForPayout(req);
 			res.status(code).json(data);
 		}
 	);

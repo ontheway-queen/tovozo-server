@@ -41,7 +41,9 @@ export default class PaymentService extends AbstractServices {
 			status: status ? String(status) : undefined,
 		};
 		const paymentModel = this.Model.paymnentModel();
-		const { data, total } = await paymentModel.getPaymentsForHotelier(params);
+		const { data, total } = await paymentModel.getPaymentsForHotelier(
+			params
+		);
 		return {
 			success: true,
 			message: this.ResMsg.HTTP_OK,
@@ -56,7 +58,10 @@ export default class PaymentService extends AbstractServices {
 		const id = req.params.id;
 
 		const model = this.Model.paymnentModel();
-		const data = await model.getSinglePaymentForHotelier(Number(id), user_id);
+		const data = await model.getSinglePaymentForHotelier(
+			Number(id),
+			user_id
+		);
 		if (!data) {
 			throw new CustomError(
 				"The requested pay slip not found",
@@ -74,13 +79,15 @@ export default class PaymentService extends AbstractServices {
 
 	public async createCheckoutSession(req: Request) {
 		try {
-			const { job_title, job_seeker_id, job_seeker_name, stripe_acc_id } =
-				req.body;
+			const { job_title, job_seeker_id, job_seeker_name } = req.body;
 			const id = Number(req.params.id);
 			const { user_id } = req.hotelier;
 
 			if (!id) {
-				throw new CustomError("Id not found", this.StatusCode.HTTP_NOT_FOUND);
+				throw new CustomError(
+					"Id not found",
+					this.StatusCode.HTTP_NOT_FOUND
+				);
 			}
 
 			const paymentModel = this.Model.paymnentModel();
@@ -100,9 +107,6 @@ export default class PaymentService extends AbstractServices {
 			}
 
 			const total_amount = Number(payment.total_amount);
-			const jobSeekerPay = Number(payment.job_seeker_pay);
-
-			const applicationFeeAmount = total_amount - jobSeekerPay;
 
 			const session = await stripe.checkout.sessions.create({
 				payment_method_types: ["card"],
@@ -120,10 +124,6 @@ export default class PaymentService extends AbstractServices {
 					},
 				],
 				payment_intent_data: {
-					application_fee_amount: Math.round(applicationFeeAmount * 100),
-					transfer_data: {
-						destination: stripe_acc_id,
-					},
 					metadata: {
 						id,
 						job_seeker_id,
@@ -225,7 +225,10 @@ export default class PaymentService extends AbstractServices {
 				id: Number(paymentIntent.metadata.job_seeker_id),
 			});
 			if (jobseeker && jobseeker.length < 1) {
-				throw new CustomError("User not found", this.StatusCode.HTTP_NOT_FOUND);
+				throw new CustomError(
+					"User not found",
+					this.StatusCode.HTTP_NOT_FOUND
+				);
 			}
 
 			const paymentPayload = {
@@ -239,6 +242,7 @@ export default class PaymentService extends AbstractServices {
 				Number(paymentIntent.metadata.id),
 				paymentPayload as unknown as IPaymentUpdate
 			);
+
 			const baseLedgerPayload = {
 				payment_id: payment.id,
 				voucher_no: payment.payment_no,
@@ -275,10 +279,12 @@ export default class PaymentService extends AbstractServices {
 					job_seeker_id: Number(paymentIntent.metadata.job_seeker_id),
 					status: JOB_APPLICATION_STATUS.COMPLETED,
 				});
+
 			const jobPost = await jobPostModel.updateJobPostDetailsStatus({
 				id: updatedApplication.job_post_details_id,
 				status: JOB_POST_DETAILS_STATUS.Completed,
 			});
+
 			const chatSession = await chatModel.getChatSessionBetweenUsers({
 				hotelier_id: user_id,
 				job_seeker_id: Number(paymentIntent.metadata.job_seeker_id),
@@ -292,6 +298,7 @@ export default class PaymentService extends AbstractServices {
 					},
 				});
 			}
+
 			await this.insertNotification(trx, TypeUser.JOB_SEEKER, {
 				user_id: Number(paymentIntent.metadata.job_seeker_id),
 				sender_id: user_id,
@@ -341,11 +348,13 @@ export default class PaymentService extends AbstractServices {
 				if (jobseeker[0].device_id) {
 					await Lib.sendNotificationToMobile({
 						to: jobseeker[0].device_id,
-						notificationTitle: this.NotificationMsg.PAYMENT_RECEIVED.title,
-						notificationBody: this.NotificationMsg.PAYMENT_RECEIVED.content({
-							jobTitle: paymentIntent.metadata.job_title,
-							amount: Number(payment.job_seeker_pay),
-						}),
+						notificationTitle:
+							this.NotificationMsg.PAYMENT_RECEIVED.title,
+						notificationBody:
+							this.NotificationMsg.PAYMENT_RECEIVED.content({
+								jobTitle: paymentIntent.metadata.job_title,
+								amount: Number(payment.job_seeker_pay),
+							}),
 					});
 				}
 			}
@@ -431,12 +440,13 @@ Total Amount: $${payment.job_seeker_pay}.`,
 		const { user_id } = req.hotelier;
 
 		const paymentModel = this.Model.paymnentModel();
-		const { data, total } = await paymentModel.getAllPaymentLedgerForHotelier({
-			limit: Number(limit) || 100,
-			skip: Number(skip) || 0,
-			search: search ? String(search) : "",
-			user_id,
-		});
+		const { data, total } =
+			await paymentModel.getAllPaymentLedgerForHotelier({
+				limit: Number(limit) || 100,
+				skip: Number(skip) || 0,
+				search: search ? String(search) : "",
+				user_id,
+			});
 
 		return {
 			success: true,

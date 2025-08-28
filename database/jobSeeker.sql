@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS jobSeeker.bank_details (
     account_name VARCHAR(255) NOT NULL,
     account_number VARCHAR(50) NOT NULL,
     bank_code VARCHAR(50) NOT NULL,
-    routing_number VARCHAR(50),
+    is_verified BOOLEAN DEFAULT false,
     swift_code VARCHAR(50),
     is_primary boolean,
     is_deleted BOOLEAN DEFAULT false,
@@ -112,6 +112,7 @@ CREATE OR REPLACE VIEW jobseeker.vw_full_job_seeker_profile
     bd.id AS bank_id,
     bd.account_name,
     bd.account_number,
+    bd.is_verified,
     bd.is_primary AS bank_is_primary,
     bd.created_at AS bank_created_at,
     bd.updated_at AS bank_updated_at

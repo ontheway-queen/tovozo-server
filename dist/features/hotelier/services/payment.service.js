@@ -69,7 +69,7 @@ class PaymentService extends abstract_service_1.default {
     createCheckoutSession(req) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const { job_title, job_seeker_id, job_seeker_name, stripe_acc_id } = req.body;
+                const { job_title, job_seeker_id, job_seeker_name } = req.body;
                 const id = Number(req.params.id);
                 const { user_id } = req.hotelier;
                 if (!id) {
@@ -84,8 +84,6 @@ class PaymentService extends abstract_service_1.default {
                     throw new customError_1.default("The payment is already paid", this.StatusCode.HTTP_CONFLICT);
                 }
                 const total_amount = Number(payment.total_amount);
-                const jobSeekerPay = Number(payment.job_seeker_pay);
-                const applicationFeeAmount = total_amount - jobSeekerPay;
                 const session = yield stripe_1.stripe.checkout.sessions.create({
                     payment_method_types: ["card"],
                     mode: "payment",
@@ -102,10 +100,6 @@ class PaymentService extends abstract_service_1.default {
                         },
                     ],
                     payment_intent_data: {
-                        application_fee_amount: Math.round(applicationFeeAmount * 100),
-                        transfer_data: {
-                            destination: stripe_acc_id,
-                        },
                         metadata: {
                             id,
                             job_seeker_id,

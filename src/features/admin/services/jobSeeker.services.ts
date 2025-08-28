@@ -423,6 +423,7 @@ class AdminJobSeekerService extends AbstractServices {
 		return this.db.transaction(async (trx) => {
 			const adminUserId = req.admin.user_id;
 			const jobSeekerId = Number(req.params.id);
+			const { bank_id } = req.body;
 
 			const jobSeekerModel = this.Model.jobSeekerModel(trx);
 			const userModel = this.Model.UserModel(trx);
@@ -462,6 +463,8 @@ class AdminJobSeekerService extends AbstractServices {
 					{ user_id: jobSeekerId }
 				)
 			);
+
+			updateTasks.push(jobSeekerModel.verifyBankAccount({ id: bank_id }));
 
 			await Promise.all(updateTasks);
 

@@ -20,6 +20,7 @@ const reportModel_1 = __importDefault(require("./reportModel/reportModel"));
 const userModel_1 = __importDefault(require("./userModel/userModel"));
 const paymentModel_1 = __importDefault(require("./paymentModel/paymentModel"));
 const statistics_model_1 = __importDefault(require("./statistics/statistics.model"));
+const payoutRequestsModel_1 = __importDefault(require("./payout_requests/payoutRequestsModel"));
 class Models {
     UserModel(trx) {
         return new userModel_1.default(trx || database_1.db);
@@ -82,6 +83,10 @@ class Models {
     // Admin stats
     statisticsModel(trx) {
         return new statistics_model_1.default(trx || database_1.db);
+    }
+    // payout request
+    payoutRequestModel(trx) {
+        return new payoutRequestsModel_1.default(trx || database_1.db);
     }
 }
 exports.default = Models;
