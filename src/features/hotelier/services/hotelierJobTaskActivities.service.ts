@@ -369,7 +369,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 	public approveEndJobTaskActivity = async (req: Request) => {
 		return await this.db.transaction(async (trx) => {
 			const id = req.params.id;
-			console.log({ data: req.hotelier });
+
 			const { user_id, email, username } = req.hotelier;
 			const userModel = this.Model.UserModel(trx);
 			const paymentModel = this.Model.paymnentModel(trx);
@@ -393,6 +393,12 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 				await jobTaskActivitiesModel.getSingleTaskActivity({
 					id: Number(id),
 				});
+			if (!taskActivity) {
+				throw new CustomError(
+					"Task activity with related id not found or does not belong to you.",
+					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
 
 			if (
 				taskActivity.application_status !==

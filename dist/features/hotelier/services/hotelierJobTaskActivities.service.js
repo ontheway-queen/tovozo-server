@@ -266,7 +266,6 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
         this.approveEndJobTaskActivity = (req) => __awaiter(this, void 0, void 0, function* () {
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const id = req.params.id;
-                console.log({ data: req.hotelier });
                 const { user_id, email, username } = req.hotelier;
                 const userModel = this.Model.UserModel(trx);
                 const paymentModel = this.Model.paymnentModel(trx);
@@ -283,6 +282,9 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 const taskActivity = yield jobTaskActivitiesModel.getSingleTaskActivity({
                     id: Number(id),
                 });
+                if (!taskActivity) {
+                    throw new customError_1.default("Task activity with related id not found or does not belong to you.", this.StatusCode.HTTP_NOT_FOUND);
+                }
                 if (taskActivity.application_status !==
                     constants_1.JOB_APPLICATION_STATUS.IN_PROGRESS) {
                     throw new customError_1.default(`You cannot perform this action because the application is still in progress.`, this.StatusCode.HTTP_FORBIDDEN);

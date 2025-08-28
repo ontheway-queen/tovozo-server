@@ -270,6 +270,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 	public getMyJobApplications = async (req: Request) => {
 		const { orderBy, orderTo, status, limit, skip } = req.query;
 		const { user_id } = req.jobSeeker;
+		console.log({ user_id });
 		const model = this.Model.jobApplicationModel();
 		const { data, total } = await model.getMyJobApplications({
 			user_id,

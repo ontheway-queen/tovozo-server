@@ -42,7 +42,7 @@ class JobApplicationModel extends schema_1.default {
             const { user_id: job_seeker_id, orderBy, orderTo, status, limit, skip, need_total = true, } = params;
             const data = yield this.db("job_applications as ja")
                 .withSchema(this.DBO_SCHEMA)
-                .select("ja.id as job_application_id", "ja.status as job_application_status", "jpd.start_time", "jpd.end_time", "j.title as job_post_title", "j.details as job_post_details", "j.job_seeker_pay", "org.id as organization_id", "org.user_id as hotelier_id", "org.name as organization_name", "org_p.file as organization_photo", "vwl.location_address", "vwl.city_name", "vwl.longitude", "vwl.latitude")
+                .select("ja.id as job_application_id", "ja.status as job_application_status", "jpd.start_time", "jpd.end_time", "j.title as job_post_title", "j.details as job_post_details", "j.job_seeker_pay", "org.id as organization_id", "org.user_id as hotelier_id", "org.name as organization_name", "org.photo as organization_photo", "vwl.location_address", "vwl.city_name", "vwl.longitude", "vwl.latitude")
                 .leftJoin("job_post_details as jpd", "ja.job_post_details_id", "jpd.id")
                 .leftJoin("jobs as j", "jpd.job_id", "j.id")
                 .leftJoin("job_post as jp", "jpd.job_post_id", "jp.id")
@@ -50,9 +50,6 @@ class JobApplicationModel extends schema_1.default {
                 `${this.HOTELIER}.${this.TABLES.organization}`,
             ])
                 .leftJoin("vw_location as vwl", "vwl.location_id", "org.location_id")
-                .leftJoin(this.db.raw(`?? as org_p ON org_p.organization_id = org.id`, [
-                `${this.HOTELIER}.${this.TABLES.organization_photos}`,
-            ]))
                 .where("ja.job_seeker_id", job_seeker_id)
                 .modify((qb) => {
                 if (status) {
@@ -83,7 +80,7 @@ class JobApplicationModel extends schema_1.default {
         return __awaiter(this, arguments, void 0, function* ({ job_application_id, job_seeker_id, }) {
             return yield this.db("job_applications as ja")
                 .withSchema(this.DBO_SCHEMA)
-                .select("ja.id as job_application_id", "ja.status as job_application_status", "jpd.id as job_post_details_id", "jpd.status as job_post_details_status", "jpd.start_time", "jpd.end_time", "jpd.job_post_id", "j.title as job_post_title", "j.details as job_post_details", "j.job_seeker_pay", "org.user_id as hotelier_id", "org.id as organization_id", "org.name as organization_name", "org_p.file as organization_photo", "vwl.location_address", "vwl.city_name", "vwl.longitude", "vwl.latitude", this.db.raw(`json_build_object(
+                .select("ja.id as job_application_id", "ja.status as job_application_status", "jpd.id as job_post_details_id", "jpd.status as job_post_details_status", "jpd.start_time", "jpd.end_time", "jpd.job_post_id", "j.title as job_post_title", "j.details as job_post_details", "j.job_seeker_pay", "org.user_id as hotelier_id", "org.id as organization_id", "org.name as organization_name", "org.photo as organization_photo", "vwl.location_address", "vwl.city_name", "vwl.longitude", "vwl.latitude", this.db.raw(`json_build_object(
             'id', jta.id,
             'start_time', jta.start_time,
             'end_time', jta.end_time,
@@ -97,14 +94,12 @@ class JobApplicationModel extends schema_1.default {
                 .joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
                 `${this.HOTELIER}.${this.TABLES.organization}`,
             ])
-                .leftJoin(this.db.raw(`?? as org_p ON org_p.organization_id = org.id`, [
-                `${this.HOTELIER}.${this.TABLES.organization_photos}`,
-            ]))
                 .leftJoin("vw_location as vwl", "vwl.location_id", "org.location_id")
                 .leftJoin("jobs as j", "jpd.job_id", "j.id")
                 .leftJoin("job_task_activities as jta", "jta.job_application_id", "ja.id")
                 .leftJoin(this.db
-                .select("jtl.job_task_activity_id", this.db.raw(`COALESCE(json_agg(DISTINCT jsonb_build_object(
+                .select("jtl.job_task_activity_id", this.db
+                .raw(`COALESCE(json_agg(DISTINCT jsonb_build_object(
                   'id', jtl.id,
         'message', jtl.message,
         'is_completed', jtl.is_completed,

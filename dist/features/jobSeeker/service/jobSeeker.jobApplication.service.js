@@ -192,6 +192,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
         this.getMyJobApplications = (req) => __awaiter(this, void 0, void 0, function* () {
             const { orderBy, orderTo, status, limit, skip } = req.query;
             const { user_id } = req.jobSeeker;
+            console.log({ user_id });
             const model = this.Model.jobApplicationModel();
             const { data, total } = yield model.getMyJobApplications({
                 user_id,

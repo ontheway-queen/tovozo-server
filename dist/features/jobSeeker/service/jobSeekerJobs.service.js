@@ -46,6 +46,9 @@ class JobSeekerServices extends abstract_service_1.default {
             const { id } = req.params;
             const model = this.Model.jobPostModel();
             const data = yield model.getSingleJobPostForJobSeeker(Number(id));
+            if (!data) {
+                throw new customError_1.default("Job post not found with related id", this.StatusCode.HTTP_NOT_FOUND);
+            }
             return {
                 success: true,
                 message: this.ResMsg.HTTP_OK,
