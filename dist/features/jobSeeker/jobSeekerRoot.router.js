@@ -11,6 +11,7 @@ const jobSeekerJobs_router_1 = require("./router/jobSeekerJobs.router");
 const jobSeekerJobTaskActivity_router_1 = __importDefault(require("./router/jobSeekerJobTaskActivity.router"));
 const jobSeekerNotification_router_1 = __importDefault(require("./router/jobSeekerNotification.router"));
 const jobSeekerPayment_router_1 = __importDefault(require("./router/jobSeekerPayment.router"));
+const jobSeekerPayout_router_1 = __importDefault(require("./router/jobSeekerPayout.router"));
 const jobSeekerProfile_router_1 = __importDefault(require("./router/jobSeekerProfile.router"));
 const jobSeekerReport_router_1 = __importDefault(require("./router/jobSeekerReport.router"));
 class JobSeekerRootRouter extends abstract_router_1.default {
@@ -33,6 +34,7 @@ class JobSeekerRootRouter extends abstract_router_1.default {
         this.router.use("/payments", new jobSeekerPayment_router_1.default().router);
         this.router.use("/notification", new jobSeekerNotification_router_1.default().router);
         this.router.use("/chat", new jobSeekerChat_router_1.JobSeekerChatRouter().router);
+        this.router.use("/payouts", new jobSeekerPayout_router_1.default().router);
     }
 }
 exports.default = JobSeekerRootRouter;

@@ -52,8 +52,6 @@ CREATE TABLE IF NOT EXISTS jobSeeker.bank_details (
 );
 
 
-
-
 -- Job Seeker Auth View
 CREATE OR REPLACE VIEW jobSeeker.job_seeker_auth_view AS
 SELECT

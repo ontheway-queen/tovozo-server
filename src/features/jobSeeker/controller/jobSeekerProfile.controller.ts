@@ -58,13 +58,4 @@ export default class JobSeekerProfileController extends AbstractController {
 			res.status(code).json(data);
 		}
 	);
-
-	public requestForPayout = this.asyncWrapper.wrap(
-		null,
-		async (req: Request, res: Response) => {
-			const { code, ...data } =
-				await this.profileService.requestForPayout(req);
-			res.status(code).json(data);
-		}
-	);
 }

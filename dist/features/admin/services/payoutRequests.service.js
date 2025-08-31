@@ -13,15 +13,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
-class PayoutRequestsService extends abstract_service_1.default {
+class AdminPayoutService extends abstract_service_1.default {
     constructor() {
         super();
     }
-    getAllPayoutRequests(req) {
+    getAllPayouts(req) {
         return __awaiter(this, void 0, void 0, function* () {
             const { search, limit, skip } = req.query;
-            const payoutRequestModel = this.Model.payoutRequestModel();
-            const { data, total } = yield payoutRequestModel.getAllPayoutRequests({
+            const payoutModel = this.Model.payoutModel();
+            const { data, total } = yield payoutModel.getAllPayoutForAdmin({
                 search: search,
                 limit: Number(limit),
                 skip: Number(skip),
@@ -36,4 +36,4 @@ class PayoutRequestsService extends abstract_service_1.default {
         });
     }
 }
-exports.default = PayoutRequestsService;
+exports.default = AdminPayoutService;

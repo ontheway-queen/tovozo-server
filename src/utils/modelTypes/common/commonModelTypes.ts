@@ -160,6 +160,7 @@ export enum NotificationTypeEnum {
 	SECURITY_ALERT = "SECURITY_ALERT",
 	SYSTEM_UPDATE = "SYSTEM_UPDATE",
 	JOB_POST = "JOB_POST",
+	PAYOUT = "PAYOUT",
 }
 
 export interface INotificationPayload {
@@ -263,4 +264,29 @@ export interface IGetNationality {
 	name?: string;
 	limit?: number;
 	skip?: number;
+}
+interface IRootPayoutInterface {
+	id: number;
+	job_seeker_id: number;
+	job_seeker_name: string;
+	job_seeker_email: string;
+	amount: string;
+	status: string;
+	requested_at: string;
+	transaction_reference: string;
+	job_seeker_note: string;
+	bank_account_name: string;
+	bank_account_number: string;
+	bank_code: string;
+	is_deleted: boolean;
+}
+export interface IGetAllPayouts extends IRootPayoutInterface {
+	managed_by: number;
+	managed_at: string;
+}
+export interface IGetSinglePayout extends IRootPayoutInterface {
+	managed_by_id: number;
+	managed_by_name: string;
+	managed_by_photo: string;
+	managed_at: string;
 }

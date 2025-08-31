@@ -16,7 +16,7 @@ import ReportModel from "./reportModel/reportModel";
 import UserModel from "./userModel/userModel";
 import PaymentModel from "./paymentModel/paymentModel";
 import StatisticsModel from "./statistics/statistics.model";
-import PayoutRequestsModel from "./payout_requests/payoutRequestsModel";
+import PayoutModel from "./payout/payoutModel";
 
 export default class Models {
 	public UserModel(trx?: Knex.Transaction) {
@@ -97,7 +97,7 @@ export default class Models {
 	}
 
 	// payout request
-	public payoutRequestModel(trx?: Knex.Transaction) {
-		return new PayoutRequestsModel(trx || db);
+	public payoutModel(trx?: Knex.Transaction) {
+		return new PayoutModel(trx || db);
 	}
 }

@@ -6,6 +6,7 @@ import { JobSeekerJobsRouter } from "./router/jobSeekerJobs.router";
 import JobTaskActivityRouter from "./router/jobSeekerJobTaskActivity.router";
 import jobSeekerNotificationRouter from "./router/jobSeekerNotification.router";
 import JobSeekerPaymentRouter from "./router/jobSeekerPayment.router";
+import JobSeekerPayoutRoute from "./router/jobSeekerPayout.router";
 import jobSeekerProfileRouter from "./router/jobSeekerProfile.router";
 import JobSeekerReportRouter from "./router/jobSeekerReport.router";
 
@@ -50,5 +51,7 @@ export default class JobSeekerRootRouter extends AbstractRouter {
 		);
 
 		this.router.use("/chat", new JobSeekerChatRouter().router);
+
+		this.router.use("/payouts", new JobSeekerPayoutRoute().router);
 	}
 }

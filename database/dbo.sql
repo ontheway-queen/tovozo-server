@@ -28,6 +28,12 @@ CREATE TYPE dbo.type_email_otp AS ENUM (
   '2fa_admin',
   '2fa_hotelier'
 );
+
+CREATE TYPE dbo.payout_status_type AS ENUM (
+	'Pending',
+	'Approved',
+	'Rejected'
+);
 -------------------------------------------------------------------------------------------------
 
 
@@ -486,48 +492,22 @@ ALTER TABLE dbo.cities
 ADD PRIMARY KEY (id);
 
 
-/*
-{
-    "success": true,
-    "message": "The request is OK",
-    "data": [
-        {
-            "session_id": 4,
-            "last_message": "ererer",
-            "last_message_at": "2025-08-11T05:16:50.055Z",
-            "enable_chat": false,
-            "participant_user_id": 266,
-            "participant_name": "soton soton",
-            "participant_email": "soton.m360ict@gmail.com",
-            "participant_image": "job-seeker-files/1754291953366-387273557.jpg",
-            "participant_type": "JOB_SEEKER",
-            "unread_message_count": 0
-        },
-        {
-            "session_id": 18,
-            "last_message": "THis is testing...😂",
-            "last_message_at": "2025-08-11T04:46:01.787Z",
-            "enable_chat": false,
-            "participant_user_id": 295,
-            "participant_name": "Tovozo Jobseeker",
-            "participant_email": "tovozo.jobseeker@yopmail.com",
-            "participant_image": null,
-            "participant_type": "JOB_SEEKER",
-            "unread_message_count": 2
-        },
-        {
-            "session_id": 19,
-            "last_message": "THis is testing...😂",
-            "last_message_at": "2025-08-11T04:46:01.787Z",
-            "enable_chat": false,
-            "participant_user_id": 295,
-            "participant_name": "Tovozo Jobseeker",
-            "participant_email": "tovozo.jobseeker@yopmail.com",
-            "participant_image": null,
-            "participant_type": "JOB_SEEKER",
-            "unread_message_count": 3
-        }
-    ],
-    unread_session_count: 2
-}
-*/
+CREATE TABLE IF NOT EXISTS dbo.payout
+(
+    id SERIAL PRIMARY KEY,
+    job_seeker_id integer NOT NULL references dbo."user"(id),
+    amount numeric(12,2) NOT NULL,
+    status dbo.payout_status_type NOT NULL DEFAULT 'Pending',
+    requested_at timestamp without time zone NOT NULL DEFAULT now(),
+    approved_by integer,
+    approved_at timestamp without time zone,
+    paid_at timestamp without time zone,
+    transaction_reference character varying(255),
+    job_seeker_note text,
+    admin_note text, 
+    bank_account_name varchar(255),
+    bank_account_number varchar(50),
+    bank_code varchar(50),
+    is_deleted boolean NOT NULL DEFAULT false
+)
+

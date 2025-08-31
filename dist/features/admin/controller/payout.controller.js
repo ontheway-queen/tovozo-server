@@ -24,15 +24,28 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_controller_1 = __importDefault(require("../../../abstract/abstract.controller"));
-const payoutRequests_service_1 = __importDefault(require("../services/payoutRequests.service"));
-class PayoutController extends abstract_controller_1.default {
+const payout_service_1 = __importDefault(require("../services/payout.service"));
+const adminPayout_validator_1 = __importDefault(require("../utils/validator/adminPayout.validator"));
+class AdminPayoutController extends abstract_controller_1.default {
     constructor() {
         super();
-        this.service = new payoutRequests_service_1.default();
-        this.getAllPayouts = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
+        this.service = new payout_service_1.default();
+        this.validator = new adminPayout_validator_1.default();
+        this.getAllPayouts = this.asyncWrapper.wrap({ querySchema: this.validator.queryValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
             const _a = yield this.service.getAllPayouts(req), { code } = _a, data = __rest(_a, ["code"]);
+            res.status(code).json(data);
+        }));
+        this.getSinglePayout = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.singleParamNumValidator("id") }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.getSinglePayout(req), { code } = _a, data = __rest(_a, ["code"]);
+            res.status(code).json(data);
+        }));
+        this.managePayout = this.asyncWrapper.wrap({
+            paramSchema: this.commonValidator.singleParamNumValidator("id"),
+            bodySchema: this.validator.managePayout,
+        }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.managePayout(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }
 }
-exports.default = PayoutController;
+exports.default = AdminPayoutController;

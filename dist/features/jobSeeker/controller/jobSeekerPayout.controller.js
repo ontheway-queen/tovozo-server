@@ -24,15 +24,25 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_controller_1 = __importDefault(require("../../../abstract/abstract.controller"));
-const payoutRequests_service_1 = __importDefault(require("../services/payoutRequests.service"));
-class PayoutController extends abstract_controller_1.default {
+const jobSeekerPayout_service_1 = __importDefault(require("../service/jobSeekerPayout.service"));
+const jobSeekerPayout_validator_1 = __importDefault(require("../utils/validator/jobSeekerPayout.validator"));
+class JobSeekerPayoutController extends abstract_controller_1.default {
     constructor() {
         super();
-        this.service = new payoutRequests_service_1.default();
-        this.getAllPayouts = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.getAllPayouts(req), { code } = _a, data = __rest(_a, ["code"]);
+        this.profileService = new jobSeekerPayout_service_1.default();
+        this.validator = new jobSeekerPayout_validator_1.default();
+        this.requestForPayout = this.asyncWrapper.wrap({ bodySchema: this.validator.requestPayoutValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.profileService.requestForPayout(req), { code } = _a, data = __rest(_a, ["code"]);
+            res.status(code).json(data);
+        }));
+        this.getPayoutsForJobSeeker = this.asyncWrapper.wrap({ querySchema: this.validator.queryValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.profileService.getPayoutsForJobSeeker(req), { code } = _a, data = __rest(_a, ["code"]);
+            res.status(code).json(data);
+        }));
+        this.getSinglePayout = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.singleParamNumValidator("id") }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.profileService.getSinglePayout(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }
 }
-exports.default = PayoutController;
+exports.default = JobSeekerPayoutController;

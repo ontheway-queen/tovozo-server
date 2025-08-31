@@ -276,40 +276,5 @@ class JobSeekerProfileService extends abstract_service_1.default {
             }
         });
     }
-    // Make a payout request
-    requestForPayout(req) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
-                const { user_id } = req.jobSeeker;
-                const { amount, note } = req.body;
-                const jobseekerModel = this.Model.jobSeekerModel(trx);
-                const payoutRequestModel = this.Model.payoutRequestModel(trx);
-                const jobSeeker = yield jobseekerModel.getJobSeekerDetails({
-                    user_id,
-                });
-                const availableBalance = parseFloat(jobSeeker.available_balance);
-                if (amount > availableBalance) {
-                    throw new customError_1.default(`Requested amount exceeds your available balance of $${availableBalance}`, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
-                }
-                const isPrimaryAccountExists = Array.isArray(jobSeeker.bank_details)
-                    ? jobSeeker.bank_details.some((bd) => bd.is_primary === true)
-                    : false;
-                if (!isPrimaryAccountExists) {
-                    throw new customError_1.default("Primary bank account is not exists for this user. Please add a primary bank account for payout and then request", this.StatusCode.HTTP_BAD_REQUEST);
-                }
-                const payload = {
-                    job_seeker_id: user_id,
-                    amount,
-                    note,
-                };
-                yield payoutRequestModel.createPayoutRequest(payload);
-                return {
-                    success: true,
-                    code: this.StatusCode.HTTP_OK,
-                    message: this.ResMsg.HTTP_OK,
-                };
-            }));
-        });
-    }
 }
 exports.default = JobSeekerProfileService;

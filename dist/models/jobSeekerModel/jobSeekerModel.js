@@ -140,16 +140,16 @@ class JobSeekerModel extends schema_1.default {
            AND DATE(pl.created_at) = CURRENT_DATE) as today_earnings
       `), this.db.raw(`
         (SELECT COALESCE(SUM(pr.amount), 0)
-         FROM jobseeker.payout_requests pr
+         FROM dbo.payout pr
          WHERE pr.job_seeker_id = vw_full_job_seeker_profile.user_id
-           AND pr.status = 'Paid') as total_payout
+           AND pr.status = 'Approved') as total_payout
       `), this.db.raw(`
         (SELECT 
            COALESCE(SUM(pl.amount), 0) - 
            COALESCE((SELECT SUM(pr.amount) 
-                     FROM jobseeker.payout_requests pr 
+                     FROM dbo.payout pr 
                      WHERE pr.job_seeker_id = vw_full_job_seeker_profile.user_id 
-                       AND pr.status = 'Paid'), 0)
+                       AND pr.status = 'Approved'), 0)
          FROM dbo.payment_ledger pl
          WHERE pl.user_id = vw_full_job_seeker_profile.user_id
            AND pl.trx_type = 'In'

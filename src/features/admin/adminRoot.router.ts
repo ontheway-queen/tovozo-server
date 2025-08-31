@@ -12,7 +12,7 @@ import AdminReportRouter from "./router/report.router";
 import AdminPaymentRouter from "./router/adminPayment.router";
 import AdminStatsRouter from "./router/adminStats.router";
 import AdminNotificationRouter from "./router/adminNotificationRouter";
-import AdminPayoutRequestRouter from "./router/payoutRequests.router";
+import AdminPayoutRouter from "./router/payout.router";
 
 export default class AdminRootRouter {
 	public Router = Router();
@@ -29,7 +29,7 @@ export default class AdminRootRouter {
 	private paymentRouter = new AdminPaymentRouter();
 	private adminStatsRouter = new AdminStatsRouter();
 	private notificationRouter = new AdminNotificationRouter();
-	private payoutRouter = new AdminPayoutRequestRouter();
+	private payoutRouter = new AdminPayoutRouter();
 
 	constructor() {
 		this.callRouter();
@@ -78,6 +78,6 @@ export default class AdminRootRouter {
 		// Notification
 		this.Router.use("/notification", this.notificationRouter.router);
 
-		this.Router.use("/payout-requests", this.payoutRouter.router);
+		this.Router.use("/payouts", this.payoutRouter.router);
 	}
 }

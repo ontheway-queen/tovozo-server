@@ -17,7 +17,7 @@ const report_router_1 = __importDefault(require("./router/report.router"));
 const adminPayment_router_1 = __importDefault(require("./router/adminPayment.router"));
 const adminStats_router_1 = __importDefault(require("./router/adminStats.router"));
 const adminNotificationRouter_1 = __importDefault(require("./router/adminNotificationRouter"));
-const payoutRequests_router_1 = __importDefault(require("./router/payoutRequests.router"));
+const payout_router_1 = __importDefault(require("./router/payout.router"));
 class AdminRootRouter {
     constructor() {
         this.Router = (0, express_1.Router)();
@@ -34,7 +34,7 @@ class AdminRootRouter {
         this.paymentRouter = new adminPayment_router_1.default();
         this.adminStatsRouter = new adminStats_router_1.default();
         this.notificationRouter = new adminNotificationRouter_1.default();
-        this.payoutRouter = new payoutRequests_router_1.default();
+        this.payoutRouter = new payout_router_1.default();
         this.callRouter();
     }
     callRouter() {
@@ -64,7 +64,7 @@ class AdminRootRouter {
         this.Router.use("/statistics", this.adminStatsRouter.router);
         // Notification
         this.Router.use("/notification", this.notificationRouter.router);
-        this.Router.use("/payout-requests", this.payoutRouter.router);
+        this.Router.use("/payouts", this.payoutRouter.router);
     }
 }
 exports.default = AdminRootRouter;

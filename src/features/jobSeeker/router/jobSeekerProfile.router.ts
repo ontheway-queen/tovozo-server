@@ -33,9 +33,5 @@ export default class jobSeekerProfileRouter extends AbstractRouter {
 		this.router
 			.route("/change-password")
 			.post(this.controller.changePassword);
-
-		this.router
-			.route("/request-for-payout")
-			.post(this.controller.requestForPayout);
 	}
 }
