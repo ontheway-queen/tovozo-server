@@ -146,7 +146,7 @@ class JobPostModel extends schema_1.default {
             const { organization_id, user_id, title, category_id, city_id, status, limit, skip, need_total = true, } = params;
             const data = yield this.db("job_post as jp")
                 .withSchema(this.DBO_SCHEMA)
-                .select("jpd.id", "jpd.status as job_post_details_status", "jpd.start_time", "jpd.end_time", "u.id as hotelier_id", "jp.organization_id", "j.title", "j.hourly_rate", "jp.created_time", this.db.raw(`COUNT(*) OVER (PARTITION BY jpd.job_post_id) AS vacancy`), this.db.raw(`
+                .select("jpd.id", "jp.id as job_post_id", "jpd.status as job_post_details_status", "jpd.start_time", "jpd.end_time", "u.id as hotelier_id", "jp.organization_id", "j.title", "j.hourly_rate", "jp.created_time", this.db.raw(`COUNT(*) OVER (PARTITION BY jpd.job_post_id) AS vacancy`), this.db.raw(`
 				CASE
 					WHEN ja.job_seeker_id IS NULL AND js.name IS NULL AND js_vwl.longitude IS NULL AND js_vwl.latitude IS NULL THEN NULL
 					ELSE json_build_object(
@@ -412,7 +412,7 @@ class JobPostModel extends schema_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("job_post as jp")
                 .withSchema(this.DBO_SCHEMA)
-                .select("jpd.id", "jpd.job_post_id", "jpd.status as job_post_details_status", "jpd.start_time", "jpd.end_time", "jp.organization_id", "j.title", "j.hourly_rate", "j.job_seeker_pay", "j.platform_fee", "j.details as job_details", "org.name as organization_name", "org.photo as organization_photo", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.city_name", "vwl.state_name", "vwl.country_name", "vwl.longitude", "vwl.latitude", this.db.raw(`(
+                .select("jpd.id", "jpd.job_post_id", "jpd.status as job_post_details_status", "jpd.start_time", "jpd.end_time", "org.user_id as hotelier_id", "jp.organization_id", "j.title", "j.hourly_rate", "j.job_seeker_pay", "j.platform_fee", "j.details as job_details", "org.name as organization_name", "org.photo as organization_photo", "vwl.location_id", "vwl.location_name", "vwl.location_address", "vwl.city_name", "vwl.state_name", "vwl.country_name", "vwl.longitude", "vwl.latitude", this.db.raw(`(
           SELECT COUNT(*) 
           FROM dbo.job_post_details 
           WHERE job_post_id = jpd.job_post_id

@@ -226,6 +226,7 @@ class JobPostModel extends Schema {
 			.withSchema(this.DBO_SCHEMA)
 			.select(
 				"jpd.id",
+				"jp.id as job_post_id",
 				"jpd.status as job_post_details_status",
 				"jpd.start_time",
 				"jpd.end_time",
@@ -583,6 +584,7 @@ class JobPostModel extends Schema {
 				"jpd.status as job_post_details_status",
 				"jpd.start_time",
 				"jpd.end_time",
+				"org.user_id as hotelier_id",
 				"jp.organization_id",
 				"j.title",
 				"j.hourly_rate",

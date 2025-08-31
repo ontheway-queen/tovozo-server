@@ -22,6 +22,7 @@ export default class Workers {
 		this.ExpireJobPostDetails();
 		this.jobStartReminder();
 		this.chatSessionCreator();
+		this.cancelHotelierJobsIfUnpaid();
 	}
 
 	public ExpireJobPostDetails() {
@@ -79,6 +80,28 @@ export default class Workers {
 
 		this.worker.on("failed", (job, err) => {
 			console.error(`❌ Failed to create chat session.`, err);
+		});
+	}
+
+	public cancelHotelierJobsIfUnpaid() {
+		this.worker = new Worker(
+			"cancelHotelierJobsIfUnpaid",
+			async (job) =>
+				await this.jobPostWorker.cancelHotelierJobsIfUnpaid(job),
+			{ connection: this.connection }
+		);
+
+		this.worker.on("completed", (job) => {
+			console.log(
+				`✅ Successfully processed job #${job.id}: cancelled hotelier jobs if payment was unpaid.`
+			);
+		});
+
+		this.worker.on("failed", (job, err) => {
+			console.error(
+				`❌ Failed to process job #${job?.id} for cancelling hotelier jobs.`,
+				err
+			);
 		});
 	}
 }

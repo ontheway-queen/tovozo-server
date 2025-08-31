@@ -330,7 +330,7 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                     trx_fee: transactionFee,
                     payment_no: `TVZ-PAY-${paymentId}`,
                 };
-                yield paymentModel.initializePayment(paymentPayload);
+                const paymentRes = yield paymentModel.initializePayment(paymentPayload);
                 const res = yield jobTaskActivitiesModel.updateJobTaskActivity(taskActivity.id, {
                     end_approved_at: new Date(),
                     total_working_hours: totalWorkingHours,
@@ -345,6 +345,24 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 if (isJobSeekerExists && isJobSeekerExists.length < 1) {
                     throw new customError_1.default("Job Seeker not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }
+                // MQ if any payment is unpaid by hotelier
+                const cancelHotelierJobsIfUnpaidQueue = this.getQueue("cancelHotelierJobsIfUnpaid");
+                console.log({ jobPost });
+                yield cancelHotelierJobsIfUnpaidQueue.add("cancelHotelierJobsIfUnpaid", {
+                    id: jobPost.id,
+                    payment_id: paymentRes[0].id,
+                    organization_id: jobPost.organization_id,
+                    hotelier_id: jobPost.hotelier_id,
+                    hotelier_device_id: hotelier[0].device_id,
+                    photo: hotelier[0].photo,
+                    type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
+                    related_id: jobPost.id,
+                }, {
+                    delay: 24 * 60 * 60 * 1000,
+                    // delay: 1 * 60 * 1000, // 1 minute delay
+                    removeOnComplete: true,
+                    removeOnFail: false,
+                });
                 yield this.insertNotification(trx, userModelTypes_1.TypeUser.JOB_SEEKER, {
                     user_id: taskActivity.job_seeker_id,
                     sender_id: user_id,

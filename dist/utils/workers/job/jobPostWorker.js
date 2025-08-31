@@ -15,6 +15,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const database_1 = require("../../../app/database");
 const socket_1 = require("../../../app/socket");
 const commonModel_1 = __importDefault(require("../../../models/commonModel/commonModel"));
+const jobPostModel_1 = __importDefault(require("../../../models/hotelierModel/jobPostModel"));
+const paymentModel_1 = __importDefault(require("../../../models/paymentModel/paymentModel"));
 const rootModel_1 = __importDefault(require("../../../models/rootModel"));
 const lib_1 = __importDefault(require("../../lib/lib"));
 const constants_1 = require("../../miscellaneous/constants");
@@ -88,6 +90,72 @@ class JobPostWorker {
                                 }),
                             });
                         }
+                    }
+                }
+            }));
+        });
+    }
+    cancelHotelierJobsIfUnpaid(job) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { id, payment_id, organization_id, hotelier_id, hotelier_device_id, photo, type, related_id, } = job.data;
+            console.log("hotelier_id from worker", hotelier_id);
+            return yield database_1.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const paymentModel = new paymentModel_1.default(trx);
+                const payment = yield paymentModel.getSinglePayment(payment_id);
+                if (!payment || payment.status === constants_1.PAYMENT_STATUS.PAID) {
+                    return;
+                }
+                const jobPostModel = new jobPostModel_1.default(trx);
+                const { data, total } = yield jobPostModel.getJobPostListForHotelier({
+                    organization_id,
+                    status: "Pending",
+                });
+                console.log({ data });
+                for (const jobPost of data) {
+                    yield jobPostModel.updateJobPostDetailsStatus({
+                        id: jobPost.id,
+                        status: "Cancelled",
+                    });
+                    yield jobPostModel.updateJobPost(jobPost.job_post_id, {
+                        status: "Cancelled",
+                    });
+                }
+                const commonModel = new commonModel_1.default(trx);
+                yield commonModel.createNotification({
+                    user_id: hotelier_id,
+                    sender_type: userModelTypes_1.TypeUser.ADMIN,
+                    title: `Some of your jobs cancelled due to unpaid payment`,
+                    content: `You did not complete payment within 24 hours. ${total} job${total > 1 ? "s" : ""} have been cancelled automatically. Please contact support if needed.`,
+                    type,
+                    related_id,
+                });
+                const isHotelierOnline = yield (0, socket_1.getAllOnlineSocketIds)({
+                    user_id: hotelier_id,
+                    type: userModelTypes_1.TypeUser.HOTELIER,
+                });
+                if (isHotelierOnline && isHotelierOnline.length > 0) {
+                    socket_1.io.to(String(hotelier_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION, {
+                        user_id: hotelier_id,
+                        photo,
+                        title: `Some of your jobs cancelled due to unpaid payment`,
+                        content: `You did not complete payment within 24 hours. ${total} job${total > 1 ? "s" : ""} have been cancelled automatically. Please contact support if needed.`,
+                        related_id,
+                        type,
+                        read_status: false,
+                        created_at: new Date().toISOString(),
+                    });
+                }
+                else {
+                    if (hotelier_device_id) {
+                        yield lib_1.default.sendNotificationToMobile({
+                            to: hotelier_device_id,
+                            notificationTitle: `Some of your jobs cancelled due to unpaid payment`,
+                            notificationBody: `You did not complete payment within 24 hours. ${total} job${total > 1 ? "s" : ""} have been cancelled automatically. Please contact support if needed.`,
+                            // data: JSON.stringify({
+                            // 	photo,
+                            // 	related_id,
+                            // }),
+                        });
                     }
                 }
             }));

@@ -131,7 +131,9 @@ class PaymentModel extends schema_1.default {
                 .clearSelect()
                 .count("p.id as count")
                 .first();
-            const dataQuery = baseQuery.offset(skip).limit(limit);
+            const dataQuery = baseQuery
+                .offset(skip)
+                .limit(limit);
             const [data, countResult] = yield Promise.all([dataQuery, countQuery]);
             return {
                 data,

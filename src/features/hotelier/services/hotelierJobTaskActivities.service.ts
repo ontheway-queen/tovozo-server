@@ -483,7 +483,9 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 				payment_no: `TVZ-PAY-${paymentId}`,
 			};
 
-			await paymentModel.initializePayment(paymentPayload);
+			const paymentRes = await paymentModel.initializePayment(
+				paymentPayload
+			);
 
 			const res = await jobTaskActivitiesModel.updateJobTaskActivity(
 				taskActivity.id,
@@ -507,6 +509,31 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 					this.StatusCode.HTTP_NOT_FOUND
 				);
 			}
+
+			// MQ if any payment is unpaid by hotelier
+			const cancelHotelierJobsIfUnpaidQueue = this.getQueue(
+				"cancelHotelierJobsIfUnpaid"
+			);
+			console.log({ jobPost });
+			await cancelHotelierJobsIfUnpaidQueue.add(
+				"cancelHotelierJobsIfUnpaid",
+				{
+					id: jobPost.id,
+					payment_id: paymentRes[0].id,
+					organization_id: jobPost.organization_id,
+					hotelier_id: jobPost.hotelier_id,
+					hotelier_device_id: hotelier[0].device_id,
+					photo: hotelier[0].photo,
+					type: NotificationTypeEnum.JOB_TASK,
+					related_id: jobPost.id,
+				},
+				{
+					delay: 24 * 60 * 60 * 1000,
+					// delay: 1 * 60 * 1000, // 1 minute delay
+					removeOnComplete: true,
+					removeOnFail: false,
+				}
+			);
 
 			await this.insertNotification(trx, TypeUser.JOB_SEEKER, {
 				user_id: taskActivity.job_seeker_id,
