@@ -13,12 +13,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
+const socket_1 = require("../../../app/socket");
 const customError_1 = __importDefault(require("../../../utils/lib/customError"));
+const lib_1 = __importDefault(require("../../../utils/lib/lib"));
 const constants_1 = require("../../../utils/miscellaneous/constants");
 const commonModelTypes_1 = require("../../../utils/modelTypes/common/commonModelTypes");
-const socket_1 = require("../../../app/socket");
 const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
-const lib_1 = __importDefault(require("../../../utils/lib/lib"));
 class AdminPayoutService extends abstract_service_1.default {
     constructor() {
         super();
@@ -44,10 +44,18 @@ class AdminPayoutService extends abstract_service_1.default {
     getSinglePayout(req) {
         return __awaiter(this, void 0, void 0, function* () {
             const id = Number(req.params.id);
+            console.log({ id });
             const payoutModel = this.Model.payoutModel();
             const data = yield payoutModel.getSinglePayout({
                 id,
             });
+            if (!data) {
+                return {
+                    success: true,
+                    code: this.StatusCode.HTTP_NOT_FOUND,
+                    message: this.ResMsg.HTTP_NOT_FOUND,
+                };
+            }
             return {
                 success: true,
                 code: this.StatusCode.HTTP_OK,
@@ -64,12 +72,21 @@ class AdminPayoutService extends abstract_service_1.default {
                 const id = Number(req.params.id);
                 const body = req.body;
                 const payoutModel = this.Model.payoutModel(trx);
+                const paymentModel = this.Model.paymnentModel(trx);
                 const payout = yield payoutModel.getSinglePayout({ id });
                 if (!payout) {
                     throw new customError_1.default("Payout request not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }
-                const payload = Object.assign(Object.assign({}, body), { approved_at: new Date(), approved_by: adminUserId });
+                const payload = Object.assign(Object.assign({}, body), { managed_at: new Date(), managed_by: adminUserId });
                 yield payoutModel.managePayout({ id: id, payload });
+                const baseLedgerPayload = {
+                    related_id: id,
+                    voucher_no: `TVZ-WD-${Date.now()}`,
+                    ledger_date: new Date(),
+                    created_at: new Date(),
+                    updated_at: new Date(),
+                };
+                yield paymentModel.createPaymentLedger(Object.assign(Object.assign({}, baseLedgerPayload), { user_id: payout.job_seeker_id, trx_type: constants_1.PAY_LEDGER_TRX_TYPE.OUT, entry_type: constants_1.PAYMENT_ENTRY_TYPE.WITHDRAW, user_type: constants_1.USER_TYPE.JOB_SEEKER, amount: Number(payout.amount), details: `Withdrawal of ${payout.amount} processed successfully.` }));
                 // 🔹 Insert audit log
                 yield this.insertAdminAudit(trx, {
                     created_by: adminUserId,
@@ -95,7 +112,7 @@ class AdminPayoutService extends abstract_service_1.default {
                     sender_type: constants_1.USER_TYPE.ADMIN,
                     sender_id: adminUserId,
                     user_id: jobSeekerId,
-                    type: commonModelTypes_1.NotificationTypeEnum.PAYOUT,
+                    type: commonModelTypes_1.NotificationTypeEnum.PAYMENT,
                 });
                 const isJobSeekerOnline = yield (0, socket_1.getAllOnlineSocketIds)({
                     user_id: jobSeekerId,

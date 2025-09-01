@@ -161,11 +161,10 @@ class PublicCommonValidator {
                 phone_number: joi_1.default.string().min(7).max(20).optional(),
             }).required(),
             job_seeker: joi_1.default.object({
-                nationality: joi_1.default.number().integer().required(),
                 account_status: joi_1.default.string()
                     .valid(...constants_1.USER_STATUS_ENUM)
                     .default("Pending"),
-            }).required(),
+            }).optional(),
             own_address: joi_1.default.object({
                 address: joi_1.default.string().optional(),
                 city: joi_1.default.string().max(100).optional(),
@@ -173,6 +172,7 @@ class PublicCommonValidator {
                 state: joi_1.default.string().max(100).optional(),
                 longitude: joi_1.default.number().precision(6).optional(),
                 latitude: joi_1.default.number().precision(6).optional(),
+                postal_code: joi_1.default.string().optional(),
             }).optional(),
         });
         this.registerOrganizationValidator = joi_1.default.object({

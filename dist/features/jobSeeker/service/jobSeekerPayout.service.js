@@ -95,6 +95,13 @@ class JobSeekerPayoutService extends abstract_service_1.default {
             const data = yield payoutModel.getSinglePayout({
                 id,
             });
+            if (!data) {
+                return {
+                    success: true,
+                    code: this.StatusCode.HTTP_NOT_FOUND,
+                    message: this.ResMsg.HTTP_NOT_FOUND,
+                };
+            }
             return {
                 success: true,
                 code: this.StatusCode.HTTP_OK,

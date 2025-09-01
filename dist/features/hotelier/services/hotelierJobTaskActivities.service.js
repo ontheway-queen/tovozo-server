@@ -16,10 +16,10 @@ const dayjs_1 = __importDefault(require("dayjs"));
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
 const socket_1 = require("../../../app/socket");
 const customError_1 = __importDefault(require("../../../utils/lib/customError"));
+const lib_1 = __importDefault(require("../../../utils/lib/lib"));
 const constants_1 = require("../../../utils/miscellaneous/constants");
 const commonModelTypes_1 = require("../../../utils/modelTypes/common/commonModelTypes");
 const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
-const lib_1 = __importDefault(require("../../../utils/lib/lib"));
 class HotelierJobTaskActivitiesService extends abstract_service_1.default {
     constructor() {
         super();
@@ -285,10 +285,16 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 if (!taskActivity) {
                     throw new customError_1.default("Task activity with related id not found or does not belong to you.", this.StatusCode.HTTP_NOT_FOUND);
                 }
-                if (taskActivity.application_status !==
-                    constants_1.JOB_APPLICATION_STATUS.IN_PROGRESS) {
-                    throw new customError_1.default(`You cannot perform this action because the application is still in progress.`, this.StatusCode.HTTP_FORBIDDEN);
-                }
+                //! Need to uncomment later
+                // if (
+                // 	taskActivity.application_status !==
+                // 	JOB_APPLICATION_STATUS.IN_PROGRESS
+                // ) {
+                // 	throw new CustomError(
+                // 		`You cannot perform this action because the application is still in progress.`,
+                // 		this.StatusCode.HTTP_FORBIDDEN
+                // 	);
+                // }
                 const application = yield jobApplicationModel.getMyJobApplication({
                     job_application_id: taskActivity.job_application_id,
                     job_seeker_id: taskActivity.job_seeker_id,
@@ -321,12 +327,13 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 const transactionFee = Number((baseAmount * feePercentage + fixedFee).toFixed(2));
                 const jobSeekerPay = Number((totalWorkingHours * jobSeekerPayRate).toFixed(2));
                 const platformFee = Number((totalWorkingHours * platformFeeRate).toFixed(2));
+                const rest_platform_fee = platformFee - transactionFee;
                 const paymentPayload = {
                     application_id: application.job_application_id,
                     total_amount: totalAmount,
                     status: constants_1.PAYMENT_STATUS.UNPAID,
                     job_seeker_pay: jobSeekerPay,
-                    platform_fee: platformFee,
+                    platform_fee: rest_platform_fee,
                     trx_fee: transactionFee,
                     payment_no: `TVZ-PAY-${paymentId}`,
                 };

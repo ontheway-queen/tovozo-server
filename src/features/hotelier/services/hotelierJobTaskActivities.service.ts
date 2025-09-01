@@ -3,23 +3,20 @@ import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
 import { getAllOnlineSocketIds, io } from "../../../app/socket";
 import CustomError from "../../../utils/lib/customError";
+import Lib from "../../../utils/lib/lib";
 import {
-	HotelierFixedCharge,
 	JOB_APPLICATION_STATUS,
 	JOB_POST_DETAILS_STATUS,
-	JobSeekerFixedCharge,
 	PAYMENT_STATUS,
-	PlatformFee,
 	USER_TYPE,
 } from "../../../utils/miscellaneous/constants";
 import {
 	NotificationTypeEnum,
 	TypeEmitNotificationEnum,
 } from "../../../utils/modelTypes/common/commonModelTypes";
+import { IJobPostDetailsStatus } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
 import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
 import { IUpdateJobTaskListPayload } from "../utils/types/hotelierJobTaskTypes";
-import { IJobPostDetailsStatus } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
-import Lib from "../../../utils/lib/lib";
 
 export default class HotelierJobTaskActivitiesService extends AbstractServices {
 	constructor() {
@@ -400,15 +397,16 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 				);
 			}
 
-			if (
-				taskActivity.application_status !==
-				JOB_APPLICATION_STATUS.IN_PROGRESS
-			) {
-				throw new CustomError(
-					`You cannot perform this action because the application is still in progress.`,
-					this.StatusCode.HTTP_FORBIDDEN
-				);
-			}
+			//! Need to uncomment later
+			// if (
+			// 	taskActivity.application_status !==
+			// 	JOB_APPLICATION_STATUS.IN_PROGRESS
+			// ) {
+			// 	throw new CustomError(
+			// 		`You cannot perform this action because the application is still in progress.`,
+			// 		this.StatusCode.HTTP_FORBIDDEN
+			// 	);
+			// }
 			const application = await jobApplicationModel.getMyJobApplication({
 				job_application_id: taskActivity.job_application_id,
 				job_seeker_id: taskActivity.job_seeker_id,
@@ -473,12 +471,14 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 				(totalWorkingHours * platformFeeRate).toFixed(2)
 			);
 
+			const rest_platform_fee = platformFee - transactionFee;
+
 			const paymentPayload = {
 				application_id: application.job_application_id,
 				total_amount: totalAmount,
 				status: PAYMENT_STATUS.UNPAID,
 				job_seeker_pay: jobSeekerPay,
-				platform_fee: platformFee,
+				platform_fee: rest_platform_fee,
 				trx_fee: transactionFee,
 				payment_no: `TVZ-PAY-${paymentId}`,
 			};

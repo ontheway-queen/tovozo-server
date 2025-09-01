@@ -80,9 +80,13 @@ class PaymentService extends abstract_service_1.default {
                 if (!payment) {
                     throw new customError_1.default("Payment record not found", this.StatusCode.HTTP_NOT_FOUND, "ERROR");
                 }
-                if (payment.status === constants_1.PAYMENT_STATUS.PAID) {
-                    throw new customError_1.default("The payment is already paid", this.StatusCode.HTTP_CONFLICT);
-                }
+                //! Need to uncomment later
+                // if (payment.status === PAYMENT_STATUS.PAID) {
+                // 	throw new CustomError(
+                // 		"The payment is already paid",
+                // 		this.StatusCode.HTTP_CONFLICT
+                // 	);
+                // }
                 const total_amount = Number(payment.total_amount);
                 const session = yield stripe_1.stripe.checkout.sessions.create({
                     payment_method_types: ["card"],
@@ -159,9 +163,13 @@ class PaymentService extends abstract_service_1.default {
                 if (!payment) {
                     throw new customError_1.default("Payment record not found", this.StatusCode.HTTP_NOT_FOUND, "ERROR");
                 }
-                if (payment.status === "paid") {
-                    throw new customError_1.default("The payment is aleady paid", this.StatusCode.HTTP_CONFLICT);
-                }
+                //! Need to uncomment later
+                // if (payment.status === "Paid") {
+                // 	throw new CustomError(
+                // 		"The payment is aleady paid",
+                // 		this.StatusCode.HTTP_CONFLICT
+                // 	);
+                // }
                 const jobseeker = yield this.Model.UserModel().checkUser({
                     id: Number(paymentIntent.metadata.job_seeker_id),
                 });
@@ -177,15 +185,17 @@ class PaymentService extends abstract_service_1.default {
                 };
                 yield paymentModel.updatePayment(Number(paymentIntent.metadata.id), paymentPayload);
                 const baseLedgerPayload = {
-                    payment_id: payment.id,
+                    related_id: payment.id,
                     voucher_no: payment.payment_no,
                     ledger_date: new Date(),
                     created_at: new Date(),
                     updated_at: new Date(),
                 };
-                yield paymentModel.createPaymentLedger(Object.assign(Object.assign({}, baseLedgerPayload), { user_id: paymentIntent.metadata.job_seeker_id, trx_type: constants_1.PAY_LEDGER_TRX_TYPE.IN, user_type: constants_1.USER_TYPE.JOB_SEEKER, amount: payment.job_seeker_pay, details: `Payment received for job "${paymentIntent.metadata.job_title}".` }));
-                yield paymentModel.createPaymentLedger(Object.assign(Object.assign({}, baseLedgerPayload), { trx_type: constants_1.PAY_LEDGER_TRX_TYPE.IN, user_type: constants_1.USER_TYPE.ADMIN, amount: payment.platform_fee, details: `Platform fee received from job "${paymentIntent.metadata.job_title}" completed by ${paymentIntent.metadata.job_seeker_name}` }));
-                yield paymentModel.createPaymentLedger(Object.assign(Object.assign({}, baseLedgerPayload), { user_id: user_id, trx_type: constants_1.PAY_LEDGER_TRX_TYPE.OUT, user_type: constants_1.USER_TYPE.HOTELIER, amount: payment.total_amount, details: `Payment sent for job "${paymentIntent.metadata.job_title}" to ${paymentIntent.metadata.job_seeker_name}.` }));
+                yield paymentModel.createPaymentLedger(Object.assign(Object.assign({}, baseLedgerPayload), { user_id: paymentIntent.metadata.job_seeker_id, trx_type: constants_1.PAY_LEDGER_TRX_TYPE.IN, user_type: constants_1.USER_TYPE.JOB_SEEKER, amount: payment.job_seeker_pay, details: `Earnings credited for completing job "${paymentIntent.metadata.job_title}".`, entry_type: constants_1.PAYMENT_ENTRY_TYPE.INVOICE }));
+                yield paymentModel.createPaymentLedger(Object.assign(Object.assign({}, baseLedgerPayload), { trx_type: constants_1.PAY_LEDGER_TRX_TYPE.IN, user_type: constants_1.USER_TYPE.ADMIN, amount: payment.total_amount, entry_type: constants_1.PAYMENT_ENTRY_TYPE.INVOICE, details: `Platform fee received from job "${paymentIntent.metadata.job_title}" completed by ${paymentIntent.metadata.job_seeker_name}` }));
+                yield paymentModel.createPaymentLedger(Object.assign(Object.assign({}, baseLedgerPayload), { trx_type: constants_1.PAY_LEDGER_TRX_TYPE.OUT, user_type: constants_1.USER_TYPE.ADMIN, amount: payment.trx_fee, details: `Transaction charge deducted for job "${paymentIntent.metadata.job_title}" completed by ${paymentIntent.metadata.job_seeker_name}`, entry_type: constants_1.PAYMENT_ENTRY_TYPE.INVOICE }));
+                yield paymentModel.createPaymentLedger(Object.assign(Object.assign({}, baseLedgerPayload), { trx_type: constants_1.PAY_LEDGER_TRX_TYPE.OUT, user_type: constants_1.USER_TYPE.ADMIN, amount: payment.job_seeker_pay, details: `Wages transferred to ${paymentIntent.metadata.job_seeker_name} for successfully completing job "${paymentIntent.metadata.job_title}"`, entry_type: constants_1.PAYMENT_ENTRY_TYPE.INVOICE }));
+                yield paymentModel.createPaymentLedger(Object.assign(Object.assign({}, baseLedgerPayload), { user_id: user_id, trx_type: constants_1.PAY_LEDGER_TRX_TYPE.OUT, user_type: constants_1.USER_TYPE.HOTELIER, entry_type: constants_1.PAYMENT_ENTRY_TYPE.INVOICE, amount: payment.total_amount, details: `Payment sent for job "${paymentIntent.metadata.job_title}" to ${paymentIntent.metadata.job_seeker_name}.` }));
                 const updatedApplication = yield jobApplicationModel.updateMyJobApplicationStatus({
                     application_id: payment.application_id,
                     job_seeker_id: Number(paymentIntent.metadata.job_seeker_id),

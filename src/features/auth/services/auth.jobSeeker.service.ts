@@ -20,13 +20,10 @@ import { registrationJobSeekerTemplate } from "../../../utils/templates/jobSeeke
 import { sendEmailOtpTemplate } from "../../../utils/templates/sendEmailOtpTemplate";
 import {
 	IJobSeekerAuthView,
-	IJobSeekerInfoBody,
 	IJobSeekerLocationInfo,
 	IJobSeekerNationalityBody,
 	IJobSeekerUserBody,
 } from "../utils/types/jobSeekerAuth.types";
-
-import { io } from "../../../app/socket";
 
 class JobSeekerAuthService extends AbstractServices {
 	//registration service

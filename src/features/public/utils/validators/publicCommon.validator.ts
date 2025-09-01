@@ -198,11 +198,10 @@ export default class PublicCommonValidator {
 		}).required(),
 
 		job_seeker: Joi.object({
-			nationality: Joi.number().integer().required(),
 			account_status: Joi.string()
 				.valid(...USER_STATUS_ENUM)
 				.default("Pending"),
-		}).required(),
+		}).optional(),
 		own_address: Joi.object({
 			address: Joi.string().optional(),
 			city: Joi.string().max(100).optional(),
@@ -210,6 +209,7 @@ export default class PublicCommonValidator {
 			state: Joi.string().max(100).optional(),
 			longitude: Joi.number().precision(6).optional(),
 			latitude: Joi.number().precision(6).optional(),
+			postal_code: Joi.string().optional(),
 		}).optional(),
 	});
 

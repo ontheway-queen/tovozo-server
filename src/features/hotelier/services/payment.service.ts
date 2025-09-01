@@ -9,6 +9,7 @@ import {
 	JOB_APPLICATION_STATUS,
 	JOB_POST_DETAILS_STATUS,
 	PAY_LEDGER_TRX_TYPE,
+	PAYMENT_ENTRY_TYPE,
 	PAYMENT_STATUS,
 	PAYMENT_TYPE,
 	USER_TYPE,
@@ -99,12 +100,13 @@ export default class PaymentService extends AbstractServices {
 					"ERROR"
 				);
 			}
-			if (payment.status === PAYMENT_STATUS.PAID) {
-				throw new CustomError(
-					"The payment is already paid",
-					this.StatusCode.HTTP_CONFLICT
-				);
-			}
+			//! Need to uncomment later
+			// if (payment.status === PAYMENT_STATUS.PAID) {
+			// 	throw new CustomError(
+			// 		"The payment is already paid",
+			// 		this.StatusCode.HTTP_CONFLICT
+			// 	);
+			// }
 
 			const total_amount = Number(payment.total_amount);
 
@@ -214,12 +216,13 @@ export default class PaymentService extends AbstractServices {
 					"ERROR"
 				);
 			}
-			if (payment.status === "paid") {
-				throw new CustomError(
-					"The payment is aleady paid",
-					this.StatusCode.HTTP_CONFLICT
-				);
-			}
+			//! Need to uncomment later
+			// if (payment.status === "Paid") {
+			// 	throw new CustomError(
+			// 		"The payment is aleady paid",
+			// 		this.StatusCode.HTTP_CONFLICT
+			// 	);
+			// }
 
 			const jobseeker = await this.Model.UserModel().checkUser({
 				id: Number(paymentIntent.metadata.job_seeker_id),
@@ -244,7 +247,7 @@ export default class PaymentService extends AbstractServices {
 			);
 
 			const baseLedgerPayload = {
-				payment_id: payment.id,
+				related_id: payment.id,
 				voucher_no: payment.payment_no,
 				ledger_date: new Date(),
 				created_at: new Date(),
@@ -256,23 +259,47 @@ export default class PaymentService extends AbstractServices {
 				trx_type: PAY_LEDGER_TRX_TYPE.IN,
 				user_type: USER_TYPE.JOB_SEEKER,
 				amount: payment.job_seeker_pay,
-				details: `Payment received for job "${paymentIntent.metadata.job_title}".`,
+				details: `Earnings credited for completing job "${paymentIntent.metadata.job_title}".`,
+				entry_type: PAYMENT_ENTRY_TYPE.INVOICE,
 			});
+
 			await paymentModel.createPaymentLedger({
 				...baseLedgerPayload,
 				trx_type: PAY_LEDGER_TRX_TYPE.IN,
 				user_type: USER_TYPE.ADMIN,
-				amount: payment.platform_fee,
+				amount: payment.total_amount,
+				entry_type: PAYMENT_ENTRY_TYPE.INVOICE,
 				details: `Platform fee received from job "${paymentIntent.metadata.job_title}" completed by ${paymentIntent.metadata.job_seeker_name}`,
 			});
+
+			await paymentModel.createPaymentLedger({
+				...baseLedgerPayload,
+				trx_type: PAY_LEDGER_TRX_TYPE.OUT,
+				user_type: USER_TYPE.ADMIN,
+				amount: payment.trx_fee,
+				details: `Transaction charge deducted for job "${paymentIntent.metadata.job_title}" completed by ${paymentIntent.metadata.job_seeker_name}`,
+				entry_type: PAYMENT_ENTRY_TYPE.INVOICE,
+			});
+
+			await paymentModel.createPaymentLedger({
+				...baseLedgerPayload,
+				trx_type: PAY_LEDGER_TRX_TYPE.OUT,
+				user_type: USER_TYPE.ADMIN,
+				amount: payment.job_seeker_pay,
+				details: `Wages transferred to ${paymentIntent.metadata.job_seeker_name} for successfully completing job "${paymentIntent.metadata.job_title}"`,
+				entry_type: PAYMENT_ENTRY_TYPE.INVOICE,
+			});
+
 			await paymentModel.createPaymentLedger({
 				...baseLedgerPayload,
 				user_id: user_id,
 				trx_type: PAY_LEDGER_TRX_TYPE.OUT,
 				user_type: USER_TYPE.HOTELIER,
+				entry_type: PAYMENT_ENTRY_TYPE.INVOICE,
 				amount: payment.total_amount,
 				details: `Payment sent for job "${paymentIntent.metadata.job_title}" to ${paymentIntent.metadata.job_seeker_name}.`,
 			});
+
 			const updatedApplication =
 				await jobApplicationModel.updateMyJobApplicationStatus({
 					application_id: payment.application_id,

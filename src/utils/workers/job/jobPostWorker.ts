@@ -10,7 +10,6 @@ import {
 	JOB_POST_STATUS,
 	PAYMENT_STATUS,
 } from "../../miscellaneous/constants";
-import NotificationMessage from "../../miscellaneous/notificationMessage";
 import { TypeEmitNotificationEnum } from "../../modelTypes/common/commonModelTypes";
 import { TypeUser } from "../../modelTypes/user/userModelTypes";
 

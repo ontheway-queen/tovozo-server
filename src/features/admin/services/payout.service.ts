@@ -1,14 +1,18 @@
 import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
+import { getAllOnlineSocketIds, io } from "../../../app/socket";
 import CustomError from "../../../utils/lib/customError";
-import { USER_TYPE } from "../../../utils/miscellaneous/constants";
+import Lib from "../../../utils/lib/lib";
+import {
+	PAY_LEDGER_TRX_TYPE,
+	PAYMENT_ENTRY_TYPE,
+	USER_TYPE,
+} from "../../../utils/miscellaneous/constants";
 import {
 	NotificationTypeEnum,
 	TypeEmitNotificationEnum,
 } from "../../../utils/modelTypes/common/commonModelTypes";
-import { getAllOnlineSocketIds, io } from "../../../app/socket";
 import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
-import Lib from "../../../utils/lib/lib";
 
 export default class AdminPayoutService extends AbstractServices {
 	constructor() {
@@ -35,11 +39,19 @@ export default class AdminPayoutService extends AbstractServices {
 
 	public async getSinglePayout(req: Request) {
 		const id = Number(req.params.id);
+		console.log({ id });
 		const payoutModel = this.Model.payoutModel();
 		const data = await payoutModel.getSinglePayout({
 			id,
 		});
 
+		if (!data) {
+			return {
+				success: true,
+				code: this.StatusCode.HTTP_NOT_FOUND,
+				message: this.ResMsg.HTTP_NOT_FOUND,
+			};
+		}
 		return {
 			success: true,
 			code: this.StatusCode.HTTP_OK,
@@ -55,6 +67,8 @@ export default class AdminPayoutService extends AbstractServices {
 			const body = req.body;
 
 			const payoutModel = this.Model.payoutModel(trx);
+			const paymentModel = this.Model.paymnentModel(trx);
+
 			const payout = await payoutModel.getSinglePayout({ id });
 
 			if (!payout) {
@@ -66,11 +80,28 @@ export default class AdminPayoutService extends AbstractServices {
 
 			const payload = {
 				...body,
-				approved_at: new Date(),
-				approved_by: adminUserId,
+				managed_at: new Date(),
+				managed_by: adminUserId,
 			};
 
 			await payoutModel.managePayout({ id: id, payload });
+
+			const baseLedgerPayload = {
+				related_id: id,
+				voucher_no: `TVZ-WD-${Date.now()}`,
+				ledger_date: new Date(),
+				created_at: new Date(),
+				updated_at: new Date(),
+			};
+			await paymentModel.createPaymentLedger({
+				...baseLedgerPayload,
+				user_id: payout.job_seeker_id,
+				trx_type: PAY_LEDGER_TRX_TYPE.OUT,
+				entry_type: PAYMENT_ENTRY_TYPE.WITHDRAW,
+				user_type: USER_TYPE.JOB_SEEKER,
+				amount: Number(payout.amount),
+				details: `Withdrawal of ${payout.amount} processed successfully.`,
+			});
 
 			// 🔹 Insert audit log
 			await this.insertAdminAudit(trx, {
@@ -104,7 +135,7 @@ export default class AdminPayoutService extends AbstractServices {
 				sender_type: USER_TYPE.ADMIN,
 				sender_id: adminUserId,
 				user_id: jobSeekerId,
-				type: NotificationTypeEnum.PAYOUT,
+				type: NotificationTypeEnum.PAYMENT,
 			});
 
 			const isJobSeekerOnline = await getAllOnlineSocketIds({

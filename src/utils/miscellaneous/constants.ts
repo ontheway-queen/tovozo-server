@@ -267,3 +267,8 @@ export const REPORT_STATUS_ENUM = ["Pending", "Acknowledge"] as const;
 export const JobSeekerFixedCharge = 13;
 export const HotelierFixedCharge = 15;
 export const PlatformFee = 2;
+
+export enum PAYMENT_ENTRY_TYPE {
+	INVOICE = "Invoice", // money received
+	WITHDRAW = "Withdraw", // money taken out
+}

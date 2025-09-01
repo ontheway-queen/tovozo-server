@@ -537,10 +537,11 @@ export default class PaymentModel extends Schema {
 			organization_name: string;
 			job_seeker_name: string;
 			paid_at: string;
+			balance: number;
 		}[];
 		total: number;
 	}> {
-		const { limit, skip, search, type } = params;
+		const { limit, skip, search, type = "ADMIN" } = params;
 
 		const baseQuery = this.db("payment_ledger as pl")
 			.withSchema(this.DBO_SCHEMA)
@@ -554,7 +555,15 @@ export default class PaymentModel extends Schema {
 				"j.title as job_title",
 				"org.name as organization_name",
 				"job_seeker.name as job_seeker_name",
-				"p.paid_at"
+				"p.paid_at",
+				this.db.raw(
+					`(SELECT
+             SUM(CASE WHEN sub_ml.trx_type = ? THEN sub_ml.amount ELSE 0 END) -
+            SUM(CASE WHEN sub_ml.trx_type = ? THEN sub_ml.amount ELSE 0 END)
+            FROM dbo.payment_ledger AS sub_ml
+            WHERE sub_ml.user_type = 'ADMIN' AND sub_ml.id <= pl.id) as balance`,
+					["In", "Out"]
+				)
 			)
 			.leftJoin("payment as p", "p.payment_no", "pl.voucher_no")
 			.leftJoin("job_applications as ja", "ja.id", "p.application_id")
@@ -577,7 +586,8 @@ export default class PaymentModel extends Schema {
 					qb.whereILike("pl.details", `%${search}%`);
 				}
 			})
-			.orderBy("pl.id", "desc")
+			.orderBy("pl.ledger_date", "asc")
+			.orderBy("pl.id", "asc")
 			.offset(skip)
 			.limit(limit);
 

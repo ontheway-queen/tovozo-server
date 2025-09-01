@@ -1,5 +1,6 @@
 import {
 	PAY_LEDGER_TRX_TYPE,
+	PAYMENT_ENTRY_TYPE,
 	PAYMENT_STATUS,
 	PAYMENT_TYPE,
 } from "../../miscellaneous/constants";
@@ -52,7 +53,7 @@ export interface IPaymentUpdate {
 }
 
 export interface IPaymentLedgerPayload {
-	payment_id: number;
+	related_id: number;
 	voucher_no: string;
 	ledger_date: Date;
 	created_at: Date;
@@ -63,6 +64,7 @@ export interface IPaymentLedgerPayload {
 	user_type: `${TypeUser}`;
 	amount: number;
 	details: string;
+	entry_type: (typeof PAYMENT_ENTRY_TYPE)[keyof typeof PAYMENT_ENTRY_TYPE];
 }
 
 export interface IGetPaymentLedger {

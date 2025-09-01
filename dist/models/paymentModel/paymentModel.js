@@ -331,10 +331,14 @@ class PaymentModel extends schema_1.default {
     getAllPaymentLedgerForAdmin(params) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a, _b;
-            const { limit, skip, search, type } = params;
+            const { limit, skip, search, type = "ADMIN" } = params;
             const baseQuery = this.db("payment_ledger as pl")
                 .withSchema(this.DBO_SCHEMA)
-                .select("pl.id", "pl.trx_type", "pl.amount", "pl.details", "pl.ledger_date", "pl.voucher_no", "j.title as job_title", "org.name as organization_name", "job_seeker.name as job_seeker_name", "p.paid_at")
+                .select("pl.id", "pl.trx_type", "pl.amount", "pl.details", "pl.ledger_date", "pl.voucher_no", "j.title as job_title", "org.name as organization_name", "job_seeker.name as job_seeker_name", "p.paid_at", this.db.raw(`(SELECT
+             SUM(CASE WHEN sub_ml.trx_type = ? THEN sub_ml.amount ELSE 0 END) -
+            SUM(CASE WHEN sub_ml.trx_type = ? THEN sub_ml.amount ELSE 0 END)
+            FROM dbo.payment_ledger AS sub_ml
+            WHERE sub_ml.user_type = 'ADMIN' AND sub_ml.id <= pl.id) as balance`, ["In", "Out"]))
                 .leftJoin("payment as p", "p.payment_no", "pl.voucher_no")
                 .leftJoin("job_applications as ja", "ja.id", "p.application_id")
                 .leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
@@ -350,7 +354,8 @@ class PaymentModel extends schema_1.default {
                     qb.whereILike("pl.details", `%${search}%`);
                 }
             })
-                .orderBy("pl.id", "desc")
+                .orderBy("pl.ledger_date", "asc")
+                .orderBy("pl.id", "asc")
                 .offset(skip)
                 .limit(limit);
             const data = yield baseQuery;
