@@ -27,7 +27,6 @@ const abstract_service_1 = __importDefault(require("../../../abstract/abstract.s
 const customError_1 = __importDefault(require("../../../utils/lib/customError"));
 const lib_1 = __importDefault(require("../../../utils/lib/lib"));
 const constants_1 = require("../../../utils/miscellaneous/constants");
-const registrationVerificationCompletedTemplate_1 = require("../../../utils/templates/registrationVerificationCompletedTemplate");
 class HotelierProfileService extends abstract_service_1.default {
     constructor() {
         super();
@@ -116,25 +115,17 @@ class HotelierProfileService extends abstract_service_1.default {
                 const files = req.files;
                 const body = req.body;
                 const parsed = {
-                    organization: lib_1.default.safeParseJSON(body.organization) || {},
                     user: lib_1.default.safeParseJSON(body.user) || {},
-                    addPhoto: lib_1.default.safeParseJSON(body.add_photo) || [],
-                    deletePhoto: lib_1.default.safeParseJSON(body.delete_photo) || [],
-                    addAmenities: lib_1.default.safeParseJSON(body.add_amenities) || [],
-                    updateAmenities: lib_1.default.safeParseJSON(body.update_amenities) || {},
-                    deleteAmenities: lib_1.default.safeParseJSON(body.delete_amenities) || [],
-                    organization_address: lib_1.default.safeParseJSON(body.organization_address) || {},
+                    organization: lib_1.default.safeParseJSON(body.organization) || {},
+                    org_address: lib_1.default.safeParseJSON(body.org_address) || {},
                 };
                 for (const { fieldname, filename } of files) {
                     switch (fieldname) {
                         case "photo":
                             parsed.user.photo = filename;
                             break;
-                        case "hotel_photo":
-                            parsed.addPhoto.push({
-                                file: filename,
-                                organization_id: id,
-                            });
+                        case "organization_photo":
+                            parsed.organization.photo = filename;
                             break;
                         default:
                             throw new customError_1.default(this.ResMsg.UNKNOWN_FILE_FIELD, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
@@ -155,101 +146,96 @@ class HotelierProfileService extends abstract_service_1.default {
                     updateTasks.push(userModel.updateProfile(parsed.user, { id: data.user_id }));
                 }
                 if (Object.keys(parsed.organization).length > 0) {
-                    if (parsed.organization.status) {
-                        const checkHotelier = yield model.getSingleOrganization(id);
-                        if (!checkHotelier) {
-                            throw new customError_1.default("Hotelier account not found!", this.StatusCode.HTTP_NOT_FOUND);
-                        }
-                        if (parsed.organization.status === checkHotelier.status) {
-                            throw new customError_1.default(`Already updated status to ${parsed.organization.status}`, this.StatusCode.HTTP_CONFLICT);
-                        }
-                    }
                     updateTasks.push(model.updateOrganization({
-                        name: parsed.organization.org_name || data.org_name,
-                        status: parsed.organization.status || data.status,
+                        name: parsed.organization.name || data.name,
+                        details: parsed.organization.details || data.details,
+                        photo: parsed.organization.photo || data.photo,
                     }, {
                         id: id,
                     }));
                 }
-                if (parsed.addPhoto.length > 0) {
-                    updateTasks.push(model.addPhoto(parsed.addPhoto));
-                }
-                if (parsed.deletePhoto.length > 0) {
-                    for (const delP of parsed.deletePhoto) {
-                        updateTasks.push(model.deletePhoto(Number(delP)));
-                    }
-                }
-                if (parsed.addAmenities.length > 0) {
-                    const amenitiesPayload = [];
-                    for (const amenity of parsed.addAmenities) {
-                        amenitiesPayload.push({ amenity, organization_id: id });
-                    }
-                    updateTasks.push(model.addAmenities(amenitiesPayload));
-                }
-                if (Object.keys(parsed.updateAmenities).length) {
-                    const checkUpdateAmenity = yield model.getAmenities({
-                        organization_id: id,
-                        id: parsed.updateAmenities.id,
-                    });
-                    if (!checkUpdateAmenity.length) {
-                        throw new customError_1.default("Update amenity not found!", this.StatusCode.HTTP_NOT_FOUND);
-                    }
-                    updateTasks.push(model.updateAmenities(parsed.updateAmenities.amenity, parsed.updateAmenities.id));
-                }
-                if (parsed.deleteAmenities.length > 0) {
-                    const checkAmenities = yield model.getAmenities({
-                        organization_id: id,
-                    });
-                    if (!checkAmenities.length) {
-                        throw new customError_1.default("Amenity not found!", this.StatusCode.HTTP_NOT_FOUND);
-                    }
-                    updateTasks.push(model.deleteAmenities({
-                        organization_id: id,
-                        ids: parsed.deleteAmenities,
-                    }));
-                }
-                yield Promise.all(updateTasks);
                 if (parsed.organization.status === constants_1.USER_STATUS.ACTIVE) {
                     if (data.status === parsed.organization.status) {
                         throw new customError_1.default(`Already updated status to ${parsed.organization.status}`, this.StatusCode.HTTP_CONFLICT);
                     }
-                    yield lib_1.default.sendEmailDefault({
-                        email: existingUser.email,
-                        emailSub: "Hotelier Account Activation Successful – You Can Now Log In",
-                        emailBody: (0, registrationVerificationCompletedTemplate_1.registrationVerificationCompletedTemplate)(existingUser.name, "tovozo://login"),
-                    });
                 }
-                if (Object.keys(parsed.organization_address).length > 0) {
-                    if (parsed.organization_address.city_id) {
+                let stateId = 0;
+                let city_id = 0;
+                if (Object.keys(parsed.org_address).length > 0) {
+                    if (parsed.org_address.city) {
+                        // check country
+                        const checkCountry = yield commonModel.getAllCountry({
+                            name: parsed.org_address.country,
+                        });
+                        if (!checkCountry.length) {
+                            throw new customError_1.default("Service not available in this country", this.StatusCode.HTTP_BAD_REQUEST);
+                        }
+                        const checkState = yield commonModel.getAllStates({
+                            country_id: checkCountry[0].id,
+                            name: parsed.org_address.state,
+                        });
+                        if (!checkState.length) {
+                            const state = yield commonModel.createState({
+                                country_id: checkCountry[0].id,
+                                name: parsed.org_address.state,
+                            });
+                            stateId = state[0].id;
+                        }
+                        else {
+                            stateId = checkState[0].id;
+                        }
                         const checkCity = yield commonModel.getAllCity({
-                            city_id: parsed.organization_address.city_id,
+                            country_id: checkCountry[0].id,
+                            state_id: stateId,
+                            name: parsed.org_address.city,
                         });
                         if (!checkCity.length) {
-                            throw new customError_1.default("City not found!", this.StatusCode.HTTP_NOT_FOUND);
+                            const city = yield commonModel.createCity({
+                                country_id: checkCountry[0].id,
+                                state_id: stateId,
+                                name: parsed.org_address.city,
+                            });
+                            city_id = city[0].id;
+                        }
+                        else {
+                            city_id = checkCity[0].id;
                         }
                     }
-                    if (parsed.organization_address.id) {
+                    if (data.location_id) {
                         const checkLocation = yield commonModel.getLocation({
-                            location_id: parsed.organization_address.id,
+                            location_id: data.location_id,
                         });
                         if (!checkLocation) {
                             throw new customError_1.default("Location not found!", this.StatusCode.HTTP_NOT_FOUND);
                         }
-                        updateTasks.push(commonModel.updateLocation(parsed.organization_address, {
-                            location_id: parsed.organization_address.id,
+                        updateTasks.push(commonModel.updateLocation({
+                            city_id: checkLocation.city_id,
+                            name: parsed.org_address.name,
+                            address: parsed.org_address.address,
+                            longitude: parsed.org_address.longitude,
+                            latitude: parsed.org_address.latitude,
+                            postal_code: parsed.org_address.postal_code,
+                            is_home_address: parsed.org_address.is_home_address,
+                        }, {
+                            location_id: data.location_id,
                         }));
                     }
                     else {
-                        updateTasks.push(commonModel.createLocation(parsed.organization_address));
+                        updateTasks.push((() => __awaiter(this, void 0, void 0, function* () {
+                            const [locationRecord] = yield commonModel.createLocation({
+                                city_id,
+                                name: parsed.org_address.name,
+                                address: parsed.org_address.address,
+                                longitude: parsed.org_address.longitude,
+                                latitude: parsed.org_address.latitude,
+                                postal_code: parsed.org_address.postal_code,
+                                is_home_address: parsed.org_address.is_home_address,
+                            });
+                            parsed.organization.location_id = locationRecord.id;
+                        }))());
                     }
                 }
-                // await this.insertAdminAudit(trx, {
-                // 	details: `Hotelier (${existingUser.name} - ${data.user_id}) profile has been updated.`,
-                // 	created_by: req.admin.user_id,
-                // 	endpoint: req.originalUrl,
-                // 	type: "UPDATE",
-                // 	payload: JSON.stringify(parsed),
-                // });
+                yield Promise.all(updateTasks);
                 return {
                     success: true,
                     code: this.StatusCode.HTTP_OK,

@@ -207,8 +207,8 @@ export default class PublicCommonValidator {
 			city: Joi.string().max(100).optional(),
 			country: Joi.string().max(100).optional(),
 			state: Joi.string().max(100).optional(),
-			longitude: Joi.number().precision(6).optional(),
-			latitude: Joi.number().precision(6).optional(),
+			longitude: Joi.number().precision(6).min(-180).max(180).optional(),
+			latitude: Joi.number().precision(6).min(-90).max(90).optional(),
 			postal_code: Joi.string().optional(),
 		}).optional(),
 	});

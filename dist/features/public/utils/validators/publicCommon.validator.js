@@ -170,8 +170,8 @@ class PublicCommonValidator {
                 city: joi_1.default.string().max(100).optional(),
                 country: joi_1.default.string().max(100).optional(),
                 state: joi_1.default.string().max(100).optional(),
-                longitude: joi_1.default.number().precision(6).optional(),
-                latitude: joi_1.default.number().precision(6).optional(),
+                longitude: joi_1.default.number().precision(6).min(-180).max(180).optional(),
+                latitude: joi_1.default.number().precision(6).min(-90).max(90).optional(),
                 postal_code: joi_1.default.string().optional(),
             }).optional(),
         });

@@ -95,16 +95,10 @@ class AdminHotelierService extends abstract_service_1.default {
                     organization_id: organizationId,
                     file: file.filename,
                 }));
-                if (photos.length) {
-                    yield organizationModel.addPhoto(photos);
-                }
                 const amenities = amenitiesInput.map((a) => ({
                     organization_id: organizationId,
                     amenity: a,
                 }));
-                if (amenities.length) {
-                    yield organizationModel.addAmenities(amenities);
-                }
                 const tokenData = {
                     user_id: userId,
                     name: user.name,
@@ -168,10 +162,12 @@ class AdminHotelierService extends abstract_service_1.default {
                     code: this.StatusCode.HTTP_NOT_FOUND,
                 };
             }
-            const [organization_amenities, organization_photos] = yield Promise.all([
-                organizationModel.getAmenities({ organization_id: data.id }),
-                organizationModel.getPhotos(data.id),
-            ]);
+            // const [organization_amenities, organization_photos] = await Promise.all(
+            // 	[
+            // 		organizationModel.getAmenities({ organization_id: data.id }),
+            // 		organizationModel.getPhotos(data.id),
+            // 	]
+            // );
             const jobPosts = yield jobPostModel.getJobPostListForHotelier({
                 organization_id: data.id,
             });
@@ -179,8 +175,10 @@ class AdminHotelierService extends abstract_service_1.default {
                 success: true,
                 message: this.ResMsg.HTTP_OK,
                 code: this.StatusCode.HTTP_OK,
-                data: Object.assign(Object.assign({}, data), { organization_amenities,
-                    organization_photos, jobPosts: jobPosts.data }),
+                data: Object.assign(Object.assign({}, data), { 
+                    // organization_amenities,
+                    // organization_photos,
+                    jobPosts: jobPosts.data }),
             };
         });
     }
@@ -201,23 +199,15 @@ class AdminHotelierService extends abstract_service_1.default {
                 const parsed = {
                     organization: lib_1.default.safeParseJSON(body.organization) || {},
                     user: lib_1.default.safeParseJSON(body.user) || {},
-                    addPhoto: lib_1.default.safeParseJSON(body.add_photo) || [],
-                    deletePhoto: lib_1.default.safeParseJSON(body.delete_photo) || [],
-                    addAmenities: lib_1.default.safeParseJSON(body.add_amenities) || [],
-                    updateAmenities: lib_1.default.safeParseJSON(body.update_amenities) || {},
-                    deleteAmenities: lib_1.default.safeParseJSON(body.delete_amenities) || [],
-                    organization_address: lib_1.default.safeParseJSON(body.organization_address) || {},
+                    org_address: lib_1.default.safeParseJSON(body.org_address) || {},
                 };
                 for (const { fieldname, filename } of files) {
                     switch (fieldname) {
                         case "photo":
                             parsed.user.photo = filename;
                             break;
-                        case "hotel_photo":
-                            parsed.addPhoto.push({
-                                file: filename,
-                                organization_id: id,
-                            });
+                        case "organization_photo":
+                            parsed.organization.photo = filename;
                             break;
                         default:
                             throw new customError_1.default(this.ResMsg.UNKNOWN_FILE_FIELD, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
@@ -262,43 +252,6 @@ class AdminHotelierService extends abstract_service_1.default {
                         id: id,
                     }));
                 }
-                if (parsed.addPhoto.length > 0) {
-                    updateTasks.push(model.addPhoto(parsed.addPhoto));
-                }
-                if (parsed.deletePhoto.length > 0) {
-                    for (const delP of parsed.deletePhoto) {
-                        updateTasks.push(model.deletePhoto(Number(delP)));
-                    }
-                }
-                if (parsed.addAmenities.length > 0) {
-                    const amenitiesPayload = [];
-                    for (const amenity of parsed.addAmenities) {
-                        amenitiesPayload.push({ amenity, organization_id: id });
-                    }
-                    updateTasks.push(model.addAmenities(amenitiesPayload));
-                }
-                if (Object.keys(parsed.updateAmenities).length) {
-                    const checkUpdateAmenity = yield model.getAmenities({
-                        organization_id: id,
-                        id: parsed.updateAmenities.id,
-                    });
-                    if (!checkUpdateAmenity.length) {
-                        throw new customError_1.default("Update amenity not found!", this.StatusCode.HTTP_NOT_FOUND);
-                    }
-                    updateTasks.push(model.updateAmenities(parsed.updateAmenities.amenity, parsed.updateAmenities.id));
-                }
-                if (parsed.deleteAmenities.length > 0) {
-                    const checkAmenities = yield model.getAmenities({
-                        organization_id: id,
-                    });
-                    if (!checkAmenities.length) {
-                        throw new customError_1.default("Amenity not found!", this.StatusCode.HTTP_NOT_FOUND);
-                    }
-                    updateTasks.push(model.deleteAmenities({
-                        organization_id: id,
-                        ids: parsed.deleteAmenities,
-                    }));
-                }
                 yield Promise.all(updateTasks);
                 if (parsed.organization.status === constants_1.USER_STATUS.ACTIVE) {
                     if (data.status === parsed.organization.status) {
@@ -310,28 +263,28 @@ class AdminHotelierService extends abstract_service_1.default {
                         emailBody: (0, registrationVerificationCompletedTemplate_1.registrationVerificationCompletedTemplate)(existingUser.name, "tovozo://login"),
                     });
                 }
-                if (Object.keys(parsed.organization_address).length > 0) {
-                    if (parsed.organization_address.city_id) {
+                if (Object.keys(parsed.org_address).length > 0) {
+                    if (parsed.org_address.city_id) {
                         const checkCity = yield commonModel.getAllCity({
-                            city_id: parsed.organization_address.city_id,
+                            city_id: parsed.org_address.city_id,
                         });
                         if (!checkCity.length) {
                             throw new customError_1.default("City not found!", this.StatusCode.HTTP_NOT_FOUND);
                         }
                     }
-                    if (parsed.organization_address.id) {
+                    if (parsed.org_address.id) {
                         const checkLocation = yield commonModel.getLocation({
-                            location_id: parsed.organization_address.id,
+                            location_id: parsed.org_address.id,
                         });
                         if (!checkLocation) {
                             throw new customError_1.default("Location not found!", this.StatusCode.HTTP_NOT_FOUND);
                         }
-                        updateTasks.push(commonModel.updateLocation(parsed.organization_address, {
-                            location_id: parsed.organization_address.id,
+                        updateTasks.push(commonModel.updateLocation(parsed.org_address, {
+                            location_id: parsed.org_address.id,
                         }));
                     }
                     else {
-                        updateTasks.push(commonModel.createLocation(parsed.organization_address));
+                        updateTasks.push(commonModel.createLocation(parsed.org_address));
                     }
                 }
                 yield this.insertAdminAudit(trx, {

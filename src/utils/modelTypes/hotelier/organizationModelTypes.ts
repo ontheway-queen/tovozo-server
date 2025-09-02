@@ -16,6 +16,7 @@ export interface IUpdateOrganizationPayload {
 	details?: string;
 	status?: string;
 	is_deleted?: boolean;
+	photo?: string;
 }
 
 export interface ICreatePhotoPayload {
@@ -53,6 +54,7 @@ export interface IGetOrganization {
 	email?: string;
 	phone_number?: string;
 	name?: string;
+	details?: string;
 	photo?: string;
 	location_name?: string;
 	address?: string;

@@ -115,18 +115,10 @@ class AdminHotelierService extends AbstractServices {
 					file: file.filename,
 				}));
 
-			if (photos.length) {
-				await organizationModel.addPhoto(photos);
-			}
-
 			const amenities = amenitiesInput.map((a: string) => ({
 				organization_id: organizationId,
 				amenity: a,
 			}));
-
-			if (amenities.length) {
-				await organizationModel.addAmenities(amenities);
-			}
 
 			const tokenData = {
 				user_id: userId,
@@ -215,12 +207,12 @@ class AdminHotelierService extends AbstractServices {
 				code: this.StatusCode.HTTP_NOT_FOUND,
 			};
 		}
-		const [organization_amenities, organization_photos] = await Promise.all(
-			[
-				organizationModel.getAmenities({ organization_id: data.id }),
-				organizationModel.getPhotos(data.id),
-			]
-		);
+		// const [organization_amenities, organization_photos] = await Promise.all(
+		// 	[
+		// 		organizationModel.getAmenities({ organization_id: data.id }),
+		// 		organizationModel.getPhotos(data.id),
+		// 	]
+		// );
 		const jobPosts = await jobPostModel.getJobPostListForHotelier({
 			organization_id: data.id,
 		});
@@ -231,8 +223,8 @@ class AdminHotelierService extends AbstractServices {
 			code: this.StatusCode.HTTP_OK,
 			data: {
 				...data,
-				organization_amenities,
-				organization_photos,
+				// organization_amenities,
+				// organization_photos,
 				jobPosts: jobPosts.data,
 			},
 		};
@@ -257,24 +249,16 @@ class AdminHotelierService extends AbstractServices {
 			const parsed = {
 				organization: Lib.safeParseJSON(body.organization) || {},
 				user: Lib.safeParseJSON(body.user) || {},
-				addPhoto: Lib.safeParseJSON(body.add_photo) || [],
-				deletePhoto: Lib.safeParseJSON(body.delete_photo) || [],
-				addAmenities: Lib.safeParseJSON(body.add_amenities) || [],
-				updateAmenities: Lib.safeParseJSON(body.update_amenities) || {},
-				deleteAmenities: Lib.safeParseJSON(body.delete_amenities) || [],
-				organization_address:
-					Lib.safeParseJSON(body.organization_address) || {},
+
+				org_address: Lib.safeParseJSON(body.org_address) || {},
 			} as IHotelierUpdateParsedBody;
 			for (const { fieldname, filename } of files) {
 				switch (fieldname) {
 					case "photo":
 						parsed.user.photo = filename;
 						break;
-					case "hotel_photo":
-						parsed.addPhoto.push({
-							file: filename,
-							organization_id: id,
-						});
+					case "organization_photo":
+						parsed.organization.photo = filename;
 						break;
 					default:
 						throw new CustomError(
@@ -355,64 +339,6 @@ class AdminHotelierService extends AbstractServices {
 				);
 			}
 
-			if (parsed.addPhoto.length > 0) {
-				updateTasks.push(model.addPhoto(parsed.addPhoto));
-			}
-
-			if (parsed.deletePhoto.length > 0) {
-				for (const delP of parsed.deletePhoto) {
-					updateTasks.push(model.deletePhoto(Number(delP)));
-				}
-			}
-
-			if (parsed.addAmenities.length > 0) {
-				const amenitiesPayload: {
-					amenity: string;
-					organization_id: number;
-				}[] = [];
-				for (const amenity of parsed.addAmenities) {
-					amenitiesPayload.push({ amenity, organization_id: id });
-				}
-				updateTasks.push(model.addAmenities(amenitiesPayload));
-			}
-
-			if (Object.keys(parsed.updateAmenities).length) {
-				const checkUpdateAmenity = await model.getAmenities({
-					organization_id: id,
-					id: parsed.updateAmenities.id,
-				});
-				if (!checkUpdateAmenity.length) {
-					throw new CustomError(
-						"Update amenity not found!",
-						this.StatusCode.HTTP_NOT_FOUND
-					);
-				}
-				updateTasks.push(
-					model.updateAmenities(
-						parsed.updateAmenities.amenity,
-						parsed.updateAmenities.id
-					)
-				);
-			}
-
-			if (parsed.deleteAmenities.length > 0) {
-				const checkAmenities = await model.getAmenities({
-					organization_id: id,
-				});
-				if (!checkAmenities.length) {
-					throw new CustomError(
-						"Amenity not found!",
-						this.StatusCode.HTTP_NOT_FOUND
-					);
-				}
-				updateTasks.push(
-					model.deleteAmenities({
-						organization_id: id,
-						ids: parsed.deleteAmenities,
-					})
-				);
-			}
-
 			await Promise.all(updateTasks);
 
 			if (parsed.organization.status === USER_STATUS.ACTIVE) {
@@ -432,10 +358,10 @@ class AdminHotelierService extends AbstractServices {
 					),
 				});
 			}
-			if (Object.keys(parsed.organization_address).length > 0) {
-				if (parsed.organization_address.city_id) {
+			if (Object.keys(parsed.org_address).length > 0) {
+				if (parsed.org_address.city_id) {
 					const checkCity = await commonModel.getAllCity({
-						city_id: parsed.organization_address.city_id,
+						city_id: parsed.org_address.city_id,
 					});
 					if (!checkCity.length) {
 						throw new CustomError(
@@ -444,9 +370,9 @@ class AdminHotelierService extends AbstractServices {
 						);
 					}
 				}
-				if (parsed.organization_address.id) {
+				if (parsed.org_address.id) {
 					const checkLocation = await commonModel.getLocation({
-						location_id: parsed.organization_address.id,
+						location_id: parsed.org_address.id,
 					});
 					if (!checkLocation) {
 						throw new CustomError(
@@ -455,17 +381,14 @@ class AdminHotelierService extends AbstractServices {
 						);
 					}
 					updateTasks.push(
-						commonModel.updateLocation(
-							parsed.organization_address,
-							{
-								location_id: parsed.organization_address.id,
-							}
-						)
+						commonModel.updateLocation(parsed.org_address, {
+							location_id: parsed.org_address.id,
+						})
 					);
 				} else {
 					updateTasks.push(
 						commonModel.createLocation(
-							parsed.organization_address as ILocationUpdatePayload
+							parsed.org_address as ILocationUpdatePayload
 						)
 					);
 				}

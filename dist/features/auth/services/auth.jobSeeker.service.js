@@ -38,19 +38,26 @@ class JobSeekerAuthService extends abstract_service_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             return this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const files = req.files || [];
+                console.log({ files });
                 const parseInput = (key) => lib_1.default.safeParseJSON(req.body[key]) || {};
                 const userInput = parseInput("user");
                 const jobSeekerInput = parseInput("job_seeker");
                 const jobSeekerLocationInput = parseInput("own_address");
-                const validFileFields = ["id_copy", "photo"];
-                files.forEach(({ fieldname, filename }) => {
-                    if (!validFileFields.includes(fieldname)) {
-                        throw new customError_1.default(this.ResMsg.UNKNOWN_FILE_FIELD, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
-                    }
+                if (!files.length) {
+                    return {
+                        success: false,
+                        code: this.StatusCode.HTTP_NOT_FOUND,
+                        message: "No photo was uploaded. Please add a photo and try again.",
+                    };
+                }
+                for (const { fieldname, filename } of files) {
                     if (fieldname === "photo") {
                         userInput.photo = filename;
                     }
-                });
+                    else {
+                        throw new customError_1.default(this.ResMsg.UNKNOWN_FILE_FIELD, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
+                    }
+                }
                 const { email, phone_number, password } = userInput, restUserData = __rest(userInput, ["email", "phone_number", "password"]);
                 const userModel = this.Model.UserModel(trx);
                 const jobSeekerModel = this.Model.jobSeekerModel(trx);
@@ -87,8 +94,8 @@ class JobSeekerAuthService extends abstract_service_1.default {
                 }
                 const jobSeekerId = registration[0].id;
                 let locationId = null;
-                let city_id = 0;
                 if (jobSeekerLocationInput === null || jobSeekerLocationInput === void 0 ? void 0 : jobSeekerLocationInput.address) {
+                    let city_id;
                     if (jobSeekerLocationInput.city) {
                         if (!jobSeekerLocationInput.state &&
                             !jobSeekerLocationInput.country) {

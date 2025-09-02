@@ -7,11 +7,7 @@ import {
 	USER_STATUS,
 	USER_TYPE,
 } from "../../../utils/miscellaneous/constants";
-import {
-	IChangePasswordPayload,
-	ILocationUpdatePayload,
-} from "../../../utils/modelTypes/common/commonModelTypes";
-import { registrationVerificationCompletedTemplate } from "../../../utils/templates/registrationVerificationCompletedTemplate";
+import { IChangePasswordPayload } from "../../../utils/modelTypes/common/commonModelTypes";
 import { IHotelierUpdateParsedBody } from "../../admin/utils/types/adminHotelier.types";
 import { IHotelierAuthView } from "../../auth/utils/types/hotelierAuth.types";
 import { IJobSeekerAuthView } from "../../auth/utils/types/jobSeekerAuth.types";
@@ -129,26 +125,17 @@ export default class HotelierProfileService extends AbstractServices {
 			const files = req.files as Express.MulterS3.File[];
 			const body = req.body;
 			const parsed = {
-				organization: Lib.safeParseJSON(body.organization) || {},
 				user: Lib.safeParseJSON(body.user) || {},
-				addPhoto: Lib.safeParseJSON(body.add_photo) || [],
-				deletePhoto: Lib.safeParseJSON(body.delete_photo) || [],
-				addAmenities: Lib.safeParseJSON(body.add_amenities) || [],
-				updateAmenities: Lib.safeParseJSON(body.update_amenities) || {},
-				deleteAmenities: Lib.safeParseJSON(body.delete_amenities) || [],
-				organization_address:
-					Lib.safeParseJSON(body.organization_address) || {},
+				organization: Lib.safeParseJSON(body.organization) || {},
+				org_address: Lib.safeParseJSON(body.org_address) || {},
 			} as IHotelierUpdateParsedBody;
 			for (const { fieldname, filename } of files) {
 				switch (fieldname) {
 					case "photo":
 						parsed.user.photo = filename;
 						break;
-					case "hotel_photo":
-						parsed.addPhoto.push({
-							file: filename,
-							organization_id: id,
-						});
+					case "organization_photo":
+						parsed.organization.photo = filename;
 						break;
 					default:
 						throw new CustomError(
@@ -185,27 +172,13 @@ export default class HotelierProfileService extends AbstractServices {
 			}
 
 			if (Object.keys(parsed.organization).length > 0) {
-				if (parsed.organization.status) {
-					const checkHotelier = await model.getSingleOrganization(id);
-					if (!checkHotelier) {
-						throw new CustomError(
-							"Hotelier account not found!",
-							this.StatusCode.HTTP_NOT_FOUND
-						);
-					}
-
-					if (parsed.organization.status === checkHotelier.status) {
-						throw new CustomError(
-							`Already updated status to ${parsed.organization.status}`,
-							this.StatusCode.HTTP_CONFLICT
-						);
-					}
-				}
 				updateTasks.push(
 					model.updateOrganization(
 						{
-							name: parsed.organization.org_name || data.org_name,
-							status: parsed.organization.status || data.status,
+							name: parsed.organization.name || data.name,
+							details:
+								parsed.organization.details || data.details,
+							photo: parsed.organization.photo || data.photo,
 						},
 						{
 							id: id,
@@ -214,66 +187,6 @@ export default class HotelierProfileService extends AbstractServices {
 				);
 			}
 
-			if (parsed.addPhoto.length > 0) {
-				updateTasks.push(model.addPhoto(parsed.addPhoto));
-			}
-
-			if (parsed.deletePhoto.length > 0) {
-				for (const delP of parsed.deletePhoto) {
-					updateTasks.push(model.deletePhoto(Number(delP)));
-				}
-			}
-
-			if (parsed.addAmenities.length > 0) {
-				const amenitiesPayload: {
-					amenity: string;
-					organization_id: number;
-				}[] = [];
-				for (const amenity of parsed.addAmenities) {
-					amenitiesPayload.push({ amenity, organization_id: id });
-				}
-				updateTasks.push(model.addAmenities(amenitiesPayload));
-			}
-
-			if (Object.keys(parsed.updateAmenities).length) {
-				const checkUpdateAmenity = await model.getAmenities({
-					organization_id: id,
-					id: parsed.updateAmenities.id,
-				});
-				if (!checkUpdateAmenity.length) {
-					throw new CustomError(
-						"Update amenity not found!",
-						this.StatusCode.HTTP_NOT_FOUND
-					);
-				}
-				updateTasks.push(
-					model.updateAmenities(
-						parsed.updateAmenities.amenity,
-						parsed.updateAmenities.id
-					)
-				);
-			}
-
-			if (parsed.deleteAmenities.length > 0) {
-				const checkAmenities = await model.getAmenities({
-					organization_id: id,
-				});
-				if (!checkAmenities.length) {
-					throw new CustomError(
-						"Amenity not found!",
-						this.StatusCode.HTTP_NOT_FOUND
-					);
-				}
-				updateTasks.push(
-					model.deleteAmenities({
-						organization_id: id,
-						ids: parsed.deleteAmenities,
-					})
-				);
-			}
-
-			await Promise.all(updateTasks);
-
 			if (parsed.organization.status === USER_STATUS.ACTIVE) {
 				if (data.status === parsed.organization.status) {
 					throw new CustomError(
@@ -281,31 +194,57 @@ export default class HotelierProfileService extends AbstractServices {
 						this.StatusCode.HTTP_CONFLICT
 					);
 				}
-				await Lib.sendEmailDefault({
-					email: existingUser.email,
-					emailSub:
-						"Hotelier Account Activation Successful – You Can Now Log In",
-					emailBody: registrationVerificationCompletedTemplate(
-						existingUser.name,
-						"tovozo://login"
-					),
-				});
 			}
-			if (Object.keys(parsed.organization_address).length > 0) {
-				if (parsed.organization_address.city_id) {
-					const checkCity = await commonModel.getAllCity({
-						city_id: parsed.organization_address.city_id,
+
+			let stateId = 0;
+			let city_id = 0;
+			if (Object.keys(parsed.org_address).length > 0) {
+				if (parsed.org_address.city) {
+					// check country
+					const checkCountry = await commonModel.getAllCountry({
+						name: parsed.org_address.country,
 					});
-					if (!checkCity.length) {
+
+					if (!checkCountry.length) {
 						throw new CustomError(
-							"City not found!",
-							this.StatusCode.HTTP_NOT_FOUND
+							"Service not available in this country",
+							this.StatusCode.HTTP_BAD_REQUEST
 						);
 					}
+
+					const checkState = await commonModel.getAllStates({
+						country_id: checkCountry[0].id,
+						name: parsed.org_address.state,
+					});
+					if (!checkState.length) {
+						const state = await commonModel.createState({
+							country_id: checkCountry[0].id,
+							name: parsed.org_address.state as string,
+						});
+						stateId = state[0].id;
+					} else {
+						stateId = checkState[0].id;
+					}
+
+					const checkCity = await commonModel.getAllCity({
+						country_id: checkCountry[0].id,
+						state_id: stateId,
+						name: parsed.org_address.city,
+					});
+					if (!checkCity.length) {
+						const city = await commonModel.createCity({
+							country_id: checkCountry[0].id,
+							state_id: stateId,
+							name: parsed.org_address.city,
+						});
+						city_id = city[0].id;
+					} else {
+						city_id = checkCity[0].id;
+					}
 				}
-				if (parsed.organization_address.id) {
+				if (data.location_id) {
 					const checkLocation = await commonModel.getLocation({
-						location_id: parsed.organization_address.id,
+						location_id: data.location_id,
 					});
 					if (!checkLocation) {
 						throw new CustomError(
@@ -315,28 +254,42 @@ export default class HotelierProfileService extends AbstractServices {
 					}
 					updateTasks.push(
 						commonModel.updateLocation(
-							parsed.organization_address,
 							{
-								location_id: parsed.organization_address.id,
+								city_id: checkLocation.city_id,
+								name: parsed.org_address.name,
+								address: parsed.org_address.address,
+								longitude: parsed.org_address.longitude,
+								latitude: parsed.org_address.latitude,
+								postal_code: parsed.org_address.postal_code,
+								is_home_address:
+									parsed.org_address.is_home_address,
+							},
+							{
+								location_id: data.location_id,
 							}
 						)
 					);
 				} else {
 					updateTasks.push(
-						commonModel.createLocation(
-							parsed.organization_address as ILocationUpdatePayload
-						)
+						(async () => {
+							const [locationRecord] =
+								await commonModel.createLocation({
+									city_id,
+									name: parsed.org_address.name,
+									address: parsed.org_address.address,
+									longitude: parsed.org_address.longitude,
+									latitude: parsed.org_address.latitude,
+									postal_code: parsed.org_address.postal_code,
+									is_home_address:
+										parsed.org_address.is_home_address,
+								});
+							parsed.organization.location_id = locationRecord.id;
+						})()
 					);
 				}
 			}
 
-			// await this.insertAdminAudit(trx, {
-			// 	details: `Hotelier (${existingUser.name} - ${data.user_id}) profile has been updated.`,
-			// 	created_by: req.admin.user_id,
-			// 	endpoint: req.originalUrl,
-			// 	type: "UPDATE",
-			// 	payload: JSON.stringify(parsed),
-			// });
+			await Promise.all(updateTasks);
 			return {
 				success: true,
 				code: this.StatusCode.HTTP_OK,

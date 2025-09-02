@@ -1,9 +1,7 @@
 import { TDB } from "../../features/public/utils/types/publicCommon.types";
 import Schema from "../../utils/miscellaneous/schema";
 import {
-	ICreateAmenityPayload,
 	ICreateOrganizationPayload,
-	ICreatePhotoPayload,
 	IGetOrganization,
 	IGetOrganizationList,
 	IUpdateOrganizationPayload,
@@ -185,93 +183,5 @@ export default class OrganizationModel extends Schema {
 				if (where.user_id) qb.andWhere("user_id", where.user_id);
 			})
 			.update({ is_deleted: true });
-	}
-
-	// Photos
-	public async addPhoto(
-		payload: ICreatePhotoPayload | ICreatePhotoPayload[]
-	) {
-		return await this.db("organization_photos")
-			.withSchema(this.HOTELIER)
-			.insert(payload);
-	}
-
-	public async getPhotos(organization_id: number) {
-		return await this.db("organization_photos")
-			.withSchema(this.HOTELIER)
-			.select("*")
-			.where({ organization_id, is_deleted: false });
-	}
-
-	public async deletePhoto(id: number) {
-		return await this.db("organization_photos")
-			.withSchema(this.HOTELIER)
-			.where({ id })
-			.update({ is_deleted: true });
-	}
-
-	// Amenities
-	public async addAmenities(
-		payload: ICreateAmenityPayload | ICreateAmenityPayload[]
-	) {
-		return await this.db("organization_amenities")
-			.withSchema(this.HOTELIER)
-			.insert(payload);
-	}
-
-	public async getAmenities({
-		organization_id,
-		id,
-		amenity,
-	}: {
-		organization_id?: number;
-		amenity?: string;
-		id?: number;
-	}) {
-		return await this.db("organization_amenities")
-			.withSchema(this.HOTELIER)
-			.select("*")
-			.where((qb) => {
-				if (organization_id) {
-					qb.where({ organization_id });
-				}
-				if (amenity) {
-					qb.andWhere({ amenity });
-				}
-				if (id) {
-					qb.andWhere({ id });
-				}
-			});
-	}
-
-	public async deleteAmenities({
-		organization_id,
-		id,
-		ids,
-	}: {
-		organization_id?: number;
-		id?: number;
-		ids?: number[];
-	}) {
-		return await this.db("organization_amenities")
-			.withSchema(this.HOTELIER)
-			.where((qb) => {
-				if (ids && ids.length) {
-					qb.whereIn("id", ids);
-				}
-				if (organization_id) {
-					qb.andWhere({ organization_id });
-				}
-				if (id) {
-					qb.andWhere({ id });
-				}
-			})
-			.del();
-	}
-	public async updateAmenities(amenity: string, organization_id: number) {
-		return await this.db("organization_amenities")
-			.withSchema(this.HOTELIER)
-			.update({ amenity })
-			.where({ organization_id });
 	}
 }

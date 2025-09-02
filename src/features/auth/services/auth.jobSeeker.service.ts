@@ -30,6 +30,7 @@ class JobSeekerAuthService extends AbstractServices {
 	public async registrationService(req: Request) {
 		return this.db.transaction(async (trx) => {
 			const files = (req.files as Express.Multer.File[]) || [];
+			console.log({ files });
 
 			const parseInput = (key: string) =>
 				Lib.safeParseJSON(req.body[key]) || {};
@@ -43,20 +44,25 @@ class JobSeekerAuthService extends AbstractServices {
 				"own_address"
 			) as IJobSeekerLocationInfo;
 
-			const validFileFields = ["id_copy", "photo"];
-			files.forEach(({ fieldname, filename }) => {
-				if (!validFileFields.includes(fieldname)) {
+			if (!files.length) {
+				return {
+					success: false,
+					code: this.StatusCode.HTTP_NOT_FOUND,
+					message:
+						"No photo was uploaded. Please add a photo and try again.",
+				};
+			}
+			for (const { fieldname, filename } of files) {
+				if (fieldname === "photo") {
+					userInput.photo = filename;
+				} else {
 					throw new CustomError(
 						this.ResMsg.UNKNOWN_FILE_FIELD,
 						this.StatusCode.HTTP_BAD_REQUEST,
 						"ERROR"
 					);
 				}
-
-				if (fieldname === "photo") {
-					userInput.photo = filename;
-				}
-			});
+			}
 
 			const { email, phone_number, password, ...restUserData } =
 				userInput;
@@ -111,8 +117,8 @@ class JobSeekerAuthService extends AbstractServices {
 			const jobSeekerId = registration[0].id;
 
 			let locationId: number | null = null;
-			let city_id = 0;
 			if (jobSeekerLocationInput?.address) {
+				let city_id;
 				if (jobSeekerLocationInput.city) {
 					if (
 						!jobSeekerLocationInput.state &&
@@ -174,7 +180,6 @@ class JobSeekerAuthService extends AbstractServices {
 				});
 				locationId = locationRecord.id;
 			}
-
 			await jobSeekerModel.createJobSeeker({
 				...jobSeekerInput,
 				user_id: jobSeekerId,
@@ -191,7 +196,6 @@ class JobSeekerAuthService extends AbstractServices {
 				status: true,
 				create_date: new Date(),
 			};
-
 			await this.insertNotification(trx, TypeUser.ADMIN, {
 				user_id: jobSeekerId,
 				sender_type: USER_TYPE.ADMIN,
@@ -203,7 +207,6 @@ class JobSeekerAuthService extends AbstractServices {
 				related_id: jobSeekerId,
 				type: NotificationTypeEnum.JOB_SEEKER_VERIFICATION,
 			});
-
 			await Lib.sendEmailDefault({
 				email,
 				emailSub: `Your registration with ${PROJECT_NAME} is under review`,
