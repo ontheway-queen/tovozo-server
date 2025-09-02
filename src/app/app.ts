@@ -4,19 +4,12 @@ import { Server } from "http";
 import morgan from "morgan";
 import ErrorHandler from "../middleware/errorHandler/errorHandler";
 import CustomError from "../utils/lib/customError";
-import { origin, USER_TYPE } from "../utils/miscellaneous/constants";
+import { origin } from "../utils/miscellaneous/constants";
 import { TypeUser } from "../utils/modelTypes/user/userModelTypes";
+import Workers from "../utils/workers";
 import { db } from "./database";
 import RootRouter from "./router";
-import {
-	SocketServer,
-	addOnlineUser,
-	getAllOnlineSocketIds,
-	io,
-	removeOnlineUser,
-} from "./socket";
-import Workers from "../utils/workers";
-import { stripe, StripeWebhook } from "../utils/miscellaneous/stripe";
+import { addOnlineUser, io, removeOnlineUser, SocketServer } from "./socket";
 
 class App {
 	public app: Application = express();
@@ -58,8 +51,6 @@ class App {
 
 	//init middleware
 	private initMiddleware() {
-		this.app.use("/webhook", new StripeWebhook().Router);
-
 		this.app.use(express.json({ limit: "2mb" }));
 		this.app.use(express.urlencoded({ limit: "2mb", extended: true }));
 		this.app.use(morgan("dev"));

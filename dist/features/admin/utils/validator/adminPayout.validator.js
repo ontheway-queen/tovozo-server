@@ -19,7 +19,7 @@ class AdminPayoutValidator {
             }),
         });
         this.queryValidator = joi_1.default.object({
-            search: joi_1.default.string().optional(),
+            name: joi_1.default.string().optional(),
             limit: joi_1.default.number().optional(),
             skip: joi_1.default.number().optional(),
         });

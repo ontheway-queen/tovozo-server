@@ -25,10 +25,10 @@ class AdminPayoutService extends abstract_service_1.default {
     }
     getAllPayouts(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { search, limit, skip } = req.query;
+            const { name, limit, skip } = req.query;
             const payoutModel = this.Model.payoutModel();
             const { data, total } = yield payoutModel.getAllPayoutForAdmin({
-                search: search,
+                search: name,
                 limit: Number(limit),
                 skip: Number(skip),
             });

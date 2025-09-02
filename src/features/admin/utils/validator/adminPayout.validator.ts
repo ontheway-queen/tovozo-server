@@ -15,7 +15,7 @@ export default class AdminPayoutValidator {
 	});
 
 	public queryValidator = Joi.object({
-		search: Joi.string().optional(),
+		name: Joi.string().optional(),
 		limit: Joi.number().optional(),
 		skip: Joi.number().optional(),
 	});

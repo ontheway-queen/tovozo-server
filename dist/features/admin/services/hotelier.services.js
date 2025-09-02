@@ -195,7 +195,6 @@ class AdminHotelierService extends abstract_service_1.default {
                 }
                 const files = req.files;
                 const body = req.body;
-                console.log({ body });
                 const parsed = {
                     organization: lib_1.default.safeParseJSON(body.organization) || {},
                     user: lib_1.default.safeParseJSON(body.user) || {},
@@ -236,17 +235,10 @@ class AdminHotelierService extends abstract_service_1.default {
                     updateTasks.push(userModel.updateProfile(parsed.user, { id: data.user_id }));
                 }
                 if (Object.keys(parsed.organization).length > 0) {
-                    if (parsed.organization.status) {
-                        const checkHotelier = yield model.getSingleOrganization(id);
-                        if (!checkHotelier) {
-                            throw new customError_1.default("Hotelier account not found!", this.StatusCode.HTTP_NOT_FOUND);
-                        }
-                        if (parsed.organization.status === checkHotelier.status) {
-                            throw new customError_1.default(`Already updated status to ${parsed.organization.status}`, this.StatusCode.HTTP_CONFLICT);
-                        }
-                    }
                     updateTasks.push(model.updateOrganization({
-                        name: parsed.organization.org_name || data.org_name,
+                        name: parsed.organization.name || data.name,
+                        details: parsed.organization.details || data.details,
+                        photo: parsed.organization.photo || data.photo,
                         status: parsed.organization.status || data.status,
                     }, {
                         id: id,
@@ -263,28 +255,80 @@ class AdminHotelierService extends abstract_service_1.default {
                         emailBody: (0, registrationVerificationCompletedTemplate_1.registrationVerificationCompletedTemplate)(existingUser.name, "tovozo://login"),
                     });
                 }
+                let stateId = 0;
+                let city_id = 0;
                 if (Object.keys(parsed.org_address).length > 0) {
-                    if (parsed.org_address.city_id) {
+                    if (parsed.org_address.city) {
+                        // check country
+                        const checkCountry = yield commonModel.getAllCountry({
+                            name: parsed.org_address.country,
+                        });
+                        if (!checkCountry.length) {
+                            throw new customError_1.default("Service not available in this country", this.StatusCode.HTTP_BAD_REQUEST);
+                        }
+                        const checkState = yield commonModel.getAllStates({
+                            country_id: checkCountry[0].id,
+                            name: parsed.org_address.state,
+                        });
+                        if (!checkState.length) {
+                            const state = yield commonModel.createState({
+                                country_id: checkCountry[0].id,
+                                name: parsed.org_address.state,
+                            });
+                            stateId = state[0].id;
+                        }
+                        else {
+                            stateId = checkState[0].id;
+                        }
                         const checkCity = yield commonModel.getAllCity({
-                            city_id: parsed.org_address.city_id,
+                            country_id: checkCountry[0].id,
+                            state_id: stateId,
+                            name: parsed.org_address.city,
                         });
                         if (!checkCity.length) {
-                            throw new customError_1.default("City not found!", this.StatusCode.HTTP_NOT_FOUND);
+                            const city = yield commonModel.createCity({
+                                country_id: checkCountry[0].id,
+                                state_id: stateId,
+                                name: parsed.org_address.city,
+                            });
+                            city_id = city[0].id;
+                        }
+                        else {
+                            city_id = checkCity[0].id;
                         }
                     }
-                    if (parsed.org_address.id) {
+                    if (data.location_id) {
                         const checkLocation = yield commonModel.getLocation({
-                            location_id: parsed.org_address.id,
+                            location_id: data.location_id,
                         });
                         if (!checkLocation) {
                             throw new customError_1.default("Location not found!", this.StatusCode.HTTP_NOT_FOUND);
                         }
-                        updateTasks.push(commonModel.updateLocation(parsed.org_address, {
-                            location_id: parsed.org_address.id,
+                        updateTasks.push(commonModel.updateLocation({
+                            city_id: checkLocation.city_id,
+                            name: parsed.org_address.name,
+                            address: parsed.org_address.address,
+                            longitude: parsed.org_address.longitude,
+                            latitude: parsed.org_address.latitude,
+                            postal_code: parsed.org_address.postal_code,
+                            is_home_address: parsed.org_address.is_home_address,
+                        }, {
+                            location_id: data.location_id,
                         }));
                     }
                     else {
-                        updateTasks.push(commonModel.createLocation(parsed.org_address));
+                        updateTasks.push((() => __awaiter(this, void 0, void 0, function* () {
+                            const [locationRecord] = yield commonModel.createLocation({
+                                city_id,
+                                name: parsed.org_address.name,
+                                address: parsed.org_address.address,
+                                longitude: parsed.org_address.longitude,
+                                latitude: parsed.org_address.latitude,
+                                postal_code: parsed.org_address.postal_code,
+                                is_home_address: parsed.org_address.is_home_address,
+                            });
+                            parsed.organization.location_id = locationRecord.id;
+                        }))());
                     }
                 }
                 yield this.insertAdminAudit(trx, {

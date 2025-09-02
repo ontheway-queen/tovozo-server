@@ -20,10 +20,10 @@ export default class AdminPayoutService extends AbstractServices {
 	}
 
 	public async getAllPayouts(req: Request) {
-		const { search, limit, skip } = req.query;
+		const { name, limit, skip } = req.query;
 		const payoutModel = this.Model.payoutModel();
 		const { data, total } = await payoutModel.getAllPayoutForAdmin({
-			search: search as string,
+			search: name as string,
 			limit: Number(limit),
 			skip: Number(skip),
 		});

@@ -220,6 +220,7 @@ class JobPostModel extends Schema {
 			limit,
 			skip,
 			need_total = true,
+			job_post_id,
 		} = params;
 
 		const data = await this.db("job_post as jp")
@@ -279,6 +280,7 @@ class JobPostModel extends Schema {
 				if (city_id) qb.andWhere("js_vwl.city_id", city_id);
 				if (title) qb.andWhereILike("j.title", `%${title}%`);
 				if (status) qb.andWhere("jpd.status", status);
+				if (job_post_id) qb.andWhere("jpd.job_post_id", job_post_id);
 			})
 			.whereNot("jpd.status", "Expired")
 			.orderByRaw(
@@ -313,6 +315,8 @@ class JobPostModel extends Schema {
 					if (status) qb.andWhere("jpd.status", status);
 					if (title) qb.andWhereILike("j.title", `%${title}%`);
 					if (city_id) qb.andWhere("js_vwl.city_id", city_id);
+					if (job_post_id)
+						qb.andWhere("jpd.job_post_id", job_post_id);
 				})
 				.first();
 
@@ -498,7 +502,7 @@ class JobPostModel extends Schema {
 				"jpd.id",
 				"jpd.job_post_id",
 				"org.name as organization_name",
-				"org_p.file as organization_photo",
+				"org.photo as organization_photo",
 				"j.title",
 				"jpd.status as job_post_details_status",
 				"jp.created_time",
@@ -508,10 +512,6 @@ class JobPostModel extends Schema {
 			.joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
 				`${this.HOTELIER}.${this.TABLES.organization}`,
 			])
-			.joinRaw(
-				`LEFT JOIN ?? as org_p ON org_p.organization_id = org.id`,
-				[`${this.HOTELIER}.${this.TABLES.organization_photos}`]
-			)
 			.leftJoin("location as loc", "loc.id", "org.location_id")
 			.leftJoin("job_post_details as jpd", "jp.id", "jpd.job_post_id")
 			.leftJoin("jobs as j", "jpd.job_id", "j.id")

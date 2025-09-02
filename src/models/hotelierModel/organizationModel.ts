@@ -82,13 +82,13 @@ export default class OrganizationModel extends Schema {
 			.select(
 				"org.id",
 				"org.name as org_name",
+				"org.photo as org_photo",
 				"org.user_id",
 				"org.created_at",
 				"org.status",
 				"org.is_2fa_on",
 				"u.email as user_email",
-				"u.phone_number as user_phone_number",
-				"u.photo as user_photo"
+				"u.phone_number as user_phone_number"
 			)
 			.where((qb) => {
 				qb.where("org.is_deleted", false);
@@ -135,23 +135,23 @@ export default class OrganizationModel extends Schema {
 			.select(
 				"org.id",
 				"org.name as org_name",
+				"org.photo as org_photo",
 				"org.user_id",
 				"org.details",
 				"org.created_at",
 				"org.status",
 				"org.is_2fa_on",
 				"org.location_id",
-				"md.designation",
 				"la.location_name",
 				"la.location_address as address",
+				"la.city_id",
 				"la.city_name",
+				"la.state_id",
 				"la.state_name",
+				"la.country_id",
 				"la.country_name",
 				"la.longitude",
 				"la.latitude",
-				"la.city_id",
-				"la.state_id",
-				"la.country_id",
 				"la.postal_code",
 				"u.email",
 				"u.phone_number",
@@ -164,12 +164,6 @@ export default class OrganizationModel extends Schema {
 			.joinRaw(`left join ?? as la on la.location_id = org.location_id`, [
 				`${this.DBO_SCHEMA}.vw_location`,
 			])
-			.leftJoin(
-				"maintenance_designation as md",
-				"md.user_id",
-				"org.user_id"
-			)
-
 			.where("org.id", id)
 			.andWhere("org.is_deleted", false)
 			.first();

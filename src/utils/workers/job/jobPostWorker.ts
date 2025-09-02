@@ -1,7 +1,9 @@
+import AbstractServices from "../../../abstract/abstract.service";
 import { db } from "../../../app/database";
 import { getAllOnlineSocketIds, io } from "../../../app/socket";
 import CommonModel from "../../../models/commonModel/commonModel";
 import JobPostModel from "../../../models/hotelierModel/jobPostModel";
+import OrganizationModel from "../../../models/hotelierModel/organizationModel";
 import PaymentModel from "../../../models/paymentModel/paymentModel";
 import Models from "../../../models/rootModel";
 import Lib from "../../lib/lib";
@@ -9,11 +11,15 @@ import {
 	JOB_POST_DETAILS_STATUS,
 	JOB_POST_STATUS,
 	PAYMENT_STATUS,
+	USER_TYPE,
 } from "../../miscellaneous/constants";
-import { TypeEmitNotificationEnum } from "../../modelTypes/common/commonModelTypes";
+import {
+	NotificationTypeEnum,
+	TypeEmitNotificationEnum,
+} from "../../modelTypes/common/commonModelTypes";
 import { TypeUser } from "../../modelTypes/user/userModelTypes";
 
-export default class JobPostWorker {
+export default class JobPostWorker extends AbstractServices {
 	public async expireJobPostDetails(job: any) {
 		const { id } = job.data;
 		return await db.transaction(async (trx) => {
@@ -112,9 +118,9 @@ export default class JobPostWorker {
 			type,
 			related_id,
 		} = job.data;
-		console.log("hotelier_id from worker", hotelier_id);
 		return await db.transaction(async (trx) => {
 			const paymentModel = new PaymentModel(trx);
+			const organizationModel = new OrganizationModel(trx);
 			const payment = await paymentModel.getSinglePayment(payment_id);
 			if (!payment || payment.status === PAYMENT_STATUS.PAID) {
 				return;
@@ -124,70 +130,105 @@ export default class JobPostWorker {
 			const { data, total } =
 				await jobPostModel.getJobPostListForHotelier({
 					organization_id,
-					status: "Pending",
 				});
 
-			console.log({ data });
+			const excludedStatuses = [
+				"Completed",
+				"Work Finished",
+				"Cancelled",
+				"Expired",
+			];
 
 			for (const jobPost of data) {
+				if (excludedStatuses.includes(jobPost.job_post_details_status))
+					continue;
+
 				await jobPostModel.updateJobPostDetailsStatus({
 					id: jobPost.id,
 					status: "Cancelled",
 				});
 
-				await jobPostModel.updateJobPost(jobPost.job_post_id, {
-					status: "Cancelled",
-				});
-			}
+				const { data: jobPostDetails } =
+					await jobPostModel.getJobPostListForHotelier({
+						organization_id,
+						job_post_id: jobPost.job_post_id,
+					});
 
-			const commonModel = new CommonModel(trx);
-			await commonModel.createNotification({
-				user_id: hotelier_id,
-				sender_type: TypeUser.ADMIN,
-				title: `Some of your jobs cancelled due to unpaid payment`,
-				content: `You did not complete payment within 24 hours. ${total} job${
-					(total as number) > 1 ? "s" : ""
-				} have been cancelled automatically. Please contact support if needed.`,
-				type,
-				related_id,
-			});
-
-			const isHotelierOnline = await getAllOnlineSocketIds({
-				user_id: hotelier_id,
-				type: TypeUser.HOTELIER,
-			});
-
-			if (isHotelierOnline && isHotelierOnline.length > 0) {
-				io.to(String(hotelier_id)).emit(
-					TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION,
-					{
-						user_id: hotelier_id,
-						photo,
-						title: `Some of your jobs cancelled due to unpaid payment`,
-						content: `You did not complete payment within 24 hours. ${total} job${
-							(total as number) > 1 ? "s" : ""
-						} have been cancelled automatically. Please contact support if needed.`,
-						related_id,
-						type,
-						read_status: false,
-						created_at: new Date().toISOString(),
-					}
+				const hasPending = jobPostDetails.some(
+					(d) => !excludedStatuses.includes(d.job_post_details_status)
 				);
-			} else {
-				if (hotelier_device_id) {
-					await Lib.sendNotificationToMobile({
-						to: hotelier_device_id,
-						notificationTitle: `Some of your jobs cancelled due to unpaid payment`,
-						notificationBody: `You did not complete payment within 24 hours. ${total} job${
-							(total as number) > 1 ? "s" : ""
-						} have been cancelled automatically. Please contact support if needed.`,
-						// data: JSON.stringify({
-						// 	photo,
-						// 	related_id,
-						// }),
+
+				if (!hasPending) {
+					await jobPostModel.updateJobPost(jobPost.job_post_id, {
+						status: "Cancelled",
 					});
 				}
 			}
+
+			await organizationModel.updateOrganization(
+				{ status: "Blocked" },
+				{ id: organization_id }
+			);
+
+			await this.insertNotification(trx, TypeUser.ADMIN, {
+				user_id: hotelier_id,
+				sender_type: USER_TYPE.ADMIN,
+				title: `Hotelier’s jobs cancelled due to unpaid payment`,
+				content: `Hotelier ${hotelier_id} had ${total} job${
+					(total as number) > 1 ? "s" : ""
+				} cancelled automatically due to unpaid payment.`,
+				related_id,
+				type: NotificationTypeEnum.PAYMENT,
+			});
+
+			// const commonModel = new CommonModel(trx);
+			// await commonModel.createNotification({
+			// 	user_id: hotelier_id,
+			// 	sender_type: TypeUser.ADMIN,
+			// 	title: `Some of your jobs cancelled due to unpaid payment`,
+			// 	content: `You did not complete payment within 24 hours. ${total} job${
+			// 		(total as number) > 1 ? "s" : ""
+			// 	} have been cancelled automatically. Please contact support if needed.`,
+			// 	type,
+			// 	related_id,
+			// });
+
+			// const isHotelierOnline = await getAllOnlineSocketIds({
+			// 	user_id: hotelier_id,
+			// 	type: TypeUser.HOTELIER,
+			// });
+
+			// if (isHotelierOnline && isHotelierOnline.length > 0) {
+			// 	io.to(String(hotelier_id)).emit(
+			// 		TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION,
+			// 		{
+			// 			user_id: hotelier_id,
+			// 			photo,
+			// 			title: `Some of your jobs cancelled due to unpaid payment`,
+			// 			content: `You did not complete payment within 24 hours. ${total} job${
+			// 				(total as number) > 1 ? "s" : ""
+			// 			} have been cancelled automatically. Please contact support if needed.`,
+			// 			related_id,
+			// 			type,
+			// 			read_status: false,
+			// 			created_at: new Date().toISOString(),
+			// 		}
+			// 	);
+			// } else {
+			// 	if (hotelier_device_id) {
+			// 		await Lib.sendNotificationToMobile({
+			// 			to: hotelier_device_id,
+			// 			notificationTitle: `Some of your jobs cancelled due to unpaid payment`,
+			// 			notificationBody: `You did not complete payment within 24 hours. ${total} job${
+			// 				(total as number) > 1 ? "s" : ""
+			// 			} have been cancelled automatically. Please contact support if needed.`,
+			// 			// data: JSON.stringify({
+			// 			// 	photo,
+			// 			// 	related_id,
+			// 			// }),
+			// 		});
+			// 	}
+			// }
 		});
 	}
 }
