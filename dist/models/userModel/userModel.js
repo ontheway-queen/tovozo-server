@@ -25,13 +25,6 @@ class UserModel extends schema_1.default {
                 .insert(payload, "id");
         });
     }
-    createUserMaintenanceDesignation(payload) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db(this.TABLES.maintenance_designation)
-                .withSchema(this.HOTELIER)
-                .insert(payload);
-        });
-    }
     //update
     updateProfile(payload, where) {
         return __awaiter(this, void 0, void 0, function* () {

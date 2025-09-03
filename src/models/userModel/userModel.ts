@@ -20,14 +20,6 @@ export default class UserModel extends Schema {
 			.insert(payload, "id");
 	}
 
-	public async createUserMaintenanceDesignation(payload: {
-		designation: string;
-		user_id: number;
-	}) {
-		return await this.db(this.TABLES.maintenance_designation)
-			.withSchema(this.HOTELIER)
-			.insert(payload);
-	}
 	//update
 	public async updateProfile(
 		payload: Partial<ICreateUserPayload>,

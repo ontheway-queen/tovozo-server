@@ -41,7 +41,6 @@ class HotelierAuthService extends abstract_service_1.default {
             return this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const files = req.files || [];
                 const body = req.body;
-                console.log({ body });
                 const user = lib_1.default.safeParseJSON(body.user);
                 const organization = lib_1.default.safeParseJSON(body.organization);
                 const organizationAddress = lib_1.default.safeParseJSON(body.organization_address);

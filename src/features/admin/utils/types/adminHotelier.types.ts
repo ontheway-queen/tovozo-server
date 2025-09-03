@@ -8,13 +8,13 @@ export interface IHotelierUpdateParsedBody {
 	organization: {
 		name: string | undefined;
 		location_id: any;
-		org_name: string;
+		org_name?: string;
 		details?: string;
 		status: UserStatusType;
 		photo?: string;
 	};
 	user: Partial<IHotelierUser>;
-	org_address: Partial<IOrganizationAddressPayload> & {
+	organization_address: Partial<IOrganizationAddressPayload> & {
 		id?: number;
 		city_id?: number;
 	};

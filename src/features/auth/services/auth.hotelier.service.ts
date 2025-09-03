@@ -23,8 +23,6 @@ import {
 	IHotelierRegistrationBodyPayload,
 	IHotelierUser,
 	IOrganizationAddressPayload,
-	IOrganizationAmenitiesType,
-	IOrganizationName,
 } from "../utils/types/hotelierAuth.types";
 
 export default class HotelierAuthService extends AbstractServices {
@@ -36,7 +34,6 @@ export default class HotelierAuthService extends AbstractServices {
 		return this.db.transaction(async (trx) => {
 			const files = (req.files as Express.Multer.File[]) || [];
 			const body = req.body as IHotelierRegistrationBodyPayload;
-			console.log({ body });
 
 			const user = Lib.safeParseJSON(body.user) as IHotelierUser;
 			const organization = Lib.safeParseJSON(body.organization);

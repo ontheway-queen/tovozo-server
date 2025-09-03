@@ -2,77 +2,70 @@ import Joi from "joi";
 import { USER_STATUS_ENUM } from "../../../../utils/miscellaneous/constants";
 
 class AdminHotelierValidator {
-  public createHotelier = Joi.object({
-    user: Joi.object({
-      name: Joi.string().required(),
-      email: Joi.string().email().required(),
-      password: Joi.string().min(6).required(),
-      phone_number: Joi.string().required(),
-      photo: Joi.string().optional(),
-      designation: Joi.string().required(),
-    }).required(),
-    organization: Joi.object({
-      org_name: Joi.string().required(),
-      description: Joi.string().optional(),
-    }).required(),
+	public createHotelier = Joi.object({
+		user: Joi.object({
+			name: Joi.string().required(),
+			email: Joi.string().email().required(),
+			password: Joi.string().min(6).required(),
+			phone_number: Joi.string().required(),
+		}).required(),
+		organization: Joi.object({
+			org_name: Joi.string().required(),
+			details: Joi.string().optional(),
+		}).required(),
 
-    organization_address: Joi.object({
-      name: Joi.string().max(100).optional(),
-      address: Joi.string().required(),
-      city_id: Joi.string().required(),
-      postal_code: Joi.string().optional(),
-      longitude: Joi.string().required(),
-      latitude: Joi.string().required(),
-    }).optional(),
+		organization_address: Joi.object({
+			name: Joi.string().max(100).optional(),
+			address: Joi.string().required(),
+			city: Joi.string().required(),
+			state: Joi.string().required(),
+			country: Joi.string().required(),
+			postal_code: Joi.string().optional(),
+			longitude: Joi.string().required(),
+			latitude: Joi.string().required(),
+		}).required(),
+	});
 
-    organization_amenities: Joi.array()
-      .items(Joi.string().max(255).required())
-      .optional(),
-  });
+	public getHoteliersQuery = Joi.object({
+		id: Joi.number().optional(),
+		user_id: Joi.number().optional(),
+		name: Joi.string().trim().min(1).max(255),
+		status: Joi.string()
+			.valid(...USER_STATUS_ENUM)
+			.optional(),
+		from_date: Joi.date().optional(),
+		to_date: Joi.date().optional(),
+		limit: Joi.number().integer().default(100).optional(),
+		skip: Joi.number().integer().default(0).optional(),
+	});
 
-  public getHoteliersQuery = Joi.object({
-    id: Joi.number().optional(),
-    user_id: Joi.number().optional(),
-    name: Joi.string().trim().min(1).max(255),
-    status: Joi.string()
-      .valid(...USER_STATUS_ENUM)
-      .optional(),
-    from_date: Joi.date().optional(),
-    to_date: Joi.date().optional(),
-    limit: Joi.number().integer().default(100).optional(),
-    skip: Joi.number().integer().default(0).optional(),
-  });
+	public updateHotelier = Joi.object({
+		user: Joi.object({
+			name: Joi.string().optional(),
+			email: Joi.string().email().optional(),
+			password: Joi.string().min(6).optional(),
+			phone_number: Joi.string().optional(),
+			device_id: Joi.string().optional(),
+		}).optional(),
+		organization: Joi.object({
+			org_name: Joi.string().optional(),
+			details: Joi.string().optional(),
+			status: Joi.string()
+				.valid(...USER_STATUS_ENUM)
+				.optional(),
+		}).optional(),
 
-  public updateHotelier = Joi.object({
-    user: Joi.object({
-      name: Joi.string().optional(),
-      email: Joi.string().email().optional(),
-      password: Joi.string().min(6).optional(),
-      phone_number: Joi.string().optional(),
-      photo: Joi.string().optional(),
-      designation: Joi.string().optional(),
-    }).optional(),
-    organization: Joi.object({
-      name: Joi.string().optional(),
-      description: Joi.string().optional(),
-      status: Joi.string()
-        .valid(...USER_STATUS_ENUM)
-        .optional(),
-    }).optional(),
-
-    organization_address: Joi.object({
-      name: Joi.string().max(100).optional(),
-      address: Joi.string().optional(),
-      city_id: Joi.string().optional(),
-      postal_code: Joi.string().optional(),
-      longitude: Joi.string().optional(),
-      latitude: Joi.string().optional(),
-    }).optional(),
-
-    organization_amenities: Joi.array()
-      .items(Joi.string().max(255).optional())
-      .optional(),
-  });
+		organization_address: Joi.object({
+			name: Joi.string().max(100).optional(),
+			address: Joi.string().optional(),
+			city: Joi.string().optional(),
+			postal_code: Joi.string().optional(),
+			longitude: Joi.string().optional(),
+			latitude: Joi.string().optional(),
+			country: Joi.string().optional(),
+			state: Joi.string().optional(),
+		}).optional(),
+	});
 }
 
 export default AdminHotelierValidator;

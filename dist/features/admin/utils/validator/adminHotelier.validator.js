@@ -13,24 +13,21 @@ class AdminHotelierValidator {
                 email: joi_1.default.string().email().required(),
                 password: joi_1.default.string().min(6).required(),
                 phone_number: joi_1.default.string().required(),
-                photo: joi_1.default.string().optional(),
-                designation: joi_1.default.string().required(),
             }).required(),
             organization: joi_1.default.object({
                 org_name: joi_1.default.string().required(),
-                description: joi_1.default.string().optional(),
+                details: joi_1.default.string().optional(),
             }).required(),
             organization_address: joi_1.default.object({
                 name: joi_1.default.string().max(100).optional(),
                 address: joi_1.default.string().required(),
-                city_id: joi_1.default.string().required(),
+                city: joi_1.default.string().required(),
+                state: joi_1.default.string().required(),
+                country: joi_1.default.string().required(),
                 postal_code: joi_1.default.string().optional(),
                 longitude: joi_1.default.string().required(),
                 latitude: joi_1.default.string().required(),
-            }).optional(),
-            organization_amenities: joi_1.default.array()
-                .items(joi_1.default.string().max(255).required())
-                .optional(),
+            }).required(),
         });
         this.getHoteliersQuery = joi_1.default.object({
             id: joi_1.default.number().optional(),
@@ -50,12 +47,11 @@ class AdminHotelierValidator {
                 email: joi_1.default.string().email().optional(),
                 password: joi_1.default.string().min(6).optional(),
                 phone_number: joi_1.default.string().optional(),
-                photo: joi_1.default.string().optional(),
-                designation: joi_1.default.string().optional(),
+                device_id: joi_1.default.string().optional(),
             }).optional(),
             organization: joi_1.default.object({
-                name: joi_1.default.string().optional(),
-                description: joi_1.default.string().optional(),
+                org_name: joi_1.default.string().optional(),
+                details: joi_1.default.string().optional(),
                 status: joi_1.default.string()
                     .valid(...constants_1.USER_STATUS_ENUM)
                     .optional(),
@@ -63,14 +59,13 @@ class AdminHotelierValidator {
             organization_address: joi_1.default.object({
                 name: joi_1.default.string().max(100).optional(),
                 address: joi_1.default.string().optional(),
-                city_id: joi_1.default.string().optional(),
+                city: joi_1.default.string().optional(),
                 postal_code: joi_1.default.string().optional(),
                 longitude: joi_1.default.string().optional(),
                 latitude: joi_1.default.string().optional(),
+                country: joi_1.default.string().optional(),
+                state: joi_1.default.string().optional(),
             }).optional(),
-            organization_amenities: joi_1.default.array()
-                .items(joi_1.default.string().max(255).optional())
-                .optional(),
         });
     }
 }

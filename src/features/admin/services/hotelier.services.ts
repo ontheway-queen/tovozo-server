@@ -10,8 +10,6 @@ import {
 import {
 	IHotelierUser,
 	IOrganizationAddressPayload,
-	IOrganizationAmenitiesType,
-	IOrganizationName,
 } from "../../auth/utils/types/hotelierAuth.types";
 import { UserStatusType } from "../../public/utils/types/publicCommon.types";
 import { IHotelierUpdateParsedBody } from "../utils/types/adminHotelier.types";
@@ -20,24 +18,20 @@ class AdminHotelierService extends AbstractServices {
 		const { user_id } = req.admin;
 
 		return this.db.transaction(async (trx) => {
-			const files = (req.files as Express.Multer.File[]) || [];
-			const { designation, ...user } = Lib.safeParseJSON(
-				req.body.user
-			) as IHotelierUser;
-			const organization = Lib.safeParseJSON(
-				req.body.organization
-			) as IOrganizationName;
+			const user = Lib.safeParseJSON(req.body.user) as IHotelierUser;
+			const organization = Lib.safeParseJSON(req.body.organization);
 			const organizationAddress = Lib.safeParseJSON(
 				req.body.organization_address
 			) as IOrganizationAddressPayload;
-			const amenitiesInput =
-				(Lib.safeParseJSON(
-					req.body.organization_amenities
-				) as IOrganizationAmenitiesType[]) || [];
 
+			const files = (req.files as Express.Multer.File[]) || [];
 			for (const file of files) {
 				if (file.fieldname === "photo") {
 					user.photo = file.filename;
+				}
+
+				if (file.fieldname === "organization_photo") {
+					organization.photo = file.filename;
 				}
 			}
 
@@ -87,40 +81,76 @@ class AdminHotelierService extends AbstractServices {
 					"ERROR"
 				);
 			}
+			let stateId = 0;
+			let city_id = 0;
+			let location_id = null;
+			if (Object.keys(organizationAddress).length > 0) {
+				if (organizationAddress.city) {
+					// check country
+					const checkCountry = await commonModel.getAllCountry({
+						name: organizationAddress.country,
+					});
 
-			const organization_location = await commonModel.createLocation(
-				organizationAddress
-			);
-			const locationId = organization_location[0].id;
-			const userId = registration[0].id;
+					if (!checkCountry.length) {
+						throw new CustomError(
+							"Service not available in this country",
+							this.StatusCode.HTTP_BAD_REQUEST
+						);
+					}
 
-			await userModel.createUserMaintenanceDesignation({
-				designation,
-				user_id: userId,
-			});
+					const checkState = await commonModel.getAllStates({
+						country_id: checkCountry[0].id,
+						name: organizationAddress.state,
+					});
+					if (!checkState.length) {
+						const state = await commonModel.createState({
+							country_id: checkCountry[0].id,
+							name: organizationAddress.state as string,
+						});
+						stateId = state[0].id;
+					} else {
+						stateId = checkState[0].id;
+					}
+
+					const checkCity = await commonModel.getAllCity({
+						country_id: checkCountry[0].id,
+						state_id: stateId,
+						name: organizationAddress.city,
+					});
+					if (!checkCity.length) {
+						const city = await commonModel.createCity({
+							country_id: checkCountry[0].id,
+							state_id: stateId,
+							name: organizationAddress.city,
+						});
+						city_id = city[0].id;
+					} else {
+						city_id = checkCity[0].id;
+					}
+				}
+
+				const [locationRecord] = await commonModel.createLocation({
+					city_id,
+					name: organizationAddress.name,
+					address: organizationAddress.address,
+					longitude: organizationAddress.longitude,
+					latitude: organizationAddress.latitude,
+					postal_code: organizationAddress.postal_code,
+					is_home_address: organizationAddress.is_home_address,
+				});
+				location_id = locationRecord.id;
+			}
 			const orgInsert = await organizationModel.createOrganization({
 				name: organization.org_name,
+				details: organization.details,
+				photo: organization.photo,
 				status: USER_STATUS.ACTIVE,
-				user_id: userId,
-				location_id: locationId,
+				user_id: registration[0].id,
+				location_id,
 			});
 
-			const organizationId = orgInsert[0].id;
-
-			const photos = files
-				.filter((file) => file.fieldname === "hotel_photo")
-				.map((file) => ({
-					organization_id: organizationId,
-					file: file.filename,
-				}));
-
-			const amenities = amenitiesInput.map((a: string) => ({
-				organization_id: organizationId,
-				amenity: a,
-			}));
-
 			const tokenData = {
-				user_id: userId,
+				user_id: registration[0].id,
 				name: user.name,
 				user_email: email,
 				phone_number,
@@ -248,7 +278,8 @@ class AdminHotelierService extends AbstractServices {
 			const parsed = {
 				organization: Lib.safeParseJSON(body.organization) || {},
 				user: Lib.safeParseJSON(body.user) || {},
-				org_address: Lib.safeParseJSON(body.org_address) || {},
+				organization_address:
+					Lib.safeParseJSON(body.organization_address) || {},
 			} as IHotelierUpdateParsedBody;
 			for (const { fieldname, filename } of files) {
 				switch (fieldname) {
@@ -311,7 +342,10 @@ class AdminHotelierService extends AbstractServices {
 				updateTasks.push(
 					model.updateOrganization(
 						{
-							name: parsed.organization.name || data.name,
+							name:
+								parsed.organization.name ||
+								parsed.organization.org_name ||
+								data.name,
 							details:
 								parsed.organization.details || data.details,
 							photo: parsed.organization.photo || data.photo,
@@ -346,11 +380,11 @@ class AdminHotelierService extends AbstractServices {
 
 			let stateId = 0;
 			let city_id = 0;
-			if (Object.keys(parsed.org_address).length > 0) {
-				if (parsed.org_address.city) {
+			if (Object.keys(parsed.organization_address).length > 0) {
+				if (parsed.organization_address.city) {
 					// check country
 					const checkCountry = await commonModel.getAllCountry({
-						name: parsed.org_address.country,
+						name: parsed.organization_address.country,
 					});
 
 					if (!checkCountry.length) {
@@ -362,12 +396,12 @@ class AdminHotelierService extends AbstractServices {
 
 					const checkState = await commonModel.getAllStates({
 						country_id: checkCountry[0].id,
-						name: parsed.org_address.state,
+						name: parsed.organization_address.state,
 					});
 					if (!checkState.length) {
 						const state = await commonModel.createState({
 							country_id: checkCountry[0].id,
-							name: parsed.org_address.state as string,
+							name: parsed.organization_address.state as string,
 						});
 						stateId = state[0].id;
 					} else {
@@ -377,13 +411,13 @@ class AdminHotelierService extends AbstractServices {
 					const checkCity = await commonModel.getAllCity({
 						country_id: checkCountry[0].id,
 						state_id: stateId,
-						name: parsed.org_address.city,
+						name: parsed.organization_address.city,
 					});
 					if (!checkCity.length) {
 						const city = await commonModel.createCity({
 							country_id: checkCountry[0].id,
 							state_id: stateId,
-							name: parsed.org_address.city,
+							name: parsed.organization_address.city,
 						});
 						city_id = city[0].id;
 					} else {
@@ -404,13 +438,15 @@ class AdminHotelierService extends AbstractServices {
 						commonModel.updateLocation(
 							{
 								city_id: checkLocation.city_id,
-								name: parsed.org_address.name,
-								address: parsed.org_address.address,
-								longitude: parsed.org_address.longitude,
-								latitude: parsed.org_address.latitude,
-								postal_code: parsed.org_address.postal_code,
+								name: parsed.organization_address.name,
+								address: parsed.organization_address.address,
+								longitude:
+									parsed.organization_address.longitude,
+								latitude: parsed.organization_address.latitude,
+								postal_code:
+									parsed.organization_address.postal_code,
 								is_home_address:
-									parsed.org_address.is_home_address,
+									parsed.organization_address.is_home_address,
 							},
 							{
 								location_id: data.location_id,
@@ -423,13 +459,18 @@ class AdminHotelierService extends AbstractServices {
 							const [locationRecord] =
 								await commonModel.createLocation({
 									city_id,
-									name: parsed.org_address.name,
-									address: parsed.org_address.address,
-									longitude: parsed.org_address.longitude,
-									latitude: parsed.org_address.latitude,
-									postal_code: parsed.org_address.postal_code,
+									name: parsed.organization_address.name,
+									address:
+										parsed.organization_address.address,
+									longitude:
+										parsed.organization_address.longitude,
+									latitude:
+										parsed.organization_address.latitude,
+									postal_code:
+										parsed.organization_address.postal_code,
 									is_home_address:
-										parsed.org_address.is_home_address,
+										parsed.organization_address
+											.is_home_address,
 								});
 							parsed.organization.location_id = locationRecord.id;
 						})()

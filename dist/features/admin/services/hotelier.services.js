@@ -33,14 +33,16 @@ class AdminHotelierService extends abstract_service_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             const { user_id } = req.admin;
             return this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
-                const files = req.files || [];
-                const _a = lib_1.default.safeParseJSON(req.body.user), { designation } = _a, user = __rest(_a, ["designation"]);
+                const user = lib_1.default.safeParseJSON(req.body.user);
                 const organization = lib_1.default.safeParseJSON(req.body.organization);
                 const organizationAddress = lib_1.default.safeParseJSON(req.body.organization_address);
-                const amenitiesInput = lib_1.default.safeParseJSON(req.body.organization_amenities) || [];
+                const files = req.files || [];
                 for (const file of files) {
                     if (file.fieldname === "photo") {
                         user.photo = file.filename;
+                    }
+                    if (file.fieldname === "organization_photo") {
+                        organization.photo = file.filename;
                     }
                 }
                 const { email, phone_number, password } = user, userData = __rest(user, ["email", "phone_number", "password"]);
@@ -75,32 +77,70 @@ class AdminHotelierService extends abstract_service_1.default {
                 if (!registration.length) {
                     throw new customError_1.default(this.ResMsg.HTTP_BAD_REQUEST, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
                 }
-                const organization_location = yield commonModel.createLocation(organizationAddress);
-                const locationId = organization_location[0].id;
-                const userId = registration[0].id;
-                yield userModel.createUserMaintenanceDesignation({
-                    designation,
-                    user_id: userId,
-                });
+                let stateId = 0;
+                let city_id = 0;
+                let location_id = null;
+                if (Object.keys(organizationAddress).length > 0) {
+                    if (organizationAddress.city) {
+                        // check country
+                        const checkCountry = yield commonModel.getAllCountry({
+                            name: organizationAddress.country,
+                        });
+                        if (!checkCountry.length) {
+                            throw new customError_1.default("Service not available in this country", this.StatusCode.HTTP_BAD_REQUEST);
+                        }
+                        const checkState = yield commonModel.getAllStates({
+                            country_id: checkCountry[0].id,
+                            name: organizationAddress.state,
+                        });
+                        if (!checkState.length) {
+                            const state = yield commonModel.createState({
+                                country_id: checkCountry[0].id,
+                                name: organizationAddress.state,
+                            });
+                            stateId = state[0].id;
+                        }
+                        else {
+                            stateId = checkState[0].id;
+                        }
+                        const checkCity = yield commonModel.getAllCity({
+                            country_id: checkCountry[0].id,
+                            state_id: stateId,
+                            name: organizationAddress.city,
+                        });
+                        if (!checkCity.length) {
+                            const city = yield commonModel.createCity({
+                                country_id: checkCountry[0].id,
+                                state_id: stateId,
+                                name: organizationAddress.city,
+                            });
+                            city_id = city[0].id;
+                        }
+                        else {
+                            city_id = checkCity[0].id;
+                        }
+                    }
+                    const [locationRecord] = yield commonModel.createLocation({
+                        city_id,
+                        name: organizationAddress.name,
+                        address: organizationAddress.address,
+                        longitude: organizationAddress.longitude,
+                        latitude: organizationAddress.latitude,
+                        postal_code: organizationAddress.postal_code,
+                        is_home_address: organizationAddress.is_home_address,
+                    });
+                    location_id = locationRecord.id;
+                }
                 const orgInsert = yield organizationModel.createOrganization({
                     name: organization.org_name,
+                    details: organization.details,
+                    photo: organization.photo,
                     status: constants_1.USER_STATUS.ACTIVE,
-                    user_id: userId,
-                    location_id: locationId,
+                    user_id: registration[0].id,
+                    location_id,
                 });
-                const organizationId = orgInsert[0].id;
-                const photos = files
-                    .filter((file) => file.fieldname === "hotel_photo")
-                    .map((file) => ({
-                    organization_id: organizationId,
-                    file: file.filename,
-                }));
-                const amenities = amenitiesInput.map((a) => ({
-                    organization_id: organizationId,
-                    amenity: a,
-                }));
                 const tokenData = {
-                    user_id: userId,
+                    user_id: registration[0].id,
                     name: user.name,
                     user_email: email,
                     phone_number,
@@ -198,7 +238,7 @@ class AdminHotelierService extends abstract_service_1.default {
                 const parsed = {
                     organization: lib_1.default.safeParseJSON(body.organization) || {},
                     user: lib_1.default.safeParseJSON(body.user) || {},
-                    org_address: lib_1.default.safeParseJSON(body.org_address) || {},
+                    organization_address: lib_1.default.safeParseJSON(body.organization_address) || {},
                 };
                 for (const { fieldname, filename } of files) {
                     switch (fieldname) {
@@ -236,7 +276,9 @@ class AdminHotelierService extends abstract_service_1.default {
                 }
                 if (Object.keys(parsed.organization).length > 0) {
                     updateTasks.push(model.updateOrganization({
-                        name: parsed.organization.name || data.name,
+                        name: parsed.organization.name ||
+                            parsed.organization.org_name ||
+                            data.name,
                         details: parsed.organization.details || data.details,
                         photo: parsed.organization.photo || data.photo,
                         status: parsed.organization.status || data.status,
@@ -257,23 +299,23 @@ class AdminHotelierService extends abstract_service_1.default {
                 }
                 let stateId = 0;
                 let city_id = 0;
-                if (Object.keys(parsed.org_address).length > 0) {
-                    if (parsed.org_address.city) {
+                if (Object.keys(parsed.organization_address).length > 0) {
+                    if (parsed.organization_address.city) {
                         // check country
                         const checkCountry = yield commonModel.getAllCountry({
-                            name: parsed.org_address.country,
+                            name: parsed.organization_address.country,
                         });
                         if (!checkCountry.length) {
                             throw new customError_1.default("Service not available in this country", this.StatusCode.HTTP_BAD_REQUEST);
                         }
                         const checkState = yield commonModel.getAllStates({
                             country_id: checkCountry[0].id,
-                            name: parsed.org_address.state,
+                            name: parsed.organization_address.state,
                         });
                         if (!checkState.length) {
                             const state = yield commonModel.createState({
                                 country_id: checkCountry[0].id,
-                                name: parsed.org_address.state,
+                                name: parsed.organization_address.state,
                             });
                             stateId = state[0].id;
                         }
@@ -283,13 +325,13 @@ class AdminHotelierService extends abstract_service_1.default {
                         const checkCity = yield commonModel.getAllCity({
                             country_id: checkCountry[0].id,
                             state_id: stateId,
-                            name: parsed.org_address.city,
+                            name: parsed.organization_address.city,
                         });
                         if (!checkCity.length) {
                             const city = yield commonModel.createCity({
                                 country_id: checkCountry[0].id,
                                 state_id: stateId,
-                                name: parsed.org_address.city,
+                                name: parsed.organization_address.city,
                             });
                             city_id = city[0].id;
                         }
@@ -306,12 +348,12 @@ class AdminHotelierService extends abstract_service_1.default {
                         }
                         updateTasks.push(commonModel.updateLocation({
                             city_id: checkLocation.city_id,
-                            name: parsed.org_address.name,
-                            address: parsed.org_address.address,
-                            longitude: parsed.org_address.longitude,
-                            latitude: parsed.org_address.latitude,
-                            postal_code: parsed.org_address.postal_code,
-                            is_home_address: parsed.org_address.is_home_address,
+                            name: parsed.organization_address.name,
+                            address: parsed.organization_address.address,
+                            longitude: parsed.organization_address.longitude,
+                            latitude: parsed.organization_address.latitude,
+                            postal_code: parsed.organization_address.postal_code,
+                            is_home_address: parsed.organization_address.is_home_address,
                         }, {
                             location_id: data.location_id,
                         }));
@@ -320,12 +362,13 @@ class AdminHotelierService extends abstract_service_1.default {
                         updateTasks.push((() => __awaiter(this, void 0, void 0, function* () {
                             const [locationRecord] = yield commonModel.createLocation({
                                 city_id,
-                                name: parsed.org_address.name,
-                                address: parsed.org_address.address,
-                                longitude: parsed.org_address.longitude,
-                                latitude: parsed.org_address.latitude,
-                                postal_code: parsed.org_address.postal_code,
-                                is_home_address: parsed.org_address.is_home_address,
+                                name: parsed.organization_address.name,
+                                address: parsed.organization_address.address,
+                                longitude: parsed.organization_address.longitude,
+                                latitude: parsed.organization_address.latitude,
+                                postal_code: parsed.organization_address.postal_code,
+                                is_home_address: parsed.organization_address
+                                    .is_home_address,
                             });
                             parsed.organization.location_id = locationRecord.id;
                         }))());

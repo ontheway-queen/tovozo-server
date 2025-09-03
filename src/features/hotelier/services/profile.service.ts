@@ -127,7 +127,8 @@ export default class HotelierProfileService extends AbstractServices {
 			const parsed = {
 				user: Lib.safeParseJSON(body.user) || {},
 				organization: Lib.safeParseJSON(body.organization) || {},
-				org_address: Lib.safeParseJSON(body.org_address) || {},
+				organization_address:
+					Lib.safeParseJSON(body.organization_address) || {},
 			} as IHotelierUpdateParsedBody;
 			for (const { fieldname, filename } of files) {
 				switch (fieldname) {
@@ -198,11 +199,11 @@ export default class HotelierProfileService extends AbstractServices {
 
 			let stateId = 0;
 			let city_id = 0;
-			if (Object.keys(parsed.org_address).length > 0) {
-				if (parsed.org_address.city) {
+			if (Object.keys(parsed.organization_address).length > 0) {
+				if (parsed.organization_address.city) {
 					// check country
 					const checkCountry = await commonModel.getAllCountry({
-						name: parsed.org_address.country,
+						name: parsed.organization_address.country,
 					});
 
 					if (!checkCountry.length) {
@@ -214,12 +215,12 @@ export default class HotelierProfileService extends AbstractServices {
 
 					const checkState = await commonModel.getAllStates({
 						country_id: checkCountry[0].id,
-						name: parsed.org_address.state,
+						name: parsed.organization_address.state,
 					});
 					if (!checkState.length) {
 						const state = await commonModel.createState({
 							country_id: checkCountry[0].id,
-							name: parsed.org_address.state as string,
+							name: parsed.organization_address.state as string,
 						});
 						stateId = state[0].id;
 					} else {
@@ -229,13 +230,13 @@ export default class HotelierProfileService extends AbstractServices {
 					const checkCity = await commonModel.getAllCity({
 						country_id: checkCountry[0].id,
 						state_id: stateId,
-						name: parsed.org_address.city,
+						name: parsed.organization_address.city,
 					});
 					if (!checkCity.length) {
 						const city = await commonModel.createCity({
 							country_id: checkCountry[0].id,
 							state_id: stateId,
-							name: parsed.org_address.city,
+							name: parsed.organization_address.city,
 						});
 						city_id = city[0].id;
 					} else {
@@ -256,13 +257,15 @@ export default class HotelierProfileService extends AbstractServices {
 						commonModel.updateLocation(
 							{
 								city_id: checkLocation.city_id,
-								name: parsed.org_address.name,
-								address: parsed.org_address.address,
-								longitude: parsed.org_address.longitude,
-								latitude: parsed.org_address.latitude,
-								postal_code: parsed.org_address.postal_code,
+								name: parsed.organization_address.name,
+								address: parsed.organization_address.address,
+								longitude:
+									parsed.organization_address.longitude,
+								latitude: parsed.organization_address.latitude,
+								postal_code:
+									parsed.organization_address.postal_code,
 								is_home_address:
-									parsed.org_address.is_home_address,
+									parsed.organization_address.is_home_address,
 							},
 							{
 								location_id: data.location_id,
@@ -275,13 +278,18 @@ export default class HotelierProfileService extends AbstractServices {
 							const [locationRecord] =
 								await commonModel.createLocation({
 									city_id,
-									name: parsed.org_address.name,
-									address: parsed.org_address.address,
-									longitude: parsed.org_address.longitude,
-									latitude: parsed.org_address.latitude,
-									postal_code: parsed.org_address.postal_code,
+									name: parsed.organization_address.name,
+									address:
+										parsed.organization_address.address,
+									longitude:
+										parsed.organization_address.longitude,
+									latitude:
+										parsed.organization_address.latitude,
+									postal_code:
+										parsed.organization_address.postal_code,
 									is_home_address:
-										parsed.org_address.is_home_address,
+										parsed.organization_address
+											.is_home_address,
 								});
 							parsed.organization.location_id = locationRecord.id;
 						})()
