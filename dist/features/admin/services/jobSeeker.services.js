@@ -39,35 +39,27 @@ class AdminJobSeekerService extends abstract_service_1.default {
                 const parseInput = (key) => lib_1.default.safeParseJSON(req.body[key]) || {};
                 const userInput = parseInput("user");
                 const jobSeekerInput = parseInput("job_seeker");
-                const jobSeekerInfoInput = parseInput("job_seeker_info");
-                // Attach file references
-                let idCopyFound = false;
+                const jobSeekerLocationInput = parseInput("own_address");
+                if (!files.length) {
+                    return {
+                        success: false,
+                        code: this.StatusCode.HTTP_NOT_FOUND,
+                        message: "No photo was uploaded. Please add a photo and try again.",
+                    };
+                }
                 for (const { fieldname, filename } of files) {
                     if (fieldname === "photo") {
                         userInput.photo = filename;
-                        continue;
-                    }
-                    if (jobSeekerInput.nationality === constants_1.BRITISH_ID) {
-                        if (fieldname === "id_copy") {
-                            idCopyFound = true;
-                        }
-                        else if (fieldname !== "passport_copy") {
-                            throw new customError_1.default("Only id_copy is allowed for British nationality", this.StatusCode.HTTP_BAD_REQUEST);
-                        }
                     }
                     else {
-                        if (fieldname !== "visa_copy") {
-                            throw new customError_1.default("Only visa_copy required for Non-British Nationality", this.StatusCode.HTTP_BAD_REQUEST);
-                        }
+                        throw new customError_1.default(this.ResMsg.UNKNOWN_FILE_FIELD, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
                     }
-                    jobSeekerInfoInput[fieldname] = filename;
                 }
-                if (jobSeekerInput.nationality === constants_1.BRITISH_ID && !idCopyFound) {
-                    throw new customError_1.default("id_copy is required for British Nationality", this.StatusCode.HTTP_BAD_REQUEST);
-                }
+                // Attach file references
                 const { email, phone_number, password } = userInput, restUserData = __rest(userInput, ["email", "phone_number", "password"]);
                 const userModel = this.Model.UserModel(trx);
                 const jobSeekerModel = this.Model.jobSeekerModel(trx);
+                const commonModel = this.Model.commonModel(trx);
                 const existingUser = yield userModel.checkUser({
                     email,
                     phone_number,
@@ -99,7 +91,61 @@ class AdminJobSeekerService extends abstract_service_1.default {
                     throw new customError_1.default(this.ResMsg.HTTP_BAD_REQUEST, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
                 }
                 const jobSeekerId = registration[0].id;
-                yield jobSeekerModel.createJobSeeker(Object.assign(Object.assign({}, jobSeekerInput), { user_id: jobSeekerId }));
+                let locationId = null;
+                if (jobSeekerLocationInput === null || jobSeekerLocationInput === void 0 ? void 0 : jobSeekerLocationInput.address) {
+                    let city_id;
+                    if (jobSeekerLocationInput.city) {
+                        if (!jobSeekerLocationInput.state &&
+                            !jobSeekerLocationInput.country) {
+                            throw new customError_1.default("state and country required", this.StatusCode.HTTP_BAD_REQUEST);
+                        }
+                        const checkCountry = yield commonModel.getAllCountry({
+                            name: jobSeekerLocationInput.country,
+                        });
+                        if (!checkCountry.length) {
+                            throw new customError_1.default("Service not available in this country", this.StatusCode.HTTP_BAD_REQUEST);
+                        }
+                        let stateId = 0;
+                        const checkState = yield commonModel.getAllStates({
+                            country_id: checkCountry[0].id,
+                            name: jobSeekerLocationInput.state,
+                        });
+                        if (!checkState.length) {
+                            const state = yield commonModel.createState({
+                                country_id: checkCountry[0].id,
+                                name: jobSeekerLocationInput.state,
+                            });
+                            stateId = state[0].id;
+                        }
+                        else {
+                            stateId = checkState[0].id;
+                        }
+                        const checkCity = yield commonModel.getAllCity({
+                            country_id: checkCountry[0].id,
+                            state_id: stateId,
+                            name: jobSeekerLocationInput.city,
+                        });
+                        if (!checkCity.length) {
+                            const city = yield commonModel.createCity({
+                                country_id: checkCountry[0].id,
+                                state_id: stateId,
+                                name: jobSeekerLocationInput.city,
+                            });
+                            city_id = city[0].id;
+                        }
+                        else {
+                            city_id = checkCity[0].id;
+                        }
+                    }
+                    const [locationRecord] = yield commonModel.createLocation({
+                        city_id,
+                        address: jobSeekerLocationInput.address,
+                        longitude: jobSeekerLocationInput.longitude,
+                        latitude: jobSeekerLocationInput.latitude,
+                    });
+                    locationId = locationRecord.id;
+                }
+                yield jobSeekerModel.createJobSeeker(Object.assign(Object.assign({}, jobSeekerInput), { user_id: jobSeekerId, location_id: locationId }));
                 const tokenPayload = {
                     user_id: jobSeekerId,
                     name: userInput.name,

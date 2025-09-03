@@ -38,7 +38,6 @@ class JobSeekerAuthService extends abstract_service_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             return this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const files = req.files || [];
-                console.log({ files });
                 const parseInput = (key) => lib_1.default.safeParseJSON(req.body[key]) || {};
                 const userInput = parseInput("user");
                 const jobSeekerInput = parseInput("job_seeker");

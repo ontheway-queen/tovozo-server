@@ -28,14 +28,19 @@ class AdminJobSeekerValidator {
                 phone_number: joi_1.default.string().min(7).max(20).optional(),
             }).required(),
             job_seeker: joi_1.default.object({
-                nationality: joi_1.default.number().integer().required(),
                 account_status: joi_1.default.string()
                     .valid(...constants_1.USER_STATUS_ENUM)
-                    .default(constants_1.USER_STATUS.PENDING),
-            }).required(),
-            passport_copy: joi_1.default.string().max(255).allow("").optional(),
-            id_copy: joi_1.default.string().max(255).allow("").optional(),
-            visa_copy: joi_1.default.string().max(255).allow("").optional(),
+                    .default("Pending"),
+            }).optional(),
+            own_address: joi_1.default.object({
+                address: joi_1.default.string().optional(),
+                city: joi_1.default.string().max(100).optional(),
+                country: joi_1.default.string().max(100).optional(),
+                state: joi_1.default.string().max(100).optional(),
+                longitude: joi_1.default.number().precision(6).min(-180).max(180).optional(),
+                latitude: joi_1.default.number().precision(6).min(-90).max(90).optional(),
+                postal_code: joi_1.default.string().optional(),
+            }).optional(),
         });
         this.updateJobSeekerValidator = joi_1.default.object({
             user: joi_1.default.object({
@@ -63,9 +68,15 @@ class AdminJobSeekerValidator {
                 is_2fa_on: joi_1.default.boolean().optional(),
                 final_completed: joi_1.default.boolean().optional(),
             }).optional(),
-            add_job_preferences: joi_1.default.array().items(joi_1.default.number().integer()).optional(),
-            del_job_preferences: joi_1.default.array().items(joi_1.default.number().integer()).optional(),
-            delete_job_locations: joi_1.default.array().items(joi_1.default.number().integer()).optional(),
+            add_job_preferences: joi_1.default.array()
+                .items(joi_1.default.number().integer())
+                .optional(),
+            del_job_preferences: joi_1.default.array()
+                .items(joi_1.default.number().integer())
+                .optional(),
+            delete_job_locations: joi_1.default.array()
+                .items(joi_1.default.number().integer())
+                .optional(),
             update_job_locations: joi_1.default.array()
                 .items(joi_1.default.object({
                 id: joi_1.default.number().optional(),

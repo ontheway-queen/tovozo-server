@@ -30,7 +30,6 @@ class JobSeekerAuthService extends AbstractServices {
 	public async registrationService(req: Request) {
 		return this.db.transaction(async (trx) => {
 			const files = (req.files as Express.Multer.File[]) || [];
-			console.log({ files });
 
 			const parseInput = (key: string) =>
 				Lib.safeParseJSON(req.body[key]) || {};

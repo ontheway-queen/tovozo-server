@@ -2,11 +2,7 @@ import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
 import CustomError from "../../../utils/lib/customError";
 import Lib from "../../../utils/lib/lib";
-import {
-	BRITISH_ID,
-	USER_STATUS,
-	USER_TYPE,
-} from "../../../utils/miscellaneous/constants";
+import { USER_STATUS, USER_TYPE } from "../../../utils/miscellaneous/constants";
 import { NotificationTypeEnum } from "../../../utils/modelTypes/common/commonModelTypes";
 import { IJobApplicationStatus } from "../../../utils/modelTypes/jobApplication/jobApplicationModel.types";
 import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
@@ -15,7 +11,7 @@ import {
 	registrationVerificationCompletedTemplate,
 } from "../../../utils/templates/registrationVerificationCompletedTemplate";
 import {
-	IJobSeekerInfoBody,
+	IJobSeekerLocationInfo,
 	IJobSeekerNationalityBody,
 	IJobSeekerUserBody,
 } from "../../auth/utils/types/jobSeekerAuth.types";
@@ -34,50 +30,37 @@ class AdminJobSeekerService extends AbstractServices {
 			const jobSeekerInput = parseInput(
 				"job_seeker"
 			) as IJobSeekerNationalityBody;
-			const jobSeekerInfoInput = parseInput(
-				"job_seeker_info"
-			) as IJobSeekerInfoBody;
+			const jobSeekerLocationInput = parseInput(
+				"own_address"
+			) as IJobSeekerLocationInfo;
 
-			// Attach file references
-			let idCopyFound = false;
+			if (!files.length) {
+				return {
+					success: false,
+					code: this.StatusCode.HTTP_NOT_FOUND,
+					message:
+						"No photo was uploaded. Please add a photo and try again.",
+				};
+			}
 			for (const { fieldname, filename } of files) {
 				if (fieldname === "photo") {
 					userInput.photo = filename;
-					continue;
-				}
-
-				if (jobSeekerInput.nationality === BRITISH_ID) {
-					if (fieldname === "id_copy") {
-						idCopyFound = true;
-					} else if (fieldname !== "passport_copy") {
-						throw new CustomError(
-							"Only id_copy is allowed for British nationality",
-							this.StatusCode.HTTP_BAD_REQUEST
-						);
-					}
 				} else {
-					if (fieldname !== "visa_copy") {
-						throw new CustomError(
-							"Only visa_copy required for Non-British Nationality",
-							this.StatusCode.HTTP_BAD_REQUEST
-						);
-					}
+					throw new CustomError(
+						this.ResMsg.UNKNOWN_FILE_FIELD,
+						this.StatusCode.HTTP_BAD_REQUEST,
+						"ERROR"
+					);
 				}
-
-				jobSeekerInfoInput[fieldname] = filename;
-			}
-			if (jobSeekerInput.nationality === BRITISH_ID && !idCopyFound) {
-				throw new CustomError(
-					"id_copy is required for British Nationality",
-					this.StatusCode.HTTP_BAD_REQUEST
-				);
 			}
 
+			// Attach file references
 			const { email, phone_number, password, ...restUserData } =
 				userInput;
 
 			const userModel = this.Model.UserModel(trx);
 			const jobSeekerModel = this.Model.jobSeekerModel(trx);
+			const commonModel = this.Model.commonModel(trx);
 
 			const existingUser = await userModel.checkUser({
 				email,
@@ -94,7 +77,6 @@ class AdminJobSeekerService extends AbstractServices {
 							message: this.ResMsg.EMAIL_ALREADY_EXISTS,
 						};
 					}
-
 					if (user.phone_number === phone_number) {
 						return {
 							success: false,
@@ -125,9 +107,74 @@ class AdminJobSeekerService extends AbstractServices {
 
 			const jobSeekerId = registration[0].id;
 
+			let locationId: number | null = null;
+			if (jobSeekerLocationInput?.address) {
+				let city_id;
+				if (jobSeekerLocationInput.city) {
+					if (
+						!jobSeekerLocationInput.state &&
+						!jobSeekerLocationInput.country
+					) {
+						throw new CustomError(
+							"state and country required",
+							this.StatusCode.HTTP_BAD_REQUEST
+						);
+					}
+
+					const checkCountry = await commonModel.getAllCountry({
+						name: jobSeekerLocationInput.country,
+					});
+
+					if (!checkCountry.length) {
+						throw new CustomError(
+							"Service not available in this country",
+							this.StatusCode.HTTP_BAD_REQUEST
+						);
+					}
+
+					let stateId = 0;
+					const checkState = await commonModel.getAllStates({
+						country_id: checkCountry[0].id,
+						name: jobSeekerLocationInput.state,
+					});
+					if (!checkState.length) {
+						const state = await commonModel.createState({
+							country_id: checkCountry[0].id,
+							name: jobSeekerLocationInput.state,
+						});
+						stateId = state[0].id;
+					} else {
+						stateId = checkState[0].id;
+					}
+
+					const checkCity = await commonModel.getAllCity({
+						country_id: checkCountry[0].id,
+						state_id: stateId,
+						name: jobSeekerLocationInput.city,
+					});
+					if (!checkCity.length) {
+						const city = await commonModel.createCity({
+							country_id: checkCountry[0].id,
+							state_id: stateId,
+							name: jobSeekerLocationInput.city,
+						});
+						city_id = city[0].id;
+					} else {
+						city_id = checkCity[0].id;
+					}
+				}
+				const [locationRecord] = await commonModel.createLocation({
+					city_id,
+					address: jobSeekerLocationInput.address,
+					longitude: jobSeekerLocationInput.longitude,
+					latitude: jobSeekerLocationInput.latitude,
+				});
+				locationId = locationRecord.id;
+			}
 			await jobSeekerModel.createJobSeeker({
 				...jobSeekerInput,
 				user_id: jobSeekerId,
+				location_id: locationId as number,
 			});
 
 			const tokenPayload = {

@@ -27,16 +27,20 @@ class AdminJobSeekerValidator {
 			password: Joi.string().min(8).max(100).required(),
 			phone_number: Joi.string().min(7).max(20).optional(),
 		}).required(),
-
 		job_seeker: Joi.object({
-			nationality: Joi.number().integer().required(),
 			account_status: Joi.string()
 				.valid(...USER_STATUS_ENUM)
-				.default(USER_STATUS.PENDING),
-		}).required(),
-		passport_copy: Joi.string().max(255).allow("").optional(),
-		id_copy: Joi.string().max(255).allow("").optional(),
-		visa_copy: Joi.string().max(255).allow("").optional(),
+				.default("Pending"),
+		}).optional(),
+		own_address: Joi.object({
+			address: Joi.string().optional(),
+			city: Joi.string().max(100).optional(),
+			country: Joi.string().max(100).optional(),
+			state: Joi.string().max(100).optional(),
+			longitude: Joi.number().precision(6).min(-180).max(180).optional(),
+			latitude: Joi.number().precision(6).min(-90).max(90).optional(),
+			postal_code: Joi.string().optional(),
+		}).optional(),
 	});
 
 	updateJobSeekerValidator = Joi.object({
@@ -68,10 +72,16 @@ class AdminJobSeekerValidator {
 			final_completed: Joi.boolean().optional(),
 		}).optional(),
 
-		add_job_preferences: Joi.array().items(Joi.number().integer()).optional(),
-		del_job_preferences: Joi.array().items(Joi.number().integer()).optional(),
+		add_job_preferences: Joi.array()
+			.items(Joi.number().integer())
+			.optional(),
+		del_job_preferences: Joi.array()
+			.items(Joi.number().integer())
+			.optional(),
 
-		delete_job_locations: Joi.array().items(Joi.number().integer()).optional(),
+		delete_job_locations: Joi.array()
+			.items(Joi.number().integer())
+			.optional(),
 
 		update_job_locations: Joi.array()
 			.items(
@@ -102,10 +112,14 @@ class AdminJobSeekerValidator {
 			.optional(),
 
 		add_job_shifting: Joi.array()
-			.items(Joi.string().valid("Morning", "Afternoon", "Night", "Flexible"))
+			.items(
+				Joi.string().valid("Morning", "Afternoon", "Night", "Flexible")
+			)
 			.optional(),
 		del_job_shifting: Joi.array()
-			.items(Joi.string().valid("Morning", "Afternoon", "Night", "Flexible"))
+			.items(
+				Joi.string().valid("Morning", "Afternoon", "Night", "Flexible")
+			)
 			.optional(),
 
 		job_seeker_info: Joi.object({
