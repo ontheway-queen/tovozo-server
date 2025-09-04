@@ -157,7 +157,7 @@ class JobApplicationModel extends schema_1.default {
                 "org.id as organization_id",
                 "org.user_id as organization_user_id",
                 "org.name as organization_name",
-                "org_p.file as organization_photo",
+                "org.photo as organization_photo",
                 "js.user_id as job_seeker_id",
                 "jsu.name as job_seeker_name",
                 "jsu.photo as job_seeker_photo",
@@ -174,9 +174,6 @@ class JobApplicationModel extends schema_1.default {
                 `${this.HOTELIER}.${this.TABLES.organization}`,
             ])
                 .leftJoin("vw_location as vwl", "vwl.location_id", "org.location_id")
-                .leftJoin(this.db.raw(`?? as org_p ON org_p.organization_id = org.id`, [
-                `${this.HOTELIER}.${this.TABLES.organization_photos}`,
-            ]))
                 .leftJoin(this.db.raw(`?? as js ON js.user_id = ja.job_seeker_id`, [
                 `${this.JOB_SEEKER}.${this.TABLES.job_seeker}`,
             ]))

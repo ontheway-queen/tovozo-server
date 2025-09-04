@@ -97,6 +97,9 @@ CREATE OR REPLACE VIEW jobseeker.vw_full_job_seeker_profile
     js.id_copy,
     loc.id AS home_location_id,
     loc.city_id AS home_city_id,
+    c.name as city,
+    s.name as state,
+    coun.name as country,
     loc.name AS home_location_name,
     loc.address AS home_address,
     loc.longitude AS home_longitude,
@@ -119,6 +122,9 @@ CREATE OR REPLACE VIEW jobseeker.vw_full_job_seeker_profile
      LEFT JOIN dbo.location loc ON js.location_id = loc.id AND loc.is_home_address = true
      LEFT JOIN jobSeeker.bank_details bd 
     ON js.user_id = bd.job_seeker_id AND bd.is_primary = true
+    LEFT JOIN dbo.cities c ON c.id = loc.city_id
+    LEFT JOIN dbo.states s ON s.id = c.state_id
+    LEFT JOIN dbo.countries coun ON coun.id = s.country_id
   WHERE u.is_deleted = false;
 
 -------------------------------------------------------------------------------------------------

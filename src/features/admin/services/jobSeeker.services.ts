@@ -294,6 +294,7 @@ class AdminJobSeekerService extends AbstractServices {
 			const id = req.params.id as unknown as number;
 			const model = this.Model.jobSeekerModel(trx);
 			const data = await model.getJobSeekerDetails({ user_id: id });
+
 			if (!data) {
 				return {
 					success: false,
@@ -367,12 +368,107 @@ class AdminJobSeekerService extends AbstractServices {
 				updateTasks.push(userModel.updateProfile(parsed.user, { id }));
 			}
 
+			let stateId = 0;
+			let city_id = 0;
 			if (Object.keys(parsed.ownAddress).length > 0) {
-				updateTasks.push(
-					commonModel.updateLocation(parsed.ownAddress, {
-						location_id: parsed.ownAddress.id!,
-					})
-				);
+				if (parsed.ownAddress.city) {
+					if (
+						!parsed.ownAddress.state &&
+						!parsed.ownAddress.country
+					) {
+						throw new CustomError(
+							"state and country required",
+							this.StatusCode.HTTP_BAD_REQUEST
+						);
+					}
+
+					// check country
+					const checkCountry = await commonModel.getAllCountry({
+						name: parsed.ownAddress.country,
+					});
+
+					if (!checkCountry.length) {
+						throw new CustomError(
+							"Service not available in this country",
+							this.StatusCode.HTTP_BAD_REQUEST
+						);
+					}
+
+					const checkState = await commonModel.getAllStates({
+						country_id: checkCountry[0].id,
+						name: parsed.ownAddress.state,
+					});
+					if (!checkState.length) {
+						const state = await commonModel.createState({
+							country_id: checkCountry[0].id,
+							name: parsed.ownAddress.state as string,
+						});
+						stateId = state[0].id;
+					} else {
+						stateId = checkState[0].id;
+					}
+
+					const checkCity = await commonModel.getAllCity({
+						country_id: checkCountry[0].id,
+						state_id: stateId,
+						name: parsed.ownAddress.city,
+					});
+
+					if (!checkCity.length) {
+						const city = await commonModel.createCity({
+							country_id: checkCountry[0].id,
+							state_id: stateId,
+							name: parsed.ownAddress.city,
+						});
+						city_id = city[0].id;
+					} else {
+						city_id = checkCity[0].id;
+					}
+				}
+
+				let checkLocation;
+				console.log("ll", data.home_location_id);
+				if (data.home_location_id) {
+					checkLocation = await commonModel.getLocation({
+						location_id: data.home_location_id,
+					});
+					console.log({ checkLocation });
+					if (!checkLocation) {
+						throw new CustomError(
+							"Location not found!",
+							this.StatusCode.HTTP_NOT_FOUND
+						);
+					}
+
+					updateTasks.push(
+						commonModel.updateLocation(
+							{
+								city_id: checkLocation?.city_id || city_id,
+								name: parsed.ownAddress.name,
+								address: parsed.ownAddress.address,
+								longitude: parsed.ownAddress.longitude,
+								latitude: parsed.ownAddress.latitude,
+								postal_code: parsed.ownAddress.postal_code,
+								is_home_address:
+									parsed.ownAddress.is_home_address,
+							},
+							{
+								location_id: data.home_location_id,
+							}
+						)
+					);
+				} else {
+					const [locationRecord] = await commonModel.createLocation({
+						city_id,
+						name: parsed.ownAddress?.name,
+						address: parsed.ownAddress?.address,
+						longitude: parsed.ownAddress?.longitude,
+						latitude: parsed.ownAddress?.latitude,
+						postal_code: parsed.ownAddress?.postal_code,
+						is_home_address: parsed.ownAddress?.is_home_address,
+					});
+					parsed.jobSeeker.location_id = locationRecord.id;
+				}
 			}
 
 			if (Object.keys(parsed.jobSeeker).length > 0) {
@@ -429,13 +525,13 @@ class AdminJobSeekerService extends AbstractServices {
 				);
 			}
 
-			if (parsed.updateJobLocations.length > 0) {
-				for (const loc of parsed.updateJobLocations) {
-					updateTasks.push(
-						commonModel.updateLocation(loc, { location_id: loc.id })
-					);
-				}
-			}
+			// if (parsed.updateJobLocations.length > 0) {
+			// 	for (const loc of parsed.updateJobLocations) {
+			// 		updateTasks.push(
+			// 			commonModel.updateLocation(loc, { location_id: loc.id })
+			// 		);
+			// 	}
+			// }
 
 			await Promise.all(updateTasks);
 

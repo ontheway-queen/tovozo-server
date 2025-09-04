@@ -6,18 +6,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const adminChatRouter_1 = __importDefault(require("./router/adminChatRouter"));
 const administration_router_1 = __importDefault(require("./router/administration.router"));
+const adminNotificationRouter_1 = __importDefault(require("./router/adminNotificationRouter"));
+const adminPayment_router_1 = __importDefault(require("./router/adminPayment.router"));
+const adminStats_router_1 = __importDefault(require("./router/adminStats.router"));
 const cancellationLog_router_1 = __importDefault(require("./router/cancellationLog.router"));
 const hotelier_router_1 = __importDefault(require("./router/hotelier.router"));
 const jobApplication_router_1 = __importDefault(require("./router/jobApplication.router"));
 const jobPost_router_1 = __importDefault(require("./router/jobPost.router"));
 const jobs_router_1 = __importDefault(require("./router/jobs.router"));
 const jobSeeker_router_1 = __importDefault(require("./router/jobSeeker.router"));
+const payout_router_1 = __importDefault(require("./router/payout.router"));
 const profile_router_1 = __importDefault(require("./router/profile.router"));
 const report_router_1 = __importDefault(require("./router/report.router"));
-const adminPayment_router_1 = __importDefault(require("./router/adminPayment.router"));
-const adminStats_router_1 = __importDefault(require("./router/adminStats.router"));
-const adminNotificationRouter_1 = __importDefault(require("./router/adminNotificationRouter"));
-const payout_router_1 = __importDefault(require("./router/payout.router"));
 class AdminRootRouter {
     constructor() {
         this.Router = (0, express_1.Router)();
@@ -26,7 +26,7 @@ class AdminRootRouter {
         this.adminJobRouter = new jobs_router_1.default();
         this.adminJobSeekerRouter = new jobSeeker_router_1.default();
         this.adminHotelierRouter = new hotelier_router_1.default();
-        this.cancellationReportRouter = new cancellationLog_router_1.default();
+        this.cancellationLogsRouter = new cancellationLog_router_1.default();
         this.jobPostRouter = new jobPost_router_1.default();
         this.reportRouter = new report_router_1.default();
         this.jobApplicationRouter = new jobApplication_router_1.default();
@@ -51,7 +51,7 @@ class AdminRootRouter {
         // jobs
         this.Router.use("/jobs", this.jobPostRouter.router);
         // cancellation report
-        this.Router.use("/cancellation-report", this.cancellationReportRouter.router);
+        this.Router.use("/cancellation-logs", this.cancellationLogsRouter.router);
         // report
         this.Router.use("/reports", this.reportRouter.router);
         // job-application

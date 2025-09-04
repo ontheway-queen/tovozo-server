@@ -1,7 +1,7 @@
 import AbstractRouter from "../../../abstract/abstract.router";
 import AdminCancellationReportController from "../controller/cancellationLog.controller";
 
-class CancellationReportRouter extends AbstractRouter {
+class CancellationLogsRouter extends AbstractRouter {
 	private controller = new AdminCancellationReportController();
 
 	constructor() {
@@ -19,4 +19,4 @@ class CancellationReportRouter extends AbstractRouter {
 	}
 }
 
-export default CancellationReportRouter;
+export default CancellationLogsRouter;

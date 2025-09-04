@@ -282,7 +282,7 @@ class JobPostModel extends Schema {
 				if (status) qb.andWhere("jpd.status", status);
 				if (job_post_id) qb.andWhere("jpd.job_post_id", job_post_id);
 			})
-			.whereNot("jpd.status", "Expired")
+			// .whereNot("jpd.status", "Expired")
 			.orderByRaw(
 				`
         CASE

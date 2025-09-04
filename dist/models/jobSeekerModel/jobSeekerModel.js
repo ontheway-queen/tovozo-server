@@ -127,7 +127,7 @@ class JobSeekerModel extends schema_1.default {
             // Fetch main profile
             const profile = yield this.db("vw_full_job_seeker_profile")
                 .withSchema(this.JOB_SEEKER)
-                .select("user_id", "email", "name", "phone_number", "photo", "user_status", "user_type", "user_created_at", "date_of_birth", "gender", "work_permit", "id_copy", "account_status", "is_completed", "completed_at", "final_completed", "final_completed_at", "home_location_id", "home_location_name", "home_address", "home_postal_code", "home_status", "is_home_address", this.db.raw(`
+                .select("user_id", "email", "name", "phone_number", "photo", "user_status", "user_type", "user_created_at", "date_of_birth", "gender", "work_permit", "id_copy", "account_status", "city", "state", "country", "is_completed", "completed_at", "final_completed", "final_completed_at", "home_location_id", "home_location_name", "home_address", "home_postal_code", "home_status", "is_home_address", this.db.raw(`
         (SELECT COALESCE(SUM(pl.amount), 0)
          FROM dbo.payment_ledger pl
          WHERE pl.user_id = vw_full_job_seeker_profile.user_id

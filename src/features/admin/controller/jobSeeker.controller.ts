@@ -38,7 +38,7 @@ class AdminJobSeekerController extends AbstractController {
 	public updateJobSeeker = this.asyncWrapper.wrap(
 		{
 			paramSchema: this.commonValidator.singleParamValidator,
-			// bodySchema: this.validator.updateJobSeekerValidator,
+			bodySchema: this.validator.updateJobSeekerValidator,
 		},
 		async (req: Request, res: Response) => {
 			const { code, ...data } = await this.service.updateJobSeeker(req);

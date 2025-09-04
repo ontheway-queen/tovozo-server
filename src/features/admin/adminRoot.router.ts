@@ -1,18 +1,18 @@
 import { Router } from "express";
 import AdminChatRouter from "./router/adminChatRouter";
 import AdminAdministrationRouter from "./router/administration.router";
-import CancellationReportRouter from "./router/cancellationLog.router";
+import AdminNotificationRouter from "./router/adminNotificationRouter";
+import AdminPaymentRouter from "./router/adminPayment.router";
+import AdminStatsRouter from "./router/adminStats.router";
+import CancellationLogsRouter from "./router/cancellationLog.router";
 import AdminHotelierRouter from "./router/hotelier.router";
 import AdminJobApplicationRouter from "./router/jobApplication.router";
 import AdminJobPostRouter from "./router/jobPost.router";
 import AdminJobRouter from "./router/jobs.router";
 import AdminJobSeekerRouter from "./router/jobSeeker.router";
+import AdminPayoutRouter from "./router/payout.router";
 import AdminProfileRouter from "./router/profile.router";
 import AdminReportRouter from "./router/report.router";
-import AdminPaymentRouter from "./router/adminPayment.router";
-import AdminStatsRouter from "./router/adminStats.router";
-import AdminNotificationRouter from "./router/adminNotificationRouter";
-import AdminPayoutRouter from "./router/payout.router";
 
 export default class AdminRootRouter {
 	public Router = Router();
@@ -21,7 +21,7 @@ export default class AdminRootRouter {
 	private adminJobRouter = new AdminJobRouter();
 	private adminJobSeekerRouter = new AdminJobSeekerRouter();
 	private adminHotelierRouter = new AdminHotelierRouter();
-	private cancellationReportRouter = new CancellationReportRouter();
+	private cancellationLogsRouter = new CancellationLogsRouter();
 	private jobPostRouter = new AdminJobPostRouter();
 	private reportRouter = new AdminReportRouter();
 	private jobApplicationRouter = new AdminJobApplicationRouter();
@@ -56,8 +56,8 @@ export default class AdminRootRouter {
 
 		// cancellation report
 		this.Router.use(
-			"/cancellation-report",
-			this.cancellationReportRouter.router
+			"/cancellation-logs",
+			this.cancellationLogsRouter.router
 		);
 
 		// report

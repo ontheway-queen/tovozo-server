@@ -228,7 +228,7 @@ class AdminJobSeekerService extends abstract_service_1.default {
     updateJobSeeker(req) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
-                var _a;
+                var _a, _b, _c, _d, _e, _f, _g;
                 const user_id = req.admin.user_id;
                 const id = req.params.id;
                 const model = this.Model.jobSeekerModel(trx);
@@ -284,10 +284,86 @@ class AdminJobSeekerService extends abstract_service_1.default {
                 if (Object.keys(parsed.user).length > 0) {
                     updateTasks.push(userModel.updateProfile(parsed.user, { id }));
                 }
+                let stateId = 0;
+                let city_id = 0;
                 if (Object.keys(parsed.ownAddress).length > 0) {
-                    updateTasks.push(commonModel.updateLocation(parsed.ownAddress, {
-                        location_id: parsed.ownAddress.id,
-                    }));
+                    if (parsed.ownAddress.city) {
+                        if (!parsed.ownAddress.state &&
+                            !parsed.ownAddress.country) {
+                            throw new customError_1.default("state and country required", this.StatusCode.HTTP_BAD_REQUEST);
+                        }
+                        // check country
+                        const checkCountry = yield commonModel.getAllCountry({
+                            name: parsed.ownAddress.country,
+                        });
+                        if (!checkCountry.length) {
+                            throw new customError_1.default("Service not available in this country", this.StatusCode.HTTP_BAD_REQUEST);
+                        }
+                        const checkState = yield commonModel.getAllStates({
+                            country_id: checkCountry[0].id,
+                            name: parsed.ownAddress.state,
+                        });
+                        if (!checkState.length) {
+                            const state = yield commonModel.createState({
+                                country_id: checkCountry[0].id,
+                                name: parsed.ownAddress.state,
+                            });
+                            stateId = state[0].id;
+                        }
+                        else {
+                            stateId = checkState[0].id;
+                        }
+                        const checkCity = yield commonModel.getAllCity({
+                            country_id: checkCountry[0].id,
+                            state_id: stateId,
+                            name: parsed.ownAddress.city,
+                        });
+                        if (!checkCity.length) {
+                            const city = yield commonModel.createCity({
+                                country_id: checkCountry[0].id,
+                                state_id: stateId,
+                                name: parsed.ownAddress.city,
+                            });
+                            city_id = city[0].id;
+                        }
+                        else {
+                            city_id = checkCity[0].id;
+                        }
+                    }
+                    let checkLocation;
+                    console.log("ll", data.home_location_id);
+                    if (data.home_location_id) {
+                        checkLocation = yield commonModel.getLocation({
+                            location_id: data.home_location_id,
+                        });
+                        console.log({ checkLocation });
+                        if (!checkLocation) {
+                            throw new customError_1.default("Location not found!", this.StatusCode.HTTP_NOT_FOUND);
+                        }
+                        updateTasks.push(commonModel.updateLocation({
+                            city_id: (checkLocation === null || checkLocation === void 0 ? void 0 : checkLocation.city_id) || city_id,
+                            name: parsed.ownAddress.name,
+                            address: parsed.ownAddress.address,
+                            longitude: parsed.ownAddress.longitude,
+                            latitude: parsed.ownAddress.latitude,
+                            postal_code: parsed.ownAddress.postal_code,
+                            is_home_address: parsed.ownAddress.is_home_address,
+                        }, {
+                            location_id: data.home_location_id,
+                        }));
+                    }
+                    else {
+                        const [locationRecord] = yield commonModel.createLocation({
+                            city_id,
+                            name: (_b = parsed.ownAddress) === null || _b === void 0 ? void 0 : _b.name,
+                            address: (_c = parsed.ownAddress) === null || _c === void 0 ? void 0 : _c.address,
+                            longitude: (_d = parsed.ownAddress) === null || _d === void 0 ? void 0 : _d.longitude,
+                            latitude: (_e = parsed.ownAddress) === null || _e === void 0 ? void 0 : _e.latitude,
+                            postal_code: (_f = parsed.ownAddress) === null || _f === void 0 ? void 0 : _f.postal_code,
+                            is_home_address: (_g = parsed.ownAddress) === null || _g === void 0 ? void 0 : _g.is_home_address,
+                        });
+                        parsed.jobSeeker.location_id = locationRecord.id;
+                    }
                 }
                 if (Object.keys(parsed.jobSeeker).length > 0) {
                     if (parsed.jobSeeker.account_status) {
@@ -323,11 +399,13 @@ class AdminJobSeekerService extends abstract_service_1.default {
                         user_id: id,
                     }));
                 }
-                if (parsed.updateJobLocations.length > 0) {
-                    for (const loc of parsed.updateJobLocations) {
-                        updateTasks.push(commonModel.updateLocation(loc, { location_id: loc.id }));
-                    }
-                }
+                // if (parsed.updateJobLocations.length > 0) {
+                // 	for (const loc of parsed.updateJobLocations) {
+                // 		updateTasks.push(
+                // 			commonModel.updateLocation(loc, { location_id: loc.id })
+                // 		);
+                // 	}
+                // }
                 yield Promise.all(updateTasks);
                 if (parsed.jobSeeker.account_status === constants_1.USER_STATUS.ACTIVE) {
                     yield lib_1.default.sendEmailDefault({

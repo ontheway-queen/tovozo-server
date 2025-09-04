@@ -339,16 +339,17 @@ class AdminHotelierService extends AbstractServices {
 			}
 
 			if (Object.keys(parsed.organization).length > 0) {
+				console.log({ data });
+
 				updateTasks.push(
 					model.updateOrganization(
 						{
 							name:
 								parsed.organization.name ||
-								parsed.organization.org_name ||
-								data.name,
+								parsed.organization.org_name,
 							details:
 								parsed.organization.details || data.details,
-							photo: parsed.organization.photo || data.photo,
+							photo: parsed.organization.photo || data.org_photo,
 							status: parsed.organization.status || data.status,
 						},
 						{

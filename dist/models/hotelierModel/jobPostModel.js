@@ -186,7 +186,7 @@ class JobPostModel extends schema_1.default {
                 if (job_post_id)
                     qb.andWhere("jpd.job_post_id", job_post_id);
             })
-                .whereNot("jpd.status", "Expired")
+                // .whereNot("jpd.status", "Expired")
                 .orderByRaw(`
         CASE
           WHEN DATE(jpd.start_time) = CURRENT_DATE AND jpd.end_time >= NOW() THEN 0 

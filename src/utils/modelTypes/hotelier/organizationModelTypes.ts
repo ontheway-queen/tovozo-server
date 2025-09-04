@@ -46,6 +46,7 @@ export interface IGetOrganizationList {
 export interface IGetOrganization {
 	id: number;
 	org_name?: string;
+	org_photo?: string;
 	user_id: number;
 	created_at?: string;
 	status: UserStatusType;
