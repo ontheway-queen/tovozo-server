@@ -23,32 +23,27 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.BankDetailsController = void 0;
 const abstract_controller_1 = __importDefault(require("../../../abstract/abstract.controller"));
-const jobSeekeerProfile_service_1 = __importDefault(require("../service/jobSeekeerProfile.service"));
-const profile_validator_1 = __importDefault(require("../utils/validator/profile.validator"));
-class JobSeekerProfileController extends abstract_controller_1.default {
+const bankDetails_service_1 = __importDefault(require("../service/bankDetails.service"));
+const bankDetails_validator_1 = __importDefault(require("../utils/validator/bankDetails.validator"));
+class BankDetailsController extends abstract_controller_1.default {
     constructor() {
         super();
-        this.profileService = new jobSeekeerProfile_service_1.default();
-        this.validator = new profile_validator_1.default();
-        // get profile
-        this.getProfile = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.profileService.getProfile(req), { code } = _a, data = __rest(_a, ["code"]);
+        this.service = new bankDetails_service_1.default();
+        this.validator = new bankDetails_validator_1.default();
+        this.getBankAccounts = this.asyncWrapper.wrap({ querySchema: this.validator.getBankDetailsQueryValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.getBankAccounts(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
-        this.updateProfile = this.asyncWrapper.wrap({ bodySchema: this.validator.updateJobSeekerValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.profileService.updateProfile(req), { code } = _a, data = __rest(_a, ["code"]);
+        this.addBankAccounts = this.asyncWrapper.wrap({ bodySchema: this.validator.addBankDetailsPayloadValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.addBankAccounts(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
-        this.updateUserVerificationDetails = this.asyncWrapper.wrap({ bodySchema: this.validator.updateUserVerificationDetails }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.profileService.updateUserVerificationDetails(req), { code } = _a, data = __rest(_a, ["code"]);
-            res.status(code).json(data);
-        }));
-        //change password
-        this.changePassword = this.asyncWrapper.wrap({ bodySchema: this.commonValidator.changePassInputValidation }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.profileService.changePassword(req), { code } = _a, data = __rest(_a, ["code"]);
+        this.removeBankAccount = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.singleParamNumValidator() }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.removeBankAccount(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }
 }
-exports.default = JobSeekerProfileController;
+exports.BankDetailsController = BankDetailsController;

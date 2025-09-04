@@ -566,7 +566,6 @@ class AdminJobSeekerService extends AbstractServices {
 		return this.db.transaction(async (trx) => {
 			const adminUserId = req.admin.user_id;
 			const jobSeekerId = Number(req.params.id);
-			const { bank_id } = req.body;
 
 			const jobSeekerModel = this.Model.jobSeekerModel(trx);
 			const userModel = this.Model.UserModel(trx);
@@ -579,6 +578,13 @@ class AdminJobSeekerService extends AbstractServices {
 					success: false,
 					message: `The requested job seeker account with ID ${jobSeekerId} not found`,
 					code: this.StatusCode.HTTP_NOT_FOUND,
+				};
+			}
+			if (jobSeekerData.final_completed) {
+				return {
+					success: false,
+					message: `The job seeker account with ID ${jobSeekerId} has already been verified and cannot be updated again.`,
+					code: this.StatusCode.HTTP_BAD_REQUEST,
 				};
 			}
 
@@ -607,13 +613,12 @@ class AdminJobSeekerService extends AbstractServices {
 				)
 			);
 
-			updateTasks.push(jobSeekerModel.verifyBankAccount({ id: bank_id }));
-
 			await Promise.all(updateTasks);
 
 			await this.insertNotification(trx, USER_TYPE.JOB_SEEKER, {
-				title: "Your account has been verified",
-				content: `Your account has been successfully verified. You can now start applying for jobs.`,
+				title: "Your documents have been verified",
+				content: `We have successfully verified your submitted documents (ID copy and work permit).  
+Your account is now active, and you can start applying for jobs.`,
 				related_id: jobSeekerId,
 				sender_type: USER_TYPE.ADMIN,
 				sender_id: adminUserId,
@@ -623,15 +628,13 @@ class AdminJobSeekerService extends AbstractServices {
 
 			await Lib.sendEmailDefault({
 				email: existingUser.email,
-				emailSub: "Job Seeker Account Verified – You Can Now Log In",
-				emailBody: registrationVerificationCompletedTemplate(
-					existingUser.name,
-					"https://play.google.com/store/apps/details?id=com.m360ict.tovozo"
-				),
+				emailSub: "Your documents have been verified",
+				emailBody: `We have successfully verified your submitted documents (ID copy and work permit).  
+Your account is now active, and you can start applying for jobs.`,
 			});
 
 			await this.insertAdminAudit(trx, {
-				details: `Job seeker (${existingUser.name} - ${jobSeekerId}) profile has been verified.`,
+				details: `Job seeker (${existingUser.name} - ${jobSeekerId}) documents have been verified`,
 				created_by: adminUserId,
 				endpoint: req.originalUrl,
 				type: "UPDATE",

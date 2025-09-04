@@ -149,6 +149,7 @@ class JobSeekerProfileService extends abstract_service_1.default {
                 }
                 const userModel = this.Model.UserModel(trx);
                 const jobSeekerModel = this.Model.jobSeekerModel(trx);
+                const bankDetailsModel = this.Model.bankDetailsModel(trx);
                 const [existingUser] = yield userModel.checkUser({
                     id: user_id,
                     type: constants_1.USER_TYPE.JOB_SEEKER,
@@ -163,30 +164,24 @@ class JobSeekerProfileService extends abstract_service_1.default {
                     }));
                 }
                 const accountNumber = String(parsed.bank_details.account_number).trim();
-                const isAccountExists = yield jobSeekerModel.getBankAccounts({
+                const { data } = yield bankDetailsModel.getBankAccounts({
                     user_id,
                     account_number: accountNumber,
                 });
-                console.log({ isAccountExists });
-                if (isAccountExists.length > 0) {
+                console.log({ data });
+                if (data.length > 0) {
                     throw new customError_1.default("Same Bank account already exists for this user", this.StatusCode.HTTP_BAD_REQUEST);
                 }
                 if (parsed.bank_details &&
                     Object.keys(parsed.bank_details).length > 0) {
-                    const existingAccounts = yield jobSeekerModel.getBankAccounts({
+                    const isAccountExists = yield bankDetailsModel.getBankAccounts({
                         user_id,
+                        account_number: String(parsed.bank_details.account_number).trim(),
                     });
-                    if (existingAccounts.length === 0) {
-                        parsed.bank_details.is_primary = true;
+                    if (data.length > 0) {
+                        throw new customError_1.default("Same Bank account already exists for this user", this.StatusCode.HTTP_BAD_REQUEST);
                     }
-                    else if (parsed.bank_details.is_primary !== undefined &&
-                        parsed.bank_details.is_primary !== false) {
-                        const isPrimaryAccountExists = existingAccounts.filter((acc) => acc.is_primary);
-                        if (isPrimaryAccountExists.length > 0) {
-                            throw new customError_1.default("Primary bank details already added for this user", this.StatusCode.HTTP_BAD_REQUEST);
-                        }
-                    }
-                    updateTasks.push(jobSeekerModel.addBankDetails(Object.assign({ job_seeker_id: user_id }, parsed.bank_details)));
+                    updateTasks.push(bankDetailsModel.addBankDetails(Object.assign({ job_seeker_id: user_id }, parsed.bank_details)));
                 }
                 yield Promise.all(updateTasks);
                 yield this.insertNotification(trx, userModelTypes_1.TypeUser.ADMIN, {
@@ -203,31 +198,6 @@ class JobSeekerProfileService extends abstract_service_1.default {
                     success: true,
                     code: this.StatusCode.HTTP_OK,
                     message: this.ResMsg.HTTP_OK,
-                };
-            }));
-        });
-    }
-    // make account primary
-    markAccountAsPrimary(req) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const { id } = req.params; // bank_details id
-            const { user_id } = req.jobSeeker;
-            return this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
-                const jobseekerModel = this.Model.jobSeekerModel(trx);
-                const allBanks = yield jobseekerModel.getBankAccounts({ user_id });
-                if (!allBanks || allBanks.length === 0) {
-                    throw new customError_1.default("No bank accounts found for this user", this.StatusCode.HTTP_NOT_FOUND);
-                }
-                const requestedBank = allBanks.find((b) => b.id === Number(id));
-                if (!requestedBank) {
-                    throw new customError_1.default("Requested bank account not found", this.StatusCode.HTTP_NOT_FOUND);
-                }
-                const updatePromises = allBanks.map((b) => jobseekerModel.markAsPrimaryBank({ id: b.id }, { is_primary: b.id === Number(id) }));
-                yield Promise.all(updatePromises);
-                return {
-                    success: true,
-                    code: this.StatusCode.HTTP_OK,
-                    message: "Bank account marked as primary",
                 };
             }));
         });

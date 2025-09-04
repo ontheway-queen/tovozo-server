@@ -11,8 +11,8 @@ import {
 	IChangePasswordPayload,
 	NotificationTypeEnum,
 } from "../../../utils/modelTypes/common/commonModelTypes";
-import { IJobSeekerAuthView } from "../../auth/utils/types/jobSeekerAuth.types";
 import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
+import { IJobSeekerAuthView } from "../../auth/utils/types/jobSeekerAuth.types";
 
 export default class JobSeekerProfileService extends AbstractServices {
 	constructor() {
@@ -201,6 +201,7 @@ export default class JobSeekerProfileService extends AbstractServices {
 
 			const userModel = this.Model.UserModel(trx);
 			const jobSeekerModel = this.Model.jobSeekerModel(trx);
+			const bankDetailsModel = this.Model.bankDetailsModel(trx);
 
 			const [existingUser] = await userModel.checkUser({
 				id: user_id,
@@ -234,13 +235,13 @@ export default class JobSeekerProfileService extends AbstractServices {
 			const accountNumber = String(
 				parsed.bank_details.account_number
 			).trim();
-			const isAccountExists = await jobSeekerModel.getBankAccounts({
+			const { data } = await bankDetailsModel.getBankAccounts({
 				user_id,
 				account_number: accountNumber,
 			});
-			console.log({ isAccountExists });
+			console.log({ data });
 
-			if (isAccountExists.length > 0) {
+			if (data.length > 0) {
 				throw new CustomError(
 					"Same Bank account already exists for this user",
 					this.StatusCode.HTTP_BAD_REQUEST
@@ -251,29 +252,22 @@ export default class JobSeekerProfileService extends AbstractServices {
 				parsed.bank_details &&
 				Object.keys(parsed.bank_details).length > 0
 			) {
-				const existingAccounts = await jobSeekerModel.getBankAccounts({
+				const isAccountExists = await bankDetailsModel.getBankAccounts({
 					user_id,
+					account_number: String(
+						parsed.bank_details.account_number
+					).trim(),
 				});
 
-				if (existingAccounts.length === 0) {
-					parsed.bank_details.is_primary = true;
-				} else if (
-					parsed.bank_details.is_primary !== undefined &&
-					parsed.bank_details.is_primary !== false
-				) {
-					const isPrimaryAccountExists = existingAccounts.filter(
-						(acc: any) => acc.is_primary
+				if (data.length > 0) {
+					throw new CustomError(
+						"Same Bank account already exists for this user",
+						this.StatusCode.HTTP_BAD_REQUEST
 					);
-					if (isPrimaryAccountExists.length > 0) {
-						throw new CustomError(
-							"Primary bank details already added for this user",
-							this.StatusCode.HTTP_BAD_REQUEST
-						);
-					}
 				}
 
 				updateTasks.push(
-					jobSeekerModel.addBankDetails({
+					bankDetailsModel.addBankDetails({
 						job_seeker_id: user_id,
 						...parsed.bank_details,
 					})
@@ -297,50 +291,6 @@ export default class JobSeekerProfileService extends AbstractServices {
 				success: true,
 				code: this.StatusCode.HTTP_OK,
 				message: this.ResMsg.HTTP_OK,
-			};
-		});
-	}
-
-	// make account primary
-	public async markAccountAsPrimary(req: Request) {
-		const { id } = req.params; // bank_details id
-		const { user_id } = req.jobSeeker;
-
-		return this.db.transaction(async (trx) => {
-			const jobseekerModel = this.Model.jobSeekerModel(trx);
-
-			const allBanks = await jobseekerModel.getBankAccounts({ user_id });
-
-			if (!allBanks || allBanks.length === 0) {
-				throw new CustomError(
-					"No bank accounts found for this user",
-					this.StatusCode.HTTP_NOT_FOUND
-				);
-			}
-
-			const requestedBank = allBanks.find(
-				(b: any) => b.id === Number(id)
-			);
-			if (!requestedBank) {
-				throw new CustomError(
-					"Requested bank account not found",
-					this.StatusCode.HTTP_NOT_FOUND
-				);
-			}
-
-			const updatePromises = allBanks.map((b: any) =>
-				jobseekerModel.markAsPrimaryBank(
-					{ id: b.id },
-					{ is_primary: b.id === Number(id) }
-				)
-			);
-
-			await Promise.all(updatePromises);
-
-			return {
-				success: true,
-				code: this.StatusCode.HTTP_OK,
-				message: "Bank account marked as primary",
 			};
 		});
 	}

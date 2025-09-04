@@ -34,7 +34,6 @@ class JobSeekerProfileUpdate {
                 account_name: joi_1.default.string().required(),
                 account_number: joi_1.default.string().required(),
                 bank_code: joi_1.default.string().required(),
-                is_primary: joi_1.default.boolean().required(),
             }).required(),
         });
     }

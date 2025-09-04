@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import AbstractController from "../../../abstract/abstract.controller";
 import JobSeekerProfileService from "../service/jobSeekeerProfile.service";
-import CustomError from "../../../utils/lib/customError";
 import JobSeekerProfileUpdate from "../utils/validator/profile.validator";
 
 export default class JobSeekerProfileController extends AbstractController {
@@ -35,15 +34,6 @@ export default class JobSeekerProfileController extends AbstractController {
 		async (req: Request, res: Response) => {
 			const { code, ...data } =
 				await this.profileService.updateUserVerificationDetails(req);
-			res.status(code).json(data);
-		}
-	);
-
-	public markAccountAsPrimary = this.asyncWrapper.wrap(
-		{ paramSchema: this.commonValidator.singleParamNumValidator("id") },
-		async (req: Request, res: Response) => {
-			const { code, ...data } =
-				await this.profileService.markAccountAsPrimary(req);
 			res.status(code).json(data);
 		}
 	);

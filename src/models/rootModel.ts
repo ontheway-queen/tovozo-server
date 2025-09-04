@@ -2,6 +2,7 @@ import { Knex } from "knex";
 import { db } from "../app/database";
 import AdministrationModel from "./adminModel/administrationModel";
 import AdminModel from "./adminModel/adminModel";
+import BankDetailsModel from "./bankDetailsModel/bankDetailsModel";
 import CancellationLogModel from "./cancellationLogModel/cancellationLogModel";
 import ChatModel from "./chatModel/chatModel";
 import CommonModel from "./commonModel/commonModel";
@@ -12,11 +13,11 @@ import JobModel from "./jobModel/jobModel";
 import JobSeekerModel from "./jobSeekerModel/jobSeekerModel";
 import JobTaskActivitiesModel from "./jobTaskActivitiesModel/jobTaskActivitiesModel";
 import JobTaskListModel from "./jobTaskActivitiesModel/jobTaskListModel";
-import ReportModel from "./reportModel/reportModel";
-import UserModel from "./userModel/userModel";
 import PaymentModel from "./paymentModel/paymentModel";
-import StatisticsModel from "./statistics/statistics.model";
 import PayoutModel from "./payout/payoutModel";
+import ReportModel from "./reportModel/reportModel";
+import StatisticsModel from "./statistics/statistics.model";
+import UserModel from "./userModel/userModel";
 
 export default class Models {
 	public UserModel(trx?: Knex.Transaction) {
@@ -99,5 +100,10 @@ export default class Models {
 	// payout request
 	public payoutModel(trx?: Knex.Transaction) {
 		return new PayoutModel(trx || db);
+	}
+
+	// Bank Details Model
+	public bankDetailsModel(trx?: Knex.Transaction) {
+		return new BankDetailsModel(trx || db);
 	}
 }

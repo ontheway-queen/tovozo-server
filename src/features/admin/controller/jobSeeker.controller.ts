@@ -55,6 +55,7 @@ class AdminJobSeekerController extends AbstractController {
 			res.status(code).json(data);
 		}
 	);
+
 	public deleteJobSeeker = this.asyncWrapper.wrap(
 		{
 			paramSchema: this.commonValidator.singleParamValidator,

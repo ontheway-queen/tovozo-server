@@ -32,7 +32,6 @@ export default class JobSeekerProfileUpdate {
 			account_name: Joi.string().required(),
 			account_number: Joi.string().required(),
 			bank_code: Joi.string().required(),
-			is_primary: Joi.boolean().required(),
 		}).required(),
 	});
 }

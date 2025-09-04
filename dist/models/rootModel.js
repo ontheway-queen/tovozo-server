@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const database_1 = require("../app/database");
 const administrationModel_1 = __importDefault(require("./adminModel/administrationModel"));
 const adminModel_1 = __importDefault(require("./adminModel/adminModel"));
+const bankDetailsModel_1 = __importDefault(require("./bankDetailsModel/bankDetailsModel"));
 const cancellationLogModel_1 = __importDefault(require("./cancellationLogModel/cancellationLogModel"));
 const chatModel_1 = __importDefault(require("./chatModel/chatModel"));
 const commonModel_1 = __importDefault(require("./commonModel/commonModel"));
@@ -16,11 +17,11 @@ const jobModel_1 = __importDefault(require("./jobModel/jobModel"));
 const jobSeekerModel_1 = __importDefault(require("./jobSeekerModel/jobSeekerModel"));
 const jobTaskActivitiesModel_1 = __importDefault(require("./jobTaskActivitiesModel/jobTaskActivitiesModel"));
 const jobTaskListModel_1 = __importDefault(require("./jobTaskActivitiesModel/jobTaskListModel"));
-const reportModel_1 = __importDefault(require("./reportModel/reportModel"));
-const userModel_1 = __importDefault(require("./userModel/userModel"));
 const paymentModel_1 = __importDefault(require("./paymentModel/paymentModel"));
-const statistics_model_1 = __importDefault(require("./statistics/statistics.model"));
 const payoutModel_1 = __importDefault(require("./payout/payoutModel"));
+const reportModel_1 = __importDefault(require("./reportModel/reportModel"));
+const statistics_model_1 = __importDefault(require("./statistics/statistics.model"));
+const userModel_1 = __importDefault(require("./userModel/userModel"));
 class Models {
     UserModel(trx) {
         return new userModel_1.default(trx || database_1.db);
@@ -87,6 +88,10 @@ class Models {
     // payout request
     payoutModel(trx) {
         return new payoutModel_1.default(trx || database_1.db);
+    }
+    // Bank Details Model
+    bankDetailsModel(trx) {
+        return new bankDetailsModel_1.default(trx || database_1.db);
     }
 }
 exports.default = Models;

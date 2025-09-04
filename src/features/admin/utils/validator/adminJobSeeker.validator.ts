@@ -75,6 +75,13 @@ class AdminJobSeekerValidator {
 		lon: Joi.string(),
 		name: Joi.string().allow("").optional(),
 	});
+
+	public verifyBankDetailsValidator = Joi.object({
+		bank_id: Joi.number().required().messages({
+			"any.required": "Bank ID is required",
+			"number.base": "Bank ID must be a number",
+		}),
+	});
 }
 
 export default AdminJobSeekerValidator;

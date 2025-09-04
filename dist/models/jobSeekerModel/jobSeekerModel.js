@@ -167,7 +167,7 @@ class JobSeekerModel extends schema_1.default {
             // Fetch bank details
             const bankDetails = yield this.db("bank_details")
                 .withSchema(this.JOB_SEEKER)
-                .select("id", "account_name", "account_number", "bank_code", "is_primary", "is_verified", "created_at", "updated_at")
+                .select("id", "account_name", "account_number", "bank_code", "created_at", "updated_at")
                 .where("job_seeker_id", where.user_id);
             return Object.assign(Object.assign({}, profile), { applied_jobs: appliedJobs !== null && appliedJobs !== void 0 ? appliedJobs : [], bank_details: bankDetails !== null && bankDetails !== void 0 ? bankDetails : [] });
         });
@@ -182,51 +182,6 @@ class JobSeekerModel extends schema_1.default {
                 }
             })
                 .del();
-        });
-    }
-    // add bank details
-    addBankDetails(payload) {
-        return __awaiter(this, void 0, void 0, function* () {
-            console.log({ payload });
-            return yield this.db("bank_details")
-                .withSchema(this.JOB_SEEKER)
-                .insert(payload, "id");
-        });
-    }
-    // check primary account
-    getBankAccounts(where) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db("bank_details as bd")
-                .withSchema(this.JOB_SEEKER)
-                .select("bd.id", "bd.job_seeker_id", "bd.account_name", "bd.account_number", "bd.bank_code", "bd.is_primary")
-                .where("bd.job_seeker_id", where.user_id)
-                .modify((qb) => {
-                if (where.account_number) {
-                    qb.andWhere("bd.account_number", where.account_number);
-                }
-                if (where.is_primary) {
-                    qb.andWhere("bd.is_primary", where.is_primary);
-                }
-            })
-                .andWhere("bd.is_deleted", false);
-        });
-    }
-    markAsPrimaryBank(where, payload) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db("bank_details as bd")
-                .withSchema(this.JOB_SEEKER)
-                .update(payload)
-                .where("bd.id", where.id)
-                .returning("*");
-        });
-    }
-    verifyBankAccount(where) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db("bank_details as bd")
-                .withSchema(this.JOB_SEEKER)
-                .update({ is_verified: true })
-                .where("bd.id", where.id)
-                .returning("*");
         });
     }
     getJobSeekerLocation(query) {

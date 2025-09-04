@@ -4,6 +4,7 @@ export default class JobSeekerPayoutValidator {
 	requestPayoutValidator = Joi.object({
 		amount: Joi.number().required(),
 		note: Joi.string().required(),
+		bank_id: Joi.number().integer().required(),
 	});
 
 	queryValidator = Joi.object({

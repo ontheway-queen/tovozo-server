@@ -9,6 +9,7 @@ class JobSeekerPayoutValidator {
         this.requestPayoutValidator = joi_1.default.object({
             amount: joi_1.default.number().required(),
             note: joi_1.default.string().required(),
+            bank_id: joi_1.default.number().integer().required(),
         });
         this.queryValidator = joi_1.default.object({
             search: joi_1.default.string().optional(),

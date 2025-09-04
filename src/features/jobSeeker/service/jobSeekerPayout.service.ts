@@ -11,14 +11,29 @@ export default class JobSeekerPayoutService extends AbstractServices {
 	public async requestForPayout(req: Request) {
 		return await this.db.transaction(async (trx) => {
 			const { user_id } = req.jobSeeker;
-			const { amount, note } = req.body;
+			const { amount, note, bank_id } = req.body;
 
 			const jobseekerModel = this.Model.jobSeekerModel(trx);
 			const payoutModel = this.Model.payoutModel(trx);
+			const bankDetailsModel = this.Model.bankDetailsModel(trx);
 			console.log(1);
 			const jobSeeker = await jobseekerModel.getJobSeekerDetails({
 				user_id,
 			});
+
+			const { data: bank_details, total } =
+				await bankDetailsModel.getBankAccounts({
+					user_id,
+					id: bank_id,
+				});
+			if (total < 1) {
+				return {
+					success: false,
+					code: this.StatusCode.HTTP_NOT_FOUND,
+					message:
+						"Bank details not found. Please check the account information and try again.",
+				};
+			}
 
 			const availableBalance = parseFloat(
 				jobSeeker.available_balance as string
@@ -45,9 +60,7 @@ export default class JobSeekerPayoutService extends AbstractServices {
 				);
 			}
 			console.log(3);
-			const primaryBankAccount = Array.isArray(jobSeeker.bank_details)
-				? jobSeeker.bank_details.find((bd) => bd.is_primary === true)
-				: null;
+			const primaryBankAccount = bank_details[0];
 
 			if (!primaryBankAccount) {
 				throw new CustomError(

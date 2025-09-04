@@ -23,13 +23,25 @@ class JobSeekerPayoutService extends abstract_service_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const { user_id } = req.jobSeeker;
-                const { amount, note } = req.body;
+                const { amount, note, bank_id } = req.body;
                 const jobseekerModel = this.Model.jobSeekerModel(trx);
                 const payoutModel = this.Model.payoutModel(trx);
+                const bankDetailsModel = this.Model.bankDetailsModel(trx);
                 console.log(1);
                 const jobSeeker = yield jobseekerModel.getJobSeekerDetails({
                     user_id,
                 });
+                const { data: bank_details, total } = yield bankDetailsModel.getBankAccounts({
+                    user_id,
+                    id: bank_id,
+                });
+                if (total < 1) {
+                    return {
+                        success: false,
+                        code: this.StatusCode.HTTP_NOT_FOUND,
+                        message: "Bank details not found. Please check the account information and try again.",
+                    };
+                }
                 const availableBalance = parseFloat(jobSeeker.available_balance);
                 if (amount > availableBalance) {
                     throw new customError_1.default(`Requested amount exceeds your available balance of $${availableBalance}`, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
@@ -43,9 +55,7 @@ class JobSeekerPayoutService extends abstract_service_1.default {
                     throw new customError_1.default("You already have a pending payout request. Only one payout request can be made at a time.", this.StatusCode.HTTP_BAD_REQUEST);
                 }
                 console.log(3);
-                const primaryBankAccount = Array.isArray(jobSeeker.bank_details)
-                    ? jobSeeker.bank_details.find((bd) => bd.is_primary === true)
-                    : null;
+                const primaryBankAccount = bank_details[0];
                 if (!primaryBankAccount) {
                     throw new customError_1.default("Primary bank account is not exists for this user. Please add a primary bank account for payout and then request", this.StatusCode.HTTP_BAD_REQUEST);
                 }

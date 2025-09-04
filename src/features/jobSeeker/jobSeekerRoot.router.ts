@@ -1,4 +1,5 @@
 import AbstractRouter from "../../abstract/abstract.router";
+import { BankDetailsRouter } from "./router/bankDetails.router";
 import { JobSeekerCancellationApplicationLogsRouter } from "./router/jobSeekerCancellationLog.router";
 import { JobSeekerChatRouter } from "./router/jobSeekerChat.router";
 import { JobSeekerJobApplicationRouter } from "./router/jobSeekerJobApplication.router";
@@ -53,5 +54,7 @@ export default class JobSeekerRootRouter extends AbstractRouter {
 		this.router.use("/chat", new JobSeekerChatRouter().router);
 
 		this.router.use("/payouts", new JobSeekerPayoutRoute().router);
+
+		this.router.use("/bank-details", new BankDetailsRouter().router);
 	}
 }

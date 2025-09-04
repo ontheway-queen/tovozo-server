@@ -269,8 +269,6 @@ export default class JobSeekerModel extends Schema {
 				"account_name",
 				"account_number",
 				"bank_code",
-				"is_primary",
-				"is_verified",
 				"created_at",
 				"updated_at"
 			)
@@ -292,66 +290,6 @@ export default class JobSeekerModel extends Schema {
 				}
 			})
 			.del();
-	}
-
-	// add bank details
-	public async addBankDetails(payload: {
-		job_seeker_id: number;
-		account_name: string;
-		account_number: string;
-		bank_code: string;
-	}) {
-		console.log({ payload });
-		return await this.db("bank_details")
-			.withSchema(this.JOB_SEEKER)
-			.insert(payload, "id");
-	}
-
-	// check primary account
-	public async getBankAccounts(where: {
-		user_id?: number;
-		account_number?: string;
-		is_primary?: boolean;
-	}) {
-		return await this.db("bank_details as bd")
-			.withSchema(this.JOB_SEEKER)
-			.select(
-				"bd.id",
-				"bd.job_seeker_id",
-				"bd.account_name",
-				"bd.account_number",
-				"bd.bank_code",
-				"bd.is_primary"
-			)
-			.where("bd.job_seeker_id", where.user_id)
-			.modify((qb) => {
-				if (where.account_number) {
-					qb.andWhere("bd.account_number", where.account_number);
-				}
-				if (where.is_primary) {
-					qb.andWhere("bd.is_primary", where.is_primary);
-				}
-			})
-			.andWhere("bd.is_deleted", false);
-	}
-
-	public async markAsPrimaryBank(
-		where: { id: number[] },
-		payload: { is_primary: boolean }
-	) {
-		return await this.db("bank_details as bd")
-			.withSchema(this.JOB_SEEKER)
-			.update(payload)
-			.where("bd.id", where.id)
-			.returning("*");
-	}
-
-	public async verifyBankAccount(where: { id: number }) {
-		return await this.db("bank_details as bd")
-			.withSchema(this.JOB_SEEKER)
-			.update({ is_verified: true })
-			.where("bd.id", where.id)
-			.returning("*");
 	}
 
 	public async getJobSeekerLocation(query: { name?: string }): Promise<
