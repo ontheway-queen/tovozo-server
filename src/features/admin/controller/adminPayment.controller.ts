@@ -1,9 +1,11 @@
 import { Request, Response } from "express";
 import AbstractController from "../../../abstract/abstract.controller";
 import AdminPaymentService from "../services/adminPayment.service";
+import AdminPaymentValidator from "../utils/validator/adminPayment.validator";
 
 export default class AdminPaymentController extends AbstractController {
 	private service = new AdminPaymentService();
+	private validator = new AdminPaymentValidator();
 
 	constructor() {
 		super();
@@ -28,7 +30,7 @@ export default class AdminPaymentController extends AbstractController {
 	);
 
 	public getAllPaymentLedgersForAdmin = this.asyncWrapper.wrap(
-		null,
+		{ querySchema: this.validator.getAllPaymentLedgerQuery },
 		async (req: Request, res: Response) => {
 			const { code, ...data } =
 				await this.service.getAllPaymentLedgersForAdmin(req);

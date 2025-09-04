@@ -251,6 +251,7 @@ export default class PayoutModel extends Schema {
 			transaction_reference?: string;
 			approved_at: Date;
 			approved_by: number;
+			voucher_no?: string;
 		};
 	}) {
 		return await this.db("payout")

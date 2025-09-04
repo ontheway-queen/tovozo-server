@@ -58,14 +58,16 @@ class AdminPaymentService extends abstract_service_1.default {
     }
     getAllPaymentLedgersForAdmin(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { search, limit, skip, type } = req.query;
-            console.log(typeof type);
+            const { name, from_date, to_date, user_id, limit, skip, type } = req.query;
             const paymentModel = this.Model.paymnentModel();
             const { data, total } = yield paymentModel.getAllPaymentLedgerForAdmin({
-                search: search,
+                search: name,
                 limit: Number(limit),
                 skip: Number(skip),
                 type: type,
+                from_date: from_date,
+                to_date: to_date,
+                user_id: user_id,
             });
             return {
                 success: true,

@@ -415,11 +415,11 @@ create type dbo.pay_ledger_trx_type AS ENUM (
 -- job seeker ledger
 CREATE TABLE IF NOT EXISTS dbo.payment_ledger (
     id SERIAL PRIMARY KEY,
-    related_id INTEGER NOT NULL,
-    user_id INTEGER REFERENCES dbo.user(id),
-    trx_type dbo.pay_ledger_trx_type NOT NULL,
-    user_type dbo.user_type NOT NULL,
     voucher_no VARCHAR(50) NOT NULL,
+    trx_type dbo.pay_ledger_trx_type NOT NULL,
+    entry_type dbo.payment_entry_type NOT NULL,
+    user_id INTEGER REFERENCES dbo.user(id),
+    user_type dbo.user_type NOT NULL,
     amount NUMERIC(18,2) NOT NULL,
     details TEXT NOT NULL,
     ledger_date TIMESTAMP,

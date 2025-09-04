@@ -47,14 +47,18 @@ export default class AdminPaymentService extends AbstractServices {
 	}
 
 	public async getAllPaymentLedgersForAdmin(req: Request) {
-		const { search, limit, skip, type } = req.query;
-		console.log(typeof type);
+		const { name, from_date, to_date, user_id, limit, skip, type } =
+			req.query;
+
 		const paymentModel = this.Model.paymnentModel();
 		const { data, total } = await paymentModel.getAllPaymentLedgerForAdmin({
-			search: search as string,
+			search: name as string,
 			limit: Number(limit),
 			skip: Number(skip),
 			type: type as TypeUser,
+			from_date: from_date as string,
+			to_date: to_date as string,
+			user_id: user_id as unknown as number,
 		});
 		return {
 			success: true,

@@ -82,12 +82,12 @@ export default class AdminPayoutService extends AbstractServices {
 				...body,
 				managed_at: new Date(),
 				managed_by: adminUserId,
+				voucher_no: `TVZ-WD-${Date.now()}`,
 			};
 
 			await payoutModel.managePayout({ id: id, payload });
 
 			const baseLedgerPayload = {
-				related_id: id,
 				voucher_no: `TVZ-WD-${Date.now()}`,
 				ledger_date: new Date(),
 				created_at: new Date(),

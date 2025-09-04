@@ -185,7 +185,6 @@ class PaymentService extends abstract_service_1.default {
                 };
                 yield paymentModel.updatePayment(Number(paymentIntent.metadata.id), paymentPayload);
                 const baseLedgerPayload = {
-                    related_id: payment.id,
                     voucher_no: payment.payment_no,
                     ledger_date: new Date(),
                     created_at: new Date(),

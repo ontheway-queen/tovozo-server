@@ -247,7 +247,6 @@ export default class PaymentService extends AbstractServices {
 			);
 
 			const baseLedgerPayload = {
-				related_id: payment.id,
 				voucher_no: payment.payment_no,
 				ledger_date: new Date(),
 				created_at: new Date(),

@@ -25,10 +25,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_controller_1 = __importDefault(require("../../../abstract/abstract.controller"));
 const adminPayment_service_1 = __importDefault(require("../services/adminPayment.service"));
+const adminPayment_validator_1 = __importDefault(require("../utils/validator/adminPayment.validator"));
 class AdminPaymentController extends abstract_controller_1.default {
     constructor() {
         super();
         this.service = new adminPayment_service_1.default();
+        this.validator = new adminPayment_validator_1.default();
         this.getAllPaymentsForAdmin = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
             const _a = yield this.service.getAllPaymentsForAdmin(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
@@ -37,7 +39,7 @@ class AdminPaymentController extends abstract_controller_1.default {
             const _a = yield this.service.getSinglePayment(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
-        this.getAllPaymentLedgersForAdmin = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
+        this.getAllPaymentLedgersForAdmin = this.asyncWrapper.wrap({ querySchema: this.validator.getAllPaymentLedgerQuery }, (req, res) => __awaiter(this, void 0, void 0, function* () {
             const _a = yield this.service.getAllPaymentLedgersForAdmin(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));

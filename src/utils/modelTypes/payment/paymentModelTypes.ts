@@ -53,7 +53,6 @@ export interface IPaymentUpdate {
 }
 
 export interface IPaymentLedgerPayload {
-	related_id: number;
 	voucher_no: string;
 	ledger_date: Date;
 	created_at: Date;

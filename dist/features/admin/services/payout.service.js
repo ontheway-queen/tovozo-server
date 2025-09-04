@@ -77,10 +77,9 @@ class AdminPayoutService extends abstract_service_1.default {
                 if (!payout) {
                     throw new customError_1.default("Payout request not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }
-                const payload = Object.assign(Object.assign({}, body), { managed_at: new Date(), managed_by: adminUserId });
+                const payload = Object.assign(Object.assign({}, body), { managed_at: new Date(), managed_by: adminUserId, voucher_no: `TVZ-WD-${Date.now()}` });
                 yield payoutModel.managePayout({ id: id, payload });
                 const baseLedgerPayload = {
-                    related_id: id,
                     voucher_no: `TVZ-WD-${Date.now()}`,
                     ledger_date: new Date(),
                     created_at: new Date(),
