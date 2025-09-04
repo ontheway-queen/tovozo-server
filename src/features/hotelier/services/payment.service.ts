@@ -307,7 +307,11 @@ export default class PaymentService extends AbstractServices {
 					status: JOB_APPLICATION_STATUS.COMPLETED,
 				});
 
-			const jobPost = await jobPostModel.updateJobPostDetailsStatus({
+			const jobPost = await jobPostModel.getSingleJobPostForHotelier(
+				updatedApplication.job_post_details_id
+			);
+
+			await jobPostModel.updateJobPostDetailsStatus({
 				id: updatedApplication.job_post_details_id,
 				status: JOB_POST_DETAILS_STATUS.Completed,
 			});
@@ -402,9 +406,9 @@ export default class PaymentService extends AbstractServices {
 			await Lib.sendEmailDefault({
 				email,
 				emailSub: `Invoice ${payment.payment_no} for Job ${
-					jobPost[0].job_post_title
+					jobPost.title
 				} - ${new Date().toLocaleDateString()}`,
-				emailBody: `Attached is your invoice ${payment.payment_no} for the job "${jobPost[0].job_post_title}".
+				emailBody: `Attached is your invoice ${payment.payment_no} for the job "${jobPost.title}".
 Total Amount: $${payment.total_amount}.`,
 				attachments: [
 					{
@@ -419,7 +423,7 @@ Total Amount: $${payment.total_amount}.`,
 			// pdf for job seeker
 			const jobseekerPdfBuffer = await Lib.generateHtmlToPdfBuffer(
 				jobSeekerInvoiceTemplate({
-					to: "mehedihassan.m360ict@gmail.com",
+					to: jobseeker[0].email,
 					address: "This is test job seeker address",
 					invoice_no: payment.payment_no,
 					date: dayjs().format("DD/MM/YYYY"),
@@ -430,11 +434,11 @@ Total Amount: $${payment.total_amount}.`,
 			);
 
 			await Lib.sendEmailDefault({
-				email: "mehedihassan.m360ict@gmail.com",
+				email: jobseeker[0].email,
 				emailSub: `Invoice ${payment.payment_no} for Job ${
-					jobPost[0].job_post_title
+					jobPost.title
 				} - ${new Date().toLocaleDateString()}`,
-				emailBody: `Attached is your invoice ${payment.payment_no} for the job "${jobPost[0].job_post_title}".
+				emailBody: `Attached is your invoice ${payment.payment_no} for the job "${jobPost.title}".
 Total Amount: $${payment.job_seeker_pay}.`,
 				attachments: [
 					{

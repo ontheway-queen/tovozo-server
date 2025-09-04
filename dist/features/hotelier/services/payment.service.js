@@ -201,7 +201,8 @@ class PaymentService extends abstract_service_1.default {
                     job_seeker_id: Number(paymentIntent.metadata.job_seeker_id),
                     status: constants_1.JOB_APPLICATION_STATUS.COMPLETED,
                 });
-                const jobPost = yield jobPostModel.updateJobPostDetailsStatus({
+                const jobPost = yield jobPostModel.getSingleJobPostForHotelier(updatedApplication.job_post_details_id);
+                yield jobPostModel.updateJobPostDetailsStatus({
                     id: updatedApplication.job_post_details_id,
                     status: constants_1.JOB_POST_DETAILS_STATUS.Completed,
                 });
@@ -282,8 +283,8 @@ class PaymentService extends abstract_service_1.default {
                 }));
                 yield lib_1.default.sendEmailDefault({
                     email,
-                    emailSub: `Invoice ${payment.payment_no} for Job ${jobPost[0].job_post_title} - ${new Date().toLocaleDateString()}`,
-                    emailBody: `Attached is your invoice ${payment.payment_no} for the job "${jobPost[0].job_post_title}".
+                    emailSub: `Invoice ${payment.payment_no} for Job ${jobPost.title} - ${new Date().toLocaleDateString()}`,
+                    emailBody: `Attached is your invoice ${payment.payment_no} for the job "${jobPost.title}".
 Total Amount: $${payment.total_amount}.`,
                     attachments: [
                         {
@@ -296,7 +297,7 @@ Total Amount: $${payment.total_amount}.`,
                 console.log({ jobseeker });
                 // pdf for job seeker
                 const jobseekerPdfBuffer = yield lib_1.default.generateHtmlToPdfBuffer((0, invoiceTemplate_1.jobSeekerInvoiceTemplate)({
-                    to: "mehedihassan.m360ict@gmail.com",
+                    to: jobseeker[0].email,
                     address: "This is test job seeker address",
                     invoice_no: payment.payment_no,
                     date: (0, dayjs_1.default)().format("DD/MM/YYYY"),
@@ -305,9 +306,9 @@ Total Amount: $${payment.total_amount}.`,
                     authorize: "TOVOZO",
                 }));
                 yield lib_1.default.sendEmailDefault({
-                    email: "mehedihassan.m360ict@gmail.com",
-                    emailSub: `Invoice ${payment.payment_no} for Job ${jobPost[0].job_post_title} - ${new Date().toLocaleDateString()}`,
-                    emailBody: `Attached is your invoice ${payment.payment_no} for the job "${jobPost[0].job_post_title}".
+                    email: jobseeker[0].email,
+                    emailSub: `Invoice ${payment.payment_no} for Job ${jobPost.title} - ${new Date().toLocaleDateString()}`,
+                    emailBody: `Attached is your invoice ${payment.payment_no} for the job "${jobPost.title}".
 Total Amount: $${payment.job_seeker_pay}.`,
                     attachments: [
                         {
