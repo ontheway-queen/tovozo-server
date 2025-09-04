@@ -17,15 +17,13 @@ import {
 } from "../../../utils/modelTypes/common/commonModelTypes";
 import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
 import { registrationHotelierTemplate } from "../../../utils/templates/registrationHotelierTemplate";
+import { sendEmailOtpTemplate } from "../../../utils/templates/sendEmailOtpTemplate";
 import {
 	IHotelierAuthView,
 	IHotelierRegistrationBodyPayload,
 	IHotelierUser,
 	IOrganizationAddressPayload,
-	IOrganizationAmenitiesType,
-	IOrganizationName,
 } from "../utils/types/hotelierAuth.types";
-import { sendEmailOtpTemplate } from "../../../utils/templates/sendEmailOtpTemplate";
 
 export default class HotelierAuthService extends AbstractServices {
 	constructor() {
@@ -36,23 +34,19 @@ export default class HotelierAuthService extends AbstractServices {
 		return this.db.transaction(async (trx) => {
 			const files = (req.files as Express.Multer.File[]) || [];
 			const body = req.body as IHotelierRegistrationBodyPayload;
-			const { designation, ...user } = Lib.safeParseJSON(
-				body.user
-			) as IHotelierUser;
-			const organization = Lib.safeParseJSON(
-				body.organization
-			) as IOrganizationName;
+
+			const user = Lib.safeParseJSON(body.user) as IHotelierUser;
+			const organization = Lib.safeParseJSON(body.organization);
 			const organizationAddress = Lib.safeParseJSON(
 				body.organization_address
 			) as IOrganizationAddressPayload;
-			const amenitiesInput =
-				(Lib.safeParseJSON(
-					req.body.organization_amenities
-				) as IOrganizationAmenitiesType[]) || [];
 
 			for (const file of files) {
 				if (file.fieldname === "photo") {
 					user.photo = file.filename;
+				}
+				if (file.fieldname === "organization_photo") {
+					organization.photo = file.filename;
 				}
 			}
 
@@ -64,9 +58,10 @@ export default class HotelierAuthService extends AbstractServices {
 
 			const [existingUser] = await userModel.checkUser({
 				email,
-				phone_number,
 				type: USER_TYPE.HOTELIER,
 			});
+
+			console.log({ existingUser });
 
 			if (existingUser) {
 				if (existingUser.email === email) {
@@ -76,6 +71,7 @@ export default class HotelierAuthService extends AbstractServices {
 						message: this.ResMsg.EMAIL_ALREADY_EXISTS,
 					};
 				}
+				console.log(existingUser.phone_number, phone_number);
 				if (existingUser.phone_number === phone_number) {
 					return {
 						success: false,
@@ -103,41 +99,65 @@ export default class HotelierAuthService extends AbstractServices {
 				);
 			}
 
-			const organization_location = await commonModel.createLocation(
-				organizationAddress
-			);
+			const checkCountry = await commonModel.getAllCountry({
+				name: organizationAddress.country,
+			});
+
+			if (!checkCountry.length) {
+				throw new CustomError(
+					"Service is not available in this country",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
+
+			let stateId = 0;
+			const checkState = await commonModel.getAllStates({
+				country_id: checkCountry[0].id,
+				name: organizationAddress.state,
+			});
+			if (!checkState.length) {
+				const state = await commonModel.createState({
+					country_id: checkCountry[0].id,
+					name: organizationAddress.state,
+				});
+				stateId = state[0].id;
+			} else {
+				stateId = checkState[0].id;
+			}
+
+			let cityId = 0;
+			const checkCity = await commonModel.getAllCity({
+				country_id: checkCountry[0].id,
+				state_id: stateId,
+				name: organizationAddress.city,
+			});
+			if (!checkCity.length) {
+				const city = await commonModel.createCity({
+					country_id: checkCountry[0].id,
+					state_id: stateId,
+					name: organizationAddress.city,
+				});
+				cityId = city[0].id;
+			} else {
+				cityId = checkCity[0].id;
+			}
+
+			const organization_location = await commonModel.createLocation({
+				address: organizationAddress.address,
+				city_id: cityId,
+				latitude: organizationAddress.latitude,
+				longitude: organizationAddress.longitude,
+				postal_code: organizationAddress.postal_code,
+			});
 			const locationId = organization_location[0].id;
 			const userId = registration[0].id;
 
-			await userModel.createUserMaintenanceDesignation({
-				designation,
-				user_id: userId,
-			});
 			const orgInsert = await organizationModel.createOrganization({
 				name: organization.org_name,
 				user_id: userId,
+				photo: organization.photo,
 				location_id: locationId,
 			});
-
-			const organizationId = orgInsert[0].id;
-
-			const photos = files.map((file) => ({
-				organization_id: organizationId,
-				file: file.filename,
-			}));
-
-			if (photos.length) {
-				await organizationModel.addPhoto(photos);
-			}
-
-			const amenities = amenitiesInput.map((a: string) => ({
-				organization_id: organizationId,
-				amenity: a,
-			}));
-
-			if (amenities.length) {
-				await organizationModel.addAmenities(amenities);
-			}
 
 			const tokenData = {
 				user_id: userId,

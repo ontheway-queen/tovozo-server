@@ -5,6 +5,7 @@ export interface ICreateOrganizationPayload {
 	user_id: number;
 	details?: string;
 	status?: string;
+	photo?: string;
 	location_id: number;
 	is_deleted?: boolean;
 }
@@ -15,6 +16,7 @@ export interface IUpdateOrganizationPayload {
 	details?: string;
 	status?: string;
 	is_deleted?: boolean;
+	photo?: string;
 }
 
 export interface ICreatePhotoPayload {
@@ -44,6 +46,7 @@ export interface IGetOrganizationList {
 export interface IGetOrganization {
 	id: number;
 	org_name?: string;
+	org_photo?: string;
 	user_id: number;
 	created_at?: string;
 	status: UserStatusType;
@@ -52,6 +55,7 @@ export interface IGetOrganization {
 	email?: string;
 	phone_number?: string;
 	name?: string;
+	details?: string;
 	photo?: string;
 	location_name?: string;
 	address?: string;

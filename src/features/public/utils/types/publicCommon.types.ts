@@ -21,7 +21,7 @@ export interface ITokenParseHotelier {
 	username: string;
 	name: string;
 	photo: string | null;
-	user_email: string;
+	email: string;
 	phone_number: string | null;
 	status: boolean;
 }

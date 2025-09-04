@@ -16,10 +16,10 @@ const dayjs_1 = __importDefault(require("dayjs"));
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
 const socket_1 = require("../../../app/socket");
 const customError_1 = __importDefault(require("../../../utils/lib/customError"));
+const lib_1 = __importDefault(require("../../../utils/lib/lib"));
 const constants_1 = require("../../../utils/miscellaneous/constants");
 const commonModelTypes_1 = require("../../../utils/modelTypes/common/commonModelTypes");
 const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
-const lib_1 = __importDefault(require("../../../utils/lib/lib"));
 class HotelierJobTaskActivitiesService extends abstract_service_1.default {
     constructor() {
         super();
@@ -264,10 +264,9 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
             }));
         });
         this.approveEndJobTaskActivity = (req) => __awaiter(this, void 0, void 0, function* () {
-            const id = req.params.id;
-            console.log({ id });
-            const { user_id } = req.hotelier;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const id = req.params.id;
+                const { user_id, email, username } = req.hotelier;
                 const userModel = this.Model.UserModel(trx);
                 const paymentModel = this.Model.paymnentModel(trx);
                 const jobPostModel = this.Model.jobPostModel(trx);
@@ -278,16 +277,24 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                     type: userModelTypes_1.TypeUser.HOTELIER,
                 });
                 if (hotelier && hotelier.length < 1) {
-                    throw new customError_1.default("Organization nor found!", this.StatusCode.HTTP_NOT_FOUND);
+                    throw new customError_1.default("Organization not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }
                 const taskActivity = yield jobTaskActivitiesModel.getSingleTaskActivity({
                     id: Number(id),
                 });
-                console.log({ taskActivity });
-                if (taskActivity.application_status !==
-                    constants_1.JOB_APPLICATION_STATUS.IN_PROGRESS) {
-                    throw new customError_1.default(`You cannot perform this action because the application is still in progress.`, this.StatusCode.HTTP_FORBIDDEN);
+                if (!taskActivity) {
+                    throw new customError_1.default("Task activity with related id not found or does not belong to you.", this.StatusCode.HTTP_NOT_FOUND);
                 }
+                //! Need to uncomment later
+                // if (
+                // 	taskActivity.application_status !==
+                // 	JOB_APPLICATION_STATUS.IN_PROGRESS
+                // ) {
+                // 	throw new CustomError(
+                // 		`You cannot perform this action because the application is still in progress.`,
+                // 		this.StatusCode.HTTP_FORBIDDEN
+                // 	);
+                // }
                 const application = yield jobApplicationModel.getMyJobApplication({
                     job_application_id: taskActivity.job_application_id,
                     job_seeker_id: taskActivity.job_seeker_id,
@@ -313,27 +320,24 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 const hourlyRate = Number(jobPost.hourly_rate);
                 const jobSeekerPayRate = Number(jobPost.job_seeker_pay);
                 const platformFeeRate = Number(jobPost.platform_fee);
-                // Transaction fee (e.g., 2.9% + 0.30)
                 const feePercentage = 0.029;
                 const fixedFee = 0.3;
                 const baseAmount = Number((totalWorkingHours * hourlyRate).toFixed(2));
-                const totalAmount = Number(((baseAmount + fixedFee) / (1 - feePercentage)).toFixed(2));
-                const transactionFee = Number((totalAmount - baseAmount).toFixed(2));
+                const totalAmount = baseAmount;
+                const transactionFee = Number((baseAmount * feePercentage + fixedFee).toFixed(2));
                 const jobSeekerPay = Number((totalWorkingHours * jobSeekerPayRate).toFixed(2));
                 const platformFee = Number((totalWorkingHours * platformFeeRate).toFixed(2));
-                console.log({ jobSeekerPay });
-                console.log({ platformFee });
-                console.log({ totalAmount });
+                const rest_platform_fee = platformFee - transactionFee;
                 const paymentPayload = {
                     application_id: application.job_application_id,
                     total_amount: totalAmount,
                     status: constants_1.PAYMENT_STATUS.UNPAID,
                     job_seeker_pay: jobSeekerPay,
-                    platform_fee: platformFee,
+                    platform_fee: rest_platform_fee,
                     trx_fee: transactionFee,
                     payment_no: `TVZ-PAY-${paymentId}`,
                 };
-                yield paymentModel.initializePayment(paymentPayload);
+                const paymentRes = yield paymentModel.initializePayment(paymentPayload);
                 const res = yield jobTaskActivitiesModel.updateJobTaskActivity(taskActivity.id, {
                     end_approved_at: new Date(),
                     total_working_hours: totalWorkingHours,
@@ -348,6 +352,24 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 if (isJobSeekerExists && isJobSeekerExists.length < 1) {
                     throw new customError_1.default("Job Seeker not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }
+                // MQ if any payment is unpaid by hotelier
+                const cancelHotelierJobsIfUnpaidQueue = this.getQueue("cancelHotelierJobsIfUnpaid");
+                console.log({ jobPost });
+                yield cancelHotelierJobsIfUnpaidQueue.add("cancelHotelierJobsIfUnpaid", {
+                    id: jobPost.id,
+                    payment_id: paymentRes[0].id,
+                    organization_id: jobPost.organization_id,
+                    hotelier_id: jobPost.hotelier_id,
+                    hotelier_device_id: hotelier[0].device_id,
+                    photo: hotelier[0].photo,
+                    type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
+                    related_id: jobPost.id,
+                }, {
+                    delay: 24 * 60 * 60 * 1000,
+                    // delay: 1 * 60 * 1000, // 1 minute delay
+                    removeOnComplete: true,
+                    removeOnFail: false,
+                });
                 yield this.insertNotification(trx, userModelTypes_1.TypeUser.JOB_SEEKER, {
                     user_id: taskActivity.job_seeker_id,
                     sender_id: user_id,

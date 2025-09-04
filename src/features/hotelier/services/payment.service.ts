@@ -1,28 +1,30 @@
+import dayjs from "dayjs";
 import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
-import { stripe } from "../../../utils/miscellaneous/stripe";
+import config from "../../../app/config";
+import { getAllOnlineSocketIds, io } from "../../../app/socket";
 import CustomError from "../../../utils/lib/customError";
+import Lib from "../../../utils/lib/lib";
 import {
 	JOB_APPLICATION_STATUS,
 	JOB_POST_DETAILS_STATUS,
 	PAY_LEDGER_TRX_TYPE,
+	PAYMENT_ENTRY_TYPE,
 	PAYMENT_STATUS,
 	PAYMENT_TYPE,
 	USER_TYPE,
 } from "../../../utils/miscellaneous/constants";
-import {
-	IPaymentLedgerPayload,
-	IPaymentUpdate,
-} from "../../../utils/modelTypes/payment/paymentModelTypes";
-import config from "../../../app/config";
-import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
+import { stripe } from "../../../utils/miscellaneous/stripe";
 import {
 	NotificationTypeEnum,
 	TypeEmitNotificationEnum,
 } from "../../../utils/modelTypes/common/commonModelTypes";
-import { getAllOnlineSocketIds, io } from "../../../app/socket";
-import UserModel from "../../../models/userModel/userModel";
-import Lib from "../../../utils/lib/lib";
+import { IPaymentUpdate } from "../../../utils/modelTypes/payment/paymentModelTypes";
+import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
+import {
+	hotelierInvoiceTemplate,
+	jobSeekerInvoiceTemplate,
+} from "../../../utils/templates/invoiceTemplate";
 
 export default class PaymentService extends AbstractServices {
 	constructor() {
@@ -78,11 +80,10 @@ export default class PaymentService extends AbstractServices {
 
 	public async createCheckoutSession(req: Request) {
 		try {
-			const { job_title, job_seeker_id, job_seeker_name, stripe_acc_id } =
-				req.body;
+			const { job_title, job_seeker_id, job_seeker_name } = req.body;
 			const id = Number(req.params.id);
 			const { user_id } = req.hotelier;
-			console.log({ id });
+
 			if (!id) {
 				throw new CustomError(
 					"Id not found",
@@ -92,7 +93,6 @@ export default class PaymentService extends AbstractServices {
 
 			const paymentModel = this.Model.paymnentModel();
 			const payment = await paymentModel.getSinglePayment(id);
-			console.log({ payment });
 			if (!payment) {
 				throw new CustomError(
 					"Payment record not found",
@@ -100,21 +100,15 @@ export default class PaymentService extends AbstractServices {
 					"ERROR"
 				);
 			}
-			if (payment.status === PAYMENT_STATUS.PAID) {
-				throw new CustomError(
-					"The payment is already paid",
-					this.StatusCode.HTTP_CONFLICT
-				);
-			}
-			// const loginLink = await stripe.accounts.createLoginLink(
-			// 	"acct_1RsFUAED98rhPWLe"
-			// );
-			// console.log("Login Link:", loginLink.url);
+			//! Need to uncomment later
+			// if (payment.status === PAYMENT_STATUS.PAID) {
+			// 	throw new CustomError(
+			// 		"The payment is already paid",
+			// 		this.StatusCode.HTTP_CONFLICT
+			// 	);
+			// }
 
 			const total_amount = Number(payment.total_amount);
-			const jobSeekerPay = Number(payment.job_seeker_pay);
-
-			const applicationFeeAmount = total_amount - jobSeekerPay;
 
 			const session = await stripe.checkout.sessions.create({
 				payment_method_types: ["card"],
@@ -132,12 +126,6 @@ export default class PaymentService extends AbstractServices {
 					},
 				],
 				payment_intent_data: {
-					application_fee_amount: Math.round(
-						applicationFeeAmount * 100
-					),
-					transfer_data: {
-						destination: stripe_acc_id,
-					},
 					metadata: {
 						id,
 						job_seeker_id,
@@ -168,10 +156,9 @@ export default class PaymentService extends AbstractServices {
 	}
 
 	public async verifyCheckoutSession(req: Request) {
-		const { user_id } = req.hotelier;
 		return await this.db.transaction(async (trx) => {
 			const sessionId = req.query.session_id as string;
-			const { user_id } = req.hotelier;
+			const { user_id, email } = req.hotelier;
 			if (!user_id) {
 				throw new CustomError(
 					"Hotelier ID is required",
@@ -229,17 +216,17 @@ export default class PaymentService extends AbstractServices {
 					"ERROR"
 				);
 			}
-			if (payment.status === "paid") {
-				throw new CustomError(
-					"The payment is aleady paid",
-					this.StatusCode.HTTP_CONFLICT
-				);
-			}
+			//! Need to uncomment later
+			// if (payment.status === "Paid") {
+			// 	throw new CustomError(
+			// 		"The payment is aleady paid",
+			// 		this.StatusCode.HTTP_CONFLICT
+			// 	);
+			// }
 
 			const jobseeker = await this.Model.UserModel().checkUser({
 				id: Number(paymentIntent.metadata.job_seeker_id),
 			});
-			console.log({ jobseeker });
 			if (jobseeker && jobseeker.length < 1) {
 				throw new CustomError(
 					"User not found",
@@ -258,8 +245,8 @@ export default class PaymentService extends AbstractServices {
 				Number(paymentIntent.metadata.id),
 				paymentPayload as unknown as IPaymentUpdate
 			);
+
 			const baseLedgerPayload = {
-				payment_id: payment.id,
 				voucher_no: payment.payment_no,
 				ledger_date: new Date(),
 				created_at: new Date(),
@@ -271,33 +258,63 @@ export default class PaymentService extends AbstractServices {
 				trx_type: PAY_LEDGER_TRX_TYPE.IN,
 				user_type: USER_TYPE.JOB_SEEKER,
 				amount: payment.job_seeker_pay,
-				details: `Payment received for job "${paymentIntent.metadata.job_title}".`,
+				details: `Earnings credited for completing job "${paymentIntent.metadata.job_title}".`,
+				entry_type: PAYMENT_ENTRY_TYPE.INVOICE,
 			});
+
 			await paymentModel.createPaymentLedger({
 				...baseLedgerPayload,
 				trx_type: PAY_LEDGER_TRX_TYPE.IN,
 				user_type: USER_TYPE.ADMIN,
-				amount: payment.platform_fee,
+				amount: payment.total_amount,
+				entry_type: PAYMENT_ENTRY_TYPE.INVOICE,
 				details: `Platform fee received from job "${paymentIntent.metadata.job_title}" completed by ${paymentIntent.metadata.job_seeker_name}`,
 			});
+
+			await paymentModel.createPaymentLedger({
+				...baseLedgerPayload,
+				trx_type: PAY_LEDGER_TRX_TYPE.OUT,
+				user_type: USER_TYPE.ADMIN,
+				amount: payment.trx_fee,
+				details: `Transaction charge deducted for job "${paymentIntent.metadata.job_title}" completed by ${paymentIntent.metadata.job_seeker_name}`,
+				entry_type: PAYMENT_ENTRY_TYPE.INVOICE,
+			});
+
+			await paymentModel.createPaymentLedger({
+				...baseLedgerPayload,
+				trx_type: PAY_LEDGER_TRX_TYPE.OUT,
+				user_type: USER_TYPE.ADMIN,
+				amount: payment.job_seeker_pay,
+				details: `Wages transferred to ${paymentIntent.metadata.job_seeker_name} for successfully completing job "${paymentIntent.metadata.job_title}"`,
+				entry_type: PAYMENT_ENTRY_TYPE.INVOICE,
+			});
+
 			await paymentModel.createPaymentLedger({
 				...baseLedgerPayload,
 				user_id: user_id,
 				trx_type: PAY_LEDGER_TRX_TYPE.OUT,
 				user_type: USER_TYPE.HOTELIER,
+				entry_type: PAYMENT_ENTRY_TYPE.INVOICE,
 				amount: payment.total_amount,
 				details: `Payment sent for job "${paymentIntent.metadata.job_title}" to ${paymentIntent.metadata.job_seeker_name}.`,
 			});
+
 			const updatedApplication =
 				await jobApplicationModel.updateMyJobApplicationStatus({
 					application_id: payment.application_id,
 					job_seeker_id: Number(paymentIntent.metadata.job_seeker_id),
 					status: JOB_APPLICATION_STATUS.COMPLETED,
 				});
+
+			const jobPost = await jobPostModel.getSingleJobPostForHotelier(
+				updatedApplication.job_post_details_id
+			);
+
 			await jobPostModel.updateJobPostDetailsStatus({
 				id: updatedApplication.job_post_details_id,
 				status: JOB_POST_DETAILS_STATUS.Completed,
 			});
+
 			const chatSession = await chatModel.getChatSessionBetweenUsers({
 				hotelier_id: user_id,
 				job_seeker_id: Number(paymentIntent.metadata.job_seeker_id),
@@ -311,7 +328,7 @@ export default class PaymentService extends AbstractServices {
 					},
 				});
 			}
-			console.log({ payment });
+
 			await this.insertNotification(trx, TypeUser.JOB_SEEKER, {
 				user_id: Number(paymentIntent.metadata.job_seeker_id),
 				sender_id: user_id,
@@ -371,6 +388,65 @@ export default class PaymentService extends AbstractServices {
 					});
 				}
 			}
+
+			// pdf for hotelier
+			const hotelierPdfBuffer = await Lib.generateHtmlToPdfBuffer(
+				hotelierInvoiceTemplate({
+					to: email,
+					address: organization.address as string,
+					invoice_no: payment.payment_no,
+					date: dayjs().format("DD/MM/YYYY"),
+					amount: payment.total_amount,
+					customer: organization.name,
+					authorize: "TOVOZO",
+				})
+			);
+
+			await Lib.sendEmailDefault({
+				email,
+				emailSub: `Invoice ${payment.payment_no} for Job ${
+					jobPost.title
+				} - ${new Date().toLocaleDateString()}`,
+				emailBody: `Attached is your invoice ${payment.payment_no} for the job "${jobPost.title}".
+Total Amount: $${payment.total_amount}.`,
+				attachments: [
+					{
+						filename: `${payment.payment_no}.pdf`,
+						content: hotelierPdfBuffer,
+						contentType: "application/pdf",
+					},
+				],
+			});
+			console.log({ jobseeker });
+
+			// pdf for job seeker
+			const jobseekerPdfBuffer = await Lib.generateHtmlToPdfBuffer(
+				jobSeekerInvoiceTemplate({
+					to: jobseeker[0].email,
+					address: "This is test job seeker address",
+					invoice_no: payment.payment_no,
+					date: dayjs().format("DD/MM/YYYY"),
+					amount: payment.job_seeker_pay,
+					customer: jobseeker[0].name,
+					authorize: "TOVOZO",
+				})
+			);
+
+			await Lib.sendEmailDefault({
+				email: jobseeker[0].email,
+				emailSub: `Invoice ${payment.payment_no} for Job ${
+					jobPost.title
+				} - ${new Date().toLocaleDateString()}`,
+				emailBody: `Attached is your invoice ${payment.payment_no} for the job "${jobPost.title}".
+Total Amount: $${payment.job_seeker_pay}.`,
+				attachments: [
+					{
+						filename: `${payment.payment_no}.pdf`,
+						content: jobseekerPdfBuffer,
+						contentType: "application/pdf",
+					},
+				],
+			});
 
 			return {
 				success: true,

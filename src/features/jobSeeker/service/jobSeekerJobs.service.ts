@@ -38,6 +38,12 @@ export class JobSeekerServices extends AbstractServices {
 		const { id } = req.params;
 		const model = this.Model.jobPostModel();
 		const data = await model.getSingleJobPostForJobSeeker(Number(id));
+		if (!data) {
+			throw new CustomError(
+				"Job post not found with related id",
+				this.StatusCode.HTTP_NOT_FOUND
+			);
+		}
 		return {
 			success: true,
 			message: this.ResMsg.HTTP_OK,

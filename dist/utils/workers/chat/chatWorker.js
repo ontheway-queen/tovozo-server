@@ -29,7 +29,6 @@ class ChatWorker {
                     job_seeker_id,
                 });
                 if (existingSession) {
-                    console.log("Chat session already exists.");
                     yield chatModel.updateChatSession({
                         session_id: existingSession.id,
                         payload: {
@@ -95,8 +94,6 @@ class ChatWorker {
                         });
                     }
                 }
-                console.log(5);
-                console.log("Chat session created successfully.");
             }));
         });
     }

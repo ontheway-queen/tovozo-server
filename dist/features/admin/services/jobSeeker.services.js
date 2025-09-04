@@ -39,35 +39,27 @@ class AdminJobSeekerService extends abstract_service_1.default {
                 const parseInput = (key) => lib_1.default.safeParseJSON(req.body[key]) || {};
                 const userInput = parseInput("user");
                 const jobSeekerInput = parseInput("job_seeker");
-                const jobSeekerInfoInput = parseInput("job_seeker_info");
-                // Attach file references
-                let idCopyFound = false;
+                const jobSeekerLocationInput = parseInput("own_address");
+                if (!files.length) {
+                    return {
+                        success: false,
+                        code: this.StatusCode.HTTP_NOT_FOUND,
+                        message: "No photo was uploaded. Please add a photo and try again.",
+                    };
+                }
                 for (const { fieldname, filename } of files) {
                     if (fieldname === "photo") {
                         userInput.photo = filename;
-                        continue;
-                    }
-                    if (jobSeekerInput.nationality === constants_1.BRITISH_ID) {
-                        if (fieldname === "id_copy") {
-                            idCopyFound = true;
-                        }
-                        else if (fieldname !== "passport_copy") {
-                            throw new customError_1.default("Only id_copy is allowed for British nationality", this.StatusCode.HTTP_BAD_REQUEST);
-                        }
                     }
                     else {
-                        if (fieldname !== "visa_copy") {
-                            throw new customError_1.default("Only visa_copy required for Non-British Nationality", this.StatusCode.HTTP_BAD_REQUEST);
-                        }
+                        throw new customError_1.default(this.ResMsg.UNKNOWN_FILE_FIELD, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
                     }
-                    jobSeekerInfoInput[fieldname] = filename;
                 }
-                if (jobSeekerInput.nationality === constants_1.BRITISH_ID && !idCopyFound) {
-                    throw new customError_1.default("id_copy is required for British Nationality", this.StatusCode.HTTP_BAD_REQUEST);
-                }
+                // Attach file references
                 const { email, phone_number, password } = userInput, restUserData = __rest(userInput, ["email", "phone_number", "password"]);
                 const userModel = this.Model.UserModel(trx);
                 const jobSeekerModel = this.Model.jobSeekerModel(trx);
+                const commonModel = this.Model.commonModel(trx);
                 const existingUser = yield userModel.checkUser({
                     email,
                     phone_number,
@@ -99,8 +91,61 @@ class AdminJobSeekerService extends abstract_service_1.default {
                     throw new customError_1.default(this.ResMsg.HTTP_BAD_REQUEST, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
                 }
                 const jobSeekerId = registration[0].id;
-                yield jobSeekerModel.createJobSeeker(Object.assign(Object.assign({}, jobSeekerInput), { user_id: jobSeekerId }));
-                yield jobSeekerModel.createJobSeekerInfo(Object.assign(Object.assign({}, jobSeekerInfoInput), { job_seeker_id: jobSeekerId }));
+                let locationId = null;
+                if (jobSeekerLocationInput === null || jobSeekerLocationInput === void 0 ? void 0 : jobSeekerLocationInput.address) {
+                    let city_id;
+                    if (jobSeekerLocationInput.city) {
+                        if (!jobSeekerLocationInput.state &&
+                            !jobSeekerLocationInput.country) {
+                            throw new customError_1.default("state and country required", this.StatusCode.HTTP_BAD_REQUEST);
+                        }
+                        const checkCountry = yield commonModel.getAllCountry({
+                            name: jobSeekerLocationInput.country,
+                        });
+                        if (!checkCountry.length) {
+                            throw new customError_1.default("Service not available in this country", this.StatusCode.HTTP_BAD_REQUEST);
+                        }
+                        let stateId = 0;
+                        const checkState = yield commonModel.getAllStates({
+                            country_id: checkCountry[0].id,
+                            name: jobSeekerLocationInput.state,
+                        });
+                        if (!checkState.length) {
+                            const state = yield commonModel.createState({
+                                country_id: checkCountry[0].id,
+                                name: jobSeekerLocationInput.state,
+                            });
+                            stateId = state[0].id;
+                        }
+                        else {
+                            stateId = checkState[0].id;
+                        }
+                        const checkCity = yield commonModel.getAllCity({
+                            country_id: checkCountry[0].id,
+                            state_id: stateId,
+                            name: jobSeekerLocationInput.city,
+                        });
+                        if (!checkCity.length) {
+                            const city = yield commonModel.createCity({
+                                country_id: checkCountry[0].id,
+                                state_id: stateId,
+                                name: jobSeekerLocationInput.city,
+                            });
+                            city_id = city[0].id;
+                        }
+                        else {
+                            city_id = checkCity[0].id;
+                        }
+                    }
+                    const [locationRecord] = yield commonModel.createLocation({
+                        city_id,
+                        address: jobSeekerLocationInput.address,
+                        longitude: jobSeekerLocationInput.longitude,
+                        latitude: jobSeekerLocationInput.latitude,
+                    });
+                    locationId = locationRecord.id;
+                }
+                yield jobSeekerModel.createJobSeeker(Object.assign(Object.assign({}, jobSeekerInput), { user_id: jobSeekerId, location_id: locationId }));
                 const tokenPayload = {
                     user_id: jobSeekerId,
                     name: userInput.name,
@@ -182,9 +227,10 @@ class AdminJobSeekerService extends abstract_service_1.default {
     }
     updateJobSeeker(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const id = req.params.id;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
-                var _a;
+                var _a, _b, _c, _d, _e, _f, _g;
+                const user_id = req.admin.user_id;
+                const id = req.params.id;
                 const model = this.Model.jobSeekerModel(trx);
                 const data = yield model.getJobSeekerDetails({ user_id: id });
                 if (!data) {
@@ -198,32 +244,17 @@ class AdminJobSeekerService extends abstract_service_1.default {
                 const parsed = {
                     user: lib_1.default.safeParseJSON(req.body.user) || {},
                     jobSeeker: lib_1.default.safeParseJSON(req.body.job_seeker) || {},
-                    jobSeekerInfo: lib_1.default.safeParseJSON(req.body.job_seeker_info) || {},
                     ownAddress: lib_1.default.safeParseJSON(req.body.own_address) || {},
-                    addJobPreferences: lib_1.default.safeParseJSON(req.body.add_job_preferences) || [],
-                    delJobPreferences: lib_1.default.safeParseJSON(req.body.del_job_preferences) || [],
-                    addJobLocations: lib_1.default.safeParseJSON(req.body.add_job_locations) || [],
-                    delJobLocations: lib_1.default.safeParseJSON(req.body.del_job_locations) || [],
-                    updateJobLocations: lib_1.default.safeParseJSON(req.body.update_job_locations) || [],
-                    addJobShifting: lib_1.default.safeParseJSON(req.body.add_job_shifting) || [],
-                    delJobShifting: lib_1.default.safeParseJSON(req.body.del_job_shifting) || [],
                 };
                 for (const { fieldname, filename } of files) {
                     switch (fieldname) {
-                        case "resume":
-                            parsed.jobSeekerInfo.resume = filename;
-                            break;
                         case "photo":
                             parsed.user.photo = filename;
                             break;
-                        case "visa_copy":
-                            parsed.jobSeekerInfo.visa_copy = filename;
-                            break;
                         case "id_copy":
-                            parsed.jobSeekerInfo.id_copy = filename;
-                            break;
-                        case "passport_copy":
-                            parsed.jobSeekerInfo.passport_copy = filename;
+                            parsed.jobSeeker.id_copy = filename;
+                        case "work_permit":
+                            parsed.jobSeeker.work_permit = filename;
                             break;
                         default:
                             throw new customError_1.default(this.ResMsg.UNKNOWN_FILE_FIELD, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
@@ -236,7 +267,6 @@ class AdminJobSeekerService extends abstract_service_1.default {
                     id: id,
                     type: constants_1.USER_TYPE.JOB_SEEKER,
                 });
-                console.log({ existingUser });
                 if (!existingUser) {
                     throw new customError_1.default(`The requested job seeker account with ID ${id} not found`, this.StatusCode.HTTP_NOT_FOUND, "ERROR");
                 }
@@ -254,10 +284,86 @@ class AdminJobSeekerService extends abstract_service_1.default {
                 if (Object.keys(parsed.user).length > 0) {
                     updateTasks.push(userModel.updateProfile(parsed.user, { id }));
                 }
+                let stateId = 0;
+                let city_id = 0;
                 if (Object.keys(parsed.ownAddress).length > 0) {
-                    updateTasks.push(commonModel.updateLocation(parsed.ownAddress, {
-                        location_id: parsed.ownAddress.id,
-                    }));
+                    if (parsed.ownAddress.city) {
+                        if (!parsed.ownAddress.state &&
+                            !parsed.ownAddress.country) {
+                            throw new customError_1.default("state and country required", this.StatusCode.HTTP_BAD_REQUEST);
+                        }
+                        // check country
+                        const checkCountry = yield commonModel.getAllCountry({
+                            name: parsed.ownAddress.country,
+                        });
+                        if (!checkCountry.length) {
+                            throw new customError_1.default("Service not available in this country", this.StatusCode.HTTP_BAD_REQUEST);
+                        }
+                        const checkState = yield commonModel.getAllStates({
+                            country_id: checkCountry[0].id,
+                            name: parsed.ownAddress.state,
+                        });
+                        if (!checkState.length) {
+                            const state = yield commonModel.createState({
+                                country_id: checkCountry[0].id,
+                                name: parsed.ownAddress.state,
+                            });
+                            stateId = state[0].id;
+                        }
+                        else {
+                            stateId = checkState[0].id;
+                        }
+                        const checkCity = yield commonModel.getAllCity({
+                            country_id: checkCountry[0].id,
+                            state_id: stateId,
+                            name: parsed.ownAddress.city,
+                        });
+                        if (!checkCity.length) {
+                            const city = yield commonModel.createCity({
+                                country_id: checkCountry[0].id,
+                                state_id: stateId,
+                                name: parsed.ownAddress.city,
+                            });
+                            city_id = city[0].id;
+                        }
+                        else {
+                            city_id = checkCity[0].id;
+                        }
+                    }
+                    let checkLocation;
+                    console.log("ll", data.home_location_id);
+                    if (data.home_location_id) {
+                        checkLocation = yield commonModel.getLocation({
+                            location_id: data.home_location_id,
+                        });
+                        console.log({ checkLocation });
+                        if (!checkLocation) {
+                            throw new customError_1.default("Location not found!", this.StatusCode.HTTP_NOT_FOUND);
+                        }
+                        updateTasks.push(commonModel.updateLocation({
+                            city_id: (checkLocation === null || checkLocation === void 0 ? void 0 : checkLocation.city_id) || city_id,
+                            name: parsed.ownAddress.name,
+                            address: parsed.ownAddress.address,
+                            longitude: parsed.ownAddress.longitude,
+                            latitude: parsed.ownAddress.latitude,
+                            postal_code: parsed.ownAddress.postal_code,
+                            is_home_address: parsed.ownAddress.is_home_address,
+                        }, {
+                            location_id: data.home_location_id,
+                        }));
+                    }
+                    else {
+                        const [locationRecord] = yield commonModel.createLocation({
+                            city_id,
+                            name: (_b = parsed.ownAddress) === null || _b === void 0 ? void 0 : _b.name,
+                            address: (_c = parsed.ownAddress) === null || _c === void 0 ? void 0 : _c.address,
+                            longitude: (_d = parsed.ownAddress) === null || _d === void 0 ? void 0 : _d.longitude,
+                            latitude: (_e = parsed.ownAddress) === null || _e === void 0 ? void 0 : _e.latitude,
+                            postal_code: (_f = parsed.ownAddress) === null || _f === void 0 ? void 0 : _f.postal_code,
+                            is_home_address: (_g = parsed.ownAddress) === null || _g === void 0 ? void 0 : _g.is_home_address,
+                        });
+                        parsed.jobSeeker.location_id = locationRecord.id;
+                    }
                 }
                 if (Object.keys(parsed.jobSeeker).length > 0) {
                     if (parsed.jobSeeker.account_status) {
@@ -271,73 +377,35 @@ class AdminJobSeekerService extends abstract_service_1.default {
                             checkJobSeeker.account_status) {
                             throw new customError_1.default(`Already updated status to ${parsed.jobSeeker.account_status}`, this.StatusCode.HTTP_CONFLICT);
                         }
+                        if (parsed.jobSeeker.final_completed) {
+                            if (!checkJobSeeker.is_completed) {
+                                throw new customError_1.default("Job Seeker account not completed!", this.StatusCode.HTTP_CONFLICT);
+                            }
+                            parsed.jobSeeker.final_completed_at =
+                                new Date().toISOString();
+                            parsed.jobSeeker.final_completed_by = user_id;
+                            yield this.insertNotification(trx, constants_1.USER_TYPE.JOB_SEEKER, {
+                                title: "Your account has been completed",
+                                content: `Your account has been completed. You can now start applying for jobs.`,
+                                related_id: id,
+                                sender_type: constants_1.USER_TYPE.ADMIN,
+                                sender_id: user_id,
+                                user_id: id,
+                                type: "JOB_SEEKER_VERIFICATION",
+                            });
+                        }
                     }
                     updateTasks.push(jobSeekerModel.updateJobSeeker(parsed.jobSeeker, {
                         user_id: id,
                     }));
                 }
-                if (Object.keys(parsed.jobSeekerInfo).length > 0) {
-                    updateTasks.push(jobSeekerModel.updateJobSeekerInfo(parsed.jobSeekerInfo, {
-                        job_seeker_id: id,
-                    }));
-                }
-                if (parsed.delJobPreferences.length > 0) {
-                    updateTasks.push(jobSeekerModel.deleteJobPreferences({
-                        job_seeker_id: id,
-                        job_ids: parsed.delJobPreferences,
-                    }));
-                }
-                if (parsed.delJobLocations.length > 0) {
-                    updateTasks.push(jobSeekerModel.deleteJobLocations({
-                        job_seeker_id: id,
-                        location_ids: parsed.delJobLocations,
-                    }));
-                }
-                if (parsed.delJobShifting.length > 0) {
-                    updateTasks.push(jobSeekerModel.deleteJobShifting({
-                        job_seeker_id: id,
-                        name: parsed.delJobShifting,
-                    }));
-                }
-                if (parsed.updateJobLocations.length > 0) {
-                    for (const loc of parsed.updateJobLocations) {
-                        updateTasks.push(commonModel.updateLocation(loc, { location_id: loc.id }));
-                    }
-                }
-                if (parsed.addJobLocations.length > 0) {
-                    const locationIds = yield commonModel.createLocation(parsed.addJobLocations);
-                    const jobLocations = locationIds.map((loc) => ({
-                        job_seeker_id: id,
-                        location_id: loc.id,
-                    }));
-                    updateTasks.push(jobSeekerModel.setJobLocations(jobLocations));
-                }
-                if (parsed.addJobPreferences.length > 0) {
-                    const existingPrefer = yield jobSeekerModel.getJobPreferences(id);
-                    const existingJobIds = new Set(existingPrefer.map((p) => p.job_id));
-                    const newPrefer = parsed.addJobPreferences.filter((id) => !existingJobIds.has(id));
-                    if (newPrefer.length !== parsed.addJobPreferences.length) {
-                        throw new customError_1.default("Some job preferences already exist", this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
-                    }
-                    const preferences = newPrefer.map((job_id) => ({
-                        job_seeker_id: id,
-                        job_id,
-                    }));
-                    updateTasks.push(jobSeekerModel.setJobPreferences(preferences));
-                }
-                if (parsed.addJobShifting.length > 0) {
-                    const existingShifts = yield jobSeekerModel.getJobShifting(id);
-                    const existingShiftNames = new Set(existingShifts.map((s) => s.shift));
-                    const newShifts = parsed.addJobShifting.filter((shift) => !existingShiftNames.has(shift));
-                    if (newShifts.length !== parsed.addJobShifting.length) {
-                        throw new customError_1.default("Some job shifts already exist", this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
-                    }
-                    const shifts = newShifts.map((shift) => ({
-                        job_seeker_id: id,
-                        shift,
-                    }));
-                    updateTasks.push(jobSeekerModel.setJobShifting(shifts));
-                }
+                // if (parsed.updateJobLocations.length > 0) {
+                // 	for (const loc of parsed.updateJobLocations) {
+                // 		updateTasks.push(
+                // 			commonModel.updateLocation(loc, { location_id: loc.id })
+                // 		);
+                // 	}
+                // }
                 yield Promise.all(updateTasks);
                 if (parsed.jobSeeker.account_status === constants_1.USER_STATUS.ACTIVE) {
                     yield lib_1.default.sendEmailDefault({
@@ -352,6 +420,75 @@ class AdminJobSeekerService extends abstract_service_1.default {
                     endpoint: req.originalUrl,
                     type: "UPDATE",
                     payload: JSON.stringify(parsed),
+                });
+                return {
+                    success: true,
+                    code: this.StatusCode.HTTP_OK,
+                    message: this.ResMsg.HTTP_OK,
+                };
+            }));
+        });
+    }
+    verifyJobSeeker(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const adminUserId = req.admin.user_id;
+                const jobSeekerId = Number(req.params.id);
+                const jobSeekerModel = this.Model.jobSeekerModel(trx);
+                const userModel = this.Model.UserModel(trx);
+                const jobSeekerData = yield jobSeekerModel.getJobSeekerDetails({
+                    user_id: jobSeekerId,
+                });
+                if (!jobSeekerData) {
+                    return {
+                        success: false,
+                        message: `The requested job seeker account with ID ${jobSeekerId} not found`,
+                        code: this.StatusCode.HTTP_NOT_FOUND,
+                    };
+                }
+                if (jobSeekerData.final_completed) {
+                    return {
+                        success: false,
+                        message: `The job seeker account with ID ${jobSeekerId} has already been verified and cannot be updated again.`,
+                        code: this.StatusCode.HTTP_BAD_REQUEST,
+                    };
+                }
+                const [existingUser] = yield userModel.checkUser({
+                    id: jobSeekerId,
+                    type: constants_1.USER_TYPE.JOB_SEEKER,
+                });
+                if (!existingUser) {
+                    throw new customError_1.default(`The requested user account with ID ${jobSeekerId} not found`, this.StatusCode.HTTP_NOT_FOUND, "ERROR");
+                }
+                const updateTasks = [];
+                updateTasks.push(jobSeekerModel.updateJobSeeker({
+                    final_completed: true,
+                    final_completed_by: adminUserId,
+                    final_completed_at: new Date().toDateString(),
+                }, { user_id: jobSeekerId }));
+                yield Promise.all(updateTasks);
+                yield this.insertNotification(trx, constants_1.USER_TYPE.JOB_SEEKER, {
+                    title: "Your documents have been verified",
+                    content: `We have successfully verified your submitted documents (ID copy and work permit).  
+Your account is now active, and you can start applying for jobs.`,
+                    related_id: jobSeekerId,
+                    sender_type: constants_1.USER_TYPE.ADMIN,
+                    sender_id: adminUserId,
+                    user_id: jobSeekerId,
+                    type: "JOB_SEEKER_VERIFICATION",
+                });
+                yield lib_1.default.sendEmailDefault({
+                    email: existingUser.email,
+                    emailSub: "Your documents have been verified",
+                    emailBody: `We have successfully verified your submitted documents (ID copy and work permit).  
+Your account is now active, and you can start applying for jobs.`,
+                });
+                yield this.insertAdminAudit(trx, {
+                    details: `Job seeker (${existingUser.name} - ${jobSeekerId}) documents have been verified`,
+                    created_by: adminUserId,
+                    endpoint: req.originalUrl,
+                    type: "UPDATE",
+                    payload: JSON.stringify({ account_status: constants_1.USER_STATUS.ACTIVE }),
                 });
                 return {
                     success: true,

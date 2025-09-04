@@ -219,7 +219,7 @@ class CancellationLogModel extends schema_1.default {
                 .withSchema(this.DBO_SCHEMA)
                 .leftJoin("user as u", "u.id", "cr.reporter_id")
                 .leftJoin("job_post_details as jpd", "cr.related_id", "jpd.id")
-                .leftJoin("jobs as j", "jpd.job_id", "j.id")
+                .leftJoin("jobs as j", "j.id", "jpd.job_id")
                 .where("cr.report_type", "CANCEL_JOB_POST");
             const jobApplicationQuery = this.db
                 .select("cr.id", "j.title", "u.name as reporter_name", "cr.report_type", "cr.status")
@@ -230,6 +230,7 @@ class CancellationLogModel extends schema_1.default {
                 .leftJoin("job_post_details as jpd", "ja.job_post_details_id", "jpd.id")
                 .leftJoin("jobs as j", "jpd.job_id", "j.id")
                 .where("cr.report_type", "CANCEL_APPLICATION");
+            console.log({ jobPostQuery, jobApplicationQuery });
             const applyFilters = (qb) => {
                 if (status)
                     qb.andWhere("cr.status", status);

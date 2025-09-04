@@ -6,12 +6,10 @@ import {
 	CANCELLATION_REPORT_TYPE,
 	JOB_APPLICATION_STATUS,
 	JOB_POST_DETAILS_STATUS,
-	REPORT_TYPE,
 } from "../../../utils/miscellaneous/constants";
 import {
 	ICancellationReportStatus,
 	ICancellationReportType,
-	IGetReportsQuery,
 } from "../../../utils/modelTypes/cancellationReport/cancellationReport.types";
 import { IJobPostDetailsStatus } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
 

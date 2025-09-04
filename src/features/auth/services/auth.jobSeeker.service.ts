@@ -4,7 +4,6 @@ import config from "../../../app/config";
 import CustomError from "../../../utils/lib/customError";
 import Lib from "../../../utils/lib/lib";
 import {
-	BRITISH_ID,
 	LOGIN_TOKEN_EXPIRES_IN,
 	OTP_TYPES,
 	PROJECT_NAME,
@@ -18,15 +17,13 @@ import {
 } from "../../../utils/modelTypes/common/commonModelTypes";
 import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
 import { registrationJobSeekerTemplate } from "../../../utils/templates/jobSeekerRegistrationTemplate";
+import { sendEmailOtpTemplate } from "../../../utils/templates/sendEmailOtpTemplate";
 import {
 	IJobSeekerAuthView,
-	IJobSeekerInfoBody,
 	IJobSeekerLocationInfo,
 	IJobSeekerNationalityBody,
 	IJobSeekerUserBody,
 } from "../utils/types/jobSeekerAuth.types";
-import { sendEmailOtpTemplate } from "../../../utils/templates/sendEmailOtpTemplate";
-import { io } from "../../../app/socket";
 
 class JobSeekerAuthService extends AbstractServices {
 	//registration service
@@ -41,55 +38,29 @@ class JobSeekerAuthService extends AbstractServices {
 			const jobSeekerInput = parseInput(
 				"job_seeker"
 			) as IJobSeekerNationalityBody;
-			const jobSeekerInfoInput = parseInput(
-				"job_seeker_info"
-			) as IJobSeekerInfoBody;
+
 			const jobSeekerLocationInput = parseInput(
 				"own_address"
 			) as IJobSeekerLocationInfo;
 
-			const validFileFields = [
-				"visa_copy",
-				"id_copy",
-				"photo",
-				"passport_copy",
-			];
-
-			let hasIdCopy = false;
-			let hasVisaCopy = false;
-
-			files.forEach(({ fieldname, filename }) => {
-				if (!validFileFields.includes(fieldname)) {
+			if (!files.length) {
+				return {
+					success: false,
+					code: this.StatusCode.HTTP_NOT_FOUND,
+					message:
+						"No photo was uploaded. Please add a photo and try again.",
+				};
+			}
+			for (const { fieldname, filename } of files) {
+				if (fieldname === "photo") {
+					userInput.photo = filename;
+				} else {
 					throw new CustomError(
 						this.ResMsg.UNKNOWN_FILE_FIELD,
 						this.StatusCode.HTTP_BAD_REQUEST,
 						"ERROR"
 					);
 				}
-
-				if (fieldname === "photo") {
-					userInput.photo = filename;
-				} else {
-					if (fieldname === "id_copy") hasIdCopy = true;
-					if (fieldname === "visa_copy") hasVisaCopy = true;
-
-					jobSeekerInfoInput[fieldname as keyof IJobSeekerInfoBody] =
-						filename;
-				}
-			});
-
-			// Validate required docs
-			if (jobSeekerInput.nationality === BRITISH_ID && !hasIdCopy) {
-				throw new CustomError(
-					"id_copy required for British Nationality",
-					this.StatusCode.HTTP_BAD_REQUEST
-				);
-			}
-			if (jobSeekerInput.nationality !== BRITISH_ID && !hasVisaCopy) {
-				throw new CustomError(
-					"visa_copy required for non-British Nationality",
-					this.StatusCode.HTTP_BAD_REQUEST
-				);
 			}
 
 			const { email, phone_number, password, ...restUserData } =
@@ -146,23 +117,72 @@ class JobSeekerAuthService extends AbstractServices {
 
 			let locationId: number | null = null;
 			if (jobSeekerLocationInput?.address) {
+				let city_id;
+				if (jobSeekerLocationInput.city) {
+					if (
+						!jobSeekerLocationInput.state &&
+						!jobSeekerLocationInput.country
+					) {
+						throw new CustomError(
+							"state and country required",
+							this.StatusCode.HTTP_BAD_REQUEST
+						);
+					}
+
+					const checkCountry = await commonModel.getAllCountry({
+						name: jobSeekerLocationInput.country,
+					});
+
+					if (!checkCountry.length) {
+						throw new CustomError(
+							"Service not available in this country",
+							this.StatusCode.HTTP_BAD_REQUEST
+						);
+					}
+
+					let stateId = 0;
+					const checkState = await commonModel.getAllStates({
+						country_id: checkCountry[0].id,
+						name: jobSeekerLocationInput.state,
+					});
+					if (!checkState.length) {
+						const state = await commonModel.createState({
+							country_id: checkCountry[0].id,
+							name: jobSeekerLocationInput.state,
+						});
+						stateId = state[0].id;
+					} else {
+						stateId = checkState[0].id;
+					}
+
+					const checkCity = await commonModel.getAllCity({
+						country_id: checkCountry[0].id,
+						state_id: stateId,
+						name: jobSeekerLocationInput.city,
+					});
+					if (!checkCity.length) {
+						const city = await commonModel.createCity({
+							country_id: checkCountry[0].id,
+							state_id: stateId,
+							name: jobSeekerLocationInput.city,
+						});
+						city_id = city[0].id;
+					} else {
+						city_id = checkCity[0].id;
+					}
+				}
 				const [locationRecord] = await commonModel.createLocation({
+					city_id,
 					address: jobSeekerLocationInput.address,
 					longitude: jobSeekerLocationInput.longitude,
 					latitude: jobSeekerLocationInput.latitude,
 				});
 				locationId = locationRecord.id;
 			}
-
 			await jobSeekerModel.createJobSeeker({
 				...jobSeekerInput,
 				user_id: jobSeekerId,
 				location_id: locationId as number,
-			});
-
-			await jobSeekerModel.createJobSeekerInfo({
-				...jobSeekerInfoInput,
-				job_seeker_id: jobSeekerId,
 			});
 
 			const tokenPayload = {
@@ -175,7 +195,6 @@ class JobSeekerAuthService extends AbstractServices {
 				status: true,
 				create_date: new Date(),
 			};
-
 			await this.insertNotification(trx, TypeUser.ADMIN, {
 				user_id: jobSeekerId,
 				sender_type: USER_TYPE.ADMIN,
@@ -187,7 +206,6 @@ class JobSeekerAuthService extends AbstractServices {
 				related_id: jobSeekerId,
 				type: NotificationTypeEnum.JOB_SEEKER_VERIFICATION,
 			});
-
 			await Lib.sendEmailDefault({
 				email,
 				emailSub: `Your registration with ${PROJECT_NAME} is under review`,

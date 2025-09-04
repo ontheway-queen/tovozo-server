@@ -45,6 +45,18 @@ class HotelierJobPostService extends AbstractServices {
 			}
 			console.log({ checkOrganization });
 
+			const unpaidJobs = await model.getWorkFinishedJobForHotelier({
+				organization_id: checkOrganization.id,
+			});
+
+			if (unpaidJobs) {
+				throw new CustomError(
+					"You have previous unpaid jobs. Please pay them before posting a new job.",
+					this.StatusCode.HTTP_BAD_REQUEST,
+					"ERROR"
+				);
+			}
+
 			body.job_post.organization_id = checkOrganization.id;
 
 			const res = await model.createJobPost(body.job_post);

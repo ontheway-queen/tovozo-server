@@ -43,7 +43,9 @@ export interface IJobSeekerUserBody {
 }
 
 export interface IJobSeekerLocationInfo {
-	city_id?: number;
+	city?: string;
+	state: string;
+	country: string;
 	name?: string;
 	address?: string;
 	longitude?: number;
@@ -53,7 +55,7 @@ export interface IJobSeekerLocationInfo {
 
 export interface IJobSeekerInfoBody {
 	visa_copy: string;
-	id_copy: string;
+
 	passport_copy: string;
 	date_of_birth?: string;
 	work_permit?: string;
@@ -63,6 +65,11 @@ export interface IJobSeekerInfoBody {
 }
 
 export interface IJobSeekerNationalityBody {
-	nationality: number;
 	account_status?: UserStatusType;
+	final_completed?: boolean;
+	final_completed_at?: string;
+	final_completed_by?: number;
+	id_copy?: string;
+	work_permit?: string;
+	location_id?: number;
 }

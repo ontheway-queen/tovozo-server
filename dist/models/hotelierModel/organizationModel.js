@@ -42,11 +42,10 @@ class OrganizationModel extends schema_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("organization as org")
                 .withSchema(this.HOTELIER)
-                .select("org.id", "org.name", "org.user_id", "org.details", "org.status", "org.is_deleted", "org.is_2fa_on", "org.location_id", "org_photo.file as photo", "l.longitude", "l.latitude")
+                .select("org.id", "org.user_id", "org.name", "org.details", "org.photo", "org.status", "org.is_deleted", "org.is_2fa_on", "org.location_id", "l.address", "l.longitude", "l.latitude")
                 .joinRaw(`LEFT JOIN ?? as l ON l.id = org.location_id`, [
                 `${this.DBO_SCHEMA}.${this.TABLES.location}`,
             ])
-                .leftJoin(`organization_photos as org_photo`, "org_photo.organization_id", "org.id")
                 .where((qb) => {
                 if (where.id)
                     qb.andWhere("org.id", where.id);
@@ -63,7 +62,7 @@ class OrganizationModel extends schema_1.default {
                 .joinRaw(`left join ?? as u on u.id = org.user_id`, [
                 `${this.DBO_SCHEMA}.${this.TABLES.user}`,
             ])
-                .select("org.id", "org.name as org_name", "org.user_id", "org.created_at", "org.status", "org.is_2fa_on", "u.email as user_email", "u.phone_number as user_phone_number", "u.photo as user_photo")
+                .select("org.id", "org.name as org_name", "org.photo as org_photo", "org.user_id", "org.created_at", "org.status", "org.is_2fa_on", "u.email as user_email", "u.phone_number as user_phone_number")
                 .where((qb) => {
                 qb.where("org.is_deleted", false);
                 if (params.id)
@@ -113,14 +112,13 @@ class OrganizationModel extends schema_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("organization as org")
                 .withSchema(this.HOTELIER)
-                .select("org.id", "org.name as org_name", "org.user_id", "org.details", "org.created_at", "org.status", "org.is_2fa_on", "org.location_id", "md.designation", "la.location_name", "la.location_address as address", "la.city_name", "la.state_name", "la.country_name", "la.longitude", "la.latitude", "la.city_id", "la.state_id", "la.country_id", "la.postal_code", "u.email", "u.phone_number", "u.name", "u.photo")
+                .select("org.id", "org.name as org_name", "org.photo as org_photo", "org.user_id", "org.details", "org.created_at", "org.status", "org.is_2fa_on", "org.location_id", "la.location_name", "la.location_address as address", "la.city_id", "la.city_name", "la.state_id", "la.state_name", "la.country_id", "la.country_name", "la.longitude", "la.latitude", "la.postal_code", "u.email", "u.phone_number", "u.name", "u.photo")
                 .joinRaw(`left join ?? as u on u.id = org.user_id`, [
                 `${this.DBO_SCHEMA}.${this.TABLES.user}`,
             ])
                 .joinRaw(`left join ?? as la on la.location_id = org.location_id`, [
                 `${this.DBO_SCHEMA}.vw_location`,
             ])
-                .leftJoin("maintenance_designation as md", "md.user_id", "org.user_id")
                 .where("org.id", id)
                 .andWhere("org.is_deleted", false)
                 .first();
@@ -137,82 +135,6 @@ class OrganizationModel extends schema_1.default {
                     qb.andWhere("user_id", where.user_id);
             })
                 .update({ is_deleted: true });
-        });
-    }
-    // Photos
-    addPhoto(payload) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db("organization_photos")
-                .withSchema(this.HOTELIER)
-                .insert(payload);
-        });
-    }
-    getPhotos(organization_id) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db("organization_photos")
-                .withSchema(this.HOTELIER)
-                .select("*")
-                .where({ organization_id, is_deleted: false });
-        });
-    }
-    deletePhoto(id) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db("organization_photos")
-                .withSchema(this.HOTELIER)
-                .where({ id })
-                .update({ is_deleted: true });
-        });
-    }
-    // Amenities
-    addAmenities(payload) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db("organization_amenities")
-                .withSchema(this.HOTELIER)
-                .insert(payload);
-        });
-    }
-    getAmenities(_a) {
-        return __awaiter(this, arguments, void 0, function* ({ organization_id, id, amenity, }) {
-            return yield this.db("organization_amenities")
-                .withSchema(this.HOTELIER)
-                .select("*")
-                .where((qb) => {
-                if (organization_id) {
-                    qb.where({ organization_id });
-                }
-                if (amenity) {
-                    qb.andWhere({ amenity });
-                }
-                if (id) {
-                    qb.andWhere({ id });
-                }
-            });
-        });
-    }
-    deleteAmenities(_a) {
-        return __awaiter(this, arguments, void 0, function* ({ organization_id, id, ids, }) {
-            return yield this.db("organization_amenities")
-                .withSchema(this.HOTELIER)
-                .where((qb) => {
-                if (ids && ids.length) {
-                    qb.whereIn("id", ids);
-                }
-                if (organization_id) {
-                    qb.andWhere({ organization_id });
-                }
-                if (id) {
-                    qb.andWhere({ id });
-                }
-            })
-                .del();
-        });
-    }
-    updateAmenities(amenity, organization_id) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db("organization_amenities")
-                .withSchema(this.HOTELIER)
-                .update({ amenity })
-                .where({ organization_id });
         });
     }
 }

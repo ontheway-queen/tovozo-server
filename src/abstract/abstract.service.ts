@@ -81,6 +81,7 @@ abstract class AbstractServices {
 						payload.type === NotificationTypeEnum.PAYMENT ||
 						payload.type === NotificationTypeEnum.SECURITY_ALERT ||
 						payload.type === NotificationTypeEnum.REMINDER ||
+						payload.type === NotificationTypeEnum.PAYOUT ||
 						payload.type === NotificationTypeEnum.SYSTEM_UPDATE)
 				) {
 					users = [{ user_id: payload.user_id }];

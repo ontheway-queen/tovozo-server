@@ -33,14 +33,16 @@ class AdminHotelierService extends abstract_service_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             const { user_id } = req.admin;
             return this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
-                const files = req.files || [];
-                const _a = lib_1.default.safeParseJSON(req.body.user), { designation } = _a, user = __rest(_a, ["designation"]);
+                const user = lib_1.default.safeParseJSON(req.body.user);
                 const organization = lib_1.default.safeParseJSON(req.body.organization);
                 const organizationAddress = lib_1.default.safeParseJSON(req.body.organization_address);
-                const amenitiesInput = lib_1.default.safeParseJSON(req.body.organization_amenities) || [];
+                const files = req.files || [];
                 for (const file of files) {
                     if (file.fieldname === "photo") {
                         user.photo = file.filename;
+                    }
+                    if (file.fieldname === "organization_photo") {
+                        organization.photo = file.filename;
                     }
                 }
                 const { email, phone_number, password } = user, userData = __rest(user, ["email", "phone_number", "password"]);
@@ -75,38 +77,70 @@ class AdminHotelierService extends abstract_service_1.default {
                 if (!registration.length) {
                     throw new customError_1.default(this.ResMsg.HTTP_BAD_REQUEST, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
                 }
-                const organization_location = yield commonModel.createLocation(organizationAddress);
-                const locationId = organization_location[0].id;
-                const userId = registration[0].id;
-                yield userModel.createUserMaintenanceDesignation({
-                    designation,
-                    user_id: userId,
-                });
+                let stateId = 0;
+                let city_id = 0;
+                let location_id = null;
+                if (Object.keys(organizationAddress).length > 0) {
+                    if (organizationAddress.city) {
+                        // check country
+                        const checkCountry = yield commonModel.getAllCountry({
+                            name: organizationAddress.country,
+                        });
+                        if (!checkCountry.length) {
+                            throw new customError_1.default("Service not available in this country", this.StatusCode.HTTP_BAD_REQUEST);
+                        }
+                        const checkState = yield commonModel.getAllStates({
+                            country_id: checkCountry[0].id,
+                            name: organizationAddress.state,
+                        });
+                        if (!checkState.length) {
+                            const state = yield commonModel.createState({
+                                country_id: checkCountry[0].id,
+                                name: organizationAddress.state,
+                            });
+                            stateId = state[0].id;
+                        }
+                        else {
+                            stateId = checkState[0].id;
+                        }
+                        const checkCity = yield commonModel.getAllCity({
+                            country_id: checkCountry[0].id,
+                            state_id: stateId,
+                            name: organizationAddress.city,
+                        });
+                        if (!checkCity.length) {
+                            const city = yield commonModel.createCity({
+                                country_id: checkCountry[0].id,
+                                state_id: stateId,
+                                name: organizationAddress.city,
+                            });
+                            city_id = city[0].id;
+                        }
+                        else {
+                            city_id = checkCity[0].id;
+                        }
+                    }
+                    const [locationRecord] = yield commonModel.createLocation({
+                        city_id,
+                        name: organizationAddress.name,
+                        address: organizationAddress.address,
+                        longitude: organizationAddress.longitude,
+                        latitude: organizationAddress.latitude,
+                        postal_code: organizationAddress.postal_code,
+                        is_home_address: organizationAddress.is_home_address,
+                    });
+                    location_id = locationRecord.id;
+                }
                 const orgInsert = yield organizationModel.createOrganization({
                     name: organization.org_name,
+                    details: organization.details,
+                    photo: organization.photo,
                     status: constants_1.USER_STATUS.ACTIVE,
-                    user_id: userId,
-                    location_id: locationId,
+                    user_id: registration[0].id,
+                    location_id,
                 });
-                const organizationId = orgInsert[0].id;
-                const photos = files
-                    .filter((file) => file.fieldname === "hotel_photo")
-                    .map((file) => ({
-                    organization_id: organizationId,
-                    file: file.filename,
-                }));
-                if (photos.length) {
-                    yield organizationModel.addPhoto(photos);
-                }
-                const amenities = amenitiesInput.map((a) => ({
-                    organization_id: organizationId,
-                    amenity: a,
-                }));
-                if (amenities.length) {
-                    yield organizationModel.addAmenities(amenities);
-                }
                 const tokenData = {
-                    user_id: userId,
+                    user_id: registration[0].id,
                     name: user.name,
                     user_email: email,
                     phone_number,
@@ -168,10 +202,12 @@ class AdminHotelierService extends abstract_service_1.default {
                     code: this.StatusCode.HTTP_NOT_FOUND,
                 };
             }
-            const [organization_amenities, organization_photos] = yield Promise.all([
-                organizationModel.getAmenities({ organization_id: data.id }),
-                organizationModel.getPhotos(data.id),
-            ]);
+            // const [organization_amenities, organization_photos] = await Promise.all(
+            // 	[
+            // 		organizationModel.getAmenities({ organization_id: data.id }),
+            // 		organizationModel.getPhotos(data.id),
+            // 	]
+            // );
             const jobPosts = yield jobPostModel.getJobPostListForHotelier({
                 organization_id: data.id,
             });
@@ -179,8 +215,10 @@ class AdminHotelierService extends abstract_service_1.default {
                 success: true,
                 message: this.ResMsg.HTTP_OK,
                 code: this.StatusCode.HTTP_OK,
-                data: Object.assign(Object.assign({}, data), { organization_amenities,
-                    organization_photos, jobPosts: jobPosts.data }),
+                data: Object.assign(Object.assign({}, data), { 
+                    // organization_amenities,
+                    // organization_photos,
+                    jobPosts: jobPosts.data }),
             };
         });
     }
@@ -197,15 +235,9 @@ class AdminHotelierService extends abstract_service_1.default {
                 }
                 const files = req.files;
                 const body = req.body;
-                console.log({ body });
                 const parsed = {
                     organization: lib_1.default.safeParseJSON(body.organization) || {},
                     user: lib_1.default.safeParseJSON(body.user) || {},
-                    addPhoto: lib_1.default.safeParseJSON(body.add_photo) || [],
-                    deletePhoto: lib_1.default.safeParseJSON(body.delete_photo) || [],
-                    addAmenities: lib_1.default.safeParseJSON(body.add_amenities) || [],
-                    updateAmenities: lib_1.default.safeParseJSON(body.update_amenities) || {},
-                    deleteAmenities: lib_1.default.safeParseJSON(body.delete_amenities) || [],
                     organization_address: lib_1.default.safeParseJSON(body.organization_address) || {},
                 };
                 for (const { fieldname, filename } of files) {
@@ -213,11 +245,8 @@ class AdminHotelierService extends abstract_service_1.default {
                         case "photo":
                             parsed.user.photo = filename;
                             break;
-                        case "hotel_photo":
-                            parsed.addPhoto.push({
-                                file: filename,
-                                organization_id: id,
-                            });
+                        case "organization_photo":
+                            parsed.organization.photo = filename;
                             break;
                         default:
                             throw new customError_1.default(this.ResMsg.UNKNOWN_FILE_FIELD, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
@@ -246,57 +275,15 @@ class AdminHotelierService extends abstract_service_1.default {
                     updateTasks.push(userModel.updateProfile(parsed.user, { id: data.user_id }));
                 }
                 if (Object.keys(parsed.organization).length > 0) {
-                    if (parsed.organization.status) {
-                        const checkHotelier = yield model.getSingleOrganization(id);
-                        if (!checkHotelier) {
-                            throw new customError_1.default("Hotelier account not found!", this.StatusCode.HTTP_NOT_FOUND);
-                        }
-                        if (parsed.organization.status === checkHotelier.status) {
-                            throw new customError_1.default(`Already updated status to ${parsed.organization.status}`, this.StatusCode.HTTP_CONFLICT);
-                        }
-                    }
+                    console.log({ data });
                     updateTasks.push(model.updateOrganization({
-                        name: parsed.organization.org_name || data.org_name,
+                        name: parsed.organization.name ||
+                            parsed.organization.org_name,
+                        details: parsed.organization.details || data.details,
+                        photo: parsed.organization.photo || data.org_photo,
                         status: parsed.organization.status || data.status,
                     }, {
                         id: id,
-                    }));
-                }
-                if (parsed.addPhoto.length > 0) {
-                    updateTasks.push(model.addPhoto(parsed.addPhoto));
-                }
-                if (parsed.deletePhoto.length > 0) {
-                    for (const delP of parsed.deletePhoto) {
-                        updateTasks.push(model.deletePhoto(Number(delP)));
-                    }
-                }
-                if (parsed.addAmenities.length > 0) {
-                    const amenitiesPayload = [];
-                    for (const amenity of parsed.addAmenities) {
-                        amenitiesPayload.push({ amenity, organization_id: id });
-                    }
-                    updateTasks.push(model.addAmenities(amenitiesPayload));
-                }
-                if (Object.keys(parsed.updateAmenities).length) {
-                    const checkUpdateAmenity = yield model.getAmenities({
-                        organization_id: id,
-                        id: parsed.updateAmenities.id,
-                    });
-                    if (!checkUpdateAmenity.length) {
-                        throw new customError_1.default("Update amenity not found!", this.StatusCode.HTTP_NOT_FOUND);
-                    }
-                    updateTasks.push(model.updateAmenities(parsed.updateAmenities.amenity, parsed.updateAmenities.id));
-                }
-                if (parsed.deleteAmenities.length > 0) {
-                    const checkAmenities = yield model.getAmenities({
-                        organization_id: id,
-                    });
-                    if (!checkAmenities.length) {
-                        throw new customError_1.default("Amenity not found!", this.StatusCode.HTTP_NOT_FOUND);
-                    }
-                    updateTasks.push(model.deleteAmenities({
-                        organization_id: id,
-                        ids: parsed.deleteAmenities,
                     }));
                 }
                 yield Promise.all(updateTasks);
@@ -310,28 +297,81 @@ class AdminHotelierService extends abstract_service_1.default {
                         emailBody: (0, registrationVerificationCompletedTemplate_1.registrationVerificationCompletedTemplate)(existingUser.name, "tovozo://login"),
                     });
                 }
+                let stateId = 0;
+                let city_id = 0;
                 if (Object.keys(parsed.organization_address).length > 0) {
-                    if (parsed.organization_address.city_id) {
+                    if (parsed.organization_address.city) {
+                        // check country
+                        const checkCountry = yield commonModel.getAllCountry({
+                            name: parsed.organization_address.country,
+                        });
+                        if (!checkCountry.length) {
+                            throw new customError_1.default("Service not available in this country", this.StatusCode.HTTP_BAD_REQUEST);
+                        }
+                        const checkState = yield commonModel.getAllStates({
+                            country_id: checkCountry[0].id,
+                            name: parsed.organization_address.state,
+                        });
+                        if (!checkState.length) {
+                            const state = yield commonModel.createState({
+                                country_id: checkCountry[0].id,
+                                name: parsed.organization_address.state,
+                            });
+                            stateId = state[0].id;
+                        }
+                        else {
+                            stateId = checkState[0].id;
+                        }
                         const checkCity = yield commonModel.getAllCity({
-                            city_id: parsed.organization_address.city_id,
+                            country_id: checkCountry[0].id,
+                            state_id: stateId,
+                            name: parsed.organization_address.city,
                         });
                         if (!checkCity.length) {
-                            throw new customError_1.default("City not found!", this.StatusCode.HTTP_NOT_FOUND);
+                            const city = yield commonModel.createCity({
+                                country_id: checkCountry[0].id,
+                                state_id: stateId,
+                                name: parsed.organization_address.city,
+                            });
+                            city_id = city[0].id;
+                        }
+                        else {
+                            city_id = checkCity[0].id;
                         }
                     }
-                    if (parsed.organization_address.id) {
+                    if (data.location_id) {
                         const checkLocation = yield commonModel.getLocation({
-                            location_id: parsed.organization_address.id,
+                            location_id: data.location_id,
                         });
                         if (!checkLocation) {
                             throw new customError_1.default("Location not found!", this.StatusCode.HTTP_NOT_FOUND);
                         }
-                        updateTasks.push(commonModel.updateLocation(parsed.organization_address, {
-                            location_id: parsed.organization_address.id,
+                        updateTasks.push(commonModel.updateLocation({
+                            city_id: checkLocation.city_id,
+                            name: parsed.organization_address.name,
+                            address: parsed.organization_address.address,
+                            longitude: parsed.organization_address.longitude,
+                            latitude: parsed.organization_address.latitude,
+                            postal_code: parsed.organization_address.postal_code,
+                            is_home_address: parsed.organization_address.is_home_address,
+                        }, {
+                            location_id: data.location_id,
                         }));
                     }
                     else {
-                        updateTasks.push(commonModel.createLocation(parsed.organization_address));
+                        updateTasks.push((() => __awaiter(this, void 0, void 0, function* () {
+                            const [locationRecord] = yield commonModel.createLocation({
+                                city_id,
+                                name: parsed.organization_address.name,
+                                address: parsed.organization_address.address,
+                                longitude: parsed.organization_address.longitude,
+                                latitude: parsed.organization_address.latitude,
+                                postal_code: parsed.organization_address.postal_code,
+                                is_home_address: parsed.organization_address
+                                    .is_home_address,
+                            });
+                            parsed.organization.location_id = locationRecord.id;
+                        }))());
                     }
                 }
                 yield this.insertAdminAudit(trx, {

@@ -20,14 +20,6 @@ export default class UserModel extends Schema {
 			.insert(payload, "id");
 	}
 
-	public async createUserMaintenanceDesignation(payload: {
-		designation: string;
-		user_id: number;
-	}) {
-		return await this.db(this.TABLES.maintenance_designation)
-			.withSchema(this.HOTELIER)
-			.insert(payload);
-	}
 	//update
 	public async updateProfile(
 		payload: Partial<ICreateUserPayload>,
@@ -47,17 +39,16 @@ export default class UserModel extends Schema {
 		params: ICheckUserParams
 	): Promise<ICheckUserData[]> {
 		const { email, id, username, type, phone_number } = params;
-
 		return await this.db(this.TABLES.user)
 			.withSchema(this.DBO_SCHEMA)
 			.select("*")
 			.where("is_deleted", false)
 			.modify((qb) => {
-				if (id) qb.where("id", id);
-				if (type) qb.where("type", type);
-				if (email) qb.orWhere("email", email);
-				if (username) qb.orWhere("username", username);
-				if (phone_number) qb.orWhere("phone_number", phone_number);
+				if (id) qb.andWhere("id", id);
+				if (type) qb.andWhere("type", type);
+				if (email) qb.andWhere("email", email);
+				if (username) qb.andWhere("username", username);
+				if (phone_number) qb.andWhere("phone_number", phone_number);
 			});
 	}
 

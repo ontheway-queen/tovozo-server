@@ -171,7 +171,7 @@ class PaymentModel extends schema_1.default {
             const { limit, skip, search, status } = params;
             const data = yield this.db("payment as p")
                 .withSchema(this.DBO_SCHEMA)
-                .select("p.id", "p.application_id", "j.title as job_title", "job_seeker.id as job_seeker_id", "job_seeker.name as job_seeker_name", "org.id as paid_by_id", "org.name as paid_by", "p.total_amount", "p.job_seeker_pay", "p.platform_fee", "p.status", "p.payment_no", "p.trx_id", "p.paid_at")
+                .select("p.id", "p.application_id", "j.title as job_title", "job_seeker.id as job_seeker_id", "job_seeker.name as job_seeker_name", "org.id as paid_by_id", "org.name as paid_by", "p.total_amount", "p.job_seeker_pay", "p.platform_fee", "p.trx_fee", "p.status", "p.payment_no", "p.trx_id", "p.paid_at")
                 .leftJoin("job_applications as ja", "ja.id", "p.application_id")
                 .leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
                 .leftJoin("jobs as j", "j.id", "jpd.job_id")
@@ -201,7 +201,10 @@ class PaymentModel extends schema_1.default {
                 .leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
                 .leftJoin("jobs as j", "j.id", "jpd.job_id")
                 .leftJoin("job_post as jp", "jp.id", "ja.job_post_id")
-                .leftJoin("user as job_seeker", "job_seeker.id", "ja.job_seeker_id") // ✅ Add this line
+                .leftJoin("user as job_seeker", "job_seeker.id", "ja.job_seeker_id")
+                .joinRaw(`LEFT JOIN ?? AS org ON org.id = jp.organization_id`, [
+                `${this.HOTELIER}.${this.TABLES.organization}`,
+            ])
                 .where((qb) => {
                 if (search) {
                     qb.andWhere((subQb) => {
@@ -224,7 +227,7 @@ class PaymentModel extends schema_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("payment as p")
                 .withSchema(this.DBO_SCHEMA)
-                .select("p.id", "p.application_id", "j.title as job_title", "job_seeker.id as job_seeker_id", "job_seeker.name as job_seeker_name", "org.id as paid_by_id", "org.name as paid_by", "p.total_amount", "p.job_seeker_pay", "p.platform_fee", "p.status", "p.payment_no", "p.trx_id", "p.paid_at")
+                .select("p.id", "p.application_id", "j.title as job_title", "job_seeker.id as job_seeker_id", "job_seeker.name as job_seeker_name", "job_seeker.phone_number as job_seeker_phone_number", "job_seeker.email as job_seeker_email", "org.id as paid_by_id", "org.name as paid_by_organization", "pu.name as paid_by_name", "pu.email as paid_by_email", "pu.phone_number as paid_by_phone_number", "p.total_amount", "p.job_seeker_pay", "p.platform_fee", "p.status", "p.payment_no", "p.trx_id", "p.trx_fee", "p.paid_at")
                 .leftJoin("job_applications as ja", "ja.id", "p.application_id")
                 .leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
                 .leftJoin("jobs as j", "j.id", "jpd.job_id")
@@ -233,6 +236,7 @@ class PaymentModel extends schema_1.default {
                 .joinRaw(`LEFT JOIN ?? AS org ON org.id = jp.organization_id`, [
                 `${this.HOTELIER}.${this.TABLES.organization}`,
             ])
+                .leftJoin("user as pu", "pu.id", "p.paid_by")
                 .where("p.id", id)
                 .first();
         });
@@ -240,7 +244,6 @@ class PaymentModel extends schema_1.default {
     // Update payment
     updatePayment(id, payload) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log({ payload });
             return yield this.db("payment")
                 .withSchema(this.DBO_SCHEMA)
                 .update(payload)
@@ -328,26 +331,51 @@ class PaymentModel extends schema_1.default {
     getAllPaymentLedgerForAdmin(params) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a, _b;
-            const { limit, skip, search, type } = params;
+            const { limit, skip, search, type, from_date, to_date, user_id } = params;
             const baseQuery = this.db("payment_ledger as pl")
                 .withSchema(this.DBO_SCHEMA)
-                .select("pl.id", "pl.trx_type", "pl.amount", "pl.details", "pl.ledger_date", "pl.voucher_no", "j.title as job_title", "org.name as organization_name", "job_seeker.name as job_seeker_name", "p.paid_at")
-                .leftJoin("payment as p", "p.payment_no", "pl.voucher_no")
-                .leftJoin("job_applications as ja", "ja.id", "p.application_id")
-                .leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
-                .leftJoin("jobs as j", "j.id", "jpd.job_id")
-                .leftJoin("job_post as jp", "jp.id", "ja.job_post_id")
-                .joinRaw(`LEFT JOIN hotelier.organization AS org ON org.id = jp.organization_id`)
-                .leftJoin("user as job_seeker", "job_seeker.id", "ja.job_seeker_id")
+                .select("pl.id", "pl.trx_type", "pl.amount", "pl.details", "pl.ledger_date", "pl.voucher_no", "pl.entry_type", "pl.user_type", "pl.details", 
+            // "j.title as job_title",
+            // "org.name as organization_name",
+            // "job_seeker.name as job_seeker_name",
+            // "p.paid_at",
+            this.db.raw(`(SELECT
+             SUM(CASE WHEN sub_ml.trx_type = ? THEN sub_ml.amount ELSE 0 END) -
+            SUM(CASE WHEN sub_ml.trx_type = ? THEN sub_ml.amount ELSE 0 END)
+            FROM dbo.payment_ledger AS sub_ml
+            WHERE sub_ml.user_type = 'ADMIN' AND sub_ml.id <= pl.id) as balance`, ["In", "Out"]))
+                // .leftJoin("payment as p", "p.payment_no", "pl.voucher_no")
+                // .leftJoin("job_applications as ja", "ja.id", "p.application_id")
+                // .leftJoin(
+                // 	"job_post_details as jpd",
+                // 	"jpd.id",
+                // 	"ja.job_post_details_id"
+                // )
+                // .leftJoin("jobs as j", "j.id", "jpd.job_id")
+                // .leftJoin("job_post as jp", "jp.id", "ja.job_post_id")
+                // .joinRaw(
+                // 	`LEFT JOIN hotelier.organization AS org ON org.id = jp.organization_id`
+                // )
+                // .leftJoin("user as job_seeker", "job_seeker.id", "ja.job_seeker_id")
                 .modify((qb) => {
                 if (type) {
                     qb.where("pl.user_type", type);
                 }
                 if (search) {
-                    qb.whereILike("pl.details", `%${search}%`);
+                    qb.whereILike("pl.voucher_no", `%${search}%`);
+                }
+                if (user_id) {
+                    qb.andWhere("pl.user_id", user_id);
+                }
+                if (from_date) {
+                    qb.andWhere("pl.ledger_date", ">=", from_date);
+                }
+                if (to_date) {
+                    qb.andWhere("pl.ledger_date", "<", new Date(new Date(to_date).getTime() + 24 * 60 * 60 * 1000));
                 }
             })
-                .orderBy("pl.id", "desc")
+                .orderBy("pl.ledger_date", "asc")
+                .orderBy("pl.id", "asc")
                 .offset(skip)
                 .limit(limit);
             const data = yield baseQuery;
@@ -359,7 +387,16 @@ class PaymentModel extends schema_1.default {
                     qb.where("pl.user_type", type);
                 }
                 if (search) {
-                    qb.whereILike("pl.details", `%${search}%`);
+                    qb.whereILike("pl.voucher_no", `%${search}%`);
+                }
+                if (user_id) {
+                    qb.andWhere("pl.user_id", user_id);
+                }
+                if (from_date) {
+                    qb.andWhere("pl.ledger_date", ">=", from_date);
+                }
+                if (to_date) {
+                    qb.andWhere("pl.ledger_date", "<", new Date(new Date(to_date).getTime() + 24 * 60 * 60 * 1000));
                 }
             })
                 .first();

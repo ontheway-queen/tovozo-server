@@ -5,12 +5,15 @@ export interface ICreateJobSeekerPayload {
 	user_id: number;
 	date_of_birth?: string;
 	gender?: IGenderType;
-	nationality: number;
 	address?: string;
-	work_permit?: boolean;
+	work_permit?: string;
 	account_status?: string;
 	criminal_convictions?: boolean;
 	location_id?: number;
+	id_copy?: string;
+	final_completed?: boolean;
+	final_completed_by?: number;
+	final_completed_at?: string;
 }
 
 export interface IUpdateJobSeekerPayload
@@ -62,10 +65,8 @@ export interface IJobSeekerProfile {
 	user_created_at: string;
 	date_of_birth?: string;
 	gender?: string;
-	nationality?: string;
 	work_permit?: string;
 	account_status: string;
-	criminal_convictions?: string;
 	home_location_id?: number;
 	home_city_id?: number;
 	home_location_name?: string;
@@ -78,23 +79,16 @@ export interface IJobSeekerProfile {
 	is_home_address?: boolean;
 	home_created_at?: string;
 	home_updated_at?: string;
-	hospitality_exp?: string;
-	languages?: string;
-	hospitality_certifications?: string;
-	medical_condition?: string;
-	dietary_restrictions?: string;
-	work_start?: string;
-	certifications?: string;
-	reference?: string;
-	resume?: string;
-	training_program_interested?: string;
-	start_working?: string;
-	hours_available?: string;
-	comment?: string;
-	passport_copy?: string;
-	visa_copy?: string;
+	is_completed?: boolean;
+	completed_at?: string;
+	final_completed?: boolean;
+	final_completed_by?: number;
+	final_completed_at?: string;
 	id_copy?: string;
-	stripe_acc_id?: string;
+	total_earnings?: string;
+	today_earnings?: string;
+	total_payout?: string;
+	available_balance?: string;
 	applied_jobs?:
 		| {
 				id: number;
@@ -102,6 +96,18 @@ export interface IJobSeekerProfile {
 				application_status: string;
 				title: string;
 				details: string;
+		  }[]
+		| [];
+	bank_details?:
+		| {
+				id: number;
+				account_name: string;
+				account_number: string;
+				bank_code: string;
+				is_primary: boolean;
+				is_verified: boolean;
+				created_at: any;
+				updated_at: any;
 		  }[]
 		| [];
 }
@@ -141,6 +147,11 @@ export interface IGetJobSeeker {
 	work_permit?: boolean;
 	account_status: UserStatusType;
 	criminal_convictions?: string;
+	is_completed?: boolean;
+	is_completed_at?: string;
+	final_completed_by?: number;
+	final_completed_at?: string;
+	final_completed?: boolean;
 	is_2fa_on: boolean;
 	location_id: number;
 }

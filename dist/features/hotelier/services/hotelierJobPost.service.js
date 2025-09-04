@@ -37,6 +37,12 @@ class HotelierJobPostService extends abstract_service_1.default {
                     throw new customError_1.default("Organization not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }
                 console.log({ checkOrganization });
+                const unpaidJobs = yield model.getWorkFinishedJobForHotelier({
+                    organization_id: checkOrganization.id,
+                });
+                if (unpaidJobs) {
+                    throw new customError_1.default("You have previous unpaid jobs. Please pay them before posting a new job.", this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
+                }
                 body.job_post.organization_id = checkOrganization.id;
                 const res = yield model.createJobPost(body.job_post);
                 if (!res.length) {

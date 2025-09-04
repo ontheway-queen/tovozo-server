@@ -41,13 +41,15 @@ class HotelierAuthService extends abstract_service_1.default {
             return this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const files = req.files || [];
                 const body = req.body;
-                const _a = lib_1.default.safeParseJSON(body.user), { designation } = _a, user = __rest(_a, ["designation"]);
+                const user = lib_1.default.safeParseJSON(body.user);
                 const organization = lib_1.default.safeParseJSON(body.organization);
                 const organizationAddress = lib_1.default.safeParseJSON(body.organization_address);
-                const amenitiesInput = lib_1.default.safeParseJSON(req.body.organization_amenities) || [];
                 for (const file of files) {
                     if (file.fieldname === "photo") {
                         user.photo = file.filename;
+                    }
+                    if (file.fieldname === "organization_photo") {
+                        organization.photo = file.filename;
                     }
                 }
                 const { email, phone_number, password } = user, userData = __rest(user, ["email", "phone_number", "password"]);
@@ -56,9 +58,9 @@ class HotelierAuthService extends abstract_service_1.default {
                 const commonModel = this.Model.commonModel(trx);
                 const [existingUser] = yield userModel.checkUser({
                     email,
-                    phone_number,
                     type: constants_1.USER_TYPE.HOTELIER,
                 });
+                console.log({ existingUser });
                 if (existingUser) {
                     if (existingUser.email === email) {
                         return {
@@ -67,6 +69,7 @@ class HotelierAuthService extends abstract_service_1.default {
                             message: this.ResMsg.EMAIL_ALREADY_EXISTS,
                         };
                     }
+                    console.log(existingUser.phone_number, phone_number);
                     if (existingUser.phone_number === phone_number) {
                         return {
                             success: false,
@@ -82,33 +85,59 @@ class HotelierAuthService extends abstract_service_1.default {
                 if (!registration.length) {
                     throw new customError_1.default(this.ResMsg.HTTP_BAD_REQUEST, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
                 }
-                const organization_location = yield commonModel.createLocation(organizationAddress);
+                const checkCountry = yield commonModel.getAllCountry({
+                    name: organizationAddress.country,
+                });
+                if (!checkCountry.length) {
+                    throw new customError_1.default("Service is not available in this country", this.StatusCode.HTTP_BAD_REQUEST);
+                }
+                let stateId = 0;
+                const checkState = yield commonModel.getAllStates({
+                    country_id: checkCountry[0].id,
+                    name: organizationAddress.state,
+                });
+                if (!checkState.length) {
+                    const state = yield commonModel.createState({
+                        country_id: checkCountry[0].id,
+                        name: organizationAddress.state,
+                    });
+                    stateId = state[0].id;
+                }
+                else {
+                    stateId = checkState[0].id;
+                }
+                let cityId = 0;
+                const checkCity = yield commonModel.getAllCity({
+                    country_id: checkCountry[0].id,
+                    state_id: stateId,
+                    name: organizationAddress.city,
+                });
+                if (!checkCity.length) {
+                    const city = yield commonModel.createCity({
+                        country_id: checkCountry[0].id,
+                        state_id: stateId,
+                        name: organizationAddress.city,
+                    });
+                    cityId = city[0].id;
+                }
+                else {
+                    cityId = checkCity[0].id;
+                }
+                const organization_location = yield commonModel.createLocation({
+                    address: organizationAddress.address,
+                    city_id: cityId,
+                    latitude: organizationAddress.latitude,
+                    longitude: organizationAddress.longitude,
+                    postal_code: organizationAddress.postal_code,
+                });
                 const locationId = organization_location[0].id;
                 const userId = registration[0].id;
-                yield userModel.createUserMaintenanceDesignation({
-                    designation,
-                    user_id: userId,
-                });
                 const orgInsert = yield organizationModel.createOrganization({
                     name: organization.org_name,
                     user_id: userId,
+                    photo: organization.photo,
                     location_id: locationId,
                 });
-                const organizationId = orgInsert[0].id;
-                const photos = files.map((file) => ({
-                    organization_id: organizationId,
-                    file: file.filename,
-                }));
-                if (photos.length) {
-                    yield organizationModel.addPhoto(photos);
-                }
-                const amenities = amenitiesInput.map((a) => ({
-                    organization_id: organizationId,
-                    amenity: a,
-                }));
-                if (amenities.length) {
-                    yield organizationModel.addAmenities(amenities);
-                }
                 const tokenData = {
                     user_id: userId,
                     name: user.name,

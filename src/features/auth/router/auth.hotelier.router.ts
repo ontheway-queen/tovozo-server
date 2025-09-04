@@ -10,13 +10,11 @@ export default class HotelierAuthRouter extends AbstractRouter {
 
 	private callRouter() {
 		//register
-		this.router
-			.route("/registration")
-			.post(
-				this.uploader.cloudUploadRaw(this.fileFolders.HOTELIER_FILES),
-				this.authChecker.hotelierAuthChecker,
-				this.controller.registration
-			);
+		this.router.route("/registration").post(
+			this.uploader.cloudUploadRaw(this.fileFolders.HOTELIER_FILES),
+			// this.authChecker.hotelierAuthChecker,
+			this.controller.registration
+		);
 
 		//login
 		this.router.route("/login").post(this.controller.login);
@@ -24,8 +22,6 @@ export default class HotelierAuthRouter extends AbstractRouter {
 		this.router.route("/login-data").post(this.controller.loginData);
 
 		//forget password
-		this.router
-			.route("/forget-password")
-			.post(this.controller.forgetPassword);
+		this.router.route("/forget-password").post(this.controller.forgetPassword);
 	}
 }

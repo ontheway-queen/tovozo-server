@@ -41,38 +41,21 @@ class JobSeekerAuthService extends abstract_service_1.default {
                 const parseInput = (key) => lib_1.default.safeParseJSON(req.body[key]) || {};
                 const userInput = parseInput("user");
                 const jobSeekerInput = parseInput("job_seeker");
-                const jobSeekerInfoInput = parseInput("job_seeker_info");
                 const jobSeekerLocationInput = parseInput("own_address");
-                const validFileFields = [
-                    "visa_copy",
-                    "id_copy",
-                    "photo",
-                    "passport_copy",
-                ];
-                let hasIdCopy = false;
-                let hasVisaCopy = false;
-                files.forEach(({ fieldname, filename }) => {
-                    if (!validFileFields.includes(fieldname)) {
-                        throw new customError_1.default(this.ResMsg.UNKNOWN_FILE_FIELD, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
-                    }
+                if (!files.length) {
+                    return {
+                        success: false,
+                        code: this.StatusCode.HTTP_NOT_FOUND,
+                        message: "No photo was uploaded. Please add a photo and try again.",
+                    };
+                }
+                for (const { fieldname, filename } of files) {
                     if (fieldname === "photo") {
                         userInput.photo = filename;
                     }
                     else {
-                        if (fieldname === "id_copy")
-                            hasIdCopy = true;
-                        if (fieldname === "visa_copy")
-                            hasVisaCopy = true;
-                        jobSeekerInfoInput[fieldname] =
-                            filename;
+                        throw new customError_1.default(this.ResMsg.UNKNOWN_FILE_FIELD, this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
                     }
-                });
-                // Validate required docs
-                if (jobSeekerInput.nationality === constants_1.BRITISH_ID && !hasIdCopy) {
-                    throw new customError_1.default("id_copy required for British Nationality", this.StatusCode.HTTP_BAD_REQUEST);
-                }
-                if (jobSeekerInput.nationality !== constants_1.BRITISH_ID && !hasVisaCopy) {
-                    throw new customError_1.default("visa_copy required for non-British Nationality", this.StatusCode.HTTP_BAD_REQUEST);
                 }
                 const { email, phone_number, password } = userInput, restUserData = __rest(userInput, ["email", "phone_number", "password"]);
                 const userModel = this.Model.UserModel(trx);
@@ -111,7 +94,52 @@ class JobSeekerAuthService extends abstract_service_1.default {
                 const jobSeekerId = registration[0].id;
                 let locationId = null;
                 if (jobSeekerLocationInput === null || jobSeekerLocationInput === void 0 ? void 0 : jobSeekerLocationInput.address) {
+                    let city_id;
+                    if (jobSeekerLocationInput.city) {
+                        if (!jobSeekerLocationInput.state &&
+                            !jobSeekerLocationInput.country) {
+                            throw new customError_1.default("state and country required", this.StatusCode.HTTP_BAD_REQUEST);
+                        }
+                        const checkCountry = yield commonModel.getAllCountry({
+                            name: jobSeekerLocationInput.country,
+                        });
+                        if (!checkCountry.length) {
+                            throw new customError_1.default("Service not available in this country", this.StatusCode.HTTP_BAD_REQUEST);
+                        }
+                        let stateId = 0;
+                        const checkState = yield commonModel.getAllStates({
+                            country_id: checkCountry[0].id,
+                            name: jobSeekerLocationInput.state,
+                        });
+                        if (!checkState.length) {
+                            const state = yield commonModel.createState({
+                                country_id: checkCountry[0].id,
+                                name: jobSeekerLocationInput.state,
+                            });
+                            stateId = state[0].id;
+                        }
+                        else {
+                            stateId = checkState[0].id;
+                        }
+                        const checkCity = yield commonModel.getAllCity({
+                            country_id: checkCountry[0].id,
+                            state_id: stateId,
+                            name: jobSeekerLocationInput.city,
+                        });
+                        if (!checkCity.length) {
+                            const city = yield commonModel.createCity({
+                                country_id: checkCountry[0].id,
+                                state_id: stateId,
+                                name: jobSeekerLocationInput.city,
+                            });
+                            city_id = city[0].id;
+                        }
+                        else {
+                            city_id = checkCity[0].id;
+                        }
+                    }
                     const [locationRecord] = yield commonModel.createLocation({
+                        city_id,
                         address: jobSeekerLocationInput.address,
                         longitude: jobSeekerLocationInput.longitude,
                         latitude: jobSeekerLocationInput.latitude,
@@ -119,7 +147,6 @@ class JobSeekerAuthService extends abstract_service_1.default {
                     locationId = locationRecord.id;
                 }
                 yield jobSeekerModel.createJobSeeker(Object.assign(Object.assign({}, jobSeekerInput), { user_id: jobSeekerId, location_id: locationId }));
-                yield jobSeekerModel.createJobSeekerInfo(Object.assign(Object.assign({}, jobSeekerInfoInput), { job_seeker_id: jobSeekerId }));
                 const tokenPayload = {
                     user_id: jobSeekerId,
                     name: userInput.name,

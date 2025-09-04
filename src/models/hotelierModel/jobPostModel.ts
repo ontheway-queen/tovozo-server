@@ -70,7 +70,7 @@ class JobPostModel extends Schema {
 				"j.job_seeker_pay",
 				"jp.created_time",
 				"org.name as organization_name",
-				"org_p.file as organization_photo",
+				"org.photo as organization_photo",
 				"vwl.location_address",
 				"vwl.city_name",
 				"vwl.longitude",
@@ -85,11 +85,6 @@ class JobPostModel extends Schema {
 				"vw_location as vwl",
 				"vwl.location_id",
 				"org.location_id"
-			)
-			.leftJoin(
-				this.db.raw(`?? as org_p ON org_p.organization_id = org.id`, [
-					`${this.HOTELIER}.${this.TABLES.organization_photos}`,
-				])
 			)
 			.where((qb) => {
 				if (category_id) qb.andWhere("j.id", category_id);
@@ -134,12 +129,6 @@ class JobPostModel extends Schema {
 					"vw_location as vwl",
 					"vwl.location_id",
 					"org.location_id"
-				)
-				.leftJoin(
-					this.db.raw(
-						`?? as org_p ON org_p.organization_id = org.id`,
-						[`${this.HOTELIER}.${this.TABLES.organization_photos}`]
-					)
 				)
 				.where((qb) => {
 					if (category_id) qb.andWhere("j.id", category_id);
@@ -195,7 +184,7 @@ class JobPostModel extends Schema {
 				"jp.created_time",
 				"u.id as hotelier_id",
 				"org.name as organization_name",
-				"org_p.file as organization_photo",
+				"org.photo as organization_photo",
 				"vwl.location_address",
 				"vwl.city_name",
 				"vwl.longitude",
@@ -212,11 +201,6 @@ class JobPostModel extends Schema {
 				"vw_location as vwl",
 				"vwl.location_id",
 				"org.location_id"
-			)
-			.leftJoin(
-				this.db.raw(`?? as org_p ON org_p.organization_id = org.id`, [
-					`${this.HOTELIER}.${this.TABLES.organization_photos}`,
-				])
 			)
 			.where("jpd.id", id)
 			.first();
@@ -236,12 +220,14 @@ class JobPostModel extends Schema {
 			limit,
 			skip,
 			need_total = true,
+			job_post_id,
 		} = params;
 
 		const data = await this.db("job_post as jp")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
 				"jpd.id",
+				"jp.id as job_post_id",
 				"jpd.status as job_post_details_status",
 				"jpd.start_time",
 				"jpd.end_time",
@@ -260,7 +246,6 @@ class JobPostModel extends Schema {
 						'job_seeker_id', ja.job_seeker_id,
 						'job_seeker_name', js.name,
             'job_seeker_image', js.photo,
-            'stripe_acc_id', jsu.stripe_acc_id,
 						'longitude', js_vwl.longitude,
 						'latitude', js_vwl.latitude
 					)
@@ -295,8 +280,9 @@ class JobPostModel extends Schema {
 				if (city_id) qb.andWhere("js_vwl.city_id", city_id);
 				if (title) qb.andWhereILike("j.title", `%${title}%`);
 				if (status) qb.andWhere("jpd.status", status);
+				if (job_post_id) qb.andWhere("jpd.job_post_id", job_post_id);
 			})
-			.whereNot("jpd.status", "Expired")
+			// .whereNot("jpd.status", "Expired")
 			.orderByRaw(
 				`
         CASE
@@ -329,6 +315,8 @@ class JobPostModel extends Schema {
 					if (status) qb.andWhere("jpd.status", status);
 					if (title) qb.andWhereILike("j.title", `%${title}%`);
 					if (city_id) qb.andWhere("js_vwl.city_id", city_id);
+					if (job_post_id)
+						qb.andWhere("jpd.job_post_id", job_post_id);
 				})
 				.first();
 
@@ -375,7 +363,6 @@ class JobPostModel extends Schema {
             'city', js_vwl.city_name,
 						'longitude', js_vwl.longitude,
 						'latitude', js_vwl.latitude,
-            'stripe_acc_id', jsu.stripe_acc_id,
             'payment_id', pay.id
 					)
 				END as job_seeker_details
@@ -440,6 +427,26 @@ class JobPostModel extends Schema {
 			.first();
 	}
 
+	// Get single job post with payment status for hotelier
+	public async getWorkFinishedJobForHotelier(where: {
+		organization_id: number;
+	}) {
+		return await this.db("job_post as jp")
+			.withSchema(this.DBO_SCHEMA)
+			.select(
+				"jp.id as job_post_id",
+				"j.title",
+				"jp.created_time",
+				"jpd.id as job_post_details_id",
+				"jpd.status as job_post_details_status"
+			)
+			.join("job_post_details as jpd", "jpd.job_post_id", "jp.id")
+			.join("jobs as j", "j.id", "jpd.job_id")
+			.where("jp.organization_id", where.organization_id)
+			.andWhere("jpd.status", JOB_POST_DETAILS_STATUS.WorkFinished)
+			.first();
+	}
+
 	// update job post
 	public async updateJobPost(id: number, payload: IJobPost) {
 		return await this.db("job_post")
@@ -474,7 +481,8 @@ class JobPostModel extends Schema {
 		return await this.db("job_post_details")
 			.withSchema(this.DBO_SCHEMA)
 			.where("id", id)
-			.update({ status });
+			.update({ status })
+			.returning("*");
 	}
 
 	// Job List for Admin
@@ -494,7 +502,7 @@ class JobPostModel extends Schema {
 				"jpd.id",
 				"jpd.job_post_id",
 				"org.name as organization_name",
-				"org_p.file as organization_photo",
+				"org.photo as organization_photo",
 				"j.title",
 				"jpd.status as job_post_details_status",
 				"jp.created_time",
@@ -504,10 +512,6 @@ class JobPostModel extends Schema {
 			.joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
 				`${this.HOTELIER}.${this.TABLES.organization}`,
 			])
-			.joinRaw(
-				`LEFT JOIN ?? as org_p ON org_p.organization_id = org.id`,
-				[`${this.HOTELIER}.${this.TABLES.organization_photos}`]
-			)
 			.leftJoin("location as loc", "loc.id", "org.location_id")
 			.leftJoin("job_post_details as jpd", "jp.id", "jpd.job_post_id")
 			.leftJoin("jobs as j", "jpd.job_id", "j.id")
@@ -580,6 +584,7 @@ class JobPostModel extends Schema {
 				"jpd.status as job_post_details_status",
 				"jpd.start_time",
 				"jpd.end_time",
+				"org.user_id as hotelier_id",
 				"jp.organization_id",
 				"j.title",
 				"j.hourly_rate",
@@ -587,7 +592,7 @@ class JobPostModel extends Schema {
 				"j.platform_fee",
 				"j.details as job_details",
 				"org.name as organization_name",
-				"org_p.file as organization_photo",
+				"org.photo as organization_photo",
 				"vwl.location_id",
 				"vwl.location_name",
 				"vwl.location_address",
@@ -682,11 +687,6 @@ class JobPostModel extends Schema {
 				"task_list_agg.job_task_activity_id",
 				"jta.id"
 			)
-			.leftJoin(
-				this.db.raw(`?? as org_p ON org_p.organization_id = org.id`, [
-					`${this.HOTELIER}.${this.TABLES.organization_photos}`,
-				])
-			)
 			.where("jpd.id", id)
 			.first();
 	}
@@ -773,7 +773,7 @@ class JobPostModel extends Schema {
 				"j.job_seeker_pay",
 				"jp.created_time",
 				"org.name as organization_name",
-				"org_p.file as organization_photo",
+				"org.photo as organization_photo",
 				"vwl.location_address",
 				"vwl.city_name",
 				"vwl.longitude",
@@ -793,11 +793,6 @@ class JobPostModel extends Schema {
 				"vw_location as vwl",
 				"vwl.location_id",
 				"org.location_id"
-			)
-			.leftJoin(
-				this.db.raw(`?? as org_p ON org_p.organization_id = org.id`, [
-					`${this.HOTELIER}.${this.TABLES.organization_photos}`,
-				])
 			)
 			.where("saved.job_seeker_id", job_seeker_id)
 			.andWhere("jpd.status", "Pending")

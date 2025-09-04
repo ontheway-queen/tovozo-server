@@ -14,15 +14,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.JobSeekerJobApplication = void 0;
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
+const socket_1 = require("../../../app/socket");
 const cancellationLogModel_1 = __importDefault(require("../../../models/cancellationLogModel/cancellationLogModel"));
 const jobPostModel_1 = __importDefault(require("../../../models/hotelierModel/jobPostModel"));
-const customError_1 = __importDefault(require("../../../utils/lib/customError"));
-const constants_1 = require("../../../utils/miscellaneous/constants");
 const userModel_1 = __importDefault(require("../../../models/userModel/userModel"));
-const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
-const commonModelTypes_1 = require("../../../utils/modelTypes/common/commonModelTypes");
-const socket_1 = require("../../../app/socket");
+const customError_1 = __importDefault(require("../../../utils/lib/customError"));
 const lib_1 = __importDefault(require("../../../utils/lib/lib"));
+const constants_1 = require("../../../utils/miscellaneous/constants");
+const commonModelTypes_1 = require("../../../utils/modelTypes/common/commonModelTypes");
+const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
 class JobSeekerJobApplication extends abstract_service_1.default {
     constructor() {
         super();
@@ -32,28 +32,29 @@ class JobSeekerJobApplication extends abstract_service_1.default {
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 const userModel = new userModel_1.default(trx);
                 const jobPostModel = new jobPostModel_1.default(trx);
+                const jobSeekerModel = this.Model.jobSeekerModel(trx);
                 const cancellationLogModel = new cancellationLogModel_1.default(trx);
-                const jobSeeker = yield userModel.checkUser({
-                    id: user_id,
-                    type: userModelTypes_1.TypeUser.JOB_SEEKER,
+                const jobSeekerUser = yield userModel.checkUser({ id: user_id });
+                if (!jobSeekerUser) {
+                    throw new customError_1.default("User not found with related ID.", this.StatusCode.HTTP_NOT_FOUND);
+                }
+                const jobSeeker = yield jobSeekerModel.getJobSeekerDetails({
+                    user_id,
                 });
-                if (jobSeeker && jobSeeker.length < 1) {
+                if (!jobSeeker) {
                     throw new customError_1.default("Job seeker not found!", this.StatusCode.HTTP_NOT_FOUND);
+                }
+                if (!jobSeeker.final_completed) {
+                    throw new customError_1.default("Please provide your ID Copy, Work Permit and bank account details to continue with the application process.", this.StatusCode.HTTP_BAD_REQUEST);
                 }
                 const jobPost = yield jobPostModel.getSingleJobPostForJobSeeker(job_post_details_id);
                 if (!jobPost) {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
                 }
-                //! Need to uncomment later.
-                // if (
-                // 	jobPost.status !==
-                // 	(JOB_POST_DETAILS_STATUS.Pending as unknown as IJobPostDetailsStatus)
-                // ) {
-                // 	throw new CustomError(
-                // 		"This job post is no longer accepting applications.",
-                // 		this.StatusCode.HTTP_BAD_REQUEST
-                // 	);
-                // }
+                if (jobPost.status !==
+                    constants_1.JOB_POST_DETAILS_STATUS.Pending) {
+                    throw new customError_1.default("This job post is no longer accepting applications.", this.StatusCode.HTTP_BAD_REQUEST);
+                }
                 const jobPostReport = yield cancellationLogModel.getSingleJobPostCancellationLog({
                     id: null,
                     report_type: constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST,
@@ -68,18 +69,13 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     job_seeker_id: user_id,
                 });
                 //! Need to uncomment later.
-                // if (
-                // 	existPendingApplication &&
-                // 	(existPendingApplication.job_application_status ===
-                // 		JOB_APPLICATION_STATUS.PENDING ||
-                // 		existPendingApplication.job_application_status ===
-                // 			JOB_APPLICATION_STATUS.IN_PROGRESS)
-                // ) {
-                // 	throw new CustomError(
-                // 		"Hold on! You need to complete your current job before moving on to the next.",
-                // 		this.StatusCode.HTTP_BAD_REQUEST
-                // 	);
-                // }
+                if (existPendingApplication &&
+                    (existPendingApplication.job_application_status ===
+                        constants_1.JOB_APPLICATION_STATUS.PENDING ||
+                        existPendingApplication.job_application_status ===
+                            constants_1.JOB_APPLICATION_STATUS.IN_PROGRESS)) {
+                    throw new customError_1.default("Hold on! You need to complete your current job before moving on to the next.", this.StatusCode.HTTP_BAD_REQUEST);
+                }
                 const payload = {
                     job_post_details_id: Number(job_post_details_id),
                     job_seeker_id: user_id,
@@ -116,13 +112,12 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     }),
                     type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
                     related_id: jobPost.id,
-                    job_seeker_device_id: jobSeeker[0].device_id,
+                    job_seeker_device_id: jobSeekerUser[0].device_id,
                 }, {
                     delay: reminderTime.getTime() - Date.now(),
                     removeOnComplete: true,
                     removeOnFail: false,
                 });
-                // Job start reminder queue end from here
                 // Chat Session Create Message queue start from here
                 const oneHourBeforeStart = new Date(startTime.getTime() - 60 * 60 * 1000);
                 const chatSessionDelay = oneHourBeforeStart.getTime() - Date.now();
@@ -157,7 +152,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 if (isHotelierOnline && isHotelierOnline.length > 0) {
                     socket_1.io.to(String(jobPost.hotelier_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.HOTELIER_NEW_NOTIFICATION, {
                         user_id,
-                        photo: jobSeeker[0].photo,
+                        photo: jobSeekerUser[0].photo,
                         title: this.NotificationMsg.JOB_APPLICATION_RECEIVED
                             .title,
                         content: this.NotificationMsg.JOB_APPLICATION_RECEIVED.content({
@@ -173,7 +168,6 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                 else {
                     if (hotelier[0].device_id) {
                         const device_id = hotelier[0].device_id;
-                        console.log({ device_id });
                         yield lib_1.default.sendNotificationToMobile({
                             to: hotelier[0].device_id,
                             notificationTitle: this.NotificationMsg.JOB_APPLICATION_RECEIVED.title,
@@ -182,7 +176,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                                 jobPostId: jobPost.id,
                             }),
                             data: JSON.stringify({
-                                photo: jobSeeker[0].photo,
+                                photo: jobSeekerUser[0].photo,
                                 related_id: jobPost.id,
                             }),
                         });
@@ -198,6 +192,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
         this.getMyJobApplications = (req) => __awaiter(this, void 0, void 0, function* () {
             const { orderBy, orderTo, status, limit, skip } = req.query;
             const { user_id } = req.jobSeeker;
+            console.log({ user_id });
             const model = this.Model.jobApplicationModel();
             const { data, total } = yield model.getMyJobApplications({
                 user_id,
@@ -288,7 +283,6 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     body.reporter_id = user_id;
                     body.related_id = id;
                     const cancellationReportModel = this.Model.cancellationLogModel(trx);
-                    console.log({ body });
                     yield cancellationReportModel.requestForCancellationLog(body);
                     return {
                         success: true,

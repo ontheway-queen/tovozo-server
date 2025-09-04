@@ -15,8 +15,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.JobSeekerChatService = void 0;
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
 const socket_1 = require("../../../app/socket");
-const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
 const customError_1 = __importDefault(require("../../../utils/lib/customError"));
+const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
 class JobSeekerChatService extends abstract_service_1.default {
     constructor() {
         super();
@@ -149,12 +149,9 @@ class JobSeekerChatService extends abstract_service_1.default {
                 throw new customError_1.default("User not found!", this.StatusCode.HTTP_NOT_FOUND);
             }
             let chatSession = yield chatModel.checkSupportSession(user_id);
-            console.log({ chatSession });
             if (chatSession) {
                 const chat_session_id = chatSession.id;
-                console.log({ chat_session_id });
                 const existingParticipants = yield chatModel.getSessionParticipants(chat_session_id);
-                console.log({ existingParticipants });
                 const existingAdminIds = new Set(existingParticipants
                     .filter((p) => p.type === userModelTypes_1.TypeUser.ADMIN)
                     .map((p) => p.user_id));

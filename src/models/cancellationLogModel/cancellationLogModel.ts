@@ -335,7 +335,7 @@ class CancellationLogModel extends Schema {
 			.withSchema(this.DBO_SCHEMA)
 			.leftJoin("user as u", "u.id", "cr.reporter_id")
 			.leftJoin("job_post_details as jpd", "cr.related_id", "jpd.id")
-			.leftJoin("jobs as j", "jpd.job_id", "j.id")
+			.leftJoin("jobs as j", "j.id", "jpd.job_id")
 			.where("cr.report_type", "CANCEL_JOB_POST");
 
 		const jobApplicationQuery = this.db
@@ -357,7 +357,7 @@ class CancellationLogModel extends Schema {
 			)
 			.leftJoin("jobs as j", "jpd.job_id", "j.id")
 			.where("cr.report_type", "CANCEL_APPLICATION");
-
+		console.log({ jobPostQuery, jobApplicationQuery });
 		const applyFilters = (qb: any) => {
 			if (status) qb.andWhere("cr.status", status);
 			if (report_type) qb.andWhere("cr.report_type", report_type);

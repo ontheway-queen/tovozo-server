@@ -25,13 +25,6 @@ class UserModel extends schema_1.default {
                 .insert(payload, "id");
         });
     }
-    createUserMaintenanceDesignation(payload) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db(this.TABLES.maintenance_designation)
-                .withSchema(this.HOTELIER)
-                .insert(payload);
-        });
-    }
     //update
     updateProfile(payload, where) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -54,15 +47,15 @@ class UserModel extends schema_1.default {
                 .where("is_deleted", false)
                 .modify((qb) => {
                 if (id)
-                    qb.where("id", id);
+                    qb.andWhere("id", id);
                 if (type)
-                    qb.where("type", type);
+                    qb.andWhere("type", type);
                 if (email)
-                    qb.orWhere("email", email);
+                    qb.andWhere("email", email);
                 if (username)
-                    qb.orWhere("username", username);
+                    qb.andWhere("username", username);
                 if (phone_number)
-                    qb.orWhere("phone_number", phone_number);
+                    qb.andWhere("phone_number", phone_number);
             });
         });
     }

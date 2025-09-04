@@ -144,6 +144,20 @@ class CommonModel extends schema_1.default {
                 .offset(skip || 0);
         });
     }
+    createState(payload) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("states")
+                .withSchema(this.DBO_SCHEMA)
+                .insert(payload, "id");
+        });
+    }
+    createCity(payload) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db("cities")
+                .withSchema(this.DBO_SCHEMA)
+                .insert(payload, "id");
+        });
+    }
     createLocation(payload) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("location")
@@ -185,7 +199,7 @@ class CommonModel extends schema_1.default {
     }
     getNotification(params) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { limit = 100, skip = 0, id, user_id, need_total = true, } = params;
+            const { limit = 100, skip = 0, id, user_id, need_total = true } = params;
             const data = yield this.db(`${this.TABLES.notification} as n`)
                 .withSchema(this.DBO_SCHEMA)
                 .select("n.id", "n.user_id", "n.sender_id", "n.sender_type", "n.title", "n.content", "n.created_at", "n.related_id", "n.type", "u.type as user_type", this.db.raw(`
@@ -194,7 +208,7 @@ class CommonModel extends schema_1.default {
           ELSE false
         END AS is_read
       `), this.db.raw(`
-          CASE 
+          CASE
             WHEN n.sender_type = 'HOTELIER' THEN sender.photo
             WHEN n.sender_type = 'JOB_SEEKER' THEN sender.photo
             WHEN n.sender_type = 'ADMIN' THEN NULL

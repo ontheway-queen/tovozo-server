@@ -86,11 +86,7 @@ export default class AdminModel extends Schema {
 					qb.where((qbc) => {
 						qbc.where("u.username", "ilike", `%${query.filter}%`);
 						qbc.orWhere("u.email", "ilike", `%${query.filter}%`);
-						qbc.orWhere(
-							"u.phone_number",
-							"ilike",
-							`%${query.filter}%`
-						);
+						qbc.orWhere("u.phone_number", "ilike", `%${query.filter}%`);
 					});
 				}
 				if (query.role) {
@@ -115,21 +111,9 @@ export default class AdminModel extends Schema {
 				.where((qb) => {
 					if (query.filter) {
 						qb.where((qbc) => {
-							qbc.where(
-								"u.username",
-								"ilike",
-								`%${query.filter}%`
-							);
-							qbc.orWhere(
-								"u.email",
-								"ilike",
-								`%${query.filter}%`
-							);
-							qbc.orWhere(
-								"u.phone_number",
-								"ilike",
-								`%${query.filter}%`
-							);
+							qbc.where("u.username", "ilike", `%${query.filter}%`);
+							qbc.orWhere("u.email", "ilike", `%${query.filter}%`);
+							qbc.orWhere("u.phone_number", "ilike", `%${query.filter}%`);
 						});
 					}
 					if (query.role) {
@@ -151,7 +135,6 @@ export default class AdminModel extends Schema {
 	public async getSingleAdmin(
 		payload: IAdminSearchQuery
 	): Promise<IGetSingleAdmin[]> {
-		// console.log("Payload for getSingleAdmin:", payload);
 		return await this.db("admin as ua")
 			.select(
 				"ua.*",

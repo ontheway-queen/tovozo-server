@@ -1,9 +1,8 @@
 import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
 import { io } from "../../../app/socket";
-import { TypeEmitNotificationEnum } from "../../../utils/modelTypes/common/commonModelTypes";
-import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
 import CustomError from "../../../utils/lib/customError";
+import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
 
 export class JobSeekerChatService extends AbstractServices {
 	constructor() {
@@ -32,11 +31,12 @@ export class JobSeekerChatService extends AbstractServices {
 		const { user_id } = req.jobSeeker;
 		const chatModel = this.Model.chatModel();
 
-		const isSessionExists =
-			await chatModel.checkSessionForJobSeekerAndHotelier({
+		const isSessionExists = await chatModel.checkSessionForJobSeekerAndHotelier(
+			{
 				hotelier_id: Number(hotelier_id),
 				job_seeker_id: Number(user_id),
-			});
+			}
+		);
 		if (!isSessionExists) {
 			throw new CustomError(
 				"Unable to start chat — no existing conversation found between you and this Hiring Manager.",
@@ -61,11 +61,10 @@ export class JobSeekerChatService extends AbstractServices {
 		const skip = Number(req.query.skip);
 		const chatModel = this.Model.chatModel();
 
-		const read_messages =
-			await chatModel.getAllReadMessagesByUserAndSession({
-				user_id,
-				session_id,
-			});
+		const read_messages = await chatModel.getAllReadMessagesByUserAndSession({
+			user_id,
+			session_id,
+		});
 
 		const data = await chatModel.getMessages({
 			user_id,
@@ -77,9 +76,7 @@ export class JobSeekerChatService extends AbstractServices {
 		// 3. Extract IDs of read messages for quick lookup
 		const readMessageIds = new Set(read_messages.map((r) => r.message_id));
 
-		const unreadMessages = data.filter(
-			(msg) => !readMessageIds.has(msg.id)
-		);
+		const unreadMessages = data.filter((msg) => !readMessageIds.has(msg.id));
 
 		if (unreadMessages.length > 0) {
 			const insertData = unreadMessages.map((msg) => ({
@@ -159,22 +156,16 @@ export class JobSeekerChatService extends AbstractServices {
 
 		const checkUser = await userModel.checkUser({ id: user_id });
 		if (checkUser && checkUser.length < 1) {
-			throw new CustomError(
-				"User not found!",
-				this.StatusCode.HTTP_NOT_FOUND
-			);
+			throw new CustomError("User not found!", this.StatusCode.HTTP_NOT_FOUND);
 		}
 
 		let chatSession = await chatModel.checkSupportSession(user_id);
-		console.log({ chatSession });
 		if (chatSession) {
 			const chat_session_id = chatSession.id;
-			console.log({ chat_session_id });
 
 			const existingParticipants = await chatModel.getSessionParticipants(
 				chat_session_id
 			);
-			console.log({ existingParticipants });
 			const existingAdminIds = new Set(
 				existingParticipants
 					.filter((p: any) => p.type === TypeUser.ADMIN)
@@ -194,9 +185,7 @@ export class JobSeekerChatService extends AbstractServices {
 					joined_at: new Date(),
 				}));
 
-				await chatModel.createChatSessionParticipants(
-					newAdminParticipants
-				);
+				await chatModel.createChatSessionParticipants(newAdminParticipants);
 			}
 
 			return {

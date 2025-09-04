@@ -19,7 +19,6 @@ export default class ChatWorker {
 					job_seeker_id,
 				});
 			if (existingSession) {
-				console.log("Chat session already exists.");
 				await chatModel.updateChatSession({
 					session_id: existingSession.id,
 					payload: {
@@ -32,8 +31,7 @@ export default class ChatWorker {
 				return;
 			}
 			const [session] = await chatModel.createChatSession({
-				last_message:
-					"Hi there! Feel free to start the conversation here.",
+				last_message: "Hi there! Feel free to start the conversation here.",
 			});
 
 			const chatSessionParticipants = [
@@ -51,9 +49,7 @@ export default class ChatWorker {
 				},
 			];
 
-			await chatModel.createChatSessionParticipants(
-				chatSessionParticipants
-			);
+			await chatModel.createChatSessionParticipants(chatSessionParticipants);
 
 			const messagePayload = {
 				chat_session_id: session.id,
@@ -75,8 +71,7 @@ export default class ChatWorker {
 						user_id: job_seeker_id,
 						type: NotificationTypeEnum.JOB_TASK,
 						title: "New Message",
-						content:
-							"Hi there! Feel free to start the conversation here.",
+						content: "Hi there! Feel free to start the conversation here.",
 						read_status: false,
 						created_at: new Date().toISOString(),
 					}
@@ -99,9 +94,6 @@ export default class ChatWorker {
 					});
 				}
 			}
-
-			console.log(5);
-			console.log("Chat session created successfully.");
 		});
 	}
 }

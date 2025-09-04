@@ -1,7 +1,4 @@
-import {
-	IAdminApplications,
-	IJobSeekerJobApplication,
-} from "../../features/jobSeeker/utils/types/jobSeekerJobApplicationTypes";
+import { IJobSeekerJobApplication } from "../../features/jobSeeker/utils/types/jobSeekerJobApplicationTypes";
 import { TDB } from "../../features/public/utils/types/publicCommon.types";
 import { JOB_APPLICATION_STATUS } from "../../utils/miscellaneous/constants";
 import Schema from "../../utils/miscellaneous/schema";
@@ -60,7 +57,7 @@ export default class JobApplicationModel extends Schema {
 				"org.id as organization_id",
 				"org.user_id as hotelier_id",
 				"org.name as organization_name",
-				"org_p.file as organization_photo",
+				"org.photo as organization_photo",
 				"vwl.location_address",
 				"vwl.city_name",
 				"vwl.longitude",
@@ -80,11 +77,6 @@ export default class JobApplicationModel extends Schema {
 				"vw_location as vwl",
 				"vwl.location_id",
 				"org.location_id"
-			)
-			.leftJoin(
-				this.db.raw(`?? as org_p ON org_p.organization_id = org.id`, [
-					`${this.HOTELIER}.${this.TABLES.organization_photos}`,
-				])
 			)
 			.where("ja.job_seeker_id", job_seeker_id)
 			.modify((qb) => {
@@ -122,7 +114,6 @@ export default class JobApplicationModel extends Schema {
 		job_application_id?: number | null;
 		job_seeker_id?: number;
 	}): Promise<IJobSeekerJobApplication> {
-		console.log({ job_seeker_id });
 		return await this.db("job_applications as ja")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
@@ -139,7 +130,7 @@ export default class JobApplicationModel extends Schema {
 				"org.user_id as hotelier_id",
 				"org.id as organization_id",
 				"org.name as organization_name",
-				"org_p.file as organization_photo",
+				"org.photo as organization_photo",
 				"vwl.location_address",
 				"vwl.city_name",
 				"vwl.longitude",
@@ -163,11 +154,6 @@ export default class JobApplicationModel extends Schema {
 			.joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
 				`${this.HOTELIER}.${this.TABLES.organization}`,
 			])
-			.leftJoin(
-				this.db.raw(`?? as org_p ON org_p.organization_id = org.id`, [
-					`${this.HOTELIER}.${this.TABLES.organization_photos}`,
-				])
-			)
 			.leftJoin(
 				"vw_location as vwl",
 				"vwl.location_id",
@@ -220,18 +206,15 @@ export default class JobApplicationModel extends Schema {
 		const [updated] = await this.db("job_applications")
 			.withSchema(this.DBO_SCHEMA)
 			.update({ status: status })
-			.where({
-				id: application_id,
-				job_seeker_id: job_seeker_id,
-			})
+			.where("id", application_id)
+			.andWhere("job_seeker_id", job_seeker_id)
 			.returning("*");
-
+		console.log({ updated });
 		return updated ?? null;
 	}
 
 	// cancel all job application if hotelier cancel the job.
 	public async cancelApplication(job_post_id: number) {
-		console.log("job_post_id", job_post_id);
 		return await this.db("job_applications")
 			.withSchema(this.DBO_SCHEMA)
 			.where("job_post_id", job_post_id)
@@ -260,7 +243,6 @@ export default class JobApplicationModel extends Schema {
 			need_total = true,
 			name,
 		} = query;
-		console.log({ query });
 
 		const selectFields = [
 			"ja.id as job_application_id",
@@ -269,9 +251,10 @@ export default class JobApplicationModel extends Schema {
 			"jpd.start_time",
 			"jpd.end_time",
 			"j.title as job_post_title",
-			"org.user_id as organization_id",
+			"org.id as organization_id",
+			"org.user_id as organization_user_id",
 			"org.name as organization_name",
-			"org_p.file as organization_photo",
+			"org.photo as organization_photo",
 			"js.user_id as job_seeker_id",
 			"jsu.name as job_seeker_name",
 			"jsu.photo as job_seeker_photo",
@@ -296,11 +279,6 @@ export default class JobApplicationModel extends Schema {
 				"vw_location as vwl",
 				"vwl.location_id",
 				"org.location_id"
-			)
-			.leftJoin(
-				this.db.raw(`?? as org_p ON org_p.organization_id = org.id`, [
-					`${this.HOTELIER}.${this.TABLES.organization_photos}`,
-				])
 			)
 			.leftJoin(
 				this.db.raw(`?? as js ON js.user_id = ja.job_seeker_id`, [

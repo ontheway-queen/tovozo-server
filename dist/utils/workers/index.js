@@ -31,6 +31,7 @@ class Workers {
         this.ExpireJobPostDetails();
         this.jobStartReminder();
         this.chatSessionCreator();
+        this.cancelHotelierJobsIfUnpaid();
     }
     ExpireJobPostDetails() {
         this.worker = new bullmq_1.Worker("expire-job-post-details", (job) => __awaiter(this, void 0, void 0, function* () { return yield this.jobPostWorker.expireJobPostDetails(job); }), { connection: this.connection });
@@ -58,6 +59,15 @@ class Workers {
         });
         this.worker.on("failed", (job, err) => {
             console.error(`❌ Failed to create chat session.`, err);
+        });
+    }
+    cancelHotelierJobsIfUnpaid() {
+        this.worker = new bullmq_1.Worker("cancelHotelierJobsIfUnpaid", (job) => __awaiter(this, void 0, void 0, function* () { return yield this.jobPostWorker.cancelHotelierJobsIfUnpaid(job); }), { connection: this.connection });
+        this.worker.on("completed", (job) => {
+            console.log(`✅ Successfully processed job #${job.id}: cancelled hotelier jobs if payment was unpaid.`);
+        });
+        this.worker.on("failed", (job, err) => {
+            console.error(`❌ Failed to process job #${job === null || job === void 0 ? void 0 : job.id} for cancelling hotelier jobs.`, err);
         });
     }
 }

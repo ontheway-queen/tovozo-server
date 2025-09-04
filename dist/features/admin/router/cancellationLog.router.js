@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_router_1 = __importDefault(require("../../../abstract/abstract.router"));
 const cancellationLog_controller_1 = __importDefault(require("../controller/cancellationLog.controller"));
-class CancellationReportRouter extends abstract_router_1.default {
+class CancellationLogsRouter extends abstract_router_1.default {
     constructor() {
         super();
         this.controller = new cancellationLog_controller_1.default();
@@ -19,4 +19,4 @@ class CancellationReportRouter extends abstract_router_1.default {
             .patch(this.controller.updateCancellationLogStatus);
     }
 }
-exports.default = CancellationReportRouter;
+exports.default = CancellationLogsRouter;

@@ -28,6 +28,17 @@ CREATE TYPE dbo.type_email_otp AS ENUM (
   '2fa_admin',
   '2fa_hotelier'
 );
+
+CREATE TYPE dbo.payout_status_type AS ENUM (
+	'Pending',
+	'Approved',
+	'Rejected'
+);
+
+CREATE TYPE dbo.payment_entry_type AS ENUM (
+	'Invoice',
+	'Withdraw'
+);
 -------------------------------------------------------------------------------------------------
 
 
@@ -312,7 +323,7 @@ CREATE TABLE IF NOT EXISTS dbo.job_applications (
     status dbo.job_application_status DEFAULT 'Pending',
     cancelled_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    is_deleted BOOLEAN NOT NULL DEFAULT FALSE
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     created_by INTEGER
 );
 
@@ -404,11 +415,11 @@ create type dbo.pay_ledger_trx_type AS ENUM (
 -- job seeker ledger
 CREATE TABLE IF NOT EXISTS dbo.payment_ledger (
     id SERIAL PRIMARY KEY,
-    payment_id INTEGER REFERENCES dbo.payment(id),
-    user_id INTEGER REFERENCES dbo.user(id),
-    trx_type dbo.pay_ledger_trx_type NOT NULL,
-    user_type dbo.user_type NOT NULL,
     voucher_no VARCHAR(50) NOT NULL,
+    trx_type dbo.pay_ledger_trx_type NOT NULL,
+    entry_type dbo.payment_entry_type NOT NULL,
+    user_id INTEGER REFERENCES dbo.user(id),
+    user_type dbo.user_type NOT NULL,
     amount NUMERIC(18,2) NOT NULL,
     details TEXT NOT NULL,
     ledger_date TIMESTAMP,
@@ -460,48 +471,48 @@ CREATE TABLE IF NOT EXISTS dbo.saved_job_post_details(
    UNIQUE (job_post_details_id, job_seeker_id)
 )
 
-/* 
-{
-    "success": true,
-    "message": "The request is OK",
-    "data": [
-        {
-            "session_id": 4,
-            "last_message": "ererer",
-            "last_message_at": "2025-08-11T05:16:50.055Z",
-            "enable_chat": false,
-            "participant_user_id": 266,
-            "participant_name": "soton soton",
-            "participant_email": "soton.m360ict@gmail.com",
-            "participant_image": "job-seeker-files/1754291953366-387273557.jpg",
-            "participant_type": "JOB_SEEKER",
-            "unread_message_count": 0
-        },
-        {
-            "session_id": 18,
-            "last_message": "THis is testing...😂",
-            "last_message_at": "2025-08-11T04:46:01.787Z",
-            "enable_chat": false,
-            "participant_user_id": 295,
-            "participant_name": "Tovozo Jobseeker",
-            "participant_email": "tovozo.jobseeker@yopmail.com",
-            "participant_image": null,
-            "participant_type": "JOB_SEEKER",
-            "unread_message_count": 2
-        },
-        {
-            "session_id": 19,
-            "last_message": "THis is testing...😂",
-            "last_message_at": "2025-08-11T04:46:01.787Z",
-            "enable_chat": false,
-            "participant_user_id": 295,
-            "participant_name": "Tovozo Jobseeker",
-            "participant_email": "tovozo.jobseeker@yopmail.com",
-            "participant_image": null,
-            "participant_type": "JOB_SEEKER",
-            "unread_message_count": 3
-        }
-    ],
-    unread_session_count: 2
-}
-*/
+
+
+
+
+CREATE SEQUENCE states_id_seq;
+
+ALTER TABLE dbo.states
+ALTER COLUMN id SET DEFAULT nextval('states_id_seq');
+
+SELECT setval('states_id_seq', COALESCE((SELECT MAX(id) FROM dbo.states), 0));
+
+ALTER TABLE dbo.states
+ADD PRIMARY KEY (id);
+
+
+CREATE SEQUENCE cities_id_seq;
+
+ALTER TABLE dbo.cities
+ALTER COLUMN id SET DEFAULT nextval('cities_id_seq');
+
+SELECT setval('cities_id_seq', COALESCE((SELECT MAX(id) FROM dbo.cities), 0));
+
+ALTER TABLE dbo.cities
+ADD PRIMARY KEY (id);
+
+
+CREATE TABLE IF NOT EXISTS dbo.payout
+(
+    id SERIAL PRIMARY KEY,
+    job_seeker_id integer NOT NULL references dbo."user"(id),
+    amount numeric(12,2) NOT NULL,
+    status dbo.payout_status_type NOT NULL DEFAULT 'Pending',
+    requested_at timestamp without time zone NOT NULL DEFAULT now(),
+    approved_by integer,
+    approved_at timestamp without time zone,
+    paid_at timestamp without time zone,
+    transaction_reference character varying(255),
+    job_seeker_note text,
+    admin_note text, 
+    bank_account_name varchar(255),
+    bank_account_number varchar(50),
+    bank_code varchar(50),
+    is_deleted boolean NOT NULL DEFAULT false
+)
+

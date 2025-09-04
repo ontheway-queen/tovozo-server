@@ -1,4 +1,5 @@
 import AbstractRouter from "../../abstract/abstract.router";
+import { BankDetailsRouter } from "./router/bankDetails.router";
 import { JobSeekerCancellationApplicationLogsRouter } from "./router/jobSeekerCancellationLog.router";
 import { JobSeekerChatRouter } from "./router/jobSeekerChat.router";
 import { JobSeekerJobApplicationRouter } from "./router/jobSeekerJobApplication.router";
@@ -6,9 +7,9 @@ import { JobSeekerJobsRouter } from "./router/jobSeekerJobs.router";
 import JobTaskActivityRouter from "./router/jobSeekerJobTaskActivity.router";
 import jobSeekerNotificationRouter from "./router/jobSeekerNotification.router";
 import JobSeekerPaymentRouter from "./router/jobSeekerPayment.router";
+import JobSeekerPayoutRoute from "./router/jobSeekerPayout.router";
 import jobSeekerProfileRouter from "./router/jobSeekerProfile.router";
 import JobSeekerReportRouter from "./router/jobSeekerReport.router";
-import JobSeekerStripeRouter from "./router/jobSeekerStripe.router";
 
 export default class JobSeekerRootRouter extends AbstractRouter {
 	constructor() {
@@ -42,9 +43,6 @@ export default class JobSeekerRootRouter extends AbstractRouter {
 		// reports
 		this.router.use("/reports", new JobSeekerReportRouter().router);
 
-		// Stripe
-		this.router.use("/stripe", new JobSeekerStripeRouter().router);
-
 		// payments
 		this.router.use("/payments", new JobSeekerPaymentRouter().router);
 
@@ -54,5 +52,9 @@ export default class JobSeekerRootRouter extends AbstractRouter {
 		);
 
 		this.router.use("/chat", new JobSeekerChatRouter().router);
+
+		this.router.use("/payouts", new JobSeekerPayoutRoute().router);
+
+		this.router.use("/bank-details", new BankDetailsRouter().router);
 	}
 }
