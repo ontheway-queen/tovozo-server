@@ -53,6 +53,7 @@ export default class PaymentModel extends Schema {
 				"p.application_id",
 				"p.total_amount",
 				"p.trx_fee",
+				"jpd.id as job_post_details_id",
 				"job_seeker.id as job_seeker_id",
 				"job_seeker.name as job_seeker_name",
 				"j.title as job_title",

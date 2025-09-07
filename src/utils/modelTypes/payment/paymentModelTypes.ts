@@ -28,6 +28,7 @@ export interface IGetPaymentsForHotelier {
 	status: string;
 	paid_at: string | null;
 	trx_id: string | null;
+	job_post_details_id: number;
 }
 
 export interface IGetPaymentsForJobSeeker {

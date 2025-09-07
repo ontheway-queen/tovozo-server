@@ -62,6 +62,7 @@ export default class AdminModel extends Schema {
 				role: string;
 				role_id: number;
 				is_2fa_on: boolean;
+				is_main: boolean;
 			}[];
 		} & { total?: number }
 	> {
@@ -77,7 +78,8 @@ export default class AdminModel extends Schema {
 				"u.status",
 				"rl.name as role",
 				"rl.id as role_id",
-				"ua.is_2fa_on"
+				"ua.is_2fa_on",
+				"ua.is_main"
 			)
 			.leftJoin("roles as rl", "rl.id", "ua.role_id")
 			.joinRaw("LEFT JOIN dbo.user u ON u.id = ua.user_id")
@@ -86,7 +88,11 @@ export default class AdminModel extends Schema {
 					qb.where((qbc) => {
 						qbc.where("u.username", "ilike", `%${query.filter}%`);
 						qbc.orWhere("u.email", "ilike", `%${query.filter}%`);
-						qbc.orWhere("u.phone_number", "ilike", `%${query.filter}%`);
+						qbc.orWhere(
+							"u.phone_number",
+							"ilike",
+							`%${query.filter}%`
+						);
 					});
 				}
 				if (query.role) {
@@ -111,9 +117,21 @@ export default class AdminModel extends Schema {
 				.where((qb) => {
 					if (query.filter) {
 						qb.where((qbc) => {
-							qbc.where("u.username", "ilike", `%${query.filter}%`);
-							qbc.orWhere("u.email", "ilike", `%${query.filter}%`);
-							qbc.orWhere("u.phone_number", "ilike", `%${query.filter}%`);
+							qbc.where(
+								"u.username",
+								"ilike",
+								`%${query.filter}%`
+							);
+							qbc.orWhere(
+								"u.email",
+								"ilike",
+								`%${query.filter}%`
+							);
+							qbc.orWhere(
+								"u.phone_number",
+								"ilike",
+								`%${query.filter}%`
+							);
 						});
 					}
 					if (query.role) {
