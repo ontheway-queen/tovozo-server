@@ -430,7 +430,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 			});
 
 			const startTime = dayjs(taskActivity.start_time).valueOf();
-			const endTime = dayjs(new Date()).valueOf();
+			const endTime = dayjs(taskActivity.end_time).valueOf();
 
 			const totalMinutes = Math.floor(
 				(endTime - startTime) / (1000 * 60)

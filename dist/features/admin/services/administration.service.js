@@ -394,9 +394,14 @@ class AdminAdministrationService extends abstract_service_1.default {
                 }
             }
             const _a = req.body, { role_id, is_2fa_on } = _a, rest = __rest(_a, ["role_id", "is_2fa_on"]);
-            const updatedProfile = yield UserModel().updateProfile(rest, { id });
+            let updatedProfile;
+            if (Object.keys(rest).length > 0) {
+                updatedProfile = yield UserModel().updateProfile(rest, {
+                    id,
+                });
+            }
             if (role_id !== undefined || is_2fa_on !== undefined) {
-                yield AdminModel().updateAdmin({ role_id, is_2fa_on }, { user_id: id });
+                updatedProfile = yield AdminModel().updateAdmin({ role_id, is_2fa_on }, { user_id: id });
             }
             return updatedProfile
                 ? {

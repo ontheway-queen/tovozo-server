@@ -309,7 +309,7 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                     status: constants_1.JOB_APPLICATION_STATUS.ENDED,
                 });
                 const startTime = (0, dayjs_1.default)(taskActivity.start_time).valueOf();
-                const endTime = (0, dayjs_1.default)(new Date()).valueOf();
+                const endTime = (0, dayjs_1.default)(taskActivity.end_time).valueOf();
                 const totalMinutes = Math.floor((endTime - startTime) / (1000 * 60));
                 const hours = Math.floor(totalMinutes / 60);
                 const minutes = totalMinutes % 60;

@@ -415,6 +415,7 @@ class AdminAdministrationService extends AbstractServices {
 			const [existingUser] = await AdminModel().getSingleAdmin({
 				username: req.body.username,
 			});
+
 			if (existingUser && existingUser.user_id !== id) {
 				return {
 					success: false,
@@ -440,10 +441,15 @@ class AdminAdministrationService extends AbstractServices {
 
 		const { role_id, is_2fa_on, ...rest } = req.body;
 
-		const updatedProfile = await UserModel().updateProfile(rest, { id });
+		let updatedProfile;
+		if (Object.keys(rest).length > 0) {
+			updatedProfile = await UserModel().updateProfile(rest, {
+				id,
+			});
+		}
 
 		if (role_id !== undefined || is_2fa_on !== undefined) {
-			await AdminModel().updateAdmin(
+			updatedProfile = await AdminModel().updateAdmin(
 				{ role_id, is_2fa_on },
 				{ user_id: id }
 			);
