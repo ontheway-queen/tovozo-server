@@ -30,7 +30,7 @@ class JobTaskListModel extends schema_1.default {
     getJobTaskList(query) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("job_task_list as jtl")
-                .select("jtl.id", "jtl.message", "jtl.is_completed", "jtl.completed_at", "js.id as job_seeker_id", "js.name as job_seeker_name", "jtl.created_at", "org.user_id as hotelier_id")
+                .select("jtl.id", "jtl.job_task_activity_id", "jtl.message", "jtl.is_completed", "jtl.completed_at", "js.id as job_seeker_id", "js.name as job_seeker_name", "jtl.created_at", "org.user_id as hotelier_id")
                 .withSchema(this.DBO_SCHEMA)
                 .join("job_task_activities as jta", "jta.id", "jtl.job_task_activity_id")
                 .join("job_applications as ja", "ja.id", "jta.job_application_id")

@@ -12,6 +12,7 @@ export interface IGetJobTaskList {
 	job_seeker_id: number;
 	job_seeker_name: string;
 	hotelier_id: number;
+	job_task_activity_id: number;
 }
 export interface IJobTaskListQuery {
 	id?: number;

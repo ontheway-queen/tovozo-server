@@ -265,7 +265,7 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                     throw new customError_1.default("Job task not found. Please create task to proceed.", this.StatusCode.HTTP_NOT_FOUND);
                 }
                 const taskActivity = yield jobTaskActivitiesModel.getSingleTaskActivity({
-                    id: taskList[0].id,
+                    id: taskList[0].job_task_activity_id,
                 });
                 if (!taskActivity) {
                     throw new customError_1.default("Task activity not found", this.StatusCode.HTTP_NOT_FOUND);

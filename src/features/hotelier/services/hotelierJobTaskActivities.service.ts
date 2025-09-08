@@ -367,7 +367,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 
 			const taskActivity =
 				await jobTaskActivitiesModel.getSingleTaskActivity({
-					id: taskList[0].id,
+					id: taskList[0].job_task_activity_id,
 				});
 
 			if (!taskActivity) {
