@@ -247,15 +247,78 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
             }));
         });
         this.deleteJobTaskList = (req) => __awaiter(this, void 0, void 0, function* () {
-            const id = Number(req.params.id);
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const { user_id } = req.hotelier;
+                const id = Number(req.params.id);
+                const userModel = this.Model.UserModel(trx);
+                const jobTaskActivitiesModel = this.Model.jobTaskActivitiesModel(trx);
                 const jobTaskListModel = this.Model.jobTaskListModel(trx);
                 const taskList = yield jobTaskListModel.getJobTaskList({ id });
+                const hotelier = yield userModel.checkUser({
+                    id: user_id,
+                    type: userModelTypes_1.TypeUser.HOTELIER,
+                });
+                if (hotelier && hotelier.length < 1) {
+                    throw new customError_1.default("Organization nor found!", this.StatusCode.HTTP_NOT_FOUND);
+                }
                 if (!taskList.length) {
                     throw new customError_1.default("Job task not found. Please create task to proceed.", this.StatusCode.HTTP_NOT_FOUND);
                 }
+                const taskActivity = yield jobTaskActivitiesModel.getSingleTaskActivity({
+                    id: taskList[0].id,
+                });
+                if (!taskActivity) {
+                    throw new customError_1.default("Task activity not found", this.StatusCode.HTTP_NOT_FOUND);
+                }
+                if (taskActivity.end_time) {
+                    throw new customError_1.default("You cannot remove task. Because It has already been submitted for approval.", this.StatusCode.HTTP_BAD_REQUEST);
+                }
                 yield jobTaskListModel.deleteJobTaskList(id);
-                socket_1.io.emit("delete:job-task-list", id);
+                const allMessages = taskList
+                    .map((task, index) => `${index + 1}. ${task.message}`)
+                    .join("\n");
+                yield this.insertNotification(trx, userModelTypes_1.TypeUser.JOB_SEEKER, {
+                    user_id: taskActivity.job_seeker_id,
+                    sender_id: user_id,
+                    sender_type: constants_1.USER_TYPE.HOTELIER,
+                    title: this.NotificationMsg.NEW_TASKS_ASSIGNED.title,
+                    content: allMessages,
+                    related_id: taskActivity.job_application_id,
+                    type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
+                });
+                const isJobSeekerOnline = yield (0, socket_1.getAllOnlineSocketIds)({
+                    user_id: taskActivity.job_seeker_id,
+                    type: userModelTypes_1.TypeUser.JOB_SEEKER,
+                });
+                const isJobSeekerExists = yield userModel.checkUser({
+                    id: taskActivity.job_seeker_id,
+                });
+                if (isJobSeekerOnline && isJobSeekerOnline.length > 0) {
+                    socket_1.io.to(String(taskActivity.job_seeker_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION, {
+                        user_id: taskActivity.job_seeker_id,
+                        photo: hotelier[0].photo,
+                        title: this.NotificationMsg.NEW_TASKS_ASSIGNED.title,
+                        content: allMessages,
+                        related_id: taskActivity.job_application_id,
+                        type: commonModelTypes_1.NotificationTypeEnum.JOB_TASK,
+                        read_status: false,
+                        created_at: new Date().toISOString(),
+                    });
+                }
+                else {
+                    if (isJobSeekerExists.length &&
+                        isJobSeekerExists[0].device_id) {
+                        yield lib_1.default.sendNotificationToMobile({
+                            to: isJobSeekerExists[0].device_id,
+                            notificationTitle: this.NotificationMsg.NEW_TASKS_ASSIGNED.title,
+                            notificationBody: allMessages,
+                            data: JSON.stringify({
+                                photo: hotelier[0].photo,
+                                related_id: taskActivity.job_application_id,
+                            }),
+                        });
+                    }
+                }
                 return {
                     success: true,
                     message: this.ResMsg.HTTP_OK,

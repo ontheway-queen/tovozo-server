@@ -45,12 +45,12 @@ export interface IGetPaymentsForJobSeeker {
 }
 
 export interface IPaymentUpdate {
-	payment_type: string;
-	status: string;
-	trx_id: string;
-	paid_at: string;
-	paid_by: number;
-	trx_fee: number;
+	payment_type?: string;
+	status?: (typeof PAYMENT_STATUS)[keyof typeof PAYMENT_STATUS];
+	trx_id?: string;
+	paid_at?: string;
+	paid_by?: number;
+	trx_fee?: number;
 }
 
 export interface IPaymentLedgerPayload {

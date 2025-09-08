@@ -71,7 +71,18 @@ class AdminJobService extends abstract_service_1.default {
                         throw new customError_1.default("Job title already exists!", this.StatusCode.HTTP_CONFLICT);
                     }
                 }
-                if (body.job_seeker_pay || body.platform_fee) {
+                if (body.hourly_rate) {
+                    if (!body.job_seeker_pay || !body.platform_fee) {
+                        throw new Error("job_seeker_pay and platform_fee are required when hourly_rate is provided");
+                    }
+                    else {
+                        const total = body.job_seeker_pay + body.platform_fee;
+                        if (total !== Number(body.hourly_rate)) {
+                            throw new customError_1.default(`Rate mismatch: expected ${check.hourly_rate}, but received ${total}`, this.StatusCode.HTTP_BAD_REQUEST);
+                        }
+                    }
+                }
+                else if (body.job_seeker_pay || body.platform_fee) {
                     const total = (body.job_seeker_pay
                         ? body.job_seeker_pay
                         : check.job_seeker_pay) +

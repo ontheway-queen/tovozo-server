@@ -219,6 +219,7 @@ export const PAYMENT_STATUS = {
 	PAID: "Paid",
 	FAILED: "Failed",
 	PARTIAL_PAID: "Partial Paid",
+	NOT_PAID: "Not Paid",
 } as const;
 
 export const PAYMENT_STATUS_ENUM = [

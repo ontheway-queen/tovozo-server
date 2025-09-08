@@ -19,11 +19,15 @@ class AdminJobValidator {
         });
         this.updateJobSchema = joi_1.default.object({
             title: joi_1.default.string().min(1).max(255).optional(),
-            description: joi_1.default.string().optional(),
+            details: joi_1.default.string().optional(),
             status: joi_1.default.boolean().optional(),
             hourly_rate: joi_1.default.number().optional(),
             job_seeker_pay: joi_1.default.number().optional(),
             platform_fee: joi_1.default.number().optional(),
+        })
+            .and("job_seeker_pay", "platform_fee")
+            .messages({
+            "object.and": "Both job_seeker_pay and platform_fee must be provided together",
         });
         this.getAllJobSchema = joi_1.default.object({
             title: joi_1.default.string().min(1).max(255).optional(),

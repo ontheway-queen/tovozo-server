@@ -229,6 +229,7 @@ class AdminHotelierService extends abstract_service_1.default {
                 var _a;
                 const model = this.Model.organizationModel(trx);
                 const commonModel = this.Model.commonModel(trx);
+                const paymentModel = this.Model.paymnentModel(trx);
                 const data = yield model.getSingleOrganization(id);
                 if (!data) {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
@@ -276,15 +277,40 @@ class AdminHotelierService extends abstract_service_1.default {
                 }
                 if (Object.keys(parsed.organization).length > 0) {
                     console.log({ data });
-                    updateTasks.push(model.updateOrganization({
-                        name: parsed.organization.name ||
-                            parsed.organization.org_name,
-                        details: parsed.organization.details || data.details,
-                        photo: parsed.organization.photo || data.org_photo,
-                        status: parsed.organization.status || data.status,
-                    }, {
-                        id: id,
-                    }));
+                    if (data.status === "Blocked" &&
+                        parsed.organization.status === "Active") {
+                        const { data: paymentList } = yield paymentModel.getPaymentsForHotelier({
+                            hotelier_id: data.user_id,
+                            status: "Unpaid",
+                        });
+                        if (paymentList.length) {
+                            for (const payment of paymentList) {
+                                yield paymentModel.updatePayment(payment.id, {
+                                    status: constants_1.PAYMENT_STATUS.NOT_PAID,
+                                });
+                            }
+                        }
+                        updateTasks.push(model.updateOrganization({
+                            name: parsed.organization.name ||
+                                parsed.organization.org_name,
+                            details: parsed.organization.details || data.details,
+                            photo: parsed.organization.photo || data.org_photo,
+                            status: parsed.organization.status,
+                        }, {
+                            id: id,
+                        }));
+                    }
+                    else {
+                        updateTasks.push(model.updateOrganization({
+                            name: parsed.organization.name ||
+                                parsed.organization.org_name,
+                            details: parsed.organization.details || data.details,
+                            photo: parsed.organization.photo || data.org_photo,
+                            status: parsed.organization.status || data.status,
+                        }, {
+                            id: id,
+                        }));
+                    }
                 }
                 yield Promise.all(updateTasks);
                 if (parsed.organization.status === constants_1.USER_STATUS.ACTIVE) {

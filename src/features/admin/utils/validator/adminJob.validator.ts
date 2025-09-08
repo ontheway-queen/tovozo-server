@@ -1,9 +1,5 @@
 import Joi from "joi";
-import {
-	CANCELLATION_REPORT_STATUS_ENUM,
-	REPORT_TYPE_ENUM,
-} from "../../../../utils/miscellaneous/constants";
-import { platform } from "os";
+import { CANCELLATION_REPORT_STATUS_ENUM } from "../../../../utils/miscellaneous/constants";
 
 class AdminJobValidator {
 	public createJobSchema = Joi.object({
@@ -19,12 +15,17 @@ class AdminJobValidator {
 
 	public updateJobSchema = Joi.object({
 		title: Joi.string().min(1).max(255).optional(),
-		description: Joi.string().optional(),
+		details: Joi.string().optional(),
 		status: Joi.boolean().optional(),
 		hourly_rate: Joi.number().optional(),
 		job_seeker_pay: Joi.number().optional(),
 		platform_fee: Joi.number().optional(),
-	});
+	})
+		.and("job_seeker_pay", "platform_fee")
+		.messages({
+			"object.and":
+				"Both job_seeker_pay and platform_fee must be provided together",
+		});
 
 	public getAllJobSchema = Joi.object({
 		title: Joi.string().min(1).max(255).optional(),
