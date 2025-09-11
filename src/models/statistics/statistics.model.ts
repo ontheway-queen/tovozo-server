@@ -27,6 +27,7 @@ export default class StatisticsModel extends Schema {
 			hoteliersData,
 			jobPostsData,
 			paymentStats,
+			settledByAdmin,
 			reportStats,
 			latestApplications,
 			paymentChart,
@@ -89,6 +90,42 @@ export default class StatisticsModel extends Schema {
 					)
 				)
 				.first(),
+
+			// settled By Admin
+			this.db("payment as p")
+				.withSchema(this.DBO_SCHEMA)
+				.select(
+					"p.id",
+					"p.application_id",
+					"p.total_amount",
+					"p.job_seeker_pay",
+					"p.platform_fee",
+					"p.status",
+					"p.created_at",
+					"job_seeker.id as job_seeker_id",
+					"job_seeker.name as job_seeker_name",
+					"org.id as organization_id",
+					"org.name as organization_name"
+				)
+				.where("p.status", "Not Paid")
+				.leftJoin("job_applications as ja", "ja.id", "p.application_id")
+				.leftJoin("job_post as jp", "jp.id", "ja.job_post_id")
+				.leftJoin(
+					"job_post_details as jpd",
+					"jpd.id",
+					"ja.job_post_details_id"
+				)
+				.leftJoin("jobs as j", "j.id", "jpd.job_id")
+				.leftJoin(
+					"user as job_seeker",
+					"job_seeker.id",
+					"ja.job_seeker_id"
+				)
+				.joinRaw(`LEFT JOIN ?? as org ON org.id = jp.organization_id`, [
+					`${this.HOTELIER}.${this.TABLES.organization}`,
+				])
+				.orderBy("p.created_at", "desc")
+				.limit(5),
 
 			// Reports
 			this.db("reports as r")
@@ -165,6 +202,7 @@ export default class StatisticsModel extends Schema {
 				paid: Number(paymentStats.paid || 0),
 				pending: Number(paymentStats.pending || 0),
 			},
+			notPaidPayments: settledByAdmin,
 			reports: {
 				pending: Number(reportStats.pending),
 			},

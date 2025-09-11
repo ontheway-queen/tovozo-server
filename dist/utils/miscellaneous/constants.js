@@ -182,6 +182,7 @@ exports.PAYMENT_STATUS = {
     PAID: "Paid",
     FAILED: "Failed",
     PARTIAL_PAID: "Partial Paid",
+    NOT_PAID: "Not Paid",
 };
 exports.PAYMENT_STATUS_ENUM = [
     "Unpaid",

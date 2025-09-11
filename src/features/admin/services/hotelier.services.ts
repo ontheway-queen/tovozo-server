@@ -2,7 +2,11 @@ import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
 import CustomError from "../../../utils/lib/customError";
 import Lib from "../../../utils/lib/lib";
-import { USER_STATUS, USER_TYPE } from "../../../utils/miscellaneous/constants";
+import {
+	PAYMENT_STATUS,
+	USER_STATUS,
+	USER_TYPE,
+} from "../../../utils/miscellaneous/constants";
 import {
 	registrationFromAdminTemplate,
 	registrationVerificationCompletedTemplate,
@@ -264,8 +268,9 @@ class AdminHotelierService extends AbstractServices {
 		return await this.db.transaction(async (trx) => {
 			const model = this.Model.organizationModel(trx);
 			const commonModel = this.Model.commonModel(trx);
-			const data = await model.getSingleOrganization(id);
+			const paymentModel = this.Model.paymnentModel(trx);
 
+			const data = await model.getSingleOrganization(id);
 			if (!data) {
 				throw new CustomError(
 					this.ResMsg.HTTP_NOT_FOUND,
@@ -340,23 +345,60 @@ class AdminHotelierService extends AbstractServices {
 
 			if (Object.keys(parsed.organization).length > 0) {
 				console.log({ data });
-
-				updateTasks.push(
-					model.updateOrganization(
-						{
-							name:
-								parsed.organization.name ||
-								parsed.organization.org_name,
-							details:
-								parsed.organization.details || data.details,
-							photo: parsed.organization.photo || data.org_photo,
-							status: parsed.organization.status || data.status,
-						},
-						{
-							id: id,
+				if (
+					data.status === "Blocked" &&
+					parsed.organization.status === "Active"
+				) {
+					const { data: paymentList } =
+						await paymentModel.getPaymentsForHotelier({
+							hotelier_id: data.user_id,
+							status: "Unpaid",
+						});
+					if (paymentList.length) {
+						for (const payment of paymentList) {
+							await paymentModel.updatePayment(payment.id, {
+								status: PAYMENT_STATUS.NOT_PAID,
+							});
 						}
-					)
-				);
+					}
+
+					updateTasks.push(
+						model.updateOrganization(
+							{
+								name:
+									parsed.organization.name ||
+									parsed.organization.org_name,
+								details:
+									parsed.organization.details || data.details,
+								photo:
+									parsed.organization.photo || data.org_photo,
+								status: parsed.organization.status,
+							},
+							{
+								id: id,
+							}
+						)
+					);
+				} else {
+					updateTasks.push(
+						model.updateOrganization(
+							{
+								name:
+									parsed.organization.name ||
+									parsed.organization.org_name,
+								details:
+									parsed.organization.details || data.details,
+								photo:
+									parsed.organization.photo || data.org_photo,
+								status:
+									parsed.organization.status || data.status,
+							},
+							{
+								id: id,
+							}
+						)
+					);
+				}
 			}
 
 			await Promise.all(updateTasks);

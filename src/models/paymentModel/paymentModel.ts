@@ -43,7 +43,13 @@ export default class PaymentModel extends Schema {
 		search?: string;
 		status?: string;
 	}): Promise<{ data: IGetPaymentsForHotelier[]; total: number }> {
-		const { hotelier_id, skip = 0, limit = 10, search = "" } = params;
+		const {
+			hotelier_id,
+			status,
+			skip = 0,
+			limit = 10,
+			search = "",
+		} = params;
 
 		const baseQuery = this.db("payment as p")
 			.withSchema(this.DBO_SCHEMA)

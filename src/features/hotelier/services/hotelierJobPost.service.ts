@@ -1,25 +1,25 @@
 import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
+import { getAllOnlineSocketIds, io } from "../../../app/socket";
 import CustomError from "../../../utils/lib/customError";
+import Lib from "../../../utils/lib/lib";
 import {
 	CANCELLATION_REPORT_TYPE,
 	JOB_POST_DETAILS_STATUS,
 	USER_TYPE,
 } from "../../../utils/miscellaneous/constants";
 import {
+	NotificationTypeEnum,
+	TypeEmitNotificationEnum,
+} from "../../../utils/modelTypes/common/commonModelTypes";
+import {
 	IGetJobPostListParams,
 	IJobPostDetailsPayload,
 	IJobPostDetailsStatus,
 	IJobPostPayload,
 } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
-import { IHoiteleirJob } from "../utils/types/hotelierJobPostTypes";
-import { getAllOnlineSocketIds, io } from "../../../app/socket";
 import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
-import {
-	NotificationTypeEnum,
-	TypeEmitNotificationEnum,
-} from "../../../utils/modelTypes/common/commonModelTypes";
-import Lib from "../../../utils/lib/lib";
+import { IHoiteleirJob } from "../utils/types/hotelierJobPostTypes";
 
 class HotelierJobPostService extends AbstractServices {
 	public async createJobPost(req: Request) {
@@ -79,9 +79,21 @@ class HotelierJobPostService extends AbstractServices {
 					);
 				}
 
-				if (new Date(detail.start_time) >= new Date(detail.end_time)) {
+				const start = new Date(detail.start_time);
+				const end = new Date(detail.end_time);
+
+				if (start >= end) {
 					throw new CustomError(
 						"Job post start time cannot be greater than or equal to end time.",
+						this.StatusCode.HTTP_BAD_REQUEST
+					);
+				}
+
+				const diffInHours =
+					(end.getTime() - start.getTime()) / (1000 * 60 * 60);
+				if (diffInHours < 1) {
+					throw new CustomError(
+						"Job post duration must be at least 1 hour.",
 						this.StatusCode.HTTP_BAD_REQUEST
 					);
 				}
@@ -89,7 +101,7 @@ class HotelierJobPostService extends AbstractServices {
 				const expireTime = new Date(detail.start_time).getTime();
 				const now = Date.now();
 				const delay = Math.max(expireTime - now, 0);
-				console.log({ delay });
+
 				const jobPostDetailsQueue = this.getQueue(
 					"expire-job-post-details"
 				);
@@ -160,7 +172,7 @@ class HotelierJobPostService extends AbstractServices {
 					user_id: seeker.user_id,
 					type: seeker.type,
 				});
-				console.log({ isJobSeekerOnline });
+
 				if (isJobSeekerOnline && isJobSeekerOnline.length > 0) {
 					io.to(String(seeker.user_id)).emit(
 						TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION,
@@ -180,22 +192,18 @@ class HotelierJobPostService extends AbstractServices {
 					);
 				} else {
 					if (isSeekerExists[0].device_id) {
-						console.log({ device_id: isSeekerExists[0].device_id });
-						const sendPushNotification =
-							await Lib.sendNotificationToMobile({
-								to: isSeekerExists[0].device_id as string,
-								notificationTitle:
-									this.NotificationMsg.NEW_JOB_POST_NEARBY
-										.title,
-								notificationBody:
-									this.NotificationMsg.NEW_JOB_POST_NEARBY
-										.content,
-								// data: JSON.stringify({
-								// 	related_id: jobpostDetailsId[0].id,
-								// 	photo: checkOrganization.photo,
-								// }),
-							});
-						console.log({ sendPushNotification });
+						await Lib.sendNotificationToMobile({
+							to: isSeekerExists[0].device_id as string,
+							notificationTitle:
+								this.NotificationMsg.NEW_JOB_POST_NEARBY.title,
+							notificationBody:
+								this.NotificationMsg.NEW_JOB_POST_NEARBY
+									.content,
+							// data: JSON.stringify({
+							// 	related_id: jobpostDetailsId[0].id,
+							// 	photo: checkOrganization.photo,
+							// }),
+						});
 					}
 				}
 			}

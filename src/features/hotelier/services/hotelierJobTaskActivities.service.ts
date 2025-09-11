@@ -337,12 +337,26 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 	};
 
 	public deleteJobTaskList = async (req: Request) => {
-		const id = Number(req.params.id);
-
 		return await this.db.transaction(async (trx) => {
-			const jobTaskListModel = this.Model.jobTaskListModel(trx);
+			const { user_id } = req.hotelier;
+			const id = Number(req.params.id);
 
+			const userModel = this.Model.UserModel(trx);
+			const jobTaskActivitiesModel =
+				this.Model.jobTaskActivitiesModel(trx);
+			const jobTaskListModel = this.Model.jobTaskListModel(trx);
 			const taskList = await jobTaskListModel.getJobTaskList({ id });
+
+			const hotelier = await userModel.checkUser({
+				id: user_id,
+				type: TypeUser.HOTELIER,
+			});
+			if (hotelier && hotelier.length < 1) {
+				throw new CustomError(
+					"Organization nor found!",
+					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
 
 			if (!taskList.length) {
 				throw new CustomError(
@@ -351,9 +365,80 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 				);
 			}
 
+			const taskActivity =
+				await jobTaskActivitiesModel.getSingleTaskActivity({
+					id: taskList[0].job_task_activity_id,
+				});
+
+			if (!taskActivity) {
+				throw new CustomError(
+					"Task activity not found",
+					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
+			if (taskActivity.end_time) {
+				throw new CustomError(
+					"You cannot remove task. Because It has already been submitted for approval.",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
+
 			await jobTaskListModel.deleteJobTaskList(id);
 
-			io.emit("delete:job-task-list", id);
+			const allMessages = taskList
+				.map((task, index) => `${index + 1}. ${task.message}`)
+				.join("\n");
+
+			await this.insertNotification(trx, TypeUser.JOB_SEEKER, {
+				user_id: taskActivity.job_seeker_id,
+				sender_id: user_id,
+				sender_type: USER_TYPE.HOTELIER,
+				title: this.NotificationMsg.NEW_TASKS_ASSIGNED.title,
+				content: allMessages,
+				related_id: taskActivity.job_application_id,
+				type: NotificationTypeEnum.JOB_TASK,
+			});
+
+			const isJobSeekerOnline = await getAllOnlineSocketIds({
+				user_id: taskActivity.job_seeker_id,
+				type: TypeUser.JOB_SEEKER,
+			});
+
+			const isJobSeekerExists = await userModel.checkUser({
+				id: taskActivity.job_seeker_id,
+			});
+
+			if (isJobSeekerOnline && isJobSeekerOnline.length > 0) {
+				io.to(String(taskActivity.job_seeker_id)).emit(
+					TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION,
+					{
+						user_id: taskActivity.job_seeker_id,
+						photo: hotelier[0].photo,
+						title: this.NotificationMsg.NEW_TASKS_ASSIGNED.title,
+						content: allMessages,
+						related_id: taskActivity.job_application_id,
+						type: NotificationTypeEnum.JOB_TASK,
+						read_status: false,
+						created_at: new Date().toISOString(),
+					}
+				);
+			} else {
+				if (
+					isJobSeekerExists.length &&
+					isJobSeekerExists[0].device_id
+				) {
+					await Lib.sendNotificationToMobile({
+						to: isJobSeekerExists[0].device_id as string,
+						notificationTitle:
+							this.NotificationMsg.NEW_TASKS_ASSIGNED.title,
+						notificationBody: allMessages,
+						data: JSON.stringify({
+							photo: hotelier[0].photo,
+							related_id: taskActivity.job_application_id,
+						}),
+					});
+				}
+			}
 
 			return {
 				success: true,

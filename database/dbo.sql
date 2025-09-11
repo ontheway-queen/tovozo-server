@@ -380,7 +380,7 @@ CREATE TABLE IF NOT EXISTS dbo.reports (
 
 -- Payment and ledger Not completed because of changing project
 -- Payment status
-CREATE TYPE dbo.payment_status AS ENUM ('Unpaid', 'Paid', 'Failed', 'Partial Paid');
+CREATE TYPE dbo.payment_status AS ENUM ('Unpaid', 'Paid', 'Failed', 'Partial Paid', 'Not Paid');
 
 create type dbo.payment_type AS ENUM (
     'Card',

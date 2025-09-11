@@ -173,6 +173,7 @@ class JobSeekerAuthService extends AbstractServices {
 				}
 				const [locationRecord] = await commonModel.createLocation({
 					city_id,
+					postal_code: jobSeekerLocationInput.postal_code,
 					address: jobSeekerLocationInput.address,
 					longitude: jobSeekerLocationInput.longitude,
 					latitude: jobSeekerLocationInput.latitude,

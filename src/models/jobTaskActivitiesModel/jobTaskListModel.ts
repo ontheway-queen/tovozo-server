@@ -29,6 +29,7 @@ class JobTaskListModel extends Schema {
 		return await this.db("job_task_list as jtl")
 			.select(
 				"jtl.id",
+				"jtl.job_task_activity_id",
 				"jtl.message",
 				"jtl.is_completed",
 				"jtl.completed_at",

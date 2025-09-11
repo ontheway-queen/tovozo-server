@@ -39,7 +39,7 @@ class PaymentModel extends schema_1.default {
     // Payment For Hotelier
     getPaymentsForHotelier(params) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { hotelier_id, skip = 0, limit = 10, search = "" } = params;
+            const { hotelier_id, status, skip = 0, limit = 10, search = "", } = params;
             const baseQuery = this.db("payment as p")
                 .withSchema(this.DBO_SCHEMA)
                 .select("p.id", "p.payment_no", "p.application_id", "p.total_amount", "p.trx_fee", "jpd.id as job_post_details_id", "job_seeker.id as job_seeker_id", "job_seeker.name as job_seeker_name", "j.title as job_title", "p.payment_type", "p.status", "p.paid_at", "p.trx_id")
