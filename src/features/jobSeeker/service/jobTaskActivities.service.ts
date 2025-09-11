@@ -2,19 +2,17 @@ import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
 import { getAllOnlineSocketIds, io } from "../../../app/socket";
 import CustomError from "../../../utils/lib/customError";
+import Lib from "../../../utils/lib/lib";
 import {
 	JOB_APPLICATION_STATUS,
-	JOB_POST_DETAILS_STATUS,
 	USER_TYPE,
 } from "../../../utils/miscellaneous/constants";
-import { IJobPostDetailsStatus } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
-import { IUpdateJobTaskListPayload } from "../../hotelier/utils/types/hotelierJobTaskTypes";
-import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
 import {
 	NotificationTypeEnum,
 	TypeEmitNotificationEnum,
 } from "../../../utils/modelTypes/common/commonModelTypes";
-import Lib from "../../../utils/lib/lib";
+import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
+import { IUpdateJobTaskListPayload } from "../../hotelier/utils/types/hotelierJobTaskTypes";
 
 export default class JobTaskActivitiesService extends AbstractServices {
 	constructor() {
@@ -306,6 +304,7 @@ export default class JobTaskActivitiesService extends AbstractServices {
 			const jobTaskActivitiesModel =
 				this.Model.jobTaskActivitiesModel(trx);
 			const jobTaskListModel = this.Model.jobTaskListModel(trx);
+			const jobPostModel = this.Model.jobPostModel(trx);
 
 			const jobSeeker = await userModel.checkUser({ id: user_id });
 			if (!jobSeeker) {
@@ -335,6 +334,50 @@ export default class JobTaskActivitiesService extends AbstractServices {
 					this.StatusCode.HTTP_FORBIDDEN
 				);
 			}
+
+			//! Need to uncomment later
+			/* const jobPostDetails =
+				await jobPostModel.getSingleJobPostForJobSeeker(
+					taskActivity.job_post_details_id
+				);
+
+			if (!jobPostDetails) {
+				throw new CustomError(
+					"Job post details not found!",
+					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
+
+			const jobStart = new Date(jobPostDetails.start_time);
+			const jobEnd = new Date(jobPostDetails.end_time);
+			const jobDurationHours =
+				(jobEnd.getTime() - jobStart.getTime()) / (1000 * 60 * 60);
+
+			if (jobDurationHours < 1) {
+				throw new CustomError(
+					"Job duration must be at least 1 hour.",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
+
+			if (!taskActivity.start_time) {
+				throw new CustomError(
+					"Task activity does not have a start time.",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
+
+			const taskStart = new Date(taskActivity.start_time);
+			const taskEnd = new Date();
+			const taskDurationHours =
+				(taskEnd.getTime() - taskStart.getTime()) / (1000 * 60 * 60);
+
+			if (taskDurationHours < 1) {
+				throw new CustomError(
+					"Task must be submitted only after working at least 1 hour.",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			} */
 
 			const taskList = await jobTaskListModel.getJobTaskList({
 				job_task_activity_id: Number(id),

@@ -140,6 +140,7 @@ class JobSeekerAuthService extends abstract_service_1.default {
                     }
                     const [locationRecord] = yield commonModel.createLocation({
                         city_id,
+                        postal_code: jobSeekerLocationInput.postal_code,
                         address: jobSeekerLocationInput.address,
                         longitude: jobSeekerLocationInput.longitude,
                         latitude: jobSeekerLocationInput.latitude,

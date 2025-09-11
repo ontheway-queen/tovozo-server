@@ -15,10 +15,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
 const socket_1 = require("../../../app/socket");
 const customError_1 = __importDefault(require("../../../utils/lib/customError"));
-const constants_1 = require("../../../utils/miscellaneous/constants");
-const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
-const commonModelTypes_1 = require("../../../utils/modelTypes/common/commonModelTypes");
 const lib_1 = __importDefault(require("../../../utils/lib/lib"));
+const constants_1 = require("../../../utils/miscellaneous/constants");
+const commonModelTypes_1 = require("../../../utils/modelTypes/common/commonModelTypes");
+const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
 class JobTaskActivitiesService extends abstract_service_1.default {
     constructor() {
         super();
@@ -216,6 +216,7 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                 const jobApplicationModel = this.Model.jobApplicationModel(trx);
                 const jobTaskActivitiesModel = this.Model.jobTaskActivitiesModel(trx);
                 const jobTaskListModel = this.Model.jobTaskListModel(trx);
+                const jobPostModel = this.Model.jobPostModel(trx);
                 const jobSeeker = yield userModel.checkUser({ id: user_id });
                 if (!jobSeeker) {
                     throw new customError_1.default("Job Seeker not found!", this.StatusCode.HTTP_NOT_FOUND);
@@ -230,6 +231,49 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                     constants_1.JOB_APPLICATION_STATUS.IN_PROGRESS) {
                     throw new customError_1.default(`You cannot perform this action because the application is not in progress.`, this.StatusCode.HTTP_FORBIDDEN);
                 }
+                //! Need to uncomment later
+                /* const jobPostDetails =
+                    await jobPostModel.getSingleJobPostForJobSeeker(
+                        taskActivity.job_post_details_id
+                    );
+    
+                if (!jobPostDetails) {
+                    throw new CustomError(
+                        "Job post details not found!",
+                        this.StatusCode.HTTP_NOT_FOUND
+                    );
+                }
+    
+                const jobStart = new Date(jobPostDetails.start_time);
+                const jobEnd = new Date(jobPostDetails.end_time);
+                const jobDurationHours =
+                    (jobEnd.getTime() - jobStart.getTime()) / (1000 * 60 * 60);
+    
+                if (jobDurationHours < 1) {
+                    throw new CustomError(
+                        "Job duration must be at least 1 hour.",
+                        this.StatusCode.HTTP_BAD_REQUEST
+                    );
+                }
+    
+                if (!taskActivity.start_time) {
+                    throw new CustomError(
+                        "Task activity does not have a start time.",
+                        this.StatusCode.HTTP_BAD_REQUEST
+                    );
+                }
+    
+                const taskStart = new Date(taskActivity.start_time);
+                const taskEnd = new Date();
+                const taskDurationHours =
+                    (taskEnd.getTime() - taskStart.getTime()) / (1000 * 60 * 60);
+    
+                if (taskDurationHours < 1) {
+                    throw new CustomError(
+                        "Task must be submitted only after working at least 1 hour.",
+                        this.StatusCode.HTTP_BAD_REQUEST
+                    );
+                } */
                 const taskList = yield jobTaskListModel.getJobTaskList({
                     job_task_activity_id: Number(id),
                 });

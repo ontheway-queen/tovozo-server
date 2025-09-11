@@ -13,12 +13,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
-const customError_1 = __importDefault(require("../../../utils/lib/customError"));
-const constants_1 = require("../../../utils/miscellaneous/constants");
 const socket_1 = require("../../../app/socket");
-const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
-const commonModelTypes_1 = require("../../../utils/modelTypes/common/commonModelTypes");
+const customError_1 = __importDefault(require("../../../utils/lib/customError"));
 const lib_1 = __importDefault(require("../../../utils/lib/lib"));
+const constants_1 = require("../../../utils/miscellaneous/constants");
+const commonModelTypes_1 = require("../../../utils/modelTypes/common/commonModelTypes");
+const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
 class HotelierJobPostService extends abstract_service_1.default {
     createJobPost(req) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -54,13 +54,18 @@ class HotelierJobPostService extends abstract_service_1.default {
                     if (!checkJob) {
                         throw new customError_1.default("Invalid Job Category!", this.StatusCode.HTTP_BAD_REQUEST);
                     }
-                    if (new Date(detail.start_time) >= new Date(detail.end_time)) {
+                    const start = new Date(detail.start_time);
+                    const end = new Date(detail.end_time);
+                    if (start >= end) {
                         throw new customError_1.default("Job post start time cannot be greater than or equal to end time.", this.StatusCode.HTTP_BAD_REQUEST);
+                    }
+                    const diffInHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+                    if (diffInHours < 1) {
+                        throw new customError_1.default("Job post duration must be at least 1 hour.", this.StatusCode.HTTP_BAD_REQUEST);
                     }
                     const expireTime = new Date(detail.start_time).getTime();
                     const now = Date.now();
                     const delay = Math.max(expireTime - now, 0);
-                    console.log({ delay });
                     const jobPostDetailsQueue = this.getQueue("expire-job-post-details");
                     yield jobPostDetailsQueue.add("expire-job-post-details", { id: res[0].id }, {
                         delay,
@@ -100,7 +105,6 @@ class HotelierJobPostService extends abstract_service_1.default {
                         user_id: seeker.user_id,
                         type: seeker.type,
                     });
-                    console.log({ isJobSeekerOnline });
                     if (isJobSeekerOnline && isJobSeekerOnline.length > 0) {
                         socket_1.io.to(String(seeker.user_id)).emit(commonModelTypes_1.TypeEmitNotificationEnum.JOB_SEEKER_NEW_NOTIFICATION, {
                             related_id: jobpostDetailsId[0].id,
@@ -117,11 +121,9 @@ class HotelierJobPostService extends abstract_service_1.default {
                     }
                     else {
                         if (isSeekerExists[0].device_id) {
-                            console.log({ device_id: isSeekerExists[0].device_id });
-                            const sendPushNotification = yield lib_1.default.sendNotificationToMobile({
+                            yield lib_1.default.sendNotificationToMobile({
                                 to: isSeekerExists[0].device_id,
-                                notificationTitle: this.NotificationMsg.NEW_JOB_POST_NEARBY
-                                    .title,
+                                notificationTitle: this.NotificationMsg.NEW_JOB_POST_NEARBY.title,
                                 notificationBody: this.NotificationMsg.NEW_JOB_POST_NEARBY
                                     .content,
                                 // data: JSON.stringify({
@@ -129,7 +131,6 @@ class HotelierJobPostService extends abstract_service_1.default {
                                 // 	photo: checkOrganization.photo,
                                 // }),
                             });
-                            console.log({ sendPushNotification });
                         }
                     }
                 }
