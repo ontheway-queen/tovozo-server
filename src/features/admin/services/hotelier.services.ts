@@ -344,7 +344,6 @@ class AdminHotelierService extends AbstractServices {
 			}
 
 			if (Object.keys(parsed.organization).length > 0) {
-				console.log({ data });
 				if (
 					data.status === "Blocked" &&
 					parsed.organization.status === "Active"

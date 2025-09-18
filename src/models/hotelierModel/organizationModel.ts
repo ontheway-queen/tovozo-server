@@ -25,6 +25,7 @@ export default class OrganizationModel extends Schema {
 		payload: Partial<IUpdateOrganizationPayload>,
 		where: { id?: number; user_id?: number }
 	) {
+		console.log({ where });
 		return await this.db("organization")
 			.withSchema(this.HOTELIER)
 			.update(payload)

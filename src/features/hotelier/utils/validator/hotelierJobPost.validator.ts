@@ -121,6 +121,7 @@ export class HotelierJobPostValidator {
 			end_time: Joi.string().isoDate().optional(),
 		}).optional(),
 	});
+
 	public trackJobSeekerLocationSchema = Joi.object({
 		job_seeker: Joi.number().integer().required(),
 	});

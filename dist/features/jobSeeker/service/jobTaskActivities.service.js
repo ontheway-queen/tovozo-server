@@ -231,49 +231,25 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                     constants_1.JOB_APPLICATION_STATUS.IN_PROGRESS) {
                     throw new customError_1.default(`You cannot perform this action because the application is not in progress.`, this.StatusCode.HTTP_FORBIDDEN);
                 }
-                //! Need to uncomment later
-                /* const jobPostDetails =
-                    await jobPostModel.getSingleJobPostForJobSeeker(
-                        taskActivity.job_post_details_id
-                    );
-    
+                const jobPostDetails = yield jobPostModel.getSingleJobPostForJobSeeker(taskActivity.job_post_details_id);
                 if (!jobPostDetails) {
-                    throw new CustomError(
-                        "Job post details not found!",
-                        this.StatusCode.HTTP_NOT_FOUND
-                    );
+                    throw new customError_1.default("Job post details not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }
-    
                 const jobStart = new Date(jobPostDetails.start_time);
                 const jobEnd = new Date(jobPostDetails.end_time);
-                const jobDurationHours =
-                    (jobEnd.getTime() - jobStart.getTime()) / (1000 * 60 * 60);
-    
+                const jobDurationHours = (jobEnd.getTime() - jobStart.getTime()) / (1000 * 60 * 60);
                 if (jobDurationHours < 1) {
-                    throw new CustomError(
-                        "Job duration must be at least 1 hour.",
-                        this.StatusCode.HTTP_BAD_REQUEST
-                    );
+                    throw new customError_1.default("Job duration must be at least 1 hour.", this.StatusCode.HTTP_BAD_REQUEST);
                 }
-    
                 if (!taskActivity.start_time) {
-                    throw new CustomError(
-                        "Task activity does not have a start time.",
-                        this.StatusCode.HTTP_BAD_REQUEST
-                    );
+                    throw new customError_1.default("Task activity does not have a start time.", this.StatusCode.HTTP_BAD_REQUEST);
                 }
-    
                 const taskStart = new Date(taskActivity.start_time);
                 const taskEnd = new Date();
-                const taskDurationHours =
-                    (taskEnd.getTime() - taskStart.getTime()) / (1000 * 60 * 60);
-    
+                const taskDurationHours = (taskEnd.getTime() - taskStart.getTime()) / (1000 * 60 * 60);
                 if (taskDurationHours < 1) {
-                    throw new CustomError(
-                        "Task must be submitted only after working at least 1 hour.",
-                        this.StatusCode.HTTP_BAD_REQUEST
-                    );
-                } */
+                    throw new customError_1.default("Task must be submitted only after working at least 1 hour.", this.StatusCode.HTTP_BAD_REQUEST);
+                }
                 const taskList = yield jobTaskListModel.getJobTaskList({
                     job_task_activity_id: Number(id),
                 });

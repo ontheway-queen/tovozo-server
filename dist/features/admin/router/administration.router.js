@@ -37,6 +37,10 @@ class AdminAdministrationRouter extends abstract_router_1.default {
             .route("/admin/:id")
             .get(this.controller.getSingleAdmin)
             .patch(this.uploader.cloudUploadRaw(this.fileFolders.ADMIN_FILES), this.controller.updateAdmin);
+        //get all audit trail
+        this.router
+            .route("/audit-trail")
+            .get(this.controller.getAllAuditTrails);
     }
 }
 exports.default = AdminAdministrationRouter;

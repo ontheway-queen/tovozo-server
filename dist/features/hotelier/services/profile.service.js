@@ -95,12 +95,17 @@ class HotelierProfileService extends abstract_service_1.default {
     updateHotelier(req) {
         return __awaiter(this, void 0, void 0, function* () {
             const { user_id } = req.hotelier;
-            const id = req.params.id;
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
                 var _a;
                 const model = this.Model.organizationModel(trx);
                 const commonModel = this.Model.commonModel(trx);
                 const userModel = this.Model.UserModel(trx);
+                const existingOrganization = yield model.getOrganization({
+                    user_id,
+                });
+                if (!existingOrganization) {
+                    throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND, "ERROR");
+                }
                 const [existingUser] = yield userModel.checkUser({
                     id: user_id,
                     type: constants_1.USER_TYPE.HOTELIER,
@@ -151,7 +156,7 @@ class HotelierProfileService extends abstract_service_1.default {
                         details: parsed.organization.details || data.details,
                         photo: parsed.organization.photo || data.photo,
                     }, {
-                        id: id,
+                        id: existingOrganization.id,
                     }));
                 }
                 if (parsed.organization.status === constants_1.USER_STATUS.ACTIVE) {

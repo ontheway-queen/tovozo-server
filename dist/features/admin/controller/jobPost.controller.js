@@ -24,8 +24,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_controller_1 = __importDefault(require("../../../abstract/abstract.controller"));
-const jobPost_service_1 = __importDefault(require("../services/jobPost.service"));
 const hotelierJobPost_validator_1 = require("../../hotelier/utils/validator/hotelierJobPost.validator");
+const jobPost_service_1 = __importDefault(require("../services/jobPost.service"));
 class AdminJobPostController extends abstract_controller_1.default {
     constructor() {
         super();
@@ -37,6 +37,10 @@ class AdminJobPostController extends abstract_controller_1.default {
         }));
         this.getSingleJobPostForAdmin = this.asyncWrapper.wrap({ paramSchema: this.validator.getSingleJobPostSchema }, (req, res) => __awaiter(this, void 0, void 0, function* () {
             const _a = yield this.service.getSingleJobPostForAdmin(req), { code } = _a, data = __rest(_a, ["code"]);
+            res.status(code).json(data);
+        }));
+        this.cancelJobPostByAdmin = this.asyncWrapper.wrap({ paramSchema: this.validator.getSingleJobPostSchema }, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const _a = yield this.service.cancelJobPostByAdmin(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }

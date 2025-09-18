@@ -276,7 +276,6 @@ class AdminHotelierService extends abstract_service_1.default {
                     updateTasks.push(userModel.updateProfile(parsed.user, { id: data.user_id }));
                 }
                 if (Object.keys(parsed.organization).length > 0) {
-                    console.log({ data });
                     if (data.status === "Blocked" &&
                         parsed.organization.status === "Active") {
                         const { data: paymentList } = yield paymentModel.getPaymentsForHotelier({

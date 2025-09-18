@@ -74,20 +74,27 @@ class ChatModel extends schema_1.default {
                 .select("cs.id as session_id", "cs.last_message", "cs.last_message_at", "cs.enable_chat", "other_participant.id as participant_user_id", "other_participant.name as participant_name", "other_participant.email as participant_email", "other_participant.photo as participant_image", "other_participant.type as participant_type", this.db.raw(`COALESCE(unread_counts.unread_message_count, 0) as unread_message_count`))
                 .join("chat_session_participants as csp", "cs.id", "csp.chat_session_id")
                 .join(this.db.raw(`
-      (
-        SELECT
-          csp2.chat_session_id,
-          u.id,
-          u.name,
-          u.email,
-          u.photo,
-          csp2.type
-        FROM "dbo"."chat_session_participants" csp2
-        LEFT JOIN "dbo"."user" u ON u.id = csp2.user_id
-        WHERE (csp2.user_id IS NULL OR csp2.user_id != ?)
-          AND u.type IS DISTINCT FROM 'ADMIN'
-      ) as other_participant
-    `, [user_id]), "cs.id", "other_participant.chat_session_id")
+    (
+      SELECT
+        csp2.chat_session_id,
+        u.id,
+        CASE 
+          WHEN csp2.type = 'HOTELIER' THEN org.name 
+          ELSE u.name 
+        END as name,
+        u.email,
+        CASE 
+          WHEN csp2.type = 'HOTELIER' THEN org.photo 
+          ELSE u.photo 
+        END as photo,
+        csp2.type
+      FROM "dbo"."chat_session_participants" csp2
+      LEFT JOIN "dbo"."user" u ON u.id = csp2.user_id
+      LEFT JOIN "hotelier"."organization" org ON org.user_id = u.id
+      WHERE (csp2.user_id IS NULL OR csp2.user_id != ?)
+        AND u.type IS DISTINCT FROM 'ADMIN'
+    ) as other_participant
+  `, [user_id]), "cs.id", "other_participant.chat_session_id")
                 .leftJoin(this.db.raw(`
       (
         SELECT

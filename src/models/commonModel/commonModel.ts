@@ -194,7 +194,9 @@ export default class CommonModel extends Schema {
 			.insert(payload, "id");
 	}
 
-	public async createLocation(payload: ILocationPayload | ILocationPayload[]) {
+	public async createLocation(
+		payload: ILocationPayload | ILocationPayload[]
+	) {
 		return await this.db("location")
 			.withSchema(this.DBO_SCHEMA)
 			.insert(payload, "id");
@@ -241,7 +243,13 @@ export default class CommonModel extends Schema {
 	public async getNotification(
 		params: IGetNotificationParams
 	): Promise<{ data: IGetNotification[]; total?: number | string }> {
-		const { limit = 100, skip = 0, id, user_id, need_total = true } = params;
+		const {
+			limit = 100,
+			skip = 0,
+			id,
+			user_id,
+			need_total = true,
+		} = params;
 
 		const data = await this.db(`${this.TABLES.notification} as n`)
 			.withSchema(this.DBO_SCHEMA)
@@ -264,7 +272,7 @@ export default class CommonModel extends Schema {
       `),
 				this.db.raw(`
           CASE
-            WHEN n.sender_type = 'HOTELIER' THEN sender.photo
+            WHEN n.sender_type = 'HOTELIER' THEN org.photo
             WHEN n.sender_type = 'JOB_SEEKER' THEN sender.photo
             WHEN n.sender_type = 'ADMIN' THEN NULL
             ELSE NULL
@@ -273,6 +281,9 @@ export default class CommonModel extends Schema {
 			)
 			.leftJoin("user as u", "u.id", "n.user_id")
 			.leftJoin("user as sender", "sender.id", "n.sender_id")
+			.joinRaw(`LEFT JOIN ?? as org ON org.user_id = n.sender_id`, [
+				`${this.HOTELIER}.${this.TABLES.organization}`,
+			])
 			.leftJoin(`${this.TABLES.notification_seen} as ns`, function () {
 				this.on("ns.notification_id", "n.id").andOn(
 					"ns.user_id",
@@ -298,18 +309,24 @@ export default class CommonModel extends Schema {
 			const totalQuery = await this.db(`${this.TABLES.notification} as n`)
 				.withSchema(this.DBO_SCHEMA)
 				.count("n.id as total")
-				.leftJoin(`${this.TABLES.notification_seen} as ns`, function () {
-					this.on("ns.notification_id", "n.id").andOn(
-						"ns.user_id",
-						db.raw("?", [user_id])
-					);
-				})
-				.leftJoin(`${this.TABLES.notification_delete} as nd`, function () {
-					this.on("nd.notification_id", "n.id").andOn(
-						"nd.user_id",
-						db.raw("?", [user_id])
-					);
-				})
+				.leftJoin(
+					`${this.TABLES.notification_seen} as ns`,
+					function () {
+						this.on("ns.notification_id", "n.id").andOn(
+							"ns.user_id",
+							db.raw("?", [user_id])
+						);
+					}
+				)
+				.leftJoin(
+					`${this.TABLES.notification_delete} as nd`,
+					function () {
+						this.on("nd.notification_id", "n.id").andOn(
+							"nd.user_id",
+							db.raw("?", [user_id])
+						);
+					}
+				)
 				.whereNull("nd.notification_id")
 				.andWhere((qb) => {
 					if (id) qb.andWhere("n.id", id);

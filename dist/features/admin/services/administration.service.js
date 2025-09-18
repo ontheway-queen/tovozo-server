@@ -416,5 +416,19 @@ class AdminAdministrationService extends abstract_service_1.default {
                 };
         });
     }
+    // Get All Audit Trail
+    getAllAuditTrails(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { limit, skip, name, type } = req.query;
+            const model = this.Model.administrationModel();
+            const data = yield model.getAllAuditTrail({
+                name: name,
+                skip: Number(skip),
+                limit: Number(limit),
+                type: type,
+            });
+            return Object.assign({ success: true, code: this.StatusCode.HTTP_OK, message: this.ResMsg.HTTP_OK }, data);
+        });
+    }
 }
 exports.default = AdminAdministrationService;

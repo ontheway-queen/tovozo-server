@@ -45,7 +45,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     throw new customError_1.default("Job seeker not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }
                 if (!jobSeeker.final_completed) {
-                    throw new customError_1.default("Please provide your ID Copy, Work Permit and bank account details to continue with the application process.", this.StatusCode.HTTP_BAD_REQUEST);
+                    throw new customError_1.default("Your ID copy and work permit have been submitted and are pending admin review. Please wait until your documents are approved before continuing with the application process.", this.StatusCode.HTTP_BAD_REQUEST);
                 }
                 const jobPost = yield jobPostModel.getSingleJobPostForJobSeeker(job_post_details_id);
                 if (!jobPost) {

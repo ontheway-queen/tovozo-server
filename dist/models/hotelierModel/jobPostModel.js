@@ -181,8 +181,14 @@ class JobPostModel extends schema_1.default {
                     qb.andWhere("js_vwl.city_id", city_id);
                 if (title)
                     qb.andWhereILike("j.title", `%${title}%`);
-                if (status)
+                if (Array.isArray(status) && status.length > 0) {
+                    qb.andWhere((qb2) => {
+                        qb2.whereIn("jpd.status", status);
+                    });
+                }
+                else if (status) {
                     qb.andWhere("jpd.status", status);
+                }
                 if (job_post_id)
                     qb.andWhere("jpd.job_post_id", job_post_id);
             })
@@ -215,8 +221,14 @@ class JobPostModel extends schema_1.default {
                         qb.andWhere("u.id", user_id);
                     if (category_id)
                         qb.andWhere("j.id", category_id);
-                    if (status)
+                    if (Array.isArray(status) && status.length > 0) {
+                        qb.andWhere((qb2) => {
+                            qb2.whereIn("jpd.status", status);
+                        });
+                    }
+                    else if (status) {
                         qb.andWhere("jpd.status", status);
+                    }
                     if (title)
                         qb.andWhereILike("j.title", `%${title}%`);
                     if (city_id)

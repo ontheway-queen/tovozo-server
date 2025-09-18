@@ -467,6 +467,24 @@ class AdminAdministrationService extends AbstractServices {
 					message: this.ResMsg.HTTP_BAD_REQUEST,
 			  };
 	}
+
+	// Get All Audit Trail
+	public async getAllAuditTrails(req: Request) {
+		const { limit, skip, name, type } = req.query;
+		const model = this.Model.administrationModel();
+		const data = await model.getAllAuditTrail({
+			name: name as string,
+			skip: Number(skip),
+			limit: Number(limit),
+			type: type as string,
+		});
+		return {
+			success: true,
+			code: this.StatusCode.HTTP_OK,
+			message: this.ResMsg.HTTP_OK,
+			...data,
+		};
+	}
 }
 
 export default AdminAdministrationService;

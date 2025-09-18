@@ -100,13 +100,13 @@ export default class PaymentService extends AbstractServices {
 					"ERROR"
 				);
 			}
-			//! Need to uncomment later
-			// if (payment.status === PAYMENT_STATUS.PAID) {
-			// 	throw new CustomError(
-			// 		"The payment is already paid",
-			// 		this.StatusCode.HTTP_CONFLICT
-			// 	);
-			// }
+			// ! Need to uncomment later
+			if (payment.status === PAYMENT_STATUS.PAID) {
+				throw new CustomError(
+					"The payment is already paid",
+					this.StatusCode.HTTP_CONFLICT
+				);
+			}
 
 			const total_amount = Number(payment.total_amount);
 
@@ -216,13 +216,12 @@ export default class PaymentService extends AbstractServices {
 					"ERROR"
 				);
 			}
-			//! Need to uncomment later
-			// if (payment.status === "Paid") {
-			// 	throw new CustomError(
-			// 		"The payment is aleady paid",
-			// 		this.StatusCode.HTTP_CONFLICT
-			// 	);
-			// }
+			if (payment.status === "Paid") {
+				throw new CustomError(
+					"The payment is aleady paid",
+					this.StatusCode.HTTP_CONFLICT
+				);
+			}
 
 			const jobseeker = await this.Model.UserModel().checkUser({
 				id: Number(paymentIntent.metadata.job_seeker_id),
