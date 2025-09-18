@@ -483,15 +483,15 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 			}
 
 			//! Need to uncomment later
-			// if (
-			// 	taskActivity.application_status !==
-			// 	JOB_APPLICATION_STATUS.IN_PROGRESS
-			// ) {
-			// 	throw new CustomError(
-			// 		`You cannot perform this action because the application is still in progress.`,
-			// 		this.StatusCode.HTTP_FORBIDDEN
-			// 	);
-			// }
+			if (
+				taskActivity.application_status !==
+				JOB_APPLICATION_STATUS.IN_PROGRESS
+			) {
+				throw new CustomError(
+					`You cannot perform this action because the application is still in progress.`,
+					this.StatusCode.HTTP_FORBIDDEN
+				);
+			}
 			const application = await jobApplicationModel.getMyJobApplication({
 				job_application_id: taskActivity.job_application_id,
 				job_seeker_id: taskActivity.job_seeker_id,

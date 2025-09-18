@@ -80,13 +80,10 @@ class PaymentService extends abstract_service_1.default {
                 if (!payment) {
                     throw new customError_1.default("Payment record not found", this.StatusCode.HTTP_NOT_FOUND, "ERROR");
                 }
-                //! Need to uncomment later
-                // if (payment.status === PAYMENT_STATUS.PAID) {
-                // 	throw new CustomError(
-                // 		"The payment is already paid",
-                // 		this.StatusCode.HTTP_CONFLICT
-                // 	);
-                // }
+                // ! Need to uncomment later
+                if (payment.status === constants_1.PAYMENT_STATUS.PAID) {
+                    throw new customError_1.default("The payment is already paid", this.StatusCode.HTTP_CONFLICT);
+                }
                 const total_amount = Number(payment.total_amount);
                 const session = yield stripe_1.stripe.checkout.sessions.create({
                     payment_method_types: ["card"],
@@ -163,13 +160,9 @@ class PaymentService extends abstract_service_1.default {
                 if (!payment) {
                     throw new customError_1.default("Payment record not found", this.StatusCode.HTTP_NOT_FOUND, "ERROR");
                 }
-                //! Need to uncomment later
-                // if (payment.status === "Paid") {
-                // 	throw new CustomError(
-                // 		"The payment is aleady paid",
-                // 		this.StatusCode.HTTP_CONFLICT
-                // 	);
-                // }
+                if (payment.status === "Paid") {
+                    throw new customError_1.default("The payment is aleady paid", this.StatusCode.HTTP_CONFLICT);
+                }
                 const jobseeker = yield this.Model.UserModel().checkUser({
                     id: Number(paymentIntent.metadata.job_seeker_id),
                 });

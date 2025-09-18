@@ -49,5 +49,38 @@ class AdminJobPostService extends abstract_service_1.default {
             };
         });
     }
+    cancelJobPostByAdmin(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const { id } = req.params;
+                const model = this.Model.jobPostModel(trx);
+                const check = yield model.getSingleJobPostForAdmin(Number(id));
+                if (!check) {
+                    throw new customError_1.default("Job post not found!", this.StatusCode.HTTP_NOT_FOUND);
+                }
+                const notCancellableStatuses = [
+                    "Work Finished",
+                    "Complete",
+                    "Cancelled",
+                ];
+                if (notCancellableStatuses.includes(check.job_post_details_status)) {
+                    throw new customError_1.default(`Can't cancel. This job post is already ${check.job_post_details_status.toLowerCase()}.`, this.StatusCode.HTTP_BAD_REQUEST);
+                }
+                const data = yield model.updateJobPostDetailsStatus({
+                    id: Number(id),
+                    status: "Cancelled",
+                });
+                if (!data) {
+                    throw new customError_1.default("Job post not found!", this.StatusCode.HTTP_NOT_FOUND);
+                }
+                return {
+                    success: true,
+                    message: this.ResMsg.HTTP_OK,
+                    code: this.StatusCode.HTTP_OK,
+                    data,
+                };
+            }));
+        });
+    }
 }
 exports.default = AdminJobPostService;

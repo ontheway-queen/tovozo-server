@@ -27,6 +27,7 @@ class OrganizationModel extends schema_1.default {
     }
     updateOrganization(payload, where) {
         return __awaiter(this, void 0, void 0, function* () {
+            console.log({ where });
             return yield this.db("organization")
                 .withSchema(this.HOTELIER)
                 .update(payload)

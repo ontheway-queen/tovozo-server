@@ -18,8 +18,8 @@ import {
 } from "../../../utils/modelTypes/common/commonModelTypes";
 
 import { IJobPostDetailsStatus } from "../../../utils/modelTypes/hotelier/jobPostModelTYpes";
-import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
 import { ICreateJobApplicationPayload } from "../../../utils/modelTypes/jobApplication/jobApplicationModel.types";
+import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
 
 export class JobSeekerJobApplication extends AbstractServices {
 	constructor() {
@@ -56,7 +56,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 
 			if (!jobSeeker.final_completed) {
 				throw new CustomError(
-					"Please provide your ID Copy, Work Permit and bank account details to continue with the application process.",
+					"Your ID copy and work permit have been submitted and are pending admin review. Please wait until your documents are approved before continuing with the application process.",
 					this.StatusCode.HTTP_BAD_REQUEST
 				);
 			}

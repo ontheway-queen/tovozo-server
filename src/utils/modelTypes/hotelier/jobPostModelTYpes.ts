@@ -54,7 +54,7 @@ export interface IGetJobPostListParams {
 	city_id?: number;
 	orderBy?: string;
 	orderTo?: "asc" | "desc";
-	status?: string;
+	status?: string | string[];
 	limit?: number;
 	skip?: number;
 	need_total?: boolean;

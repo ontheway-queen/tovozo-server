@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import AbstractController from "../../../abstract/abstract.controller";
-import AdminJobPostService from "../services/jobPost.service";
 import { HotelierJobPostValidator } from "../../hotelier/utils/validator/hotelierJobPost.validator";
+import AdminJobPostService from "../services/jobPost.service";
 
 export default class AdminJobPostController extends AbstractController {
 	private service = new AdminJobPostService();
@@ -25,6 +25,16 @@ export default class AdminJobPostController extends AbstractController {
 		async (req: Request, res: Response) => {
 			const { code, ...data } =
 				await this.service.getSingleJobPostForAdmin(req);
+			res.status(code).json(data);
+		}
+	);
+
+	public cancelJobPostByAdmin = this.asyncWrapper.wrap(
+		{ paramSchema: this.validator.getSingleJobPostSchema },
+		async (req: Request, res: Response) => {
+			const { code, ...data } = await this.service.cancelJobPostByAdmin(
+				req
+			);
 			res.status(code).json(data);
 		}
 	);

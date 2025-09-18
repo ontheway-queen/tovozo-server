@@ -125,20 +125,27 @@ class ChatModel extends Schema {
 			.join(
 				this.db.raw(
 					`
-      (
-        SELECT
-          csp2.chat_session_id,
-          u.id,
-          u.name,
-          u.email,
-          u.photo,
-          csp2.type
-        FROM "dbo"."chat_session_participants" csp2
-        LEFT JOIN "dbo"."user" u ON u.id = csp2.user_id
-        WHERE (csp2.user_id IS NULL OR csp2.user_id != ?)
-          AND u.type IS DISTINCT FROM 'ADMIN'
-      ) as other_participant
-    `,
+    (
+      SELECT
+        csp2.chat_session_id,
+        u.id,
+        CASE 
+          WHEN csp2.type = 'HOTELIER' THEN org.name 
+          ELSE u.name 
+        END as name,
+        u.email,
+        CASE 
+          WHEN csp2.type = 'HOTELIER' THEN org.photo 
+          ELSE u.photo 
+        END as photo,
+        csp2.type
+      FROM "dbo"."chat_session_participants" csp2
+      LEFT JOIN "dbo"."user" u ON u.id = csp2.user_id
+      LEFT JOIN "hotelier"."organization" org ON org.user_id = u.id
+      WHERE (csp2.user_id IS NULL OR csp2.user_id != ?)
+        AND u.type IS DISTINCT FROM 'ADMIN'
+    ) as other_participant
+  `,
 					[user_id]
 				),
 				"cs.id",

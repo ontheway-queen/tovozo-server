@@ -335,8 +335,7 @@ export default class JobTaskActivitiesService extends AbstractServices {
 				);
 			}
 
-			//! Need to uncomment later
-			/* const jobPostDetails =
+			const jobPostDetails =
 				await jobPostModel.getSingleJobPostForJobSeeker(
 					taskActivity.job_post_details_id
 				);
@@ -377,7 +376,7 @@ export default class JobTaskActivitiesService extends AbstractServices {
 					"Task must be submitted only after working at least 1 hour.",
 					this.StatusCode.HTTP_BAD_REQUEST
 				);
-			} */
+			}
 
 			const taskList = await jobTaskListModel.getJobTaskList({
 				job_task_activity_id: Number(id),

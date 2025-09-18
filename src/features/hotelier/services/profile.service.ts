@@ -95,11 +95,23 @@ export default class HotelierProfileService extends AbstractServices {
 	// update profile
 	public async updateHotelier(req: Request) {
 		const { user_id } = req.hotelier;
-		const id = req.params.id as unknown as number;
+
 		return await this.db.transaction(async (trx) => {
 			const model = this.Model.organizationModel(trx);
 			const commonModel = this.Model.commonModel(trx);
 			const userModel = this.Model.UserModel(trx);
+
+			const existingOrganization = await model.getOrganization({
+				user_id,
+			});
+
+			if (!existingOrganization) {
+				throw new CustomError(
+					this.ResMsg.HTTP_NOT_FOUND,
+					this.StatusCode.HTTP_NOT_FOUND,
+					"ERROR"
+				);
+			}
 
 			const [existingUser] = await userModel.checkUser({
 				id: user_id,
@@ -182,7 +194,7 @@ export default class HotelierProfileService extends AbstractServices {
 							photo: parsed.organization.photo || data.photo,
 						},
 						{
-							id: id,
+							id: existingOrganization.id,
 						}
 					)
 				);

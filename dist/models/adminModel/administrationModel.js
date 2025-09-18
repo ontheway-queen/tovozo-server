@@ -171,5 +171,53 @@ class AdministrationModel extends schema_1.default {
                 .andWhere({ permission_id });
         });
     }
+    // Get All Audit Trail
+    getAllAuditTrail(params) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a;
+            const { name, type, limit = 100, skip = 0 } = params;
+            const query = this.db("audit_trail as at")
+                .withSchema(this.ADMIN_SCHEMA)
+                .select("at.id", "at.created_by", "at.endpoint", "at.details", "at.created_at", "u.username as created_by_username", "u.name as created_by_name", "at.type")
+                .joinRaw(`JOIN ?? as u on u.id = at.created_by`, [
+                `${this.DBO_SCHEMA}.${this.TABLES.user}`,
+            ])
+                .limit(limit)
+                .offset(skip)
+                .orderBy("at.id", "asc");
+            if (name) {
+                query.where((qb) => {
+                    qb.whereILike("at.details", `%${name}%`)
+                        .orWhereILike("at.endpoint", `%${name}%`)
+                        .orWhereILike("u.name", `%${name}%`)
+                        .orWhereILike("u.username", `%${name}%`);
+                });
+            }
+            if (type) {
+                query.where("at.type", type);
+            }
+            const data = yield query;
+            const countQuery = this.db("audit_trail as at")
+                .withSchema(this.ADMIN_SCHEMA)
+                .count("at.id as total")
+                .joinRaw(`JOIN ?? as u on u.id = at.created_by`, [
+                `${this.DBO_SCHEMA}.${this.TABLES.user}`,
+            ]);
+            if (name) {
+                countQuery.where((qb) => {
+                    qb.whereILike("at.details", `%${name}%`)
+                        .orWhereILike("at.endpoint", `%${name}%`)
+                        .orWhereILike("u.name", `%${name}%`)
+                        .orWhereILike("u.username", `%${name}%`);
+                });
+            }
+            if (type) {
+                countQuery.where("at.type", type);
+            }
+            const countResult = yield countQuery;
+            const total = (_a = countResult[0]) === null || _a === void 0 ? void 0 : _a.total;
+            return { data, total };
+        });
+    }
 }
 exports.default = AdministrationModel;
