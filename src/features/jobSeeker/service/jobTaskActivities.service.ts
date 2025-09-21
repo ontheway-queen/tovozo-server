@@ -371,6 +371,14 @@ export default class JobTaskActivitiesService extends AbstractServices {
 			const taskDurationHours =
 				(taskEnd.getTime() - taskStart.getTime()) / (1000 * 60 * 60);
 
+			//! Need to uncomment later
+			// if (taskDurationHours < 1) {
+			// 	throw new CustomError(
+			// 		"Task must be submitted only after working at least 1 hour.",
+			// 		this.StatusCode.HTTP_BAD_REQUEST
+			// 	);
+			// }
+
 			if (taskDurationHours < 1) {
 				throw new CustomError(
 					"Task must be submitted only after working at least 1 hour.",
