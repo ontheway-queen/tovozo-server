@@ -36,19 +36,19 @@ class PaymentController extends abstract_controller_1.default {
             res.status(code).json(data);
         }));
         this.getSinglePaymentForHotelier = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.getSingleItemWithIdValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.paymentService.getSinglePaymentForHotelier(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _b = yield this.paymentService.getSinglePaymentForHotelier(req), { code } = _b, data = __rest(_b, ["code"]);
             res.status(code).json(data);
         }));
         this.createCheckoutSession = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.paymentService.createCheckoutSession(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _c = yield this.paymentService.createCheckoutSession(req), { code } = _c, data = __rest(_c, ["code"]);
             res.status(code).json(data);
         }));
         this.verifyCheckoutSession = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.paymentService.verifyCheckoutSession(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _d = yield this.paymentService.verifyCheckoutSession(req), { code } = _d, data = __rest(_d, ["code"]);
             res.status(code).json(data);
         }));
         this.getAllPaymentLedgerForHotelier = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.paymentService.getAllPaymentLedgerForHotelier(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _e = yield this.paymentService.getAllPaymentLedgerForHotelier(req), { code } = _e, data = __rest(_e, ["code"]);
             res.status(code).json(data);
         }));
     }

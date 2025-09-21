@@ -35,19 +35,19 @@ class JobSeekerJobsController extends abstract_controller_1.default {
             res.status(code).json(data);
         }));
         this.getSingleJobPostForJobSeeker = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.getSingleItemWithIdValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.getSingleJobPostForJobSeeker(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _b = yield this.service.getSingleJobPostForJobSeeker(req), { code } = _b, data = __rest(_b, ["code"]);
             res.status(code).json(data);
         }));
         this.saveJobPostDetailsForJobSeeker = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.getSingleItemWithIdValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.saveJobPostDetailsForJobSeeker(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _c = yield this.service.saveJobPostDetailsForJobSeeker(req), { code } = _c, data = __rest(_c, ["code"]);
             res.status(code).json(data);
         }));
         this.getSavedJobsList = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.getSavedJobsList(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _d = yield this.service.getSavedJobsList(req), { code } = _d, data = __rest(_d, ["code"]);
             res.status(code).json(data);
         }));
         this.deleteSavedJob = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.getSingleItemWithIdValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.service.deleteSavedJob(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _e = yield this.service.deleteSavedJob(req), { code } = _e, data = __rest(_e, ["code"]);
             res.status(code).json(data);
         }));
     }

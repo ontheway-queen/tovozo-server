@@ -36,14 +36,14 @@ class AdminReportController extends abstract_controller_1.default {
             res.status(code).json(data);
         }));
         this.getHotelierReports = this.asyncWrapper.wrap(null, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.adminReportService.getHotelierReports(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _b = yield this.adminReportService.getHotelierReports(req), { code } = _b, data = __rest(_b, ["code"]);
             res.status(code).json(data);
         }));
         this.reportMarkAsAcknowledge = this.asyncWrapper.wrap({
             paramSchema: this.commonValidator.getSingleItemWithIdValidator,
             bodySchema: this.validator.markAsAcknowledgeReportSchema,
         }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _a = yield this.adminReportService.reportMarkAsAcknowledge(req), { code } = _a, data = __rest(_a, ["code"]);
+            const _c = yield this.adminReportService.reportMarkAsAcknowledge(req), { code } = _c, data = __rest(_c, ["code"]);
             res.status(code).json(data);
         }));
     }
