@@ -192,7 +192,7 @@ class HotelierJobPostService extends AbstractServices {
 					);
 				} else {
 					if (isSeekerExists[0].device_id) {
-						await Lib.sendNotificationToMobile({
+						const pushNotify = await Lib.sendNotificationToMobile({
 							to: isSeekerExists[0].device_id as string,
 							notificationTitle:
 								this.NotificationMsg.NEW_JOB_POST_NEARBY.title,
@@ -203,6 +203,10 @@ class HotelierJobPostService extends AbstractServices {
 							// 	related_id: jobpostDetailsId[0].id,
 							// 	photo: checkOrganization.photo,
 							// }),
+						});
+						console.log({
+							pushNotify,
+							device_id: isSeekerExists[0].device_id,
 						});
 					}
 				}

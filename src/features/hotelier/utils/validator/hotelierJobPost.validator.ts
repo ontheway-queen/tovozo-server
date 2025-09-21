@@ -39,16 +39,16 @@ export class HotelierJobPostValidator {
 						.isoDate()
 						.required()
 						.custom((value, helpers) => {
-							const startTime = new Date(value);
-							const nowPlus24h = new Date(
-								Date.now() + 24 * 60 * 60 * 1000
-							);
-							if (startTime < nowPlus24h) {
-								return helpers.error("any.custom", {
-									message:
-										"Start time must be at least 24 hours from now.",
-								});
-							}
+							// const startTime = new Date(value);
+							// const nowPlus24h = new Date(
+							// 	Date.now() + 24 * 60 * 60 * 1000
+							// );
+							// if (startTime < nowPlus24h) {
+							// 	return helpers.error("any.custom", {
+							// 		message:
+							// 			"Start time must be at least 24 hours from now.",
+							// 	});
+							// }
 							return value;
 						})
 						.messages({
