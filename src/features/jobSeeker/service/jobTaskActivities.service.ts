@@ -379,6 +379,13 @@ export default class JobTaskActivitiesService extends AbstractServices {
 			// 	);
 			// }
 
+			if (taskDurationHours < 1) {
+				throw new CustomError(
+					"Task must be submitted only after working at least 1 hour.",
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
+
 			const taskList = await jobTaskListModel.getJobTaskList({
 				job_task_activity_id: Number(id),
 			});

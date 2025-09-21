@@ -254,6 +254,9 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                 // 		this.StatusCode.HTTP_BAD_REQUEST
                 // 	);
                 // }
+                if (taskDurationHours < 1) {
+                    throw new customError_1.default("Task must be submitted only after working at least 1 hour.", this.StatusCode.HTTP_BAD_REQUEST);
+                }
                 const taskList = yield jobTaskListModel.getJobTaskList({
                     job_task_activity_id: Number(id),
                 });

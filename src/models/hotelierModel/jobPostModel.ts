@@ -279,7 +279,7 @@ class JobPostModel extends Schema {
 				if (category_id) qb.andWhere("j.id", category_id);
 				if (city_id) qb.andWhere("js_vwl.city_id", city_id);
 				if (title) qb.andWhereILike("j.title", `%${title}%`);
-				// if (status) qb.andWhere("jpd.status", status);
+				if (status) qb.andWhere("jpd.status", status);
 				if (job_post_id) qb.andWhere("jpd.job_post_id", job_post_id);
 			})
 			// .whereNot("jpd.status", "Expired")
