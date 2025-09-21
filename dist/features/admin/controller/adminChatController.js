@@ -36,11 +36,11 @@ class AdminChatController extends abstract_controller_1.default {
             res.status(code).json(data);
         }));
         this.getMessages = this.asyncWrapper.wrap({ querySchema: this.validator.getMessagesValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _b = yield this.services.getMessages(req), { code } = _b, data = __rest(_b, ["code"]);
+            const _a = yield this.services.getMessages(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         this.sendMessage = this.asyncWrapper.wrap({ bodySchema: this.validator.sendMessageValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _c = yield this.services.sendMessage(req), { code } = _c, data = __rest(_c, ["code"]);
+            const _a = yield this.services.sendMessage(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }

@@ -36,14 +36,14 @@ class AdminPayoutController extends abstract_controller_1.default {
             res.status(code).json(data);
         }));
         this.getSinglePayout = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.singleParamNumValidator("id") }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _b = yield this.service.getSinglePayout(req), { code } = _b, data = __rest(_b, ["code"]);
+            const _a = yield this.service.getSinglePayout(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         this.managePayout = this.asyncWrapper.wrap({
             paramSchema: this.commonValidator.singleParamNumValidator("id"),
             bodySchema: this.validator.managePayout,
         }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _c = yield this.service.managePayout(req), { code } = _c, data = __rest(_c, ["code"]);
+            const _a = yield this.service.managePayout(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }

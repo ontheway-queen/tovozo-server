@@ -36,11 +36,11 @@ class AdminJobPostController extends abstract_controller_1.default {
             res.status(code).json(data);
         }));
         this.getSingleJobPostForAdmin = this.asyncWrapper.wrap({ paramSchema: this.validator.getSingleJobPostSchema }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _b = yield this.service.getSingleJobPostForAdmin(req), { code } = _b, data = __rest(_b, ["code"]);
+            const _a = yield this.service.getSingleJobPostForAdmin(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         this.cancelJobPostByAdmin = this.asyncWrapper.wrap({ paramSchema: this.validator.getSingleJobPostSchema }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _c = yield this.service.cancelJobPostByAdmin(req), { code } = _c, data = __rest(_c, ["code"]);
+            const _a = yield this.service.cancelJobPostByAdmin(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }

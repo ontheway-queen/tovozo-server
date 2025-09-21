@@ -38,12 +38,12 @@ class AdminProfileController extends abstract_controller_1.default {
         }));
         //edit profile
         this.editProfile = this.asyncWrapper.wrap({ bodySchema: this.validator.editUserProfileValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _b = yield this.service.editProfile(req), { code } = _b, data = __rest(_b, ["code"]);
+            const _a = yield this.service.editProfile(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         //change password
         this.changePassword = this.asyncWrapper.wrap({ bodySchema: this.commonValidator.changePassInputValidation }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _c = yield this.service.changePassword(req), { code } = _c, data = __rest(_c, ["code"]);
+            const _a = yield this.service.changePassword(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }

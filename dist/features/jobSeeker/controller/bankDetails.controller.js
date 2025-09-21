@@ -37,11 +37,11 @@ class BankDetailsController extends abstract_controller_1.default {
             res.status(code).json(data);
         }));
         this.addBankAccounts = this.asyncWrapper.wrap({ bodySchema: this.validator.addBankDetailsPayloadValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _b = yield this.service.addBankAccounts(req), { code } = _b, data = __rest(_b, ["code"]);
+            const _a = yield this.service.addBankAccounts(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         this.removeBankAccount = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.singleParamNumValidator() }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _c = yield this.service.removeBankAccount(req), { code } = _c, data = __rest(_c, ["code"]);
+            const _a = yield this.service.removeBankAccount(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }

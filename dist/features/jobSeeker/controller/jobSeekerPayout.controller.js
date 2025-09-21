@@ -36,11 +36,11 @@ class JobSeekerPayoutController extends abstract_controller_1.default {
             res.status(code).json(data);
         }));
         this.getPayoutsForJobSeeker = this.asyncWrapper.wrap({ querySchema: this.validator.queryValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _b = yield this.profileService.getPayoutsForJobSeeker(req), { code } = _b, data = __rest(_b, ["code"]);
+            const _a = yield this.profileService.getPayoutsForJobSeeker(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         this.getSinglePayout = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.singleParamNumValidator("id") }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _c = yield this.profileService.getSinglePayout(req), { code } = _c, data = __rest(_c, ["code"]);
+            const _a = yield this.profileService.getSinglePayout(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }

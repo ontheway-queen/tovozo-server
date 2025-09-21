@@ -36,24 +36,24 @@ class AdminHotelierController extends abstract_controller_1.default {
             res.status(code).json(data);
         }));
         this.getHoteliers = this.asyncWrapper.wrap({ querySchema: this.validator.getHoteliersQuery }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _b = yield this.service.getHoteliers(req), { code } = _b, data = __rest(_b, ["code"]);
+            const _a = yield this.service.getHoteliers(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         this.getSingleHotelier = this.asyncWrapper.wrap({
             paramSchema: this.commonValidator.singleParamValidator,
         }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _c = yield this.service.getSingleHotelier(req), { code } = _c, data = __rest(_c, ["code"]);
+            const _a = yield this.service.getSingleHotelier(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         this.updateHotelier = this.asyncWrapper.wrap({
             paramSchema: this.commonValidator.singleParamValidator,
             bodySchema: this.validator.updateHotelier,
         }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _d = yield this.service.updateHotelier(req), { code } = _d, data = __rest(_d, ["code"]);
+            const _a = yield this.service.updateHotelier(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
         this.deleteHotelier = this.asyncWrapper.wrap({ paramSchema: this.commonValidator.singleParamValidator }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const _e = yield this.service.deleteHotelier(req), { code } = _e, data = __rest(_e, ["code"]);
+            const _a = yield this.service.deleteHotelier(req), { code } = _a, data = __rest(_a, ["code"]);
             res.status(code).json(data);
         }));
     }
