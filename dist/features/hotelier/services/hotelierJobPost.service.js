@@ -13,10 +13,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
+const config_1 = __importDefault(require("../../../app/config"));
 const socket_1 = require("../../../app/socket");
 const customError_1 = __importDefault(require("../../../utils/lib/customError"));
 const lib_1 = __importDefault(require("../../../utils/lib/lib"));
 const constants_1 = require("../../../utils/miscellaneous/constants");
+const stripe_1 = require("../../../utils/miscellaneous/stripe");
 const commonModelTypes_1 = require("../../../utils/modelTypes/common/commonModelTypes");
 const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
 class HotelierJobPostService extends abstract_service_1.default {
@@ -228,9 +230,10 @@ class HotelierJobPostService extends abstract_service_1.default {
     cancelJobPost(req) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                var _a, _b;
                 const { id } = req.params;
                 const body = req.body;
-                const user = req.hotelier;
+                const { user_id } = req.hotelier;
                 const model = this.Model.jobPostModel(trx);
                 const cancellationLogModel = this.Model.cancellationLogModel(trx);
                 const jobApplicationModel = this.Model.jobApplicationModel(trx);
@@ -248,6 +251,8 @@ class HotelierJobPostService extends abstract_service_1.default {
                 }
                 const currentTime = new Date();
                 const startTime = new Date(jobPost.start_time);
+                const endTime = new Date(jobPost.end_time);
+                const hourlyRate = jobPost.hourly_rate;
                 const hoursDiff = (startTime.getTime() - currentTime.getTime()) /
                     (1000 * 60 * 60);
                 if (hoursDiff > 24) {
@@ -269,22 +274,151 @@ class HotelierJobPostService extends abstract_service_1.default {
                     };
                 }
                 else {
-                    if (body.report_type !==
-                        constants_1.CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST ||
-                        !body.reason) {
-                        throw new customError_1.default("Invalid request: 'report_type' and 'reason' is required.", this.StatusCode.HTTP_UNPROCESSABLE_ENTITY);
-                    }
-                    body.reporter_id = user.user_id;
-                    body.related_id = id;
-                    const cancellationLogModel = this.Model.cancellationLogModel(trx);
-                    const data = yield cancellationLogModel.requestForCancellationLog(body);
+                    const diffMs = endTime.getTime() - startTime.getTime();
+                    const diffHours = Math.abs(diffMs) / (1000 * 60 * 60);
+                    const totalAmount = Number(diffHours) * Number(hourlyRate);
+                    const session = yield stripe_1.stripe.checkout.sessions.create({
+                        payment_method_types: ["card"],
+                        mode: "payment",
+                        line_items: [
+                            {
+                                price_data: {
+                                    currency: "usd",
+                                    product_data: {
+                                        name: `Cancellation Fee for Job #${jobPost.id}`,
+                                    },
+                                    unit_amount: Math.round(totalAmount * 100),
+                                },
+                                quantity: 1,
+                            },
+                        ],
+                        payment_intent_data: {
+                            metadata: {
+                                job_post_details_id: jobPost.id.toString(),
+                                job_title: jobPost.title,
+                                user_id: user_id.toString(),
+                                total_amount: totalAmount.toString(),
+                                job_seeker_id: ((_a = jobPost === null || jobPost === void 0 ? void 0 : jobPost.job_seeker_details) === null || _a === void 0 ? void 0 : _a.job_seeker_id) !=
+                                    null
+                                    ? jobPost.job_seeker_details.job_seeker_id.toString()
+                                    : null,
+                                job_application_id: ((_b = jobPost === null || jobPost === void 0 ? void 0 : jobPost.job_seeker_details) === null || _b === void 0 ? void 0 : _b.application_id) !==
+                                    null
+                                    ? jobPost.job_seeker_details.application_id.toString()
+                                    : null,
+                            },
+                        },
+                        success_url: `${config_1.default.BASE_URL}/hotelier/job-post/job-cancellation-payment/success?session_id={CHECKOUT_SESSION_ID}`,
+                        cancel_url: `${config_1.default.BASE_URL}/hotelier/job-post/job-cancellation-payment/failed`,
+                    });
                     return {
                         success: true,
-                        message: this.ResMsg.HTTP_SUCCESSFUL,
+                        message: "To finalize your cancellation, please complete the payment.",
                         code: this.StatusCode.HTTP_OK,
-                        data: data[0].id,
+                        data: { url: session.url },
                     };
                 }
+            }));
+        });
+    }
+    verifyJobCancellationPayment(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db.transaction((trx) => __awaiter(this, void 0, void 0, function* () {
+                const sessionId = req.query.session_id;
+                const { user_id, email } = req.hotelier;
+                if (!user_id) {
+                    throw new customError_1.default("Hotelier ID is required", this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
+                }
+                if (!sessionId) {
+                    throw new customError_1.default("Session ID is required", this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
+                }
+                const chatModel = this.Model.chatModel(trx);
+                const organizationModel = this.Model.organizationModel(trx);
+                const paymentModel = this.Model.paymnentModel(trx);
+                const jobApplicationModel = this.Model.jobApplicationModel(trx);
+                const jobPostModel = this.Model.jobPostModel(trx);
+                const organization = yield organizationModel.getOrganization({
+                    user_id,
+                });
+                if (!organization) {
+                    throw new customError_1.default("Organization not found for the provided Hotelier ID", this.StatusCode.HTTP_NOT_FOUND, "ERROR");
+                }
+                console.log({ organization });
+                const session = yield stripe_1.stripe.checkout.sessions.retrieve(sessionId);
+                if (!session || session.payment_status !== "paid") {
+                    throw new customError_1.default("Payment not completed or session not found", this.StatusCode.HTTP_BAD_REQUEST, "ERROR");
+                }
+                const paymentIntentId = session.payment_intent;
+                const paymentIntent = yield stripe_1.stripe.paymentIntents.retrieve(paymentIntentId, {
+                    expand: ["charges"],
+                });
+                console.log({ paymentIntent });
+                const baseLedgerPayload = {
+                    voucher_no: `CJP-${paymentIntent.metadata.job_post_details_id}`,
+                    ledger_date: new Date(),
+                    created_at: new Date(),
+                    updated_at: new Date(),
+                };
+                yield paymentModel.createPaymentLedger(Object.assign(Object.assign({}, baseLedgerPayload), { trx_type: constants_1.PAY_LEDGER_TRX_TYPE.IN, user_type: constants_1.USER_TYPE.ADMIN, amount: Number(paymentIntent.metadata.total_amount), entry_type: constants_1.PAYMENT_ENTRY_TYPE.INVOICE, details: `Cancellation fee of amount ${Number(paymentIntent.metadata.total_amount) / 100} for job '${paymentIntent.metadata.job_title}' requested by ${organization.name} has been collected.` }));
+                yield paymentModel.createPaymentLedger(Object.assign(Object.assign({}, baseLedgerPayload), { user_id: user_id, trx_type: constants_1.PAY_LEDGER_TRX_TYPE.OUT, user_type: constants_1.USER_TYPE.HOTELIER, entry_type: constants_1.PAYMENT_ENTRY_TYPE.INVOICE, amount: Number(paymentIntent.metadata.total_amount), details: `You have successfully paid a cancellation fee of amount ${Number(paymentIntent.metadata.total_amount).toFixed(2)} for the job '${paymentIntent.metadata.job_title}'.` }));
+                const model = this.Model.jobPostModel(trx);
+                const check = yield model.getSingleJobPostForHotelier(Number(paymentIntent.metadata.job_post_details_id));
+                if (!check) {
+                    throw new customError_1.default("Job post not found!", this.StatusCode.HTTP_NOT_FOUND);
+                }
+                console.log({ check });
+                const notCancellableStatuses = [
+                    "Work Finished",
+                    "Complete",
+                    "Cancelled",
+                ];
+                if (notCancellableStatuses.includes(check.job_post_details_status)) {
+                    throw new customError_1.default(`Can't cancel. This job post is already ${check.job_post_details_status.toLowerCase()}.`, this.StatusCode.HTTP_BAD_REQUEST);
+                }
+                yield model.updateJobPostDetailsStatus({
+                    id: Number(paymentIntent.metadata.job_post_details_id),
+                    status: "Cancelled",
+                });
+                if (paymentIntent.metadata.job_seeker_id) {
+                    const chatSession = yield chatModel.getChatSessionBetweenUsers({
+                        hotelier_id: user_id,
+                        job_seeker_id: Number(paymentIntent.metadata.job_seeker_id),
+                    });
+                    if (chatSession) {
+                        yield chatModel.updateChatSession({
+                            session_id: chatSession.id,
+                            payload: {
+                                enable_chat: false,
+                            },
+                        });
+                    }
+                    yield jobApplicationModel.updateMyJobApplicationStatus({
+                        application_id: Number(paymentIntent.metadata.job_application_id),
+                        job_seeker_id: Number(paymentIntent.metadata.job_seeker_id),
+                        status: "Cancelled",
+                    });
+                }
+                yield this.insertNotification(trx, userModelTypes_1.TypeUser.ADMIN, {
+                    user_id: user_id,
+                    sender_type: constants_1.USER_TYPE.HOTELIER,
+                    title: "Payment Received for job post cancellation",
+                    content: `Cancellation fee of amount ${Number(paymentIntent.metadata.total_amount) / 100} for job '${paymentIntent.metadata.job_title}' requested by ${organization.name} has been collected.`,
+                    related_id: Number(paymentIntent.metadata.job_post_details_id),
+                    type: commonModelTypes_1.NotificationTypeEnum.PAYMENT,
+                });
+                yield this.insertNotification(trx, constants_1.USER_TYPE.HOTELIER, {
+                    title: "Payment done for job post cancellation",
+                    content: `You have successfully paid a cancellation fee of amount ${Number(paymentIntent.metadata.total_amount).toFixed(2)} for the job '${paymentIntent.metadata.job_title}'.`,
+                    related_id: Number(paymentIntent.metadata.job_post_details_id),
+                    sender_type: constants_1.USER_TYPE.ADMIN,
+                    user_id: user_id,
+                    type: commonModelTypes_1.NotificationTypeEnum.PAYMENT,
+                });
+                return {
+                    success: true,
+                    message: this.ResMsg.HTTP_OK,
+                    code: this.StatusCode.HTTP_OK,
+                };
             }));
         });
     }

@@ -7,6 +7,7 @@ import { IJobTaskActivity } from "../../../../utils/modelTypes/jobTaskActivities
 import { IGetJobResponse } from "./hotelierJobTypes";
 
 export interface JobSeekerDetails {
+	application_id: number | null;
 	application_status: string | null;
 	job_seeker_id: number | null;
 	job_seeker_name: string | null;

@@ -1,13 +1,16 @@
 import { Request } from "express";
 import AbstractServices from "../../../abstract/abstract.service";
+import config from "../../../app/config";
 import { getAllOnlineSocketIds, io } from "../../../app/socket";
 import CustomError from "../../../utils/lib/customError";
 import Lib from "../../../utils/lib/lib";
 import {
-	CANCELLATION_REPORT_TYPE,
 	JOB_POST_DETAILS_STATUS,
+	PAY_LEDGER_TRX_TYPE,
+	PAYMENT_ENTRY_TYPE,
 	USER_TYPE,
 } from "../../../utils/miscellaneous/constants";
+import { stripe } from "../../../utils/miscellaneous/stripe";
 import {
 	NotificationTypeEnum,
 	TypeEmitNotificationEnum,
@@ -342,7 +345,7 @@ class HotelierJobPostService extends AbstractServices {
 		return await this.db.transaction(async (trx) => {
 			const { id } = req.params;
 			const body = req.body;
-			const user = req.hotelier;
+			const { user_id } = req.hotelier;
 			const model = this.Model.jobPostModel(trx);
 			const cancellationLogModel = this.Model.cancellationLogModel(trx);
 			const jobApplicationModel = this.Model.jobApplicationModel(trx);
@@ -375,6 +378,8 @@ class HotelierJobPostService extends AbstractServices {
 			}
 			const currentTime = new Date();
 			const startTime = new Date(jobPost.start_time);
+			const endTime = new Date(jobPost.end_time);
+			const hourlyRate = jobPost.hourly_rate;
 			const hoursDiff =
 				(startTime.getTime() - currentTime.getTime()) /
 				(1000 * 60 * 60);
@@ -403,32 +408,232 @@ class HotelierJobPostService extends AbstractServices {
 					code: this.StatusCode.HTTP_OK,
 				};
 			} else {
-				if (
-					body.report_type !==
-						CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST ||
-					!body.reason
-				) {
-					throw new CustomError(
-						"Invalid request: 'report_type' and 'reason' is required.",
-						this.StatusCode.HTTP_UNPROCESSABLE_ENTITY
-					);
-				}
+				const diffMs = endTime.getTime() - startTime.getTime();
+				const diffHours = Math.abs(diffMs) / (1000 * 60 * 60);
 
-				body.reporter_id = user.user_id;
-				body.related_id = id;
+				const totalAmount = Number(diffHours) * Number(hourlyRate);
 
-				const cancellationLogModel =
-					this.Model.cancellationLogModel(trx);
-				const data =
-					await cancellationLogModel.requestForCancellationLog(body);
+				const session = await stripe.checkout.sessions.create({
+					payment_method_types: ["card"],
+					mode: "payment",
+					line_items: [
+						{
+							price_data: {
+								currency: "usd",
+								product_data: {
+									name: `Cancellation Fee for Job #${jobPost.id}`,
+								},
+								unit_amount: Math.round(totalAmount * 100),
+							},
+							quantity: 1,
+						},
+					],
+					payment_intent_data: {
+						metadata: {
+							job_post_details_id: jobPost.id.toString(),
+							job_title: jobPost.title,
+							user_id: user_id.toString(),
+							total_amount: totalAmount.toString(),
+							job_seeker_id:
+								jobPost?.job_seeker_details?.job_seeker_id !=
+								null
+									? jobPost.job_seeker_details.job_seeker_id.toString()
+									: null,
+							job_application_id:
+								jobPost?.job_seeker_details?.application_id !==
+								null
+									? jobPost.job_seeker_details.application_id.toString()
+									: null,
+						},
+					},
+					success_url: `${config.BASE_URL}/hotelier/job-post/job-cancellation-payment/success?session_id={CHECKOUT_SESSION_ID}`,
+					cancel_url: `${config.BASE_URL}/hotelier/job-post/job-cancellation-payment/failed`,
+				});
 
 				return {
 					success: true,
-					message: this.ResMsg.HTTP_SUCCESSFUL,
+					message:
+						"To finalize your cancellation, please complete the payment.",
 					code: this.StatusCode.HTTP_OK,
-					data: data[0].id,
+					data: { url: session.url },
 				};
 			}
+		});
+	}
+
+	public async verifyJobCancellationPayment(req: Request) {
+		return await this.db.transaction(async (trx) => {
+			const sessionId = req.query.session_id as string;
+			const { user_id, email } = req.hotelier;
+			if (!user_id) {
+				throw new CustomError(
+					"Hotelier ID is required",
+					this.StatusCode.HTTP_BAD_REQUEST,
+					"ERROR"
+				);
+			}
+
+			if (!sessionId) {
+				throw new CustomError(
+					"Session ID is required",
+					this.StatusCode.HTTP_BAD_REQUEST,
+					"ERROR"
+				);
+			}
+
+			const chatModel = this.Model.chatModel(trx);
+			const organizationModel = this.Model.organizationModel(trx);
+			const paymentModel = this.Model.paymnentModel(trx);
+			const jobApplicationModel = this.Model.jobApplicationModel(trx);
+			const jobPostModel = this.Model.jobPostModel(trx);
+
+			const organization = await organizationModel.getOrganization({
+				user_id,
+			});
+			if (!organization) {
+				throw new CustomError(
+					"Organization not found for the provided Hotelier ID",
+					this.StatusCode.HTTP_NOT_FOUND,
+					"ERROR"
+				);
+			}
+			console.log({ organization });
+			const session = await stripe.checkout.sessions.retrieve(sessionId);
+			if (!session || session.payment_status !== "paid") {
+				throw new CustomError(
+					"Payment not completed or session not found",
+					this.StatusCode.HTTP_BAD_REQUEST,
+					"ERROR"
+				);
+			}
+			const paymentIntentId = session.payment_intent as string;
+			const paymentIntent = await stripe.paymentIntents.retrieve(
+				paymentIntentId,
+				{
+					expand: ["charges"],
+				}
+			);
+			console.log({ paymentIntent });
+			const baseLedgerPayload = {
+				voucher_no: `CJP-${paymentIntent.metadata.job_post_details_id}`,
+				ledger_date: new Date(),
+				created_at: new Date(),
+				updated_at: new Date(),
+			};
+
+			await paymentModel.createPaymentLedger({
+				...baseLedgerPayload,
+				trx_type: PAY_LEDGER_TRX_TYPE.IN,
+				user_type: USER_TYPE.ADMIN,
+				amount: Number(paymentIntent.metadata.total_amount),
+				entry_type: PAYMENT_ENTRY_TYPE.INVOICE,
+				details: `Cancellation fee of amount ${
+					Number(paymentIntent.metadata.total_amount) / 100
+				} for job '${paymentIntent.metadata.job_title}' requested by ${
+					organization.name
+				} has been collected.`,
+			});
+
+			await paymentModel.createPaymentLedger({
+				...baseLedgerPayload,
+				user_id: user_id,
+				trx_type: PAY_LEDGER_TRX_TYPE.OUT,
+				user_type: USER_TYPE.HOTELIER,
+				entry_type: PAYMENT_ENTRY_TYPE.INVOICE,
+				amount: Number(paymentIntent.metadata.total_amount),
+				details: `You have successfully paid a cancellation fee of amount ${Number(
+					paymentIntent.metadata.total_amount
+				).toFixed(2)} for the job '${
+					paymentIntent.metadata.job_title
+				}'.`,
+			});
+			const model = this.Model.jobPostModel(trx);
+
+			const check = await model.getSingleJobPostForHotelier(
+				Number(paymentIntent.metadata.job_post_details_id)
+			);
+			if (!check) {
+				throw new CustomError(
+					"Job post not found!",
+					this.StatusCode.HTTP_NOT_FOUND
+				);
+			}
+			console.log({ check });
+
+			const notCancellableStatuses = [
+				"Work Finished",
+				"Complete",
+				"Cancelled",
+			];
+
+			if (
+				notCancellableStatuses.includes(check.job_post_details_status)
+			) {
+				throw new CustomError(
+					`Can't cancel. This job post is already ${check.job_post_details_status.toLowerCase()}.`,
+					this.StatusCode.HTTP_BAD_REQUEST
+				);
+			}
+
+			await model.updateJobPostDetailsStatus({
+				id: Number(paymentIntent.metadata.job_post_details_id),
+				status: "Cancelled",
+			});
+
+			if (paymentIntent.metadata.job_seeker_id) {
+				const chatSession = await chatModel.getChatSessionBetweenUsers({
+					hotelier_id: user_id,
+					job_seeker_id: Number(paymentIntent.metadata.job_seeker_id),
+				});
+				if (chatSession) {
+					await chatModel.updateChatSession({
+						session_id: chatSession.id,
+						payload: {
+							enable_chat: false,
+						},
+					});
+				}
+
+				await jobApplicationModel.updateMyJobApplicationStatus({
+					application_id: Number(
+						paymentIntent.metadata.job_application_id
+					),
+					job_seeker_id: Number(paymentIntent.metadata.job_seeker_id),
+					status: "Cancelled",
+				});
+			}
+
+			await this.insertNotification(trx, TypeUser.ADMIN, {
+				user_id: user_id,
+				sender_type: USER_TYPE.HOTELIER,
+				title: "Payment Received for job post cancellation",
+				content: `Cancellation fee of amount ${
+					Number(paymentIntent.metadata.total_amount) / 100
+				} for job '${paymentIntent.metadata.job_title}' requested by ${
+					organization.name
+				} has been collected.`,
+				related_id: Number(paymentIntent.metadata.job_post_details_id),
+				type: NotificationTypeEnum.PAYMENT,
+			});
+
+			await this.insertNotification(trx, USER_TYPE.HOTELIER, {
+				title: "Payment done for job post cancellation",
+				content: `You have successfully paid a cancellation fee of amount ${Number(
+					paymentIntent.metadata.total_amount
+				).toFixed(2)} for the job '${
+					paymentIntent.metadata.job_title
+				}'.`,
+				related_id: Number(paymentIntent.metadata.job_post_details_id),
+				sender_type: USER_TYPE.ADMIN,
+				user_id: user_id,
+				type: NotificationTypeEnum.PAYMENT,
+			});
+
+			return {
+				success: true,
+				message: this.ResMsg.HTTP_OK,
+				code: this.StatusCode.HTTP_OK,
+			};
 		});
 	}
 

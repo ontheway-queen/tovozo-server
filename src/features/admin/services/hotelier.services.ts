@@ -3,6 +3,7 @@ import AbstractServices from "../../../abstract/abstract.service";
 import CustomError from "../../../utils/lib/customError";
 import Lib from "../../../utils/lib/lib";
 import {
+	JOB_POST_DETAILS_STATUS,
 	PAYMENT_STATUS,
 	USER_STATUS,
 	USER_TYPE,
@@ -346,7 +347,7 @@ class AdminHotelierService extends AbstractServices {
 			if (Object.keys(parsed.organization).length > 0) {
 				if (
 					data.status === "Blocked" &&
-					parsed.organization.status === "Active"
+					parsed.organization.status !== "Blocked"
 				) {
 					const { data: paymentList } =
 						await paymentModel.getPaymentsForHotelier({
@@ -357,6 +358,56 @@ class AdminHotelierService extends AbstractServices {
 						for (const payment of paymentList) {
 							await paymentModel.updatePayment(payment.id, {
 								status: PAYMENT_STATUS.NOT_PAID,
+							});
+						}
+					}
+
+					updateTasks.push(
+						model.updateOrganization(
+							{
+								name:
+									parsed.organization.name ||
+									parsed.organization.org_name,
+								details:
+									parsed.organization.details || data.details,
+								photo:
+									parsed.organization.photo || data.org_photo,
+								status: parsed.organization.status,
+							},
+							{
+								id: id,
+							}
+						)
+					);
+				} else if (
+					data.status !== "Blocked" &&
+					parsed.organization.status === "Blocked"
+				) {
+					const { data: jobPostList } = await this.Model.jobPostModel(
+						trx
+					).getJobPostListForHotelier({
+						organization_id: data.id,
+					});
+
+					if (jobPostList.length) {
+						const filterableStatuses = [
+							"Pending",
+							"Applied",
+							"In Progress",
+						];
+
+						const postsToCancel = jobPostList.filter((jobPost) =>
+							filterableStatuses.includes(
+								jobPost.job_post_details_status
+							)
+						);
+
+						for (const jobPost of postsToCancel) {
+							await this.Model.jobPostModel(
+								trx
+							).updateJobPostDetailsStatus({
+								id: jobPost.id,
+								status: JOB_POST_DETAILS_STATUS.Cancelled,
 							});
 						}
 					}

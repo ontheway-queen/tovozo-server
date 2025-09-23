@@ -277,7 +277,7 @@ class AdminHotelierService extends abstract_service_1.default {
                 }
                 if (Object.keys(parsed.organization).length > 0) {
                     if (data.status === "Blocked" &&
-                        parsed.organization.status === "Active") {
+                        parsed.organization.status !== "Blocked") {
                         const { data: paymentList } = yield paymentModel.getPaymentsForHotelier({
                             hotelier_id: data.user_id,
                             status: "Unpaid",
@@ -286,6 +286,35 @@ class AdminHotelierService extends abstract_service_1.default {
                             for (const payment of paymentList) {
                                 yield paymentModel.updatePayment(payment.id, {
                                     status: constants_1.PAYMENT_STATUS.NOT_PAID,
+                                });
+                            }
+                        }
+                        updateTasks.push(model.updateOrganization({
+                            name: parsed.organization.name ||
+                                parsed.organization.org_name,
+                            details: parsed.organization.details || data.details,
+                            photo: parsed.organization.photo || data.org_photo,
+                            status: parsed.organization.status,
+                        }, {
+                            id: id,
+                        }));
+                    }
+                    else if (data.status !== "Blocked" &&
+                        parsed.organization.status === "Blocked") {
+                        const { data: jobPostList } = yield this.Model.jobPostModel(trx).getJobPostListForHotelier({
+                            organization_id: data.id,
+                        });
+                        if (jobPostList.length) {
+                            const filterableStatuses = [
+                                "Pending",
+                                "Applied",
+                                "In Progress",
+                            ];
+                            const postsToCancel = jobPostList.filter((jobPost) => filterableStatuses.includes(jobPost.job_post_details_status));
+                            for (const jobPost of postsToCancel) {
+                                yield this.Model.jobPostModel(trx).updateJobPostDetailsStatus({
+                                    id: jobPost.id,
+                                    status: constants_1.JOB_POST_DETAILS_STATUS.Cancelled,
                                 });
                             }
                         }

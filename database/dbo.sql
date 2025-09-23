@@ -516,3 +516,15 @@ CREATE TABLE IF NOT EXISTS dbo.payout
     is_deleted boolean NOT NULL DEFAULT false
 )
 
+CREATE TABLE IF NOT EXISTS dbo.job_cancellation_payments (
+    id SERIAL PRIMARY KEY,
+    job_post_details_id INT NOT NULL REFERENCES dbo.job_post_details(id),
+    user_id INT NOT NULL REFERENCES dbo.user(id),
+    payment_amount NUMERIC(12,2) NOT NULL,
+    payment_status VARCHAR(20) NOT NULL DEFAULT 'Pending',
+    payment_method VARCHAR(50), 
+    transaction_id VARCHAR(100),
+    voucher_no VARCHAR(50),
+    created_at TIMESTAMP DEFAULT now(),
+    updated_at TIMESTAMP DEFAULT now()
+);

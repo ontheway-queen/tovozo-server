@@ -119,7 +119,7 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     removeOnFail: false,
                 });
                 // Chat Session Create Message queue start from here
-                const oneHourBeforeStart = new Date(startTime.getTime() - 60 * 60 * 1000);
+                const oneHourBeforeStart = new Date(startTime.getTime() - 2 * 60 * 60 * 1000);
                 const chatSessionDelay = oneHourBeforeStart.getTime() - Date.now();
                 const safeDelay = chatSessionDelay > 0 ? chatSessionDelay : 0;
                 const chatSessionQueue = this.getQueue("chatSessionCreator");
@@ -132,7 +132,6 @@ class JobSeekerJobApplication extends abstract_service_1.default {
                     removeOnComplete: true,
                     removeOnFail: false,
                 });
-                // Chat Session Create Message queue start from here
                 yield this.insertNotification(trx, userModelTypes_1.TypeUser.HOTELIER, {
                     user_id: jobPost.hotelier_id,
                     sender_id: user_id,

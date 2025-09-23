@@ -69,4 +69,13 @@ export default class HotelierJobPostController extends AbstractController {
 			res.status(code).json(data);
 		}
 	);
+
+	public verifyJobCancellationPayment = this.asyncWrapper.wrap(
+		null,
+		async (req: Request, res: Response) => {
+			const { code, ...data } =
+				await this.service.verifyJobCancellationPayment(req);
+			res.status(code).json(data);
+		}
+	);
 }

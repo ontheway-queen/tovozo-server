@@ -17,12 +17,12 @@ const socket_1 = require("../app/socket");
 const socketService_1 = __importDefault(require("../features/public/services/socketService"));
 const rootModel_1 = __importDefault(require("../models/rootModel"));
 const manageFile_1 = __importDefault(require("../utils/lib/manageFile"));
+const notificationMessage_1 = __importDefault(require("../utils/miscellaneous/notificationMessage"));
 const responseMessage_1 = __importDefault(require("../utils/miscellaneous/responseMessage"));
 const statusCode_1 = __importDefault(require("../utils/miscellaneous/statusCode"));
 const commonModelTypes_1 = require("../utils/modelTypes/common/commonModelTypes");
 const userModelTypes_1 = require("../utils/modelTypes/user/userModelTypes");
 const queue_1 = require("../utils/queue/queue");
-const notificationMessage_1 = __importDefault(require("../utils/miscellaneous/notificationMessage"));
 class AbstractServices {
     constructor() {
         this.db = database_1.db;
@@ -73,7 +73,8 @@ class AbstractServices {
                             payload.type === commonModelTypes_1.NotificationTypeEnum.SECURITY_ALERT ||
                             payload.type === commonModelTypes_1.NotificationTypeEnum.REMINDER ||
                             payload.type === commonModelTypes_1.NotificationTypeEnum.PAYOUT ||
-                            payload.type === commonModelTypes_1.NotificationTypeEnum.SYSTEM_UPDATE)) {
+                            payload.type === commonModelTypes_1.NotificationTypeEnum.SYSTEM_UPDATE ||
+                            payload.type === "JOB_SEEKER_VERIFICATION")) {
                         users = [{ user_id: payload.user_id }];
                     }
                     else {

@@ -1,9 +1,11 @@
+import { Queue } from "bullmq";
 import { Knex } from "knex";
 import { db } from "../app/database";
 import { getAllOnlineSocketIds } from "../app/socket";
 import SocketService from "../features/public/services/socketService";
 import Models from "../models/rootModel";
 import ManageFile from "../utils/lib/manageFile";
+import NotificationMessage from "../utils/miscellaneous/notificationMessage";
 import ResMsg from "../utils/miscellaneous/responseMessage";
 import StatusCode from "../utils/miscellaneous/statusCode";
 import { ICreateAdminAuditTrailPayload } from "../utils/modelTypes/admin/adminModelTypes";
@@ -14,8 +16,6 @@ import {
 } from "../utils/modelTypes/common/commonModelTypes";
 import { TypeUser } from "../utils/modelTypes/user/userModelTypes";
 import { QueueManager } from "../utils/queue/queue";
-import { Queue } from "bullmq";
-import NotificationMessage from "../utils/miscellaneous/notificationMessage";
 
 abstract class AbstractServices {
 	protected db = db;
@@ -82,7 +82,8 @@ abstract class AbstractServices {
 						payload.type === NotificationTypeEnum.SECURITY_ALERT ||
 						payload.type === NotificationTypeEnum.REMINDER ||
 						payload.type === NotificationTypeEnum.PAYOUT ||
-						payload.type === NotificationTypeEnum.SYSTEM_UPDATE)
+						payload.type === NotificationTypeEnum.SYSTEM_UPDATE ||
+						payload.type === "JOB_SEEKER_VERIFICATION")
 				) {
 					users = [{ user_id: payload.user_id }];
 				} else {

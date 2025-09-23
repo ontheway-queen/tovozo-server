@@ -177,7 +177,7 @@ export class JobSeekerJobApplication extends AbstractServices {
 
 			// Chat Session Create Message queue start from here
 			const oneHourBeforeStart = new Date(
-				startTime.getTime() - 60 * 60 * 1000
+				startTime.getTime() - 2 * 60 * 60 * 1000
 			);
 			const chatSessionDelay = oneHourBeforeStart.getTime() - Date.now();
 			const safeDelay = chatSessionDelay > 0 ? chatSessionDelay : 0;
@@ -196,8 +196,6 @@ export class JobSeekerJobApplication extends AbstractServices {
 					removeOnFail: false,
 				}
 			);
-
-			// Chat Session Create Message queue start from here
 
 			await this.insertNotification(trx, TypeUser.HOTELIER, {
 				user_id: jobPost.hotelier_id,

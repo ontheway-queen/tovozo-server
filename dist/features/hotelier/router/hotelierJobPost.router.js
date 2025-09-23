@@ -13,6 +13,9 @@ class HotelierJobPostRouter extends abstract_router_1.default {
     }
     callRouter() {
         this.router
+            .route("/job-cancellation-payment/success")
+            .patch(this.controller.verifyJobCancellationPayment);
+        this.router
             .route("/")
             .post(this.controller.createJobPost)
             .get(this.controller.getJobPostList);
