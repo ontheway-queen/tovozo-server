@@ -91,9 +91,12 @@ class Lib {
     }
     static generateHtmlToPdfBuffer(html) {
         return __awaiter(this, void 0, void 0, function* () {
+            console.log({ node_env: process.env.NODE_ENV });
             const browser = yield puppeteer_1.default.launch({
                 headless: true,
-                // executablePath: "/snap/bin/chromium",
+                executablePath: process.env.NODE_ENV === "development"
+                    ? undefined
+                    : "/snap/bin/chromium",
                 args: ["--no-sandbox", "--disable-setuid-sandbox"],
             });
             try {
@@ -107,6 +110,10 @@ class Lib {
                     printBackground: true,
                 });
                 return Buffer.from(pdfUint8Array);
+            }
+            catch (error) {
+                console.error("PDF generation skipped due to error:", error);
+                return null;
             }
             finally {
                 yield browser.close();

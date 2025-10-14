@@ -401,21 +401,24 @@ export default class PaymentService extends AbstractServices {
 				})
 			);
 
-			await Lib.sendEmailDefault({
-				email,
-				emailSub: `Invoice ${payment.payment_no} for Job ${
-					jobPost.title
-				} - ${new Date().toLocaleDateString()}`,
-				emailBody: `Attached is your invoice ${payment.payment_no} for the job "${jobPost.title}".
+			if (hotelierPdfBuffer && hotelierPdfBuffer !== null) {
+				await Lib.sendEmailDefault({
+					email,
+					emailSub: `Invoice ${payment.payment_no} for Job ${
+						jobPost.title
+					} - ${new Date().toLocaleDateString()}`,
+					emailBody: `Attached is your invoice ${payment.payment_no} for the job "${jobPost.title}".
 Total Amount: $${payment.total_amount}.`,
-				attachments: [
-					{
-						filename: `${payment.payment_no}.pdf`,
-						content: hotelierPdfBuffer,
-						contentType: "application/pdf",
-					},
-				],
-			});
+					attachments: [
+						{
+							filename: `${payment.payment_no}.pdf`,
+							content: hotelierPdfBuffer,
+							contentType: "application/pdf",
+						},
+					],
+				});
+			}
+
 			console.log({ jobseeker });
 
 			// pdf for job seeker
@@ -438,13 +441,15 @@ Total Amount: $${payment.total_amount}.`,
 				} - ${new Date().toLocaleDateString()}`,
 				emailBody: `Attached is your invoice ${payment.payment_no} for the job "${jobPost.title}".
 Total Amount: $${payment.job_seeker_pay}.`,
-				attachments: [
-					{
-						filename: `${payment.payment_no}.pdf`,
-						content: jobseekerPdfBuffer,
-						contentType: "application/pdf",
-					},
-				],
+				attachments: jobseekerPdfBuffer
+					? [
+							{
+								filename: `${payment.payment_no}.pdf`,
+								content: jobseekerPdfBuffer,
+								contentType: "application/pdf",
+							},
+					  ]
+					: undefined,
 			});
 
 			return {

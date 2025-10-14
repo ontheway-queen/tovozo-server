@@ -238,12 +238,9 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                 const jobStart = new Date(jobPostDetails.start_time);
                 const jobEnd = new Date(jobPostDetails.end_time);
                 const jobDurationHours = (jobEnd.getTime() - jobStart.getTime()) / (1000 * 60 * 60);
-                // if (jobDurationHours < 1) {
-                // 	throw new CustomError(
-                // 		"Job duration must be at least 1 hour.",
-                // 		this.StatusCode.HTTP_BAD_REQUEST
-                // 	);
-                // }
+                if (jobDurationHours < 1) {
+                    throw new customError_1.default("Job duration must be at least 1 hour.", this.StatusCode.HTTP_BAD_REQUEST);
+                }
                 if (!taskActivity.start_time) {
                     throw new customError_1.default("Task activity does not have a start time.", this.StatusCode.HTTP_BAD_REQUEST);
                 }
@@ -257,6 +254,9 @@ class JobTaskActivitiesService extends abstract_service_1.default {
                 // 		this.StatusCode.HTTP_BAD_REQUEST
                 // 	);
                 // }
+                if (taskDurationHours < 1) {
+                    throw new customError_1.default("Task must be submitted only after working at least 1 hour.", this.StatusCode.HTTP_BAD_REQUEST);
+                }
                 const taskList = yield jobTaskListModel.getJobTaskList({
                     job_task_activity_id: Number(id),
                 });

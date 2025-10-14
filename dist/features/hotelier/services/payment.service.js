@@ -273,19 +273,21 @@ class PaymentService extends abstract_service_1.default {
                     customer: organization.name,
                     authorize: "TOVOZO",
                 }));
-                yield lib_1.default.sendEmailDefault({
-                    email,
-                    emailSub: `Invoice ${payment.payment_no} for Job ${jobPost.title} - ${new Date().toLocaleDateString()}`,
-                    emailBody: `Attached is your invoice ${payment.payment_no} for the job "${jobPost.title}".
+                if (hotelierPdfBuffer && hotelierPdfBuffer !== null) {
+                    yield lib_1.default.sendEmailDefault({
+                        email,
+                        emailSub: `Invoice ${payment.payment_no} for Job ${jobPost.title} - ${new Date().toLocaleDateString()}`,
+                        emailBody: `Attached is your invoice ${payment.payment_no} for the job "${jobPost.title}".
 Total Amount: $${payment.total_amount}.`,
-                    attachments: [
-                        {
-                            filename: `${payment.payment_no}.pdf`,
-                            content: hotelierPdfBuffer,
-                            contentType: "application/pdf",
-                        },
-                    ],
-                });
+                        attachments: [
+                            {
+                                filename: `${payment.payment_no}.pdf`,
+                                content: hotelierPdfBuffer,
+                                contentType: "application/pdf",
+                            },
+                        ],
+                    });
+                }
                 console.log({ jobseeker });
                 // pdf for job seeker
                 const jobseekerPdfBuffer = yield lib_1.default.generateHtmlToPdfBuffer((0, invoiceTemplate_1.jobSeekerInvoiceTemplate)({
@@ -302,13 +304,15 @@ Total Amount: $${payment.total_amount}.`,
                     emailSub: `Invoice ${payment.payment_no} for Job ${jobPost.title} - ${new Date().toLocaleDateString()}`,
                     emailBody: `Attached is your invoice ${payment.payment_no} for the job "${jobPost.title}".
 Total Amount: $${payment.job_seeker_pay}.`,
-                    attachments: [
-                        {
-                            filename: `${payment.payment_no}.pdf`,
-                            content: jobseekerPdfBuffer,
-                            contentType: "application/pdf",
-                        },
-                    ],
+                    attachments: jobseekerPdfBuffer
+                        ? [
+                            {
+                                filename: `${payment.payment_no}.pdf`,
+                                content: jobseekerPdfBuffer,
+                                contentType: "application/pdf",
+                            },
+                        ]
+                        : undefined,
                 });
                 return {
                     success: true,
