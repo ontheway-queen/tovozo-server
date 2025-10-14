@@ -60,7 +60,10 @@ class Lib {
 		}
 	}
 
-	public static async generateHtmlToPdfBuffer(html: string): Promise<Buffer> {
+	public static async generateHtmlToPdfBuffer(
+		html: string
+	): Promise<Buffer | null> {
+		console.log({ node_env: process.env.NODE_ENV });
 		const browser = await puppeteer.launch({
 			headless: true,
 			executablePath:
@@ -80,6 +83,9 @@ class Lib {
 				printBackground: true,
 			});
 			return Buffer.from(pdfUint8Array);
+		} catch (error) {
+			console.error("PDF generation skipped due to error:", error);
+			return null;
 		} finally {
 			await browser.close();
 		}
