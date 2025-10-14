@@ -278,6 +278,7 @@ export default class HotelierJobTaskActivitiesService extends AbstractServices {
 				);
 			} else {
 				if (isJobSeekerExists[0].device_id) {
+					console.log({ device: isJobSeekerExists[0].device_id });
 					await Lib.sendNotificationToMobile({
 						to: isJobSeekerExists[0].device_id as string,
 						notificationTitle:

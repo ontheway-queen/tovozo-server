@@ -1,20 +1,19 @@
 import bcrypt from "bcryptjs";
 
+import * as admin from "firebase-admin";
 import fs from "fs";
 import jwt, { SignOptions } from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import { Attachment } from "nodemailer/lib/mailer";
 import path from "path";
+import PDFDocument from "pdfkit";
 import config from "../../app/config";
 import { TDB } from "../../features/public/utils/types/publicCommon.types";
 import CommonModel from "../../models/commonModel/commonModel";
-import * as admin from "firebase-admin";
-import PDFDocument from "pdfkit";
 
 import dotenv from "dotenv";
-import CustomError from "./customError";
-import { stripe } from "../miscellaneous/stripe";
 import puppeteer from "puppeteer";
+import { stripe } from "../miscellaneous/stripe";
 
 dotenv.config();
 
@@ -64,7 +63,10 @@ class Lib {
 	public static async generateHtmlToPdfBuffer(html: string): Promise<Buffer> {
 		const browser = await puppeteer.launch({
 			headless: true,
-			// executablePath: "/snap/bin/chromium",
+			executablePath:
+				process.env.NODE_ENV === "development"
+					? undefined
+					: "/snap/bin/chromium",
 			args: ["--no-sandbox", "--disable-setuid-sandbox"],
 		});
 		try {

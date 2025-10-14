@@ -174,11 +174,12 @@ export class JobSeekerJobApplication extends AbstractServices {
 					removeOnFail: false,
 				}
 			);
-
+			console.log({ startTime });
 			// Chat Session Create Message queue start from here
 			const oneHourBeforeStart = new Date(
 				startTime.getTime() - 2 * 60 * 60 * 1000
 			);
+			console.log({ oneHourBeforeStart });
 			const chatSessionDelay = oneHourBeforeStart.getTime() - Date.now();
 			const safeDelay = chatSessionDelay > 0 ? chatSessionDelay : 0;
 
