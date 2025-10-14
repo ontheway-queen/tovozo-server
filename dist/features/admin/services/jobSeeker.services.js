@@ -29,6 +29,7 @@ const lib_1 = __importDefault(require("../../../utils/lib/lib"));
 const constants_1 = require("../../../utils/miscellaneous/constants");
 const commonModelTypes_1 = require("../../../utils/modelTypes/common/commonModelTypes");
 const userModelTypes_1 = require("../../../utils/modelTypes/user/userModelTypes");
+const documentVerificationTemplate_1 = require("../../../utils/templates/documentVerificationTemplate");
 const registrationVerificationCompletedTemplate_1 = require("../../../utils/templates/registrationVerificationCompletedTemplate");
 class AdminJobSeekerService extends abstract_service_1.default {
     createJobSeeker(req) {
@@ -480,8 +481,7 @@ Your account is now active, and you can start applying for jobs.`,
                 yield lib_1.default.sendEmailDefault({
                     email: existingUser.email,
                     emailSub: "Your documents have been verified",
-                    emailBody: `We have successfully verified your submitted documents (ID copy and work permit).  
-Your account is now active, and you can start applying for jobs.`,
+                    emailBody: (0, documentVerificationTemplate_1.documentVerificationSuccessTemplate)(existingUser.name),
                 });
                 yield this.insertAdminAudit(trx, {
                     details: `Job seeker (${existingUser.name} - ${jobSeekerId}) documents have been verified`,

@@ -6,6 +6,7 @@ import { USER_STATUS, USER_TYPE } from "../../../utils/miscellaneous/constants";
 import { NotificationTypeEnum } from "../../../utils/modelTypes/common/commonModelTypes";
 import { IJobApplicationStatus } from "../../../utils/modelTypes/jobApplication/jobApplicationModel.types";
 import { TypeUser } from "../../../utils/modelTypes/user/userModelTypes";
+import { documentVerificationSuccessTemplate } from "../../../utils/templates/documentVerificationTemplate";
 import {
 	registrationFromAdminTemplate,
 	registrationVerificationCompletedTemplate,
@@ -629,8 +630,9 @@ Your account is now active, and you can start applying for jobs.`,
 			await Lib.sendEmailDefault({
 				email: existingUser.email,
 				emailSub: "Your documents have been verified",
-				emailBody: `We have successfully verified your submitted documents (ID copy and work permit).  
-Your account is now active, and you can start applying for jobs.`,
+				emailBody: documentVerificationSuccessTemplate(
+					existingUser.name
+				),
 			});
 
 			await this.insertAdminAudit(trx, {

@@ -1,11 +1,11 @@
 import {
-  OTP_DEFAULT_EXPIRY,
-  PROJECT_LOGO,
-  PROJECT_NAME,
-} from '../miscellaneous/constants';
+	OTP_DEFAULT_EXPIRY,
+	PROJECT_LOGO,
+	PROJECT_NAME,
+} from "../miscellaneous/constants";
 
 export const sendEmailOtpTemplate = (otp: string, otpFor: string) => {
-  return `
+	return `
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -97,7 +97,9 @@ export const sendEmailOtpTemplate = (otp: string, otpFor: string) => {
                     line-height: 1.5;
                   "
                 >
-                  Validity for this OTP is ${OTP_DEFAULT_EXPIRY} minutes. Keep this code private.
+                 This code will expire in ${OTP_DEFAULT_EXPIRY} minutes. Keep it confidential and do not share it with anyone.
+                  <br /><br />
+                  If you didn’t request this action, please ignore this email.
                 </p>
               </td>
             </tr>

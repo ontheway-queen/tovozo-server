@@ -1,15 +1,15 @@
 import {
-  APP_STORE_ICON,
-  HOTELIER_APP_STORE_URL,
-  HOTELIER_PLAY_STORE_URL,
-  PLAY_STORE_ICON,
-  PROJECT_LOGO,
-  PROJECT_NAME,
-  PROJECT_NUMBER,
+	APP_STORE_ICON,
+	HOTELIER_APP_STORE_URL,
+	HOTELIER_PLAY_STORE_URL,
+	PLAY_STORE_ICON,
+	PROJECT_LOGO,
+	PROJECT_NAME,
+	PROJECT_NUMBER,
 } from "../miscellaneous/constants";
 
 export const registrationHotelierTemplate = (payload: { name: string }) => {
-  return `
+	return `
     <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,15 +22,15 @@ export const registrationHotelierTemplate = (payload: { name: string }) => {
 
     <!-- Header -->
     <div style="background-color:#ECECEC; color:#1d1d1d; padding:20px; text-align:center;">
-      <img src="${PROJECT_LOGO}" alt="Logo" style="width:120px; margin-bottom:10px;" />
+      <img src="${PROJECT_LOGO}" alt="Tovozo Logo" style="width:120px; margin-bottom:10px;" />
       <h1 style="font-size:20px; margin:0;">Welcome to ${PROJECT_NAME}!</h1>
     </div>
 
     <!-- Content -->
     <div style="padding:20px;">
       <p style="margin:10px 0; font-size:14px; line-height:1.5;">Hi <strong>${
-        payload.name
-      }</strong>,</p>
+			payload.name
+		}</strong>,</p>
       <p style="margin:10px 0; font-size:14px; line-height:1.5;">
         Thank you for registering as a <strong>Hotelier</strong> with <strong>${PROJECT_NAME}</strong>. We appreciate your interest in joining our platform.
       </p>

@@ -16,7 +16,7 @@ const registrationHotelierTemplate = (payload) => {
 
     <!-- Header -->
     <div style="background-color:#ECECEC; color:#1d1d1d; padding:20px; text-align:center;">
-      <img src="${constants_1.PROJECT_LOGO}" alt="Logo" style="width:120px; margin-bottom:10px;" />
+      <img src="${constants_1.PROJECT_LOGO}" alt="Tovozo Logo" style="width:120px; margin-bottom:10px;" />
       <h1 style="font-size:20px; margin:0;">Welcome to ${constants_1.PROJECT_NAME}!</h1>
     </div>
 
