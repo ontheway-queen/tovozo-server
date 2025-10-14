@@ -204,6 +204,7 @@ class HotelierJobTaskActivitiesService extends abstract_service_1.default {
                 }
                 else {
                     if (isJobSeekerExists[0].device_id) {
+                        console.log({ device: isJobSeekerExists[0].device_id });
                         yield lib_1.default.sendNotificationToMobile({
                             to: isJobSeekerExists[0].device_id,
                             notificationTitle: this.NotificationMsg.NEW_TASKS_ASSIGNED.title,
