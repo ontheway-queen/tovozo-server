@@ -95,7 +95,9 @@ const sendEmailOtpTemplate = (otp, otpFor) => {
                     line-height: 1.5;
                   "
                 >
-                  Validity for this OTP is ${constants_1.OTP_DEFAULT_EXPIRY} minutes. Keep this code private.
+                 This code will expire in ${constants_1.OTP_DEFAULT_EXPIRY} minutes. Keep it confidential and do not share it with anyone.
+                  <br /><br />
+                  If you didn’t request this action, please ignore this email.
                 </p>
               </td>
             </tr>
