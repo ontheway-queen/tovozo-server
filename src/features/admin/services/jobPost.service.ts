@@ -12,7 +12,7 @@ export default class AdminJobPostService extends AbstractServices {
 			limit,
 			skip,
 			status,
-			name: search,
+			filter: search,
 			from_date,
 			to_date,
 		} = req.query;
@@ -65,15 +65,9 @@ export default class AdminJobPostService extends AbstractServices {
 				);
 			}
 
-			const notCancellableStatuses = [
-				"Work Finished",
-				"Complete",
-				"Cancelled",
-			];
+			const notCancellableStatuses = ["Work Finished", "Complete", "Cancelled"];
 
-			if (
-				notCancellableStatuses.includes(check.job_post_details_status)
-			) {
+			if (notCancellableStatuses.includes(check.job_post_details_status)) {
 				throw new CustomError(
 					`Can't cancel. This job post is already ${check.job_post_details_status.toLowerCase()}.`,
 					this.StatusCode.HTTP_BAD_REQUEST
