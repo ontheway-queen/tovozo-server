@@ -1,6 +1,6 @@
 import { createClient } from "redis";
 
-const redis_url = "redis://localhost";
+const redis_url = "redis://127.0.0.1:6379";
 
 export const client = createClient({ url: redis_url });
 
