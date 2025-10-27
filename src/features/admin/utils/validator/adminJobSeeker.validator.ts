@@ -8,6 +8,7 @@ import {
 class AdminJobSeekerValidator {
 	public getAllJobSeekerSchema = Joi.object({
 		name: Joi.string().min(1).max(255).optional().allow(""),
+		filter: Joi.string().min(1).max(255).optional().allow(""),
 		limit: Joi.number().integer().optional(),
 		skip: Joi.number().integer().optional(),
 		status: Joi.string()
