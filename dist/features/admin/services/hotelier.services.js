@@ -174,12 +174,12 @@ class AdminHotelierService extends abstract_service_1.default {
     }
     getHoteliers(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { id, user_id, name, status, limit = 100, skip = 0, from_date, to_date, } = req.query;
+            const { id, user_id, filter, status, limit = 100, skip = 0, from_date, to_date, } = req.query;
             const model = this.Model.organizationModel();
             const data = yield model.getOrganizationList({
                 id: id ? Number(id) : undefined,
                 user_id: user_id ? Number(user_id) : undefined,
-                name,
+                name: filter,
                 limit,
                 skip,
                 status,
@@ -290,8 +290,7 @@ class AdminHotelierService extends abstract_service_1.default {
                             }
                         }
                         updateTasks.push(model.updateOrganization({
-                            name: parsed.organization.name ||
-                                parsed.organization.org_name,
+                            name: parsed.organization.name || parsed.organization.org_name,
                             details: parsed.organization.details || data.details,
                             photo: parsed.organization.photo || data.org_photo,
                             status: parsed.organization.status,
@@ -305,11 +304,7 @@ class AdminHotelierService extends abstract_service_1.default {
                             organization_id: data.id,
                         });
                         if (jobPostList.length) {
-                            const filterableStatuses = [
-                                "Pending",
-                                "Applied",
-                                "In Progress",
-                            ];
+                            const filterableStatuses = ["Pending", "Applied", "In Progress"];
                             const postsToCancel = jobPostList.filter((jobPost) => filterableStatuses.includes(jobPost.job_post_details_status));
                             for (const jobPost of postsToCancel) {
                                 yield this.Model.jobPostModel(trx).updateJobPostDetailsStatus({
@@ -319,8 +314,7 @@ class AdminHotelierService extends abstract_service_1.default {
                             }
                         }
                         updateTasks.push(model.updateOrganization({
-                            name: parsed.organization.name ||
-                                parsed.organization.org_name,
+                            name: parsed.organization.name || parsed.organization.org_name,
                             details: parsed.organization.details || data.details,
                             photo: parsed.organization.photo || data.org_photo,
                             status: parsed.organization.status,
@@ -330,8 +324,7 @@ class AdminHotelierService extends abstract_service_1.default {
                     }
                     else {
                         updateTasks.push(model.updateOrganization({
-                            name: parsed.organization.name ||
-                                parsed.organization.org_name,
+                            name: parsed.organization.name || parsed.organization.org_name,
                             details: parsed.organization.details || data.details,
                             photo: parsed.organization.photo || data.org_photo,
                             status: parsed.organization.status || data.status,
@@ -421,8 +414,7 @@ class AdminHotelierService extends abstract_service_1.default {
                                 longitude: parsed.organization_address.longitude,
                                 latitude: parsed.organization_address.latitude,
                                 postal_code: parsed.organization_address.postal_code,
-                                is_home_address: parsed.organization_address
-                                    .is_home_address,
+                                is_home_address: parsed.organization_address.is_home_address,
                             });
                             parsed.organization.location_id = locationRecord.id;
                         }))());

@@ -193,7 +193,7 @@ class AdminHotelierService extends AbstractServices {
 		const {
 			id,
 			user_id,
-			name,
+			filter,
 			status,
 			limit = 100,
 			skip = 0,
@@ -202,7 +202,7 @@ class AdminHotelierService extends AbstractServices {
 		} = req.query as unknown as {
 			id?: string;
 			user_id?: string;
-			name?: string;
+			filter?: string;
 			status?: UserStatusType;
 			limit?: number;
 			skip?: number;
@@ -213,7 +213,7 @@ class AdminHotelierService extends AbstractServices {
 		const data = await model.getOrganizationList({
 			id: id ? Number(id) : undefined,
 			user_id: user_id ? Number(user_id) : undefined,
-			name,
+			name: filter as string,
 			limit,
 			skip,
 			status,
@@ -365,13 +365,9 @@ class AdminHotelierService extends AbstractServices {
 					updateTasks.push(
 						model.updateOrganization(
 							{
-								name:
-									parsed.organization.name ||
-									parsed.organization.org_name,
-								details:
-									parsed.organization.details || data.details,
-								photo:
-									parsed.organization.photo || data.org_photo,
+								name: parsed.organization.name || parsed.organization.org_name,
+								details: parsed.organization.details || data.details,
+								photo: parsed.organization.photo || data.org_photo,
 								status: parsed.organization.status,
 							},
 							{
@@ -390,22 +386,14 @@ class AdminHotelierService extends AbstractServices {
 					});
 
 					if (jobPostList.length) {
-						const filterableStatuses = [
-							"Pending",
-							"Applied",
-							"In Progress",
-						];
+						const filterableStatuses = ["Pending", "Applied", "In Progress"];
 
 						const postsToCancel = jobPostList.filter((jobPost) =>
-							filterableStatuses.includes(
-								jobPost.job_post_details_status
-							)
+							filterableStatuses.includes(jobPost.job_post_details_status)
 						);
 
 						for (const jobPost of postsToCancel) {
-							await this.Model.jobPostModel(
-								trx
-							).updateJobPostDetailsStatus({
+							await this.Model.jobPostModel(trx).updateJobPostDetailsStatus({
 								id: jobPost.id,
 								status: JOB_POST_DETAILS_STATUS.Cancelled,
 							});
@@ -415,13 +403,9 @@ class AdminHotelierService extends AbstractServices {
 					updateTasks.push(
 						model.updateOrganization(
 							{
-								name:
-									parsed.organization.name ||
-									parsed.organization.org_name,
-								details:
-									parsed.organization.details || data.details,
-								photo:
-									parsed.organization.photo || data.org_photo,
+								name: parsed.organization.name || parsed.organization.org_name,
+								details: parsed.organization.details || data.details,
+								photo: parsed.organization.photo || data.org_photo,
 								status: parsed.organization.status,
 							},
 							{
@@ -433,15 +417,10 @@ class AdminHotelierService extends AbstractServices {
 					updateTasks.push(
 						model.updateOrganization(
 							{
-								name:
-									parsed.organization.name ||
-									parsed.organization.org_name,
-								details:
-									parsed.organization.details || data.details,
-								photo:
-									parsed.organization.photo || data.org_photo,
-								status:
-									parsed.organization.status || data.status,
+								name: parsed.organization.name || parsed.organization.org_name,
+								details: parsed.organization.details || data.details,
+								photo: parsed.organization.photo || data.org_photo,
+								status: parsed.organization.status || data.status,
 							},
 							{
 								id: id,
@@ -533,13 +512,10 @@ class AdminHotelierService extends AbstractServices {
 								city_id: checkLocation.city_id,
 								name: parsed.organization_address.name,
 								address: parsed.organization_address.address,
-								longitude:
-									parsed.organization_address.longitude,
+								longitude: parsed.organization_address.longitude,
 								latitude: parsed.organization_address.latitude,
-								postal_code:
-									parsed.organization_address.postal_code,
-								is_home_address:
-									parsed.organization_address.is_home_address,
+								postal_code: parsed.organization_address.postal_code,
+								is_home_address: parsed.organization_address.is_home_address,
 							},
 							{
 								location_id: data.location_id,
@@ -549,22 +525,15 @@ class AdminHotelierService extends AbstractServices {
 				} else {
 					updateTasks.push(
 						(async () => {
-							const [locationRecord] =
-								await commonModel.createLocation({
-									city_id,
-									name: parsed.organization_address.name,
-									address:
-										parsed.organization_address.address,
-									longitude:
-										parsed.organization_address.longitude,
-									latitude:
-										parsed.organization_address.latitude,
-									postal_code:
-										parsed.organization_address.postal_code,
-									is_home_address:
-										parsed.organization_address
-											.is_home_address,
-								});
+							const [locationRecord] = await commonModel.createLocation({
+								city_id,
+								name: parsed.organization_address.name,
+								address: parsed.organization_address.address,
+								longitude: parsed.organization_address.longitude,
+								latitude: parsed.organization_address.latitude,
+								postal_code: parsed.organization_address.postal_code,
+								is_home_address: parsed.organization_address.is_home_address,
+							});
 							parsed.organization.location_id = locationRecord.id;
 						})()
 					);
