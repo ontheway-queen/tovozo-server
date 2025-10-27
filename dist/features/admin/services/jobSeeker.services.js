@@ -191,10 +191,10 @@ class AdminJobSeekerService extends abstract_service_1.default {
     }
     getJobSeekers(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { name, status, limit = 100, skip = 0, from_date, to_date, sortBy, application_status, } = req.query;
+            const { filter, status, limit = 100, skip = 0, from_date, to_date, sortBy, application_status, } = req.query;
             const model = this.Model.jobSeekerModel();
             const data = yield model.getAllJobSeekerList({
-                name,
+                name: filter,
                 limit,
                 skip,
                 status,
@@ -289,8 +289,7 @@ class AdminJobSeekerService extends abstract_service_1.default {
                 let city_id = 0;
                 if (Object.keys(parsed.ownAddress).length > 0) {
                     if (parsed.ownAddress.city) {
-                        if (!parsed.ownAddress.state &&
-                            !parsed.ownAddress.country) {
+                        if (!parsed.ownAddress.state && !parsed.ownAddress.country) {
                             throw new customError_1.default("state and country required", this.StatusCode.HTTP_BAD_REQUEST);
                         }
                         // check country
@@ -374,16 +373,14 @@ class AdminJobSeekerService extends abstract_service_1.default {
                         if (!checkJobSeeker) {
                             throw new customError_1.default("Job Seeker account not found!", this.StatusCode.HTTP_NOT_FOUND);
                         }
-                        if (parsed.jobSeeker.account_status ===
-                            checkJobSeeker.account_status) {
+                        if (parsed.jobSeeker.account_status === checkJobSeeker.account_status) {
                             throw new customError_1.default(`Already updated status to ${parsed.jobSeeker.account_status}`, this.StatusCode.HTTP_CONFLICT);
                         }
                         if (parsed.jobSeeker.final_completed) {
                             if (!checkJobSeeker.is_completed) {
                                 throw new customError_1.default("Job Seeker account not completed!", this.StatusCode.HTTP_CONFLICT);
                             }
-                            parsed.jobSeeker.final_completed_at =
-                                new Date().toISOString();
+                            parsed.jobSeeker.final_completed_at = new Date().toISOString();
                             parsed.jobSeeker.final_completed_by = user_id;
                             yield this.insertNotification(trx, constants_1.USER_TYPE.JOB_SEEKER, {
                                 title: "Your account has been completed",
