@@ -66,21 +66,19 @@ const documentVerificationSuccessTemplate = (name) => {
               </td>
             </tr>
 
-          </table>
+            <!-- App Download Buttons -->
+            <tr>
+              <td align="center" style="padding: 10px 0;">
+                <a href="${constants_1.HOTELIER_APP_STORE_URL}" target="_blank" style="display:inline-block; margin:0 5px;">
+                  <img src="${constants_1.APP_STORE_ICON}" alt="Download on the App Store" style="height:30px;" />
+                </a>
+                <a href="${constants_1.HOTELIER_PLAY_STORE_URL}" target="_blank" style="display:inline-block; margin:0 5px;">
+                  <img src="${constants_1.PLAY_STORE_ICON}" alt="Get it on Google Play" style="height:30px;" />
+                </a>
+              </td>
+            </tr>
 
-          <div style="background-color:#f1f5fa; text-align:center; padding:10px; font-size:12px; color:#666;">
-                <p style="margin:5px 0;">Need help? Call us at <strong>${constants_1.PROJECT_NUMBER}</strong>.</p>
-                <!-- App Download Buttons -->
-                <div style="margin:10px 0;">
-                  <a href="${constants_1.HOTELIER_APP_STORE_URL}" target="_blank" style="display:inline-block; margin:0 5px;">
-                    <img src="${constants_1.APP_STORE_ICON}" alt="Download on the App Store" style="height:30px;" />
-                  </a>
-                  <a href="${constants_1.HOTELIER_PLAY_STORE_URL}" target="_blank" style="display:inline-block; margin:0 5px;">
-                    <img src="${constants_1.PLAY_STORE_ICON}" alt="Get it on Google Play" style="height:30px;" />
-                  </a>
-                </div>
-                <p style="margin:5px 0;">&copy; ${new Date().getFullYear()} ${constants_1.PROJECT_NAME}. All Rights Reserved.</p>
-              </div>
+          </table>
         </td>
       </tr>
     </table>

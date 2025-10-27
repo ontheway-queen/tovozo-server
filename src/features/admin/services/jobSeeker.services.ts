@@ -39,8 +39,7 @@ class AdminJobSeekerService extends AbstractServices {
 				return {
 					success: false,
 					code: this.StatusCode.HTTP_NOT_FOUND,
-					message:
-						"No photo was uploaded. Please add a photo and try again.",
+					message: "No photo was uploaded. Please add a photo and try again.",
 				};
 			}
 			for (const { fieldname, filename } of files) {
@@ -56,8 +55,7 @@ class AdminJobSeekerService extends AbstractServices {
 			}
 
 			// Attach file references
-			const { email, phone_number, password, ...restUserData } =
-				userInput;
+			const { email, phone_number, password, ...restUserData } = userInput;
 
 			const userModel = this.Model.UserModel(trx);
 			const jobSeekerModel = this.Model.jobSeekerModel(trx);
@@ -193,10 +191,9 @@ class AdminJobSeekerService extends AbstractServices {
 				user_id: jobSeekerId,
 				sender_type: USER_TYPE.ADMIN,
 				title: this.NotificationMsg.JOB_SEEKER_ACCOUNT_CREATED.title,
-				content:
-					this.NotificationMsg.JOB_SEEKER_ACCOUNT_CREATED.content(
-						userInput.name
-					),
+				content: this.NotificationMsg.JOB_SEEKER_ACCOUNT_CREATED.content(
+					userInput.name
+				),
 				related_id: jobSeekerId,
 				type: NotificationTypeEnum.JOB_SEEKER_VERIFICATION,
 			});
@@ -229,7 +226,7 @@ class AdminJobSeekerService extends AbstractServices {
 
 	public async getJobSeekers(req: Request) {
 		const {
-			name,
+			filter,
 			status,
 			limit = 100,
 			skip = 0,
@@ -238,7 +235,7 @@ class AdminJobSeekerService extends AbstractServices {
 			sortBy,
 			application_status,
 		} = req.query as unknown as {
-			name?: string;
+			filter?: string;
 			status?: UserStatusType;
 			limit?: number;
 			skip?: number;
@@ -249,7 +246,7 @@ class AdminJobSeekerService extends AbstractServices {
 		};
 		const model = this.Model.jobSeekerModel();
 		const data = await model.getAllJobSeekerList({
-			name,
+			name: filter as string,
 			limit,
 			skip,
 			status,
@@ -373,10 +370,7 @@ class AdminJobSeekerService extends AbstractServices {
 			let city_id = 0;
 			if (Object.keys(parsed.ownAddress).length > 0) {
 				if (parsed.ownAddress.city) {
-					if (
-						!parsed.ownAddress.state &&
-						!parsed.ownAddress.country
-					) {
+					if (!parsed.ownAddress.state && !parsed.ownAddress.country) {
 						throw new CustomError(
 							"state and country required",
 							this.StatusCode.HTTP_BAD_REQUEST
@@ -450,8 +444,7 @@ class AdminJobSeekerService extends AbstractServices {
 								longitude: parsed.ownAddress.longitude,
 								latitude: parsed.ownAddress.latitude,
 								postal_code: parsed.ownAddress.postal_code,
-								is_home_address:
-									parsed.ownAddress.is_home_address,
+								is_home_address: parsed.ownAddress.is_home_address,
 							},
 							{
 								location_id: data.home_location_id,
@@ -485,8 +478,7 @@ class AdminJobSeekerService extends AbstractServices {
 					}
 
 					if (
-						parsed.jobSeeker.account_status ===
-						checkJobSeeker.account_status
+						parsed.jobSeeker.account_status === checkJobSeeker.account_status
 					) {
 						throw new CustomError(
 							`Already updated status to ${parsed.jobSeeker.account_status}`,
@@ -500,23 +492,18 @@ class AdminJobSeekerService extends AbstractServices {
 								this.StatusCode.HTTP_CONFLICT
 							);
 						}
-						parsed.jobSeeker.final_completed_at =
-							new Date().toISOString();
+						parsed.jobSeeker.final_completed_at = new Date().toISOString();
 						parsed.jobSeeker.final_completed_by = user_id;
 
-						await this.insertNotification(
-							trx,
-							USER_TYPE.JOB_SEEKER,
-							{
-								title: "Your account has been completed",
-								content: `Your account has been completed. You can now start applying for jobs.`,
-								related_id: id,
-								sender_type: USER_TYPE.ADMIN,
-								sender_id: user_id,
-								user_id: id,
-								type: "JOB_SEEKER_VERIFICATION",
-							}
-						);
+						await this.insertNotification(trx, USER_TYPE.JOB_SEEKER, {
+							title: "Your account has been completed",
+							content: `Your account has been completed. You can now start applying for jobs.`,
+							related_id: id,
+							sender_type: USER_TYPE.ADMIN,
+							sender_id: user_id,
+							user_id: id,
+							type: "JOB_SEEKER_VERIFICATION",
+						});
 					}
 				}
 				updateTasks.push(
@@ -630,9 +617,7 @@ Your account is now active, and you can start applying for jobs.`,
 			await Lib.sendEmailDefault({
 				email: existingUser.email,
 				emailSub: "Your documents have been verified",
-				emailBody: documentVerificationSuccessTemplate(
-					existingUser.name
-				),
+				emailBody: documentVerificationSuccessTemplate(existingUser.name),
 			});
 
 			await this.insertAdminAudit(trx, {
