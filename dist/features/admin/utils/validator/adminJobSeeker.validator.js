@@ -9,6 +9,7 @@ class AdminJobSeekerValidator {
     constructor() {
         this.getAllJobSeekerSchema = joi_1.default.object({
             name: joi_1.default.string().min(1).max(255).optional().allow(""),
+            filter: joi_1.default.string().min(1).max(255).optional().allow(""),
             limit: joi_1.default.number().integer().optional(),
             skip: joi_1.default.number().integer().optional(),
             status: joi_1.default.string()

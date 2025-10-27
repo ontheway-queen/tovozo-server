@@ -11,7 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.redisFlush = exports.deleteRedis = exports.getRedis = exports.setRedis = exports.client = void 0;
 const redis_1 = require("redis");
-const redis_url = "redis://localhost";
+const redis_url = "redis://127.0.0.1:6379";
 exports.client = (0, redis_1.createClient)({ url: redis_url });
 exports.client.on("error", (err) => console.log("Redis Client Error", err));
 exports.client.connect();
