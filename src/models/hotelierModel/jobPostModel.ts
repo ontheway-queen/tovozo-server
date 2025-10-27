@@ -81,11 +81,7 @@ class JobPostModel extends Schema {
 			])
 			.join("job_post_details as jpd", "jp.id", "jpd.job_post_id")
 			.join("jobs as j", "j.id", "jpd.job_id")
-			.leftJoin(
-				"vw_location as vwl",
-				"vwl.location_id",
-				"org.location_id"
-			)
+			.leftJoin("vw_location as vwl", "vwl.location_id", "org.location_id")
 			.where((qb) => {
 				if (category_id) qb.andWhere("j.id", category_id);
 				if (city_id) qb.andWhere("vwl.city_id", city_id);
@@ -125,11 +121,7 @@ class JobPostModel extends Schema {
 				])
 				.join("job_post_details as jpd", "jp.id", "jpd.job_post_id")
 				.join("jobs as j", "j.id", "jpd.job_id")
-				.leftJoin(
-					"vw_location as vwl",
-					"vwl.location_id",
-					"org.location_id"
-				)
+				.leftJoin("vw_location as vwl", "vwl.location_id", "org.location_id")
 				.where((qb) => {
 					if (category_id) qb.andWhere("j.id", category_id);
 					if (city_id) qb.andWhere("vwl.city_id", city_id);
@@ -140,8 +132,7 @@ class JobPostModel extends Schema {
 								.orWhereILike("org.name", `%${search}%`);
 						});
 					}
-					if (from_date)
-						qb.andWhere("jpd.start_time", ">=", from_date);
+					if (from_date) qb.andWhere("jpd.start_time", ">=", from_date);
 					if (to_date) qb.andWhere("jpd.start_time", "<=", to_date);
 				})
 				.andWhere("jpd.status", "Pending");
@@ -197,11 +188,7 @@ class JobPostModel extends Schema {
 			.join("user as u", "u.id", "org.user_id")
 			.join("job_post_details as jpd", "jp.id", "jpd.job_post_id")
 			.join("jobs as j", "j.id", "jpd.job_id")
-			.leftJoin(
-				"vw_location as vwl",
-				"vwl.location_id",
-				"org.location_id"
-			)
+			.leftJoin("vw_location as vwl", "vwl.location_id", "org.location_id")
 			.where("jpd.id", id)
 			.first();
 	}
@@ -236,9 +223,7 @@ class JobPostModel extends Schema {
 				"j.title",
 				"j.hourly_rate",
 				"jp.created_time",
-				this.db.raw(
-					`COUNT(*) OVER (PARTITION BY jpd.job_post_id) AS vacancy`
-				),
+				this.db.raw(`COUNT(*) OVER (PARTITION BY jpd.job_post_id) AS vacancy`),
 				this.db.raw(`
 				CASE
 					WHEN ja.job_seeker_id IS NULL AND js.name IS NULL AND js_vwl.longitude IS NULL AND js_vwl.latitude IS NULL THEN NULL
@@ -258,11 +243,7 @@ class JobPostModel extends Schema {
 				`${this.HOTELIER}.${this.TABLES.organization}`,
 			])
 			.join("user as u", "u.id", "org.user_id")
-			.leftJoin(
-				"job_applications as ja",
-				"ja.job_post_details_id",
-				"jpd.id"
-			)
+			.leftJoin("job_applications as ja", "ja.job_post_details_id", "jpd.id")
 			.leftJoin("user as js", "js.id", "ja.job_seeker_id")
 			.joinRaw(`LEFT JOIN ?? as jsu ON jsu.user_id = js.id`, [
 				`${this.JOB_SEEKER}.${this.TABLES.job_seeker}`,
@@ -273,8 +254,7 @@ class JobPostModel extends Schema {
 				"jsu.location_id"
 			)
 			.where((qb) => {
-				if (organization_id)
-					qb.andWhere("jp.organization_id", organization_id);
+				if (organization_id) qb.andWhere("jp.organization_id", organization_id);
 				if (user_id) qb.andWhere("u.id", user_id);
 				if (category_id) qb.andWhere("j.id", category_id);
 				if (city_id) qb.andWhere("js_vwl.city_id", city_id);
@@ -315,8 +295,7 @@ class JobPostModel extends Schema {
 					if (status) qb.andWhere("jpd.status", status);
 					if (title) qb.andWhereILike("j.title", `%${title}%`);
 					if (city_id) qb.andWhere("js_vwl.city_id", city_id);
-					if (job_post_id)
-						qb.andWhere("jpd.job_post_id", job_post_id);
+					if (job_post_id) qb.andWhere("jpd.job_post_id", job_post_id);
 				})
 				.first();
 
@@ -330,9 +309,7 @@ class JobPostModel extends Schema {
 	}
 
 	// get single job post with job seeker details for hotelier
-	public async getSingleJobPostForHotelier(
-		id: number
-	): Promise<IHoiteleirJob> {
+	public async getSingleJobPostForHotelier(id: number): Promise<IHoiteleirJob> {
 		return await this.db("job_post as jp")
 			.withSchema(this.DBO_SCHEMA)
 			.select(
@@ -384,11 +361,7 @@ class JobPostModel extends Schema {
 			)
 			.join("job_post_details as jpd", "jp.id", "jpd.job_post_id")
 			.join("jobs as j", "j.id", "jpd.job_id")
-			.leftJoin(
-				"job_applications as ja",
-				"ja.job_post_details_id",
-				"jpd.id"
-			)
+			.leftJoin("job_applications as ja", "ja.job_post_details_id", "jpd.id")
 			.leftJoin("payment as pay", "pay.application_id", "ja.id")
 			.leftJoin("user as js", "js.id", "ja.job_seeker_id")
 			.joinRaw(`LEFT JOIN ?? as jsu ON jsu.user_id = js.id`, [
@@ -399,17 +372,12 @@ class JobPostModel extends Schema {
 				"js_vwl.location_id",
 				"jsu.location_id"
 			)
-			.leftJoin(
-				"job_task_activities as jta",
-				"jta.job_application_id",
-				"ja.id"
-			)
+			.leftJoin("job_task_activities as jta", "jta.job_application_id", "ja.id")
 			.leftJoin(
 				this.db
 					.select(
 						"jtl.job_task_activity_id",
-						this.db
-							.raw(`COALESCE(json_agg(DISTINCT jsonb_build_object(
+						this.db.raw(`COALESCE(json_agg(DISTINCT jsonb_build_object(
 						'id', jtl.id,
 						'message', jtl.message,
 						'is_completed', jtl.is_completed,
@@ -644,16 +612,8 @@ class JobPostModel extends Schema {
 			.join("user as u", "u.id", "org.user_id")
 			.join("job_post_details as jpd", "jp.id", "jpd.job_post_id")
 			.join("jobs as j", "j.id", "jpd.job_id")
-			.leftJoin(
-				"vw_location as vwl",
-				"vwl.location_id",
-				"org.location_id"
-			)
-			.leftJoin(
-				"job_applications as ja",
-				"ja.job_post_details_id",
-				"jpd.id"
-			)
+			.leftJoin("vw_location as vwl", "vwl.location_id", "org.location_id")
+			.leftJoin("job_applications as ja", "ja.job_post_details_id", "jpd.id")
 			.leftJoin("user as js", "js.id", "ja.job_seeker_id")
 			.joinRaw(`LEFT JOIN ?? as jsu ON jsu.user_id = js.id`, [
 				`${this.JOB_SEEKER}.${this.TABLES.job_seeker}`,
@@ -663,17 +623,12 @@ class JobPostModel extends Schema {
 				"js_vwl.location_id",
 				"jsu.location_id"
 			)
-			.leftJoin(
-				"job_task_activities as jta",
-				"jta.job_application_id",
-				"ja.id"
-			)
+			.leftJoin("job_task_activities as jta", "jta.job_application_id", "ja.id")
 			.leftJoin(
 				this.db
 					.select(
 						"jtl.job_task_activity_id",
-						this.db
-							.raw(`COALESCE(json_agg(DISTINCT jsonb_build_object(
+						this.db.raw(`COALESCE(json_agg(DISTINCT jsonb_build_object(
                   'id', jtl.id,
         'message', jtl.message,
         'is_completed', jtl.is_completed,
@@ -779,21 +734,13 @@ class JobPostModel extends Schema {
 				"vwl.longitude",
 				"vwl.latitude"
 			)
-			.join(
-				"job_post_details as jpd",
-				"jpd.id",
-				"saved.job_post_details_id"
-			)
+			.join("job_post_details as jpd", "jpd.id", "saved.job_post_details_id")
 			.join("job_post as jp", "jp.id", "jpd.job_post_id")
 			.join("jobs as j", "j.id", "jpd.job_id")
 			.joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
 				`${this.HOTELIER}.${this.TABLES.organization}`,
 			])
-			.leftJoin(
-				"vw_location as vwl",
-				"vwl.location_id",
-				"org.location_id"
-			)
+			.leftJoin("vw_location as vwl", "vwl.location_id", "org.location_id")
 			.where("saved.job_seeker_id", job_seeker_id)
 			.andWhere("jpd.status", "Pending")
 			.modify((qb) => {
@@ -822,21 +769,13 @@ class JobPostModel extends Schema {
 			const totalQuery = this.db("saved_job_post_details as saved")
 				.withSchema(DBO_SCHEMA)
 				.countDistinct("saved.job_post_details_id as total")
-				.join(
-					"job_post_details as jpd",
-					"jpd.id",
-					"saved.job_post_details_id"
-				)
+				.join("job_post_details as jpd", "jpd.id", "saved.job_post_details_id")
 				.join("job_post as jp", "jp.id", "jpd.job_post_id")
 				.join("jobs as j", "j.id", "jpd.job_id")
 				.joinRaw(`JOIN ?? as org ON org.id = jp.organization_id`, [
 					`${this.HOTELIER}.${this.TABLES.organization}`,
 				])
-				.leftJoin(
-					"vw_location as vwl",
-					"vwl.location_id",
-					"org.location_id"
-				)
+				.leftJoin("vw_location as vwl", "vwl.location_id", "org.location_id")
 				.where("saved.job_seeker_id", job_seeker_id)
 				.andWhere("jpd.status", "Pending")
 				.modify((qb) => {

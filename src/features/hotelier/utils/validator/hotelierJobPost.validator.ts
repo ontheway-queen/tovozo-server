@@ -15,8 +15,7 @@ export class HotelierJobPostValidator {
 					const expireDate = new Date(value);
 					if (expireDate <= new Date()) {
 						return helpers.error("any.custom", {
-							message:
-								"Expire time must be a future date and time.",
+							message: "Expire time must be a future date and time.",
 						});
 					}
 					return value;
@@ -52,8 +51,7 @@ export class HotelierJobPostValidator {
 							return value;
 						})
 						.messages({
-							"string.isoDate":
-								"Start time must be a valid ISO date.",
+							"string.isoDate": "Start time must be a valid ISO date.",
 							"any.required": "Start time is required.",
 							"any.custom": "{{#message}}",
 						}),
@@ -89,6 +87,7 @@ export class HotelierJobPostValidator {
 			.valid(...JOB_POST_DETAILS_STATUS_ENUM)
 			.optional(),
 		name: Joi.string().allow("").optional(),
+		filter: Joi.string().allow("").optional(),
 		title: Joi.string().optional(),
 		from_date: Joi.string().optional(),
 		to_date: Joi.string().optional(),

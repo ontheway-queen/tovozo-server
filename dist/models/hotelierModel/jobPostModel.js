@@ -283,8 +283,7 @@ class JobPostModel extends schema_1.default {
                 .leftJoin("vw_location as js_vwl", "js_vwl.location_id", "jsu.location_id")
                 .leftJoin("job_task_activities as jta", "jta.job_application_id", "ja.id")
                 .leftJoin(this.db
-                .select("jtl.job_task_activity_id", this.db
-                .raw(`COALESCE(json_agg(DISTINCT jsonb_build_object(
+                .select("jtl.job_task_activity_id", this.db.raw(`COALESCE(json_agg(DISTINCT jsonb_build_object(
 						'id', jtl.id,
 						'message', jtl.message,
 						'is_completed', jtl.is_completed,
@@ -464,8 +463,7 @@ class JobPostModel extends schema_1.default {
                 .leftJoin("vw_location as js_vwl", "js_vwl.location_id", "jsu.location_id")
                 .leftJoin("job_task_activities as jta", "jta.job_application_id", "ja.id")
                 .leftJoin(this.db
-                .select("jtl.job_task_activity_id", this.db
-                .raw(`COALESCE(json_agg(DISTINCT jsonb_build_object(
+                .select("jtl.job_task_activity_id", this.db.raw(`COALESCE(json_agg(DISTINCT jsonb_build_object(
                   'id', jtl.id,
         'message', jtl.message,
         'is_completed', jtl.is_completed,

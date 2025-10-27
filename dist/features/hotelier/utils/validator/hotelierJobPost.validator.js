@@ -85,6 +85,7 @@ class HotelierJobPostValidator {
                 .valid(...constants_1.JOB_POST_DETAILS_STATUS_ENUM)
                 .optional(),
             name: joi_1.default.string().allow("").optional(),
+            filter: joi_1.default.string().allow("").optional(),
             title: joi_1.default.string().optional(),
             from_date: joi_1.default.string().optional(),
             to_date: joi_1.default.string().optional(),

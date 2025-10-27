@@ -20,7 +20,7 @@ class AdminJobPostService extends abstract_service_1.default {
     }
     getJobPostListForAdmin(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { limit, skip, status, name: search, from_date, to_date, } = req.query;
+            const { limit, skip, status, filter: search, from_date, to_date, } = req.query;
             const model = this.Model.jobPostModel();
             const data = yield model.getJobPostListForAdmin({
                 limit: Number(limit) || 100,
@@ -58,11 +58,7 @@ class AdminJobPostService extends abstract_service_1.default {
                 if (!check) {
                     throw new customError_1.default("Job post not found!", this.StatusCode.HTTP_NOT_FOUND);
                 }
-                const notCancellableStatuses = [
-                    "Work Finished",
-                    "Complete",
-                    "Cancelled",
-                ];
+                const notCancellableStatuses = ["Work Finished", "Complete", "Cancelled"];
                 if (notCancellableStatuses.includes(check.job_post_details_status)) {
                     throw new customError_1.default(`Can't cancel. This job post is already ${check.job_post_details_status.toLowerCase()}.`, this.StatusCode.HTTP_BAD_REQUEST);
                 }
