@@ -29,7 +29,8 @@ class AdminHotelierValidator {
 	public getHoteliersQuery = Joi.object({
 		id: Joi.number().optional(),
 		user_id: Joi.number().optional(),
-		name: Joi.string().trim().min(1).max(255),
+		name: Joi.string().trim().min(1).max(255).optional(),
+		filter: Joi.string().min(1).max(255).optional().allow(""),
 		status: Joi.string()
 			.valid(...USER_STATUS_ENUM)
 			.optional(),
