@@ -32,7 +32,8 @@ class AdminHotelierValidator {
         this.getHoteliersQuery = joi_1.default.object({
             id: joi_1.default.number().optional(),
             user_id: joi_1.default.number().optional(),
-            name: joi_1.default.string().trim().min(1).max(255),
+            name: joi_1.default.string().trim().min(1).max(255).optional(),
+            filter: joi_1.default.string().min(1).max(255).optional().allow(""),
             status: joi_1.default.string()
                 .valid(...constants_1.USER_STATUS_ENUM)
                 .optional(),
