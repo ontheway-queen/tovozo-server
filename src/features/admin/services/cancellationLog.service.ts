@@ -16,7 +16,7 @@ import { IJobPostDetailsStatus } from "../../../utils/modelTypes/hotelier/jobPos
 class CancellationLogService extends AbstractServices {
 	// get reports
 	public async getCancellationLogs(req: Request) {
-		const { report_type, status, skip, limit, name } = req.query;
+		const { report_type, status, skip, limit, filter } = req.query;
 
 		const model = this.Model.cancellationLogModel();
 
@@ -25,7 +25,7 @@ class CancellationLogService extends AbstractServices {
 			status: status as ICancellationReportStatus,
 			skip: Number(skip),
 			limit: Number(limit),
-			name: name as string,
+			name: filter as string,
 		});
 
 		return {
@@ -89,14 +89,11 @@ class CancellationLogService extends AbstractServices {
 					report_type,
 				});
 				console.log({ report });
-			} else if (
-				report_type === CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION
-			) {
-				report =
-					await reportModel.getSingleJobApplicationCancellationLog({
-						id: Number(id),
-						report_type,
-					});
+			} else if (report_type === CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION) {
+				report = await reportModel.getSingleJobApplicationCancellationLog({
+					id: Number(id),
+					report_type,
+				});
 			}
 
 			if (!report) {
@@ -123,14 +120,11 @@ class CancellationLogService extends AbstractServices {
 			if (body.status === CANCELLATION_REPORT_STATUS.APPROVED) {
 				await reportModel.updateCancellationLogStatus(Number(id), body);
 				if (report_type === CANCELLATION_REPORT_TYPE.CANCEL_JOB_POST) {
-					const jobPost =
-						await jobPostModel.getSingleJobPostForHotelier(
-							report.related_job_post_details
-						);
-					console.log({ jobPost });
-					await jobPostModel.cancelJobPost(
-						Number(jobPost.job_post_id)
+					const jobPost = await jobPostModel.getSingleJobPostForHotelier(
+						report.related_job_post_details
 					);
+					console.log({ jobPost });
+					await jobPostModel.cancelJobPost(Number(jobPost.job_post_id));
 
 					await jobPostModel.updateJobPostDetailsStatus({
 						id: Number(jobPost.id),
@@ -151,7 +145,8 @@ class CancellationLogService extends AbstractServices {
 						});
 					await jobPostModel.updateJobPostDetailsStatus({
 						id: application.job_post_details_id,
-						status: JOB_POST_DETAILS_STATUS.Pending as unknown as IJobPostDetailsStatus,
+						status:
+							JOB_POST_DETAILS_STATUS.Pending as unknown as IJobPostDetailsStatus,
 					});
 				}
 			} else {

@@ -7,6 +7,16 @@ class JobSeekerNotificationService extends AbstractServices {
 		const user_id = req.jobSeeker.user_id;
 		const model = this.Model.commonModel();
 		const data = await model.getNotification({ ...req.query, user_id });
+		const { data: notifications } = data;
+		const unreadNotifications = notifications.map((notification) => {
+			return {
+				user_id,
+				notification_id: notification.id,
+			};
+		});
+
+		await model.readNotification(unreadNotifications);
+
 		return {
 			success: true,
 			message: this.ResMsg.HTTP_OK,
@@ -104,19 +114,6 @@ class JobSeekerNotificationService extends AbstractServices {
 					message: this.ResMsg.HTTP_NOT_FOUND,
 					code: this.StatusCode.HTTP_NOT_FOUND,
 				};
-			}
-			if (
-				getMyNotification.data[0].user_type.toLowerCase() ===
-				USER_TYPE.ADMIN.toLowerCase()
-			) {
-				await this.insertAdminAudit(trx, {
-					details: id
-						? `Notification ${id} has been read`
-						: "All Notification has been read.",
-					created_by: user_id,
-					endpoint: req.originalUrl,
-					type: "UPDATE",
-				});
 			}
 
 			const data = await model.readNotification({

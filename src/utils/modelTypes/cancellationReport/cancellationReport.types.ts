@@ -26,6 +26,7 @@ export interface IGetReportsQuery {
 	skip: number;
 	need_total: boolean;
 	searchQuery: string;
+	filter?: string;
 }
 export interface IGetCancellationLogAdminQuery {
 	report_type?: ICancellationReportType;

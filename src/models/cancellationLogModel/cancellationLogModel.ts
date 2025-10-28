@@ -60,8 +60,7 @@ class CancellationLogModel extends Schema {
 				if (user_id) qb.andWhere("cr.reporter_id", user_id);
 				if (report_type) qb.andWhere("cr.report_type", report_type);
 				if (status) qb.andWhere("cr.status", status);
-				if (searchQuery)
-					qb.andWhereILike("j.title", `%${searchQuery}%`);
+				if (searchQuery) qb.andWhereILike("j.title", `%${searchQuery}%`);
 			})
 			.limit(limit || 100)
 			.offset(skip || 0);
@@ -80,8 +79,7 @@ class CancellationLogModel extends Schema {
 					if (user_id) qb.andWhere("cr.reporter_id", user_id);
 					if (report_type) qb.andWhere("cr.report_type", report_type);
 					if (status) qb.andWhere("cr.status", status);
-					if (searchQuery)
-						qb.andWhereILike("j.title", `%${searchQuery}%`);
+					if (searchQuery) qb.andWhereILike("j.title", `%${searchQuery}%`);
 				})
 				.first();
 
@@ -350,11 +348,7 @@ class CancellationLogModel extends Schema {
 			.withSchema(this.DBO_SCHEMA)
 			.leftJoin("user as u", "u.id", "cr.reporter_id")
 			.leftJoin("job_applications as ja", "cr.related_id", "ja.id")
-			.leftJoin(
-				"job_post_details as jpd",
-				"ja.job_post_details_id",
-				"jpd.id"
-			)
+			.leftJoin("job_post_details as jpd", "ja.job_post_details_id", "jpd.id")
 			.leftJoin("jobs as j", "jpd.job_id", "j.id")
 			.where("cr.report_type", "CANCEL_APPLICATION");
 		console.log({ jobPostQuery, jobApplicationQuery });
@@ -375,9 +369,7 @@ class CancellationLogModel extends Schema {
 
 		const unioned = this.db
 			.from((qb: any) => {
-				qb.unionAll([jobPostQuery, jobApplicationQuery], true).as(
-					"combined"
-				);
+				qb.unionAll([jobPostQuery, jobApplicationQuery], true).as("combined");
 			})
 			.select("*")
 			.limit(limit)
@@ -401,11 +393,7 @@ class CancellationLogModel extends Schema {
 				.count("cr.id as count")
 				.leftJoin("user as u", "u.id", "cr.reporter_id")
 				.leftJoin("job_applications as ja", "cr.related_id", "ja.id")
-				.leftJoin(
-					"job_post_details as jpd",
-					"ja.job_post_details_id",
-					"jpd.id"
-				)
+				.leftJoin("job_post_details as jpd", "ja.job_post_details_id", "jpd.id")
 				.leftJoin("jobs as j", "jpd.job_id", "j.id")
 				.where("cr.report_type", "CANCEL_APPLICATION");
 
@@ -418,8 +406,7 @@ class CancellationLogModel extends Schema {
 			]);
 
 			total =
-				Number(jobPostCount?.count || 0) +
-				Number(jobAppCount?.count || 0);
+				Number(jobPostCount?.count || 0) + Number(jobAppCount?.count || 0);
 		}
 
 		return { data, total };

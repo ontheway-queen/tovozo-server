@@ -27,7 +27,7 @@ class CancellationReportValidator {
                 .optional(),
             limit: joi_1.default.number().integer().min(1).max(1000).optional(),
             skip: joi_1.default.number().integer().min(0).optional(),
-            searchQuery: joi_1.default.string().allow("").optional(),
+            filter: joi_1.default.string().allow("").optional(),
             name: joi_1.default.string().allow("").optional(),
         });
         this.reportTypeQuerySchema = joi_1.default.object({

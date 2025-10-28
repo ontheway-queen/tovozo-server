@@ -20,13 +20,14 @@ class JobSeekerCancellationLogServices extends abstract_service_1.default {
         super();
         this.getCancellationApplicationLogs = (req) => __awaiter(this, void 0, void 0, function* () {
             const { user_id } = req.jobSeeker;
-            const { limit, skip, status } = req.query;
+            const { limit, skip, status, filter } = req.query;
             const model = this.Model.cancellationLogModel();
             const data = yield model.getJobApplicationCancellationLogs({
                 user_id,
                 limit,
                 skip,
                 status,
+                filter,
             });
             return Object.assign({ success: true, message: this.ResMsg.HTTP_OK, code: this.StatusCode.HTTP_OK }, data);
         });

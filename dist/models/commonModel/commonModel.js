@@ -199,7 +199,7 @@ class CommonModel extends schema_1.default {
     }
     getNotification(params) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { limit = 100, skip = 0, id, user_id, need_total = true, } = params;
+            const { limit = 100, skip = 0, id, user_id, need_total = true } = params;
             const data = yield this.db(`${this.TABLES.notification} as n`)
                 .withSchema(this.DBO_SCHEMA)
                 .select("n.id", "n.user_id", "n.sender_id", "n.sender_type", "n.title", "n.content", "n.created_at", "n.related_id", "n.type", "u.type as user_type", this.db.raw(`

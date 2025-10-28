@@ -19,14 +19,14 @@ class CancellationLogService extends abstract_service_1.default {
     // get reports
     getCancellationLogs(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { report_type, status, skip, limit, name } = req.query;
+            const { report_type, status, skip, limit, filter } = req.query;
             const model = this.Model.cancellationLogModel();
             const data = yield model.getCancellationLogsForAdmin({
                 report_type: report_type,
                 status: status,
                 skip: Number(skip),
                 limit: Number(limit),
-                name: name,
+                name: filter,
             });
             return Object.assign({ success: true, code: this.StatusCode.HTTP_OK, message: this.ResMsg.HTTP_OK }, data);
         });
@@ -81,11 +81,10 @@ class CancellationLogService extends abstract_service_1.default {
                     console.log({ report });
                 }
                 else if (report_type === constants_1.CANCELLATION_REPORT_TYPE.CANCEL_APPLICATION) {
-                    report =
-                        yield reportModel.getSingleJobApplicationCancellationLog({
-                            id: Number(id),
-                            report_type,
-                        });
+                    report = yield reportModel.getSingleJobApplicationCancellationLog({
+                        id: Number(id),
+                        report_type,
+                    });
                 }
                 if (!report) {
                     throw new customError_1.default(this.ResMsg.HTTP_NOT_FOUND, this.StatusCode.HTTP_NOT_FOUND);
