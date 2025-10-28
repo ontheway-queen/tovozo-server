@@ -5,10 +5,10 @@ class HotelierNotificationService extends AbstractServices {
 	public async getAllNotification(req: Request) {
 		const user_id = req.hotelier.user_id;
 		const model = this.Model.commonModel();
+
 		const data = await model.getNotification({ ...req.query, user_id });
 		const { data: notifications } = data;
-
-		if (notifications.length) {
+		if (notifications && notifications.length > 0) {
 			const filteredNotifications = notifications.filter(
 				(notification) => notification.is_read === false
 			);
@@ -19,7 +19,9 @@ class HotelierNotificationService extends AbstractServices {
 				};
 			});
 
-			await model.readNotification(unreadNotifications);
+			if (unreadNotifications.length > 0) {
+				await model.readNotification(unreadNotifications);
+			}
 		}
 		return {
 			success: true,
