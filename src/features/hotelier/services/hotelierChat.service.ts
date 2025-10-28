@@ -59,11 +59,10 @@ export class HotelierChatService extends AbstractServices {
 		const skip = Number(req.query.skip);
 		const chatModel = this.Model.chatModel();
 
-		const read_messages =
-			await chatModel.getAllReadMessagesByUserAndSession({
-				user_id,
-				session_id,
-			});
+		const read_messages = await chatModel.getAllReadMessagesByUserAndSession({
+			user_id,
+			session_id,
+		});
 
 		const data = await chatModel.getMessages({
 			user_id,
@@ -74,9 +73,7 @@ export class HotelierChatService extends AbstractServices {
 
 		const readMessageIds = new Set(read_messages.map((r) => r.message_id));
 
-		const unreadMessages = data.filter(
-			(msg) => !readMessageIds.has(msg.id)
-		);
+		const unreadMessages = data.filter((msg) => !readMessageIds.has(msg.id));
 
 		if (unreadMessages.length > 0) {
 			const insertData = unreadMessages.map((msg) => ({
@@ -160,10 +157,7 @@ export class HotelierChatService extends AbstractServices {
 
 		const checkUser = await userModel.checkUser({ id: user_id });
 		if (checkUser && checkUser.length < 1) {
-			throw new CustomError(
-				"User not found!",
-				this.StatusCode.HTTP_NOT_FOUND
-			);
+			throw new CustomError("User not found!", this.StatusCode.HTTP_NOT_FOUND);
 		}
 
 		let chatSession = await chatModel.checkSupportSession(user_id);
@@ -192,9 +186,7 @@ export class HotelierChatService extends AbstractServices {
 					joined_at: new Date(),
 				}));
 
-				await chatModel.createChatSessionParticipants(
-					newAdminParticipants
-				);
+				await chatModel.createChatSessionParticipants(newAdminParticipants);
 			}
 
 			return {
@@ -212,7 +204,7 @@ export class HotelierChatService extends AbstractServices {
 			{
 				chat_session_id,
 				user_id,
-				type: TypeUser.JOB_SEEKER,
+				type: TypeUser.HOTELIER,
 				joined_at: new Date(),
 			},
 		]);
