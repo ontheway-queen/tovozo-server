@@ -41,11 +41,7 @@ class ChatModel extends Schema {
 			.first();
 	}
 
-	public async createChatSession({
-		last_message,
-	}: {
-		last_message?: string;
-	}) {
+	public async createChatSession({ last_message }: { last_message?: string }) {
 		return await this.db("chat_sessions")
 			.withSchema(this.DBO_SCHEMA)
 			.insert({ last_message }, "id");
@@ -117,11 +113,7 @@ class ChatModel extends Schema {
 					`COALESCE(unread_counts.unread_message_count, 0) as unread_message_count`
 				)
 			)
-			.join(
-				"chat_session_participants as csp",
-				"cs.id",
-				"csp.chat_session_id"
-			)
+			.join("chat_session_participants as csp", "cs.id", "csp.chat_session_id")
 			.join(
 				this.db.raw(
 					`
@@ -140,8 +132,8 @@ class ChatModel extends Schema {
         END as photo,
         csp2.type
       FROM "dbo"."chat_session_participants" csp2
-      LEFT JOIN "dbo"."user" u ON u.id = csp2.user_id
-      LEFT JOIN "hotelier"."organization" org ON org.user_id = u.id
+      JOIN "dbo"."user" u ON u.id = csp2.user_id
+      JOIN "hotelier"."organization" org ON org.user_id = csp2.user_id
       WHERE (csp2.user_id IS NULL OR csp2.user_id != ?)
         AND u.type IS DISTINCT FROM 'ADMIN'
     ) as other_participant
@@ -203,16 +195,8 @@ class ChatModel extends Schema {
 	}) {
 		return await this.db("chat_sessions as cs")
 			.withSchema(this.DBO_SCHEMA)
-			.join(
-				"chat_session_participants as p1",
-				"p1.chat_session_id",
-				"cs.id"
-			)
-			.join(
-				"chat_session_participants as p2",
-				"p2.chat_session_id",
-				"cs.id"
-			)
+			.join("chat_session_participants as p1", "p1.chat_session_id", "cs.id")
+			.join("chat_session_participants as p2", "p2.chat_session_id", "cs.id")
 			.where("p1.user_id", hotelier_id)
 			.where("p2.user_id", job_seeker_id)
 			.select(

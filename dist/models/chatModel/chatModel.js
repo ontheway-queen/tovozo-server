@@ -44,7 +44,7 @@ class ChatModel extends schema_1.default {
         });
     }
     createChatSession(_a) {
-        return __awaiter(this, arguments, void 0, function* ({ last_message, }) {
+        return __awaiter(this, arguments, void 0, function* ({ last_message }) {
             return yield this.db("chat_sessions")
                 .withSchema(this.DBO_SCHEMA)
                 .insert({ last_message }, "id");
@@ -89,8 +89,8 @@ class ChatModel extends schema_1.default {
         END as photo,
         csp2.type
       FROM "dbo"."chat_session_participants" csp2
-      LEFT JOIN "dbo"."user" u ON u.id = csp2.user_id
-      LEFT JOIN "hotelier"."organization" org ON org.user_id = u.id
+      JOIN "dbo"."user" u ON u.id = csp2.user_id
+      JOIN "hotelier"."organization" org ON org.user_id = csp2.user_id
       WHERE (csp2.user_id IS NULL OR csp2.user_id != ?)
         AND u.type IS DISTINCT FROM 'ADMIN'
     ) as other_participant

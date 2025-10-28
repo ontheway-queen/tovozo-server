@@ -182,7 +182,7 @@ class HotelierChatService extends abstract_service_1.default {
                 {
                     chat_session_id,
                     user_id,
-                    type: userModelTypes_1.TypeUser.JOB_SEEKER,
+                    type: userModelTypes_1.TypeUser.HOTELIER,
                     joined_at: new Date(),
                 },
             ]);

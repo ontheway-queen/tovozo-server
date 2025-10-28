@@ -13,7 +13,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const abstract_service_1 = __importDefault(require("../../../abstract/abstract.service"));
-const constants_1 = require("../../../utils/miscellaneous/constants");
 class JobSeekerNotificationService extends abstract_service_1.default {
     getAllNotification(req) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -21,13 +20,16 @@ class JobSeekerNotificationService extends abstract_service_1.default {
             const model = this.Model.commonModel();
             const data = yield model.getNotification(Object.assign(Object.assign({}, req.query), { user_id }));
             const { data: notifications } = data;
-            const unreadNotifications = notifications.map((notification) => {
-                return {
-                    user_id,
-                    notification_id: notification.id,
-                };
-            });
-            yield model.readNotification(unreadNotifications);
+            if (notifications.length) {
+                const filteredNotifications = notifications.filter((notification) => notification.is_read === false);
+                const unreadNotifications = filteredNotifications.map((notification) => {
+                    return {
+                        user_id,
+                        notification_id: notification.id,
+                    };
+                });
+                yield model.readNotification(unreadNotifications);
+            }
             return Object.assign({ success: true, message: this.ResMsg.HTTP_OK, code: this.StatusCode.HTTP_OK }, data);
         });
     }
@@ -49,17 +51,6 @@ class JobSeekerNotificationService extends abstract_service_1.default {
                         message: this.ResMsg.HTTP_NOT_FOUND,
                         code: this.StatusCode.HTTP_NOT_FOUND,
                     };
-                }
-                if (getMyNotification.data[0].user_type.toLowerCase() ===
-                    constants_1.USER_TYPE.ADMIN.toLowerCase()) {
-                    yield this.insertAdminAudit(trx, {
-                        details: id
-                            ? `Notification ${id} has been deleted`
-                            : "All Notification has been deleted.",
-                        created_by: user_id,
-                        endpoint: req.originalUrl,
-                        type: "DELETE",
-                    });
                 }
                 if (id) {
                     yield model.deleteNotification({
@@ -110,7 +101,7 @@ class JobSeekerNotificationService extends abstract_service_1.default {
                         code: this.StatusCode.HTTP_NOT_FOUND,
                     };
                 }
-                const data = yield model.readNotification({
+                yield model.readNotification({
                     notification_id: Number(id),
                     user_id,
                 });
