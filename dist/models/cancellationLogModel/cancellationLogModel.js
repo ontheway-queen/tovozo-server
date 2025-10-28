@@ -212,7 +212,7 @@ class CancellationLogModel extends schema_1.default {
     // Get cancellation logs for admin
     getCancellationLogsForAdmin(query) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { status, limit = 100, skip = 0, need_total = true, name, report_type, } = query;
+            const { status, limit = 100, skip = 0, need_total = true, name, report_type, from_date, to_date, } = query;
             const jobPostQuery = this.db
                 .select("cr.id", "j.title", "u.name as reporter_name", "cr.report_type", "cr.status")
                 .from("cancellation_logs as cr")
@@ -242,6 +242,12 @@ class CancellationLogModel extends schema_1.default {
                             .whereILike("j.title", `%${name}%`)
                             .orWhereILike("u.name", `%${name}%`);
                     });
+                }
+                if (from_date) {
+                    qb.andWhere("cr.created_at", ">=", from_date);
+                }
+                if (to_date) {
+                    qb.andWhere("cr.created_at", "<=", to_date);
                 }
             };
             applyFilters(jobPostQuery);

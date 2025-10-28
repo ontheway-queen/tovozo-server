@@ -35,6 +35,8 @@ export interface IGetCancellationLogAdminQuery {
 	skip?: number;
 	need_total?: boolean;
 	name?: string;
+	from_date?: string;
+	to_date?: string;
 }
 
 export type ICancellationReportType = keyof typeof CANCELLATION_REPORT_TYPE;
