@@ -20,7 +20,7 @@ class JobSeekerNotificationService extends abstract_service_1.default {
             const model = this.Model.commonModel();
             const data = yield model.getNotification(Object.assign(Object.assign({}, req.query), { user_id }));
             const { data: notifications } = data;
-            if (notifications.length) {
+            if (notifications && notifications.length > 0) {
                 const filteredNotifications = notifications.filter((notification) => notification.is_read === false);
                 const unreadNotifications = filteredNotifications.map((notification) => {
                     return {
@@ -28,7 +28,9 @@ class JobSeekerNotificationService extends abstract_service_1.default {
                         notification_id: notification.id,
                     };
                 });
-                yield model.readNotification(unreadNotifications);
+                if (unreadNotifications.length > 0) {
+                    yield model.readNotification(unreadNotifications);
+                }
             }
             return Object.assign({ success: true, message: this.ResMsg.HTTP_OK, code: this.StatusCode.HTTP_OK }, data);
         });
