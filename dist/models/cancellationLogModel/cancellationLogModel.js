@@ -278,8 +278,7 @@ class CancellationLogModel extends schema_1.default {
                     jobAppTotal.first(),
                 ]);
                 total =
-                    Number((jobPostCount === null || jobPostCount === void 0 ? void 0 : jobPostCount.count) || 0) +
-                        Number((jobAppCount === null || jobAppCount === void 0 ? void 0 : jobAppCount.count) || 0);
+                    Number((jobPostCount === null || jobPostCount === void 0 ? void 0 : jobPostCount.count) || 0) + Number((jobAppCount === null || jobAppCount === void 0 ? void 0 : jobAppCount.count) || 0);
             }
             return { data, total };
         });

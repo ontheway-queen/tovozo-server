@@ -11,13 +11,14 @@ export class JobSeekerCancellationLogServices extends AbstractServices {
 
 	public getCancellationApplicationLogs = async (req: Request) => {
 		const { user_id } = req.jobSeeker;
-		const { limit, skip, status } = req.query;
+		const { limit, skip, status, filter } = req.query;
 		const model = this.Model.cancellationLogModel();
 		const data = await model.getJobApplicationCancellationLogs({
 			user_id,
 			limit,
 			skip,
 			status,
+			filter,
 		} as unknown as IGetReportsQuery);
 		return {
 			success: true,

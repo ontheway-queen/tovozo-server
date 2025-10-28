@@ -12,8 +12,7 @@ class CancellationReportValidator {
 		reject_reason: Joi.string().when("status", {
 			is: CANCELLATION_REPORT_STATUS.REJECTED,
 			then: Joi.required().messages({
-				"any.required":
-					"Rejected reason is required when status is REJECTED.",
+				"any.required": "Rejected reason is required when status is REJECTED.",
 			}),
 			otherwise: Joi.forbidden(),
 		}),
@@ -31,7 +30,7 @@ class CancellationReportValidator {
 
 		limit: Joi.number().integer().min(1).max(1000).optional(),
 		skip: Joi.number().integer().min(0).optional(),
-		searchQuery: Joi.string().allow("").optional(),
+		filter: Joi.string().allow("").optional(),
 		name: Joi.string().allow("").optional(),
 	});
 
