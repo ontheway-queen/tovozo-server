@@ -16,7 +16,8 @@ import { IJobPostDetailsStatus } from "../../../utils/modelTypes/hotelier/jobPos
 class CancellationLogService extends AbstractServices {
 	// get reports
 	public async getCancellationLogs(req: Request) {
-		const { report_type, status, skip, limit, filter } = req.query;
+		const { report_type, status, skip, limit, filter, from_date, to_date } =
+			req.query;
 
 		const model = this.Model.cancellationLogModel();
 
@@ -26,6 +27,8 @@ class CancellationLogService extends AbstractServices {
 			skip: Number(skip),
 			limit: Number(limit),
 			name: filter as string,
+			from_date: from_date as string,
+			to_date: to_date as string,
 		});
 
 		return {

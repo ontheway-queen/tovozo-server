@@ -19,7 +19,7 @@ class CancellationLogService extends abstract_service_1.default {
     // get reports
     getCancellationLogs(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { report_type, status, skip, limit, filter } = req.query;
+            const { report_type, status, skip, limit, filter, from_date, to_date } = req.query;
             const model = this.Model.cancellationLogModel();
             const data = yield model.getCancellationLogsForAdmin({
                 report_type: report_type,
@@ -27,6 +27,8 @@ class CancellationLogService extends abstract_service_1.default {
                 skip: Number(skip),
                 limit: Number(limit),
                 name: filter,
+                from_date: from_date,
+                to_date: to_date,
             });
             return Object.assign({ success: true, code: this.StatusCode.HTTP_OK, message: this.ResMsg.HTTP_OK }, data);
         });

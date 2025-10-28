@@ -28,6 +28,9 @@ class CancellationReportValidator {
 			.valid(...CANCELLATION_REPORT_STATUS_ENUM)
 			.optional(),
 
+		from_date: Joi.date().optional(),
+		to_date: Joi.date().optional(),
+
 		limit: Joi.number().integer().min(1).max(1000).optional(),
 		skip: Joi.number().integer().min(0).optional(),
 		filter: Joi.string().allow("").optional(),

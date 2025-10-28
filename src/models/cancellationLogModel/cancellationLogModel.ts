@@ -170,11 +170,7 @@ class CancellationLogModel extends Schema {
 			)
 			.leftJoin("user as u", "u.id", "cr.reporter_id")
 			.leftJoin("job_applications as ja", "cr.related_id", "ja.id")
-			.leftJoin(
-				"job_post_details as jpd",
-				"jpd.id",
-				"ja.job_post_details_id"
-			)
+			.leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
 			.leftJoin("jobs as j", "j.id", "jpd.job_id")
 			.where((qb) => {
 				if (user_id) {
@@ -200,11 +196,7 @@ class CancellationLogModel extends Schema {
 				.count("cr.id as total")
 				.leftJoin("user as u", "u.id", "cr.reporter_id")
 				.leftJoin("job_applications as ja", "cr.related_id", "ja.id")
-				.leftJoin(
-					"job_post_details as jpd",
-					"jpd.id",
-					"ja.job_post_details_id"
-				)
+				.leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
 				.leftJoin("jobs as j", "j.id", "jpd.job_id")
 				.where((qb) => {
 					if (user_id) {
@@ -257,11 +249,7 @@ class CancellationLogModel extends Schema {
 			)
 			.leftJoin("user as u", "u.id", "cr.reporter_id")
 			.leftJoin("job_applications as ja", "cr.related_id", "ja.id")
-			.leftJoin(
-				"job_post_details as jpd",
-				"jpd.id",
-				"ja.job_post_details_id"
-			)
+			.leftJoin("job_post_details as jpd", "jpd.id", "ja.job_post_details_id")
 			.leftJoin("job_post as jp", "jp.id", "jpd.job_post_id")
 			.leftJoin("jobs as j", "j.id", "jpd.job_id")
 			.where("cr.report_type", report_type)
@@ -319,6 +307,8 @@ class CancellationLogModel extends Schema {
 			need_total = true,
 			name,
 			report_type,
+			from_date,
+			to_date,
 		} = query;
 
 		const jobPostQuery = this.db
@@ -361,6 +351,12 @@ class CancellationLogModel extends Schema {
 						.whereILike("j.title", `%${name}%`)
 						.orWhereILike("u.name", `%${name}%`);
 				});
+			}
+			if (from_date) {
+				qb.andWhere("cr.created_at", ">=", from_date);
+			}
+			if (to_date) {
+				qb.andWhere("cr.created_at", "<=", to_date);
 			}
 		};
 
