@@ -30,6 +30,7 @@ class JobSeekerChatService extends abstract_service_1.default {
                 user_id,
                 name: name,
             });
+            console.log({ data });
             return {
                 success: true,
                 message: this.ResMsg.HTTP_OK,
@@ -105,7 +106,7 @@ class JobSeekerChatService extends abstract_service_1.default {
                 const chatModel = this.Model.chatModel(trx);
                 const isSessionExists = yield chatModel.getChatSessionById(chat_session_id);
                 if (isSessionExists && !isSessionExists.enable_chat) {
-                    throw new customError_1.default("This chat session is closed and no longer accepts new messages.", this.StatusCode.HTTP_FORBIDDEN);
+                    throw new customError_1.default("This chat session is closed or no longer accepts new messages.", this.StatusCode.HTTP_FORBIDDEN);
                 }
                 const messagePayload = {
                     sender_id: user_id,
@@ -125,6 +126,7 @@ class JobSeekerChatService extends abstract_service_1.default {
                     message,
                     created_at: newMessage[0].created_at,
                     sender_type: "JOBSEEKER",
+                    chat_session_id,
                 });
                 return {
                     success: true,

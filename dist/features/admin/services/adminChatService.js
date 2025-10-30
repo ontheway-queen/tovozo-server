@@ -166,10 +166,11 @@ class AdminChatService extends abstract_service_1.default {
             const { user_id } = req.admin;
             const { name } = req.query;
             const chatModel = this.Model.chatModel();
-            const data = yield chatModel.getChatSessions({
+            const data = yield chatModel.getChatSessionsForAdmin({
                 user_id,
                 name: name,
             });
+            console.log({ data });
             return {
                 success: true,
                 message: this.ResMsg.HTTP_OK,
@@ -190,6 +191,30 @@ class AdminChatService extends abstract_service_1.default {
                 chat_session_id: session_id,
                 limit,
                 skip,
+            });
+            const read_messages = yield chatModel.getAllReadMessagesByUserAndSession({
+                user_id,
+                session_id,
+            });
+            const readMessageIds = new Set(read_messages.map((r) => r.message_id));
+            const unreadMessages = data.filter((msg) => !readMessageIds.has(msg.id));
+            console.log({ unreadMessages });
+            console.log({ readMessages: read_messages.length });
+            console.log({ unreadMessages: unreadMessages.length });
+            if (unreadMessages.length > 0) {
+                const insertData = unreadMessages.map((msg) => ({
+                    message_id: msg.id,
+                    chat_session_id: session_id,
+                    user_id,
+                    seen_at: new Date(),
+                }));
+                yield chatModel.markMessagesAsSeenBulk(insertData);
+            }
+            yield chatModel.getChatSessionsForAdmin({
+                user_id,
+            });
+            socket_1.io.to(`chat:${session_id}`).emit("chat:count_update", {
+                count: 0,
             });
             return {
                 success: true,
