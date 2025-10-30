@@ -178,10 +178,11 @@ class AdminChatService extends AbstractServices {
 		const { user_id } = req.admin;
 		const { name } = req.query;
 		const chatModel = this.Model.chatModel();
-		const data = await chatModel.getChatSessions({
+		const data = await chatModel.getChatSessionsForAdmin({
 			user_id,
 			name: name as string,
 		});
+		console.log({ data });
 		return {
 			success: true,
 			message: this.ResMsg.HTTP_OK,
@@ -203,6 +204,37 @@ class AdminChatService extends AbstractServices {
 			limit,
 			skip,
 		});
+
+		const read_messages = await chatModel.getAllReadMessagesByUserAndSession({
+			user_id,
+			session_id,
+		});
+
+		const readMessageIds = new Set(read_messages.map((r) => r.message_id));
+
+		const unreadMessages = data.filter((msg) => !readMessageIds.has(msg.id));
+		console.log({ unreadMessages });
+		console.log({ readMessages: read_messages.length });
+		console.log({ unreadMessages: unreadMessages.length });
+		if (unreadMessages.length > 0) {
+			const insertData = unreadMessages.map((msg) => ({
+				message_id: msg.id,
+				chat_session_id: session_id,
+				user_id,
+				seen_at: new Date(),
+			}));
+
+			await chatModel.markMessagesAsSeenBulk(insertData);
+		}
+
+		await chatModel.getChatSessionsForAdmin({
+			user_id,
+		});
+
+		io.to(`chat:${session_id}`).emit("chat:count_update", {
+			count: 0,
+		});
+
 		return {
 			success: true,
 			message: this.ResMsg.HTTP_OK,

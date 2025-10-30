@@ -17,7 +17,7 @@ export class JobSeekerChatService extends AbstractServices {
 			user_id,
 			name: name as string,
 		});
-
+		console.log({ data });
 		return {
 			success: true,
 			message: this.ResMsg.HTTP_OK,
@@ -108,7 +108,7 @@ export class JobSeekerChatService extends AbstractServices {
 			);
 			if (isSessionExists && !isSessionExists.enable_chat) {
 				throw new CustomError(
-					"This chat session is closed and no longer accepts new messages.",
+					"This chat session is closed or no longer accepts new messages.",
 					this.StatusCode.HTTP_FORBIDDEN
 				);
 			}
@@ -134,6 +134,7 @@ export class JobSeekerChatService extends AbstractServices {
 				message,
 				created_at: newMessage[0].created_at,
 				sender_type: "JOBSEEKER",
+				chat_session_id,
 			});
 
 			return {

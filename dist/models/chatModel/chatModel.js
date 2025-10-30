@@ -117,6 +117,62 @@ class ChatModel extends schema_1.default {
                 .orderBy("cs.last_message_at", "desc");
         });
     }
+    getChatSessionsForAdmin(query) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { user_id, name } = query;
+            console.log({ user_id, name });
+            return yield this.db("chat_sessions as cs")
+                .withSchema(this.DBO_SCHEMA)
+                .select("cs.id as session_id", "cs.last_message", "cs.last_message_at", "cs.enable_chat", "other_participant.id as participant_user_id", "other_participant.name as participant_name", "other_participant.email as participant_email", "other_participant.photo as participant_image", "other_participant.type as participant_type", this.db.raw(`COALESCE(unread_counts.unread_message_count, 0) as unread_message_count`))
+                .join("chat_session_participants as csp", "cs.id", "csp.chat_session_id")
+                .join(this.db.raw(`
+    (
+      SELECT
+        csp2.chat_session_id,
+        u.id,
+        CASE 
+          WHEN csp2.type = 'HOTELIER' THEN org.name
+          WHEN csp2.type = 'JOB_SEEKER' THEN u.name
+          ELSE u.name 
+        END as name,
+        u.email,
+        CASE 
+          WHEN csp2.type = 'HOTELIER' THEN org.photo
+          WHEN csp2.type = 'JOB_SEEKER' THEN u.photo
+          ELSE u.photo 
+        END as photo,
+        csp2.type
+      FROM "dbo"."chat_session_participants" csp2
+      JOIN "dbo"."user" u ON u.id = csp2.user_id
+      LEFT JOIN "hotelier"."organization" org ON org.user_id = csp2.user_id
+      LEFT JOIN "jobseeker"."job_seeker" js ON js.user_id = csp2.user_id
+
+      WHERE (csp2.user_id IS NULL OR csp2.user_id != ?)
+        AND u.type IS DISTINCT FROM 'ADMIN'
+    ) as other_participant
+    `, [user_id]), "cs.id", "other_participant.chat_session_id")
+                .leftJoin(this.db.raw(`
+      (
+        SELECT
+          cm.chat_session_id,
+          COUNT(*) AS unread_message_count
+        FROM "dbo"."chat_messages" cm
+        LEFT JOIN "dbo"."chat_message_reads" cmr
+          ON cm.id = cmr.message_id AND cmr.user_id = ?
+        WHERE cmr.id IS NULL
+          AND cm.sender_id != ?
+        GROUP BY cm.chat_session_id
+      ) as unread_counts
+      `, [user_id, user_id]), "unread_counts.chat_session_id", "cs.id")
+                .where((qb) => {
+                qb.andWhere("csp.user_id", user_id);
+                if (name) {
+                    qb.andWhereILike("other_participant.name", `%${name}%`);
+                }
+            })
+                .orderBy("cs.last_message_at", "desc");
+        });
+    }
     getChatSessionById(id) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db("chat_sessions as cs")
@@ -192,7 +248,7 @@ class ChatModel extends schema_1.default {
         return __awaiter(this, arguments, void 0, function* ({ user_id, session_id, }) {
             return yield this.db("chat_message_reads as cmr")
                 .withSchema(this.DBO_SCHEMA)
-                .select("cmr.id as message_id")
+                .select("cmr.message_id")
                 .where("cmr.chat_session_id", session_id)
                 .andWhere("cmr.user_id", user_id);
         });
